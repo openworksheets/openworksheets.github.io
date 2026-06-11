@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>Test zip</title></head>
+<body>
+<pre id="out"></pre>
+<script>
+window.onerror = (m, s, l) => { document.getElementById('out').textContent += '\nONERROR: ' + m + ' @ ' + s + ':' + l; };
+window.onunhandledrejection = e => { document.getElementById('out').textContent += '\nREJECT: ' + (e.reason && e.reason.message || e.reason); };
+</script>
+<script src="../vendor/jszip.min.js"></script>
+<script src="../vendor/pdf.min.js"></script>
+<script type="module">
+import { exportFichaZip, importFichaZip, newManifest } from '../js/zipio.js';
+
+const out = [];
+const log = (...a) => { out.push(a.join(' ')); document.getElementById('out').textContent = out.join('\n'); };
+
+function makeImage() {
+  return new Promise(res => {
+    const c = document.createElement('canvas');
+    c.width = 400; c.height = 500;
+    const g = c.getContext('2d');
+    g.fillStyle = '#fff'; g.fillRect(0, 0, 400, 500);
+    c.toBlob(b => res(b), 'image/png');
+  });
+}
+
+async function main() {
+  try {
+    log('inicio main, JSZip:', typeof window.JSZip);
+    const blob = await makeImage();
+    log('makeImage ok');
+    log('webp soportado:', blob.type === 'image/webp');
+    const manifest = newManifest();
+    manifest.title = 'Ida y vuelta';
+    manifest.pages.push({
+      image: 'pages/page-1.webp', w: 400, h: 500,
+      fields: [{ id: 'f1', type: 'select', rect: { x: 0.1, y: 0.1, w: 0.2, h: 0.05 }, points: 1, fontScale: 1.2, config: { options: ['a', 'b'], correct: 1 } }]
+    });
+    const files = new Map([['pages/page-1.webp', blob]]);
+    const zip = await exportFichaZip({ manifest, files });
+    log('zip:', zip.size, 'bytes');
+    const ficha = await importFichaZip(zip);
+    log('título:', ficha.manifest.title);
+    log('campo recuperado:', ficha.manifest.pages[0].fields[0].config.correct === 1);
+    log('imagen:', ficha.files.get('pages/page-1.webp').size, 'bytes');
+    log('pdfjs cargado:', typeof window.pdfjsLib?.getDocument === 'function');
+    const bad = new Blob([new Uint8Array([1, 2, 3])]);
+    try { await importFichaZip(bad); log('zip inválido: NO detectado'); }
+    catch { log('zip inválido detectado: true'); }
+    log('__TEST_OK__');
+  } catch (e) {
+    log('__TEST_FAIL__', e.message);
+  }
+}
+main();
+</script>
+</body>
+</html>

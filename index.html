@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WorkPDF · Fichas interactivas autocorregibles</title>
+  <meta name="description" content="Crea fichas, ejercicios y actividades autocorregibles a partir de un PDF o una imagen. Sin servidor: exporta un ZIP, súbelo a Drive y comparte el enlace.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <a class="brand" href="index.html">WorkPDF <span class="tag">fichas autocorregibles</span></a>
+    <span class="spacer"></span>
+    <a class="btn small" href="alumno.html">Soy alumno/a</a>
+    <a class="btn small primary" href="editor.html">Crear una ficha</a>
+  </header>
+
+  <main class="page-wrap">
+
+    <section class="hero">
+      <h1>Tu PDF, convertido en una<br><span class="subrayado">ficha autocorregible</span></h1>
+      <p class="lead">
+        Sube un PDF o una imagen, coloca encima campos interactivos y compártelo con tu
+        alumnado mediante un simple enlace. Sin servidor, sin cuentas, sin instalaciones.
+      </p>
+      <p style="margin-top:18px">
+        <a class="btn primary" href="editor.html">✎ Empezar a crear</a>
+      </p>
+    </section>
+
+    <section class="home-grid">
+      <div class="card home-card anim-in">
+        <span class="num">1</span>
+        <h3>Crea</h3>
+        <p>Sube tu PDF (cada página se convierte en imagen) y dibuja encima respuestas cortas,
+        opciones, huecos, emparejamientos, ordenaciones o zonas de arrastre. Configura
+        respuestas correctas y puntuación.</p>
+        <a class="btn" href="editor.html">Abrir el editor</a>
+      </div>
+      <div class="card home-card anim-in">
+        <span class="num">2</span>
+        <h3>Comparte</h3>
+        <p>Exporta la ficha como un ZIP que lo contiene todo. Súbelo a Google Drive, hazlo
+        público («cualquier persona con el enlace») y genera aquí el enlace para tus alumnos.</p>
+        <a class="btn" href="#compartir">Generar enlace</a>
+      </div>
+      <div class="card home-card anim-in">
+        <span class="num">3</span>
+        <h3>Corrige sola</h3>
+        <p>El alumnado abre el enlace, responde en el navegador y recibe su corrección al
+        instante. Cada entrega lleva un código de verificación que puedes comprobar aquí.</p>
+        <a class="btn" href="alumno.html">Modo alumno</a>
+      </div>
+    </section>
+
+    <section id="compartir" class="card steps-box anim-in">
+      <h2>Generar el enlace para el alumnado</h2>
+      <ol>
+        <li>Exporta tu ficha como ZIP desde el editor.</li>
+        <li>Súbela a Google Drive (u otro alojamiento público).</li>
+        <li>En Drive: <em>Compartir → Cualquier persona con el enlace → Copiar enlace</em>.</li>
+        <li>Pega aquí ese enlace y copia la dirección resultante en Classroom, Moodle o correo.</li>
+      </ol>
+      <label class="f-label" for="urlZip">URL pública del ZIP</label>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <input type="url" id="urlZip" placeholder="https://drive.google.com/file/d/…" style="flex:1;min-width:240px">
+        <button class="btn primary" id="btnGenerar">Generar enlace</button>
+      </div>
+      <div id="salidaEnlace" style="display:none">
+        <div class="link-out" id="enlaceAlumnos"></div>
+        <button class="btn small" id="btnCopiarEnlace">⧉ Copiar enlace</button>
+      </div>
+    </section>
+
+    <section class="card steps-box anim-in" style="margin-top:24px">
+      <h2>Verificar una entrega</h2>
+      <p>Comprueba que el archivo de entrega de un alumno no ha sido modificado a mano:
+      el código de verificación debe coincidir con su contenido.</p>
+      <button class="btn" id="btnVerificar">Abrir archivo de entrega (.json)</button>
+      <input type="file" id="inputEntrega" accept=".json,application/json" style="display:none">
+      <div id="salidaVerificacion" class="link-out" style="display:none"></div>
+    </section>
+
+    <div class="aviso">
+      <strong>Sobre la seguridad:</strong> al funcionar sin servidor, las respuestas correctas
+      viajan dentro del ZIP y un alumno con conocimientos técnicos podría inspeccionarlas.
+      WorkPDF es ideal para prácticas, deberes y autoevaluación, pero no debe usarse como
+      sistema de examen de alta seguridad.
+    </div>
+
+  </main>
+
+  <footer class="pie">
+    WorkPDF · aplicación web estática para crear fichas autocorregibles ·
+    <a href="https://github.com/jjdeharo" target="_blank" rel="noopener">GitHub</a>
+  </footer>
+
+  <script src="config.js"></script>
+  <script type="module" src="js/index.js"></script>
+</body>
+</html>

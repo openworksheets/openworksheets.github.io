@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Test player</title>
+  <link rel="stylesheet" href="../css/app.css">
+</head>
+<body>
+<div id="app"></div>
+<pre id="out"></pre>
+<script src="../config.js"></script>
+<script type="module">
+import { mountPlayer } from '../js/player.js';
+
+const out = [];
+const log = (...a) => { out.push(a.join(' ')); document.getElementById('out').textContent = out.join('\n'); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+window.confirm = () => true;
+
+function makeImage() {
+  return new Promise(res => {
+    const c = document.createElement('canvas');
+    c.width = 800; c.height = 1000;
+    const g = c.getContext('2d');
+    g.fillStyle = '#fff'; g.fillRect(0, 0, 800, 1000);
+    g.fillStyle = '#000'; g.font = '24px sans-serif';
+    g.fillText('Página de prueba', 40, 60);
+    c.toBlob(b => res(b), 'image/png');
+  });
+}
+
+async function main() {
+  try {
+    localStorage.clear();
+    const blob = await makeImage();
+    const manifest = {
+      format: 'workpdf-ficha', version: 1, id: 'wpftest1',
+      title: 'Ficha de prueba', author: 'Test', instructions: 'Responde todo.',
+      settings: { showScore: true, showCorrection: true, shuffle: true, maxAttempts: 2 },
+      pages: [{
+        image: 'pages/page-1.png', w: 800, h: 1000, fields: [
+          { id: 'f1', type: 'text', rect: { x: 0.1, y: 0.1, w: 0.25, h: 0.04 }, points: 2, fontScale: 1,
+            config: { answers: ['Célula'], ignoreCase: true, ignoreAccents: true, collapseSpaces: true } },
+          { id: 'f2', type: 'single', rect: { x: 0.1, y: 0.2, w: 0.3, h: 0.12 }, points: 1, fontScale: 1,
+            config: { options: ['Roja', 'Verde', 'Azul'], correct: 2 } },
+          { id: 'f3', type: 'gaps', rect: { x: 0.1, y: 0.4, w: 0.5, h: 0.1 }, points: 2, fontScale: 1,
+            config: { text: 'Dos por dos son [4|cuatro] y tres por tres [9].', ignoreCase: true } },
+          { id: 'f4', type: 'dragdrop', rect: { x: 0.1, y: 0.6, w: 0.4, h: 0.08 }, points: 2, fontScale: 1,
+            config: {
+              zones: [
+                { id: 'z1', rect: { x: 0.6, y: 0.6, w: 0.15, h: 0.05 }, answer: 'Norte' },
+                { id: 'z2', rect: { x: 0.6, y: 0.7, w: 0.15, h: 0.05 }, answer: 'Sur' }
+              ], distractors: ['Este']
+            } }
+        ]
+      }]
+    };
+    const files = new Map([['pages/page-1.png', blob]]);
+    const root = document.getElementById('app');
+    mountPlayer(root, { manifest, files });
+    await sleep(100);
+
+    // Identificación
+    const nameInput = root.querySelector('form input[type="text"]');
+    if (!nameInput) throw new Error('no hay formulario de identificación');
+    nameInput.value = 'Alumno Test';
+    root.querySelector('form').dispatchEvent(new Event('submit', { cancelable: true }));
+    await sleep(100);
+
+    // f1: texto (correcto, con mayúsculas y sin tilde)
+    const f1 = root.querySelector('[data-id="f1"] input');
+    f1.value = 'CELULA';
+    f1.dispatchEvent(new Event('input'));
+
+    // f2: opción única → marcar la opción "Azul" (barajada)
+    const labels = [...root.querySelectorAll('[data-id="f2"] .wpf-choice')];
+    const azul = labels.find(l => l.textContent.trim() === 'Azul');
+    azul.querySelector('input').click();
+
+    // f3: huecos → primero bien, segundo mal
+    const gapsInputs = [...root.querySelectorAll('[data-id="f3"] .wpf-gap-input')];
+    gapsInputs[0].value = 'cuatro'; gapsInputs[0].dispatchEvent(new Event('input'));
+    gapsInputs[1].value = '7'; gapsInputs[1].dispatchEvent(new Event('input'));
+
+    // f4: arrastrar → 'Norte' a z1 (bien), 'Este' a z2 (mal)
+    function clickToken(text) {
+      const tk = [...root.querySelectorAll('.wpf-token')].find(t => t.textContent === text);
+      tk.click();
+    }
+    clickToken('Norte');
+    root.querySelector('.wpf-zone[data-zone="z1"]').click();
+    clickToken('Este');
+    root.querySelector('.wpf-zone[data-zone="z2"]').click();
+    await sleep(50);
+
+    const progreso = root.querySelector('.al-barra .estado').textContent;
+    log('progreso:', progreso);
+
+    // Comprobar autoguardado
+    await sleep(600);
+    const saved = JSON.parse(localStorage.getItem('workpdf:al:wpftest1'));
+    log('autoguardado alumno:', saved.alumno, '| respuestas guardadas:', Object.keys(saved.answers).length);
+
+    // Finalizar
+    [...root.querySelectorAll('button')].find(b => b.textContent.includes('Finalizar')).click();
+    await sleep(400);
+
+    const nota = root.querySelector('.notaza')?.textContent?.trim();
+    log('nota mostrada:', nota, '| esperada: 5 / 7');
+    const marks = {
+      ok: root.querySelectorAll('.wpf-field.mark-ok').length,
+      partial: root.querySelectorAll('.wpf-field.mark-partial').length,
+      ko: root.querySelectorAll('.wpf-field.mark-ko').length
+    };
+    log('marcas → ok:', marks.ok, 'parciales:', marks.partial, 'ko:', marks.ko, '| esperado ok:2 parciales:2 ko:0');
+    const codigo = root.querySelector('.codigo')?.textContent;
+    log('código entrega:', codigo);
+    const expected = root.querySelectorAll('.wpf-expected').length;
+    log('soluciones mostradas en campos fallados:', expected);
+    const retry = [...root.querySelectorAll('button')].some(b => b.textContent.includes('Intentar de nuevo'));
+    log('botón reintentar (queda 1 intento):', retry);
+
+    const pass = nota === '5 / 7' && marks.ok === 2 && marks.partial === 2 && marks.ko === 0 && codigo && retry;
+    log(pass ? '__TEST_OK__' : '__TEST_FAIL__');
+  } catch (e) {
+    log('__TEST_FAIL__', e.message, e.stack);
+  }
+}
+main();
+</script>
+</body>
+</html>

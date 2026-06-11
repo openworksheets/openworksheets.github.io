@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>Test pdf</title></head>
+<body>
+<pre id="out"></pre>
+<script src="../vendor/pdf.min.js"></script>
+<script type="module">
+import { pdfToPages, isPdf } from '../js/pdfimport.js';
+
+const out = [];
+const log = (...a) => { out.push(a.join(' ')); document.getElementById('out').textContent = out.join('\n'); };
+
+// El tiempo virtual del headless no espera la codificación webp/jpeg:
+// forzamos PNG nativo solo para esta prueba.
+const origToBlob = HTMLCanvasElement.prototype.toBlob;
+HTMLCanvasElement.prototype.toBlob = function (cb) { origToBlob.call(this, cb, 'image/png'); };
+
+async function main() {
+  try {
+    const resp = await fetch('test_doc.pdf');
+    const blob = await resp.blob();
+    const file = new File([blob], 'test_doc.pdf', { type: 'application/pdf' });
+    log('isPdf:', isPdf(file));
+    const pages = await pdfToPages(file, (n, t) => log(`progreso ${n}/${t}`));
+    log('páginas:', pages.length);
+    log('dimensiones:', pages[0].w + 'x' + pages[0].h, '| ancho objetivo 1600:', pages[0].w === 1600);
+    log('blob páginas:', pages[0].blob && pages[0].blob.size > 1000 ? 'con contenido' : 'vacío');
+    log(pages.length === 1 && pages[0].w === 1600 ? '__TEST_OK__' : '__TEST_FAIL__');
+  } catch (e) {
+    log('__TEST_FAIL__', e.message);
+  }
+}
+main();
+</script>
+</body>
+</html>

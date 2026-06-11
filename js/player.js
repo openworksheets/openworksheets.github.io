@@ -1,0 +1,324 @@
+// Visor de fichas en modo alumno. También lo usa el editor como vista previa.
+//
+// mountPlayer(rootEl, ficha, opts)
+//   ficha = { manifest, files: Map<ruta, Blob> }
+//   opts  = { preview: bool }
+
+import { el, toast, mulberry32, formatNum, downloadBlob, copyToClipboard, fechaHora } from './util.js';
+import { renderField } from './render.js';
+import { gradeField, expectedText } from './grading.js';
+import { buildEntrega, entregaFilename, entregaResumen } from './entrega.js';
+
+export function mountPlayer(rootEl, ficha, opts = {}) {
+  const { manifest, files } = ficha;
+  const settings = manifest.settings || {};
+  const preview = Boolean(opts.preview);
+  const storageKey = 'workpdf:al:' + manifest.id;
+
+  const urls = new Map();
+  function fileUrl(path) {
+    if (!urls.has(path)) urls.set(path, URL.createObjectURL(files.get(path)));
+    return urls.get(path);
+  }
+
+  const totalPoints = manifest.pages.reduce(
+    (sum, p) => sum + p.fields.reduce((s, f) => s + (Number(f.points) || 0), 0), 0);
+  const totalFields = manifest.pages.reduce((s, p) => s + p.fields.length, 0);
+
+  let state = loadState();
+  let controllers = [];
+  let finished = false;
+
+  function loadState() {
+    if (preview) return null;
+    try {
+      const raw = localStorage.getItem(storageKey);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  }
+
+  function saveState(extra = {}) {
+    if (preview) return;
+    try {
+      localStorage.setItem(storageKey, JSON.stringify({
+        alumno: datos.alumno,
+        grupo: datos.grupo,
+        seed: datos.seed,
+        attempts: datos.attempts,
+        answers: collectAnswers(),
+        lastEntrega: datos.lastEntrega || null,
+        ...extra
+      }));
+    } catch { /* almacenamiento no disponible */ }
+  }
+
+  function clearAnswersState() {
+    if (preview) return;
+    try {
+      const st = loadState() || {};
+      delete st.answers;
+      localStorage.setItem(storageKey, JSON.stringify({ ...st, seed: datos.seed }));
+    } catch { /* nada */ }
+  }
+
+  const datos = {
+    alumno: state?.alumno || '',
+    grupo: state?.grupo || '',
+    seed: state?.seed || ((Math.random() * 2 ** 31) | 0),
+    attempts: state?.attempts || 0,
+    lastEntrega: state?.lastEntrega || null
+  };
+
+  function collectAnswers() {
+    const out = {};
+    controllers.forEach(c => { out[c.field.id] = c.getAnswer(); });
+    return out;
+  }
+
+  function attemptsLeft() {
+    const max = Number(settings.maxAttempts) || 0;
+    if (max <= 0) return Infinity;
+    return Math.max(0, max - datos.attempts);
+  }
+
+  // ---------- Pantalla de identificación ----------
+
+  function showStart() {
+    rootEl.textContent = '';
+    if (preview) { startActivity('Vista previa', ''); return; }
+
+    if (attemptsLeft() <= 0) { showBlocked(); return; }
+
+    const nombre = el('input', { type: 'text', autocomplete: 'name', required: '' });
+    const grupo = el('input', { type: 'text' });
+    nombre.value = datos.alumno;
+    grupo.value = datos.grupo;
+
+    const form = el('form', {},
+      el('label', { class: 'f-label' }, 'Nombre y apellidos *'), nombre,
+      el('label', { class: 'f-label' }, 'Grupo o identificador (opcional)'), grupo,
+      el('div', { style: 'margin-top:18px;text-align:center' },
+        el('button', { class: 'btn primary', type: 'submit' }, 'Comenzar la ficha')));
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      if (!nombre.value.trim()) { toast('Escribe tu nombre para empezar.', 'error'); return; }
+      startActivity(nombre.value.trim(), grupo.value.trim());
+    });
+
+    const restored = state && state.answers && Object.keys(state.answers).length;
+    rootEl.appendChild(el('div', { class: 'al-centro' },
+      el('div', { class: 'card al-tarjeta anim-in' },
+        el('div', { class: 'icono' }, '¶'),
+        el('h1', {}, manifest.title || 'Ficha interactiva'),
+        manifest.author ? el('p', { class: 'quien' }, 'Por ' + manifest.author) : null,
+        el('p', {}, `${manifest.pages.length} página${manifest.pages.length === 1 ? '' : 's'} · ${totalFields} pregunta${totalFields === 1 ? '' : 's'} · ${formatNum(totalPoints)} punto${totalPoints === 1 ? '' : 's'}`),
+        restored ? el('p', { style: 'color:var(--verde);font-weight:700' }, '✓ Se recuperará tu progreso guardado.') : null,
+        Number(settings.maxAttempts) > 0
+          ? el('p', {}, `Intentos disponibles: ${attemptsLeft()} de ${settings.maxAttempts}`)
+          : null,
+        form)));
+  }
+
+  function showBlocked() {
+    rootEl.textContent = '';
+    const last = datos.lastEntrega;
+    rootEl.appendChild(el('div', { class: 'al-centro' },
+      el('div', { class: 'card al-tarjeta' },
+        el('div', { class: 'icono' }, '✕'),
+        el('h1', {}, 'Sin intentos disponibles'),
+        el('p', {}, 'Ya has agotado los intentos permitidos para esta ficha en este navegador.'),
+        last ? el('p', {}, `Última puntuación: ${formatNum(last.nota)} / ${formatNum(last.total)} · Código: ${last.codigo}`) : null,
+        last ? el('div', { style: 'display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px' },
+          el('button', { class: 'btn', onclick: () => downloadEntrega(last) }, '⬇ Descargar entrega'),
+          el('button', { class: 'btn', onclick: () => copyResumen(last) }, '⧉ Copiar resumen')) : null)));
+  }
+
+  // ---------- Actividad ----------
+
+  function startActivity(alumno, grupo) {
+    datos.alumno = alumno;
+    datos.grupo = grupo;
+    finished = false;
+    controllers = [];
+    rootEl.textContent = '';
+
+    const rng = mulberry32(datos.seed);
+    const doc = el('div', { class: 'al-doc' });
+
+    doc.appendChild(el('div', { class: 'al-cabecera' },
+      el('h1', {}, manifest.title || 'Ficha interactiva'),
+      el('span', { class: 'quien' },
+        preview ? 'Vista previa del alumno' : `${alumno}${grupo ? ' · ' + grupo : ''}`)));
+
+    if (manifest.instructions) {
+      doc.appendChild(el('div', { class: 'al-instrucciones' }, manifest.instructions));
+    }
+
+    const ctx = {
+      rng,
+      shuffle: Boolean(settings.shuffle),
+      onChange: () => { updateProgress(); scheduleSave(); }
+    };
+
+    manifest.pages.forEach((page, pi) => {
+      const pageEl = el('div', { class: 'wpf-page' },
+        el('img', { class: 'fondo', src: fileUrl(page.image), alt: 'Página ' + (pi + 1) }));
+      page.fields.forEach(field => {
+        const ctl = renderField(field, pageEl, ctx);
+        ctl.pageIndex = pi;
+        controllers.push(ctl);
+      });
+      doc.appendChild(pageEl);
+    });
+
+    // Barra inferior
+    const progTxt = el('span', {}, '');
+    const progBar = el('div', {});
+    const btnFin = el('button', { class: 'btn primary' }, 'Finalizar y corregir');
+    btnFin.addEventListener('click', confirmFinish);
+    const barra = el('div', { class: 'al-barra' },
+      el('div', { class: 'estado' }, progTxt, el('div', { class: 'mini-prog' }, progBar)),
+      btnFin);
+    rootEl.appendChild(doc);
+    rootEl.appendChild(barra);
+
+    // Restaurar respuestas guardadas
+    if (!preview && state?.answers) {
+      controllers.forEach(c => {
+        if (c.field.id in state.answers) {
+          try { c.setAnswer(state.answers[c.field.id]); } catch { /* respuesta incompatible */ }
+        }
+      });
+    }
+    updateProgress();
+
+    let saveTimer = null;
+    function scheduleSave() {
+      if (preview) return;
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => saveState(), 400);
+    }
+
+    function updateProgress() {
+      const done = controllers.filter(c => c.isAnswered()).length;
+      progTxt.textContent = `Respondidas: ${done} de ${controllers.length}`;
+      progBar.style.width = controllers.length ? (done / controllers.length * 100) + '%' : '0%';
+    }
+
+    function confirmFinish() {
+      if (finished) return;
+      const pending = controllers.filter(c => !c.isAnswered()).length;
+      const msg = pending > 0
+        ? `Te quedan ${pending} pregunta${pending === 1 ? '' : 's'} sin responder. ¿Quieres entregar de todas formas?`
+        : '¿Entregar la ficha y ver la corrección?';
+      if (window.confirm(msg)) finish(doc, barra, btnFin);
+    }
+  }
+
+  // ---------- Corrección ----------
+
+  async function finish(doc, barra, btnFin) {
+    finished = true;
+    btnFin.disabled = true;
+
+    const resultados = [];
+    let earned = 0;
+    controllers.forEach(c => {
+      const res = gradeField(c.field, c.getAnswer());
+      earned += res.earned;
+      c.setDisabled(true);
+      if (settings.showCorrection !== false) {
+        c.mark(res, expectedText(c.field));
+      }
+      resultados.push({
+        id: c.field.id,
+        type: c.field.type,
+        page: c.pageIndex + 1,
+        answer: c.getAnswer(),
+        earned: res.earned,
+        max: res.max,
+        ok: res.ok
+      });
+    });
+    earned = Math.round(earned * 100) / 100;
+
+    const entrega = await buildEntrega({
+      manifest,
+      alumno: datos.alumno,
+      grupo: datos.grupo,
+      resultados,
+      earned,
+      total: totalPoints
+    });
+
+    if (!preview) {
+      datos.attempts += 1;
+      datos.lastEntrega = {
+        nota: entrega.nota, total: entrega.total, codigo: entrega.codigo, fecha: entrega.fecha
+      };
+      saveState();
+      clearAnswersState();
+    }
+
+    // Tarjeta de resultados
+    const nota10 = entrega.nota10;
+    const showScore = settings.showScore !== false;
+    const acciones = el('div', { class: 'acciones' });
+    acciones.appendChild(el('button', { class: 'btn dark', onclick: () => downloadEntrega(entrega) }, '⬇ Descargar entrega'));
+    acciones.appendChild(el('button', { class: 'btn', onclick: () => copyResumen(entrega) }, '⧉ Copiar resumen'));
+    if (preview || attemptsLeft() > 0) {
+      acciones.appendChild(el('button', {
+        class: 'btn', onclick: () => {
+          datos.seed = (Math.random() * 2 ** 31) | 0;
+          state = null;
+          if (!preview) saveState();
+          startActivity(datos.alumno, datos.grupo);
+          window.scrollTo({ top: 0 });
+        }
+      }, '↻ Intentar de nuevo'));
+    }
+
+    const tarjeta = el('div', { class: 'al-resultado anim-in' },
+      el('h2', {}, preview ? 'Resultado (vista previa)' : 'Ficha entregada'),
+      showScore
+        ? el('div', { class: 'notaza' + (totalPoints > 0 && entrega.nota / totalPoints >= 0.5 ? ' bien' : '') },
+            `${formatNum(entrega.nota)} / ${formatNum(entrega.total)}`)
+        : el('p', {}, 'Tu profesor o profesora revisará el resultado.'),
+      showScore ? el('div', { class: 'detalle' }, `Equivale a un ${formatNum(nota10)} sobre 10.`) : null,
+      el('div', { class: 'detalle' },
+        `${datos.alumno}${datos.grupo ? ' · ' + datos.grupo : ''} · ${fechaHora(new Date(entrega.fecha))} · Código: `,
+        el('span', { class: 'codigo' }, entrega.codigo)),
+      el('p', { style: 'margin-top:12px' },
+        'Descarga tu archivo de entrega y adjúntalo en Classroom, o copia el resumen y pégalo donde te indique tu docente.'),
+      acciones);
+
+    if (showScore && totalPoints > 0) {
+      const pct = Math.round(entrega.nota / totalPoints * 100);
+      tarjeta.querySelector('.detalle').append(` (${pct} % de aciertos)`);
+    }
+
+    doc.insertBefore(tarjeta, doc.firstChild);
+    barra.remove();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function downloadEntrega(entrega) {
+    const blob = new Blob([JSON.stringify(entrega, null, 2)], { type: 'application/json' });
+    downloadBlob(blob, entregaFilename(entrega));
+  }
+
+  async function copyResumen(entrega) {
+    const ok = await copyToClipboard(entregaResumen(entrega));
+    toast(ok ? 'Resumen copiado al portapapeles.' : 'No se pudo copiar. Descarga la entrega.', ok ? 'ok' : 'error');
+  }
+
+  showStart();
+
+  return {
+    destroy() {
+      urls.forEach(u => URL.revokeObjectURL(u));
+      urls.clear();
+      rootEl.textContent = '';
+    }
+  };
+}
