@@ -160,6 +160,28 @@ export function el(tag, attrs = {}, ...children) {
   return node;
 }
 
+// Control de zoom (− 100% +). `apply(z)` recibe la escala; el porcentaje
+// se guarda en localStorage bajo `key`. Pulsar el porcentaje vuelve al 100%.
+export function zoomControl({ apply, key, titles = {}, min = 0.5, max = 3 }) {
+  let z = 1;
+  const saved = parseFloat(localStorage.getItem(key));
+  if (saved >= min && saved <= max) z = saved;
+  const out = el('button', { type: 'button', title: titles.out || '' }, '−');
+  const pct = el('button', { class: 'zoom-pct', type: 'button', title: titles.reset || '' });
+  const inn = el('button', { type: 'button', title: titles.in || '' }, '+');
+  function set(v) {
+    z = Math.round(clamp(v, min, max) * 100) / 100;
+    localStorage.setItem(key, String(z));
+    pct.textContent = Math.round(z * 100) + '%';
+    apply(z);
+  }
+  out.addEventListener('click', () => set(z / 1.2));
+  inn.addEventListener('click', () => set(z * 1.2));
+  pct.addEventListener('click', () => set(1));
+  set(z);
+  return { el: el('div', { class: 'zoom-ctrl' }, out, pct, inn), set, get: () => z };
+}
+
 export function fechaHora(date = new Date()) {
   const p = n => String(n).padStart(2, '0');
   return `${p(date.getDate())}/${p(date.getMonth() + 1)}/${date.getFullYear()} ${p(date.getHours())}:${p(date.getMinutes())}`;

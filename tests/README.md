@@ -18,6 +18,21 @@ pantalla y termina con `__TEST_OK__` o `__TEST_FAIL__`.
   los distintos tipos de campo, autoguardado, corrección, nota, marcas e intentos.
 - `test_zip.html` — exportación e importación del ZIP de ficha en el navegador.
 - `test_pdf.html` — conversión de PDF a imágenes de página con pdf.js.
+- `test_ampos.html` — precisión de posición de los hotspots de «Unir con
+  flechas» en el visor respecto a la imagen de fondo (tolerancia < 1 px).
+- `test_imgfield.html` — el campo imagen decorativa ocupa exactamente la caja
+  dibujada (altura fija, no la proporción natural de la imagen).
+- `run_ampos_editor.js` — script de puppeteer aparte: dibuja con el ratón las
+  áreas de un par de «Unir con flechas» en el editor real y comprueba que el
+  overlay y la vista previa coinciden al píxel
+  (`node tests/run_ampos_editor.js`, con el servidor en el puerto 8765).
+- `run_shapes_editor.js` — script de puppeteer aparte: comprueba la paleta
+  agrupada (acordeón) y las formas de dibujo (línea, flecha, rectángulo,
+  elipse): creación, configuración (puntas, relleno) y vista previa
+  (`node tests/run_shapes_editor.js`, con el servidor en el puerto 8765).
+- `run_zoom.js` — script de puppeteer aparte: zoom de página en el editor
+  (botones, Ctrl+rueda) y en el visor del alumno, y transición del acordeón
+  de la paleta (`node tests/run_zoom.js`, con el servidor en el puerto 8765).
 - `test_doc.pdf` — PDF mínimo usado por las pruebas.
 
 Nota: `--virtual-time-budget` de Chromium headless no espera a los hilos de

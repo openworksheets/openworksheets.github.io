@@ -4,7 +4,7 @@
 //   ficha = { manifest, files: Map<ruta, Blob> }
 //   opts  = { preview: bool }
 
-import { el, toast, mulberry32, formatNum, downloadBlob, copyToClipboard, fechaHora } from './util.js';
+import { el, toast, mulberry32, formatNum, downloadBlob, copyToClipboard, fechaHora, zoomControl } from './util.js';
 import { isDecorField } from './fieldtypes.js';
 import { renderField } from './render.js';
 import { gradeField, expectedText } from './grading.js';
@@ -262,8 +262,19 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     const crono = el('span', { class: 'al-crono' });
     const btnFin = el('button', { class: 'btn primary' }, t('player.finishBtn'));
     btnFin.addEventListener('click', confirmFinish);
+    const zoom = zoomControl({
+      apply: z => doc.style.setProperty('--zoom', z),
+      key: 'wpf-al-zoom',
+      titles: { in: t('zoom.in'), out: t('zoom.out'), reset: t('zoom.reset') }
+    });
+    doc.addEventListener('wheel', e => {
+      if (!e.ctrlKey) return; // Ctrl+rueda (o pellizco en el panel táctil)
+      e.preventDefault();
+      zoom.set(zoom.get() * (e.deltaY < 0 ? 1.1 : 1 / 1.1));
+    }, { passive: false });
     const barra = el('div', { class: 'al-barra' },
       el('div', { class: 'estado' }, progTxt, el('div', { class: 'mini-prog' }, progBar)),
+      zoom.el,
       deadline ? crono : null,
       btnFin);
     rootEl.appendChild(doc);

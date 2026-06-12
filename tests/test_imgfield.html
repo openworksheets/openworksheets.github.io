@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Test campo imagen</title>
+  <link rel="stylesheet" href="../css/app.css">
+</head>
+<body>
+<div id="app"></div>
+<pre id="out"></pre>
+<script src="../config.js"></script>
+<script type="module">
+import { mountPlayer } from '../js/player.js';
+
+const out = [];
+const log = (...a) => { out.push(a.join(' ')); document.getElementById('out').textContent = out.join('\n'); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function makePng(w, h, color) {
+  return new Promise(res => {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const g = c.getContext('2d');
+    g.fillStyle = color; g.fillRect(0, 0, w, h);
+    c.toBlob(b => res(b), 'image/png');
+  });
+}
+
+async function main() {
+  try {
+    localStorage.clear();
+    const fondo = await makePng(800, 1000, '#fff');
+    // Imagen decorativa cuadrada (aspecto 1:1) en una caja apaisada (aspecto 2.25:1)
+    const decor = await makePng(400, 400, '#ccc');
+    const rect = { x: 0.1, y: 0.1, w: 0.45, h: 0.16 }; // caja: 0.45*800=360 × 0.16*1000=160
+    const manifest = {
+      format: 'workpdf-ficha', version: 1, id: 'wpftestimg',
+      title: 'Test img', settings: {},
+      pages: [{
+        image: 'pages/page-1.png', w: 800, h: 1000, fields: [
+          { id: 'fi1', type: 'image', rect, points: 0, fontScale: 1, config: { src: 'images/d1.png' } }
+        ]
+      }]
+    };
+    const files = new Map([['pages/page-1.png', fondo], ['images/d1.png', decor]]);
+    const root = document.getElementById('app');
+    mountPlayer(root, { manifest, files }, { preview: true });
+    await sleep(400);
+
+    const page = root.querySelector('.wpf-page');
+    const ir = page.querySelector('img.fondo').getBoundingClientRect();
+    const box = page.querySelector('.wpf-field-image').getBoundingClientRect();
+    const img = page.querySelector('.wpf-img-decor').getBoundingClientRect();
+    const expW = rect.w * ir.width, expH = rect.h * ir.height;
+    log('caja esperada:', expW.toFixed(1), 'x', expH.toFixed(1));
+    log('caja medida  :', box.width.toFixed(1), 'x', box.height.toFixed(1));
+    log('img medida   :', img.width.toFixed(1), 'x', img.height.toFixed(1));
+    const ok = Math.abs(box.height - expH) < 1.5 && Math.abs(img.height - expH) < 1.5;
+    log(ok ? '__TEST_OK__' : '__TEST_FAIL__');
+  } catch (e) {
+    log('__TEST_FAIL__', e.message, e.stack);
+  }
+}
+main();
+</script>
+</body>
+</html>

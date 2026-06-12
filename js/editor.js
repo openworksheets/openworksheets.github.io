@@ -1,7 +1,8 @@
 // Editor de fichas (modo profesor).
 
-import { el, uid, clamp, toast, downloadBlob, slugify, copyToClipboard } from './util.js';
-import { FIELD_TYPES, FIELD_ORDER, fieldTypeName, gapCount } from './fieldtypes.js';
+import { el, uid, clamp, toast, downloadBlob, slugify, copyToClipboard, zoomControl } from './util.js';
+import { FIELD_TYPES, PALETTE_GROUPS, fieldTypeName, gapCount, isShapeField } from './fieldtypes.js';
+import { buildShapeSvg } from './render.js';
 import { expectedText } from './grading.js';
 import { pdfToPages, imageToPage, isPdf, isImage } from './pdfimport.js';
 import { exportFichaZip, importFichaZip, newManifest } from './zipio.js';
@@ -18,7 +19,9 @@ let manifest = newManifest();
 let files = new Map();          // ruta → Blob
 let pageSeq = 1;                // numeración de archivos de página
 let activeTool = null;          // tipo de campo a dibujar, o 'zone'
-let sel = null;                 // {kind:'field'|'zone', pageIndex, fieldId, zoneId?}
+let pendingAmItem = null;       // item de arrowmatch esperando que se dibuje su rect
+let pendingAmNext = null;       // item que se dibujará automáticamente tras pendingAmItem
+let sel = null;                 // {kind:'field'|'zone'|'amitem', pageIndex, fieldId, zoneId?, amItemId?}
 let dirty = false;
 let preview = null;
 
@@ -36,40 +39,80 @@ const titleInput = $('#titulo');
 
 function markDirty() { dirty = true; }
 
+// ---------- Zoom del lienzo ----------
+
+const zoomCtl = zoomControl({
+  apply: z => canvas.style.setProperty('--zoom', z),
+  key: 'wpf-ed-zoom',
+  titles: { in: t('zoom.in'), out: t('zoom.out'), reset: t('zoom.reset') }
+});
+
+canvas.addEventListener('wheel', e => {
+  if (!e.ctrlKey) return; // Ctrl+rueda (o pellizco en el panel táctil)
+  e.preventDefault();
+  zoomCtl.set(zoomCtl.get() * (e.deltaY < 0 ? 1.1 : 1 / 1.1));
+}, { passive: false });
+
 window.addEventListener('beforeunload', e => {
   if (dirty) { e.preventDefault(); e.returnValue = ''; }
 });
 
 // ---------- Paleta ----------
 
+let openGroup = null; // al entrar, todos los grupos colapsados
+
 function renderPalette() {
   palette.textContent = '';
-  FIELD_ORDER.forEach(type => {
-    const ft = FIELD_TYPES[type];
-    const name = fieldTypeName(type);
-    const btn = el('button', { class: 'ed-tool', type: 'button', title: name },
-      el('span', { class: 'glyph' }, ft.glyph),
-      el('span', { class: 'name' }, name));
-    btn.addEventListener('click', () => {
-      activeTool = activeTool === type ? null : type;
+  PALETTE_GROUPS.forEach(group => {
+    const gName = t('palette.' + group.id);
+    const head = el('button', { class: 'ed-group', type: 'button', title: gName },
+      el('span', { class: 'glyph' }, group.glyph),
+      el('span', { class: 'name' }, gName));
+    head.dataset.group = group.id;
+    head.addEventListener('click', () => {
+      openGroup = openGroup === group.id ? null : group.id;
       refreshPaletteState();
-      if (activeTool && !manifest.pages.length) {
-        toast(t('toast.addPdfFirst'), 'error');
-        activeTool = null;
-        refreshPaletteState();
-      }
     });
-    btn.dataset.type = type;
-    palette.appendChild(btn);
+    palette.appendChild(head);
+
+    const tools = el('div', { class: 'ed-group-tools' });
+    tools.dataset.group = group.id;
+    const inner = el('div', { class: 'ed-group-tools-inner' });
+    tools.appendChild(inner);
+    group.types.forEach(type => {
+      const ft = FIELD_TYPES[type];
+      const name = fieldTypeName(type);
+      const btn = el('button', { class: 'ed-tool', type: 'button', title: name },
+        el('span', { class: 'glyph' }, ft.glyph),
+        el('span', { class: 'name' }, name));
+      btn.addEventListener('click', () => {
+        activeTool = activeTool === type ? null : type;
+        refreshPaletteState();
+        if (activeTool && !manifest.pages.length) {
+          toast(t('toast.addPdfFirst'), 'error');
+          activeTool = null;
+          refreshPaletteState();
+        }
+      });
+      btn.dataset.type = type;
+      inner.appendChild(btn);
+    });
+    palette.appendChild(tools);
   });
   refreshPaletteState();
 }
 
 function refreshPaletteState() {
+  palette.querySelectorAll('.ed-group').forEach(b => {
+    b.classList.toggle('open', b.dataset.group === openGroup);
+  });
+  palette.querySelectorAll('.ed-group-tools').forEach(d => {
+    d.classList.toggle('open', d.dataset.group === openGroup);
+  });
   palette.querySelectorAll('.ed-tool').forEach(b => {
     b.classList.toggle('active', b.dataset.type === activeTool);
   });
-  canvas.classList.toggle('drawing', Boolean(activeTool));
+  canvas.classList.toggle('drawing', Boolean(activeTool) || Boolean(pendingAmItem));
 }
 
 // ---------- Páginas ----------
@@ -161,6 +204,8 @@ function renderCanvas() {
     return;
   }
 
+  canvas.appendChild(el('div', { class: 'ed-zoom-wrap' }, zoomCtl.el));
+
   manifest.pages.forEach((page, pi) => {
     const pageEl = el('div', { class: 'wpf-page', dataset: { page: pi } },
       el('img', { class: 'fondo', src: fileUrl(page.image), alt: t('editor.pageN', { n: pi + 1, total: manifest.pages.length }), draggable: 'false' }));
@@ -180,13 +225,27 @@ function renderCanvas() {
         box.style.background = field.config.color || '#ffffff';
       } else if (field.type === 'image' && field.config?.src && files.has(field.config.src)) {
         box.appendChild(el('img', { src: fileUrl(field.config.src), class: 'ed-img-prev', alt: '' }));
+      } else if (isShapeField(field.type)) {
+        box.appendChild(buildShapeSvg(field));
       }
       setRectStyle(box, field.rect);
       box.style.setProperty('--fs', field.fontScale || 1);
-      attachBoxInteraction(box, pageEl, field.rect, {
-        onSelect: () => selectField(pi, field.id),
-        isSelected: () => sel?.kind === 'field' && sel.fieldId === field.id
-      });
+      // En modo hotspot (arrowmatch con áreas definidas), el campo principal no se arrastra:
+      // las posiciones las gestionan los overlays de items.
+      const isAmHotspot = field.type === 'arrowmatch' && (field.config.items || []).some(i => i.rect);
+      if (isAmHotspot) {
+        box.classList.add('ed-am-hotspot-field');
+        box.addEventListener('pointerdown', e => {
+          if (activeTool || pendingAmItem) return;
+          e.stopPropagation();
+          selectField(pi, field.id);
+        });
+      } else {
+        attachBoxInteraction(box, pageEl, field.rect, {
+          onSelect: () => selectField(pi, field.id),
+          isSelected: () => sel?.kind === 'field' && sel.fieldId === field.id
+        });
+      }
       pageEl.appendChild(box);
 
       if (field.type === 'dragdrop') {
@@ -202,6 +261,21 @@ function renderCanvas() {
             isSelected: () => sel?.kind === 'zone' && sel.zoneId === zone.id
           });
           pageEl.appendChild(zEl);
+        });
+      }
+
+      if (field.type === 'arrowmatch') {
+        (field.config.items || []).filter(i => i.rect).forEach(item => {
+          const label = item.src ? '🖼' : (item.label || '?');
+          const aEl = el('div', { class: `ed-amitem ed-amitem-${item.side}`, dataset: { id: item.id } },
+            el('span', { class: 'chip' }, label),
+            el('span', { class: 'handle' }));
+          setRectStyle(aEl, item.rect);
+          attachBoxInteraction(aEl, pageEl, item.rect, {
+            onSelect: () => selectAmItem(pi, field.id, item.id),
+            isSelected: () => sel?.kind === 'amitem' && sel.amItemId === item.id
+          });
+          pageEl.appendChild(aEl);
         });
       }
     });
@@ -228,23 +302,31 @@ function setRectStyle(node, rect) {
 }
 
 function refreshSelectionStyles() {
-  canvas.querySelectorAll('.ed-field, .ed-zone').forEach(n => n.classList.remove('selected'));
+  canvas.querySelectorAll('.ed-field, .ed-zone, .ed-amitem').forEach(n => n.classList.remove('selected'));
   if (!sel) return;
-  const id = sel.kind === 'zone' ? sel.zoneId : sel.fieldId;
+  const id = sel.kind === 'zone' ? sel.zoneId : sel.kind === 'amitem' ? sel.amItemId : sel.fieldId;
   const node = canvas.querySelector(`[data-id="${id}"]`);
   if (node) node.classList.add('selected');
+}
+
+// Dimensiones del área de contenido de la página (sin borde).
+function pageContentSize(pageEl) {
+  const pr = pageEl.getBoundingClientRect();
+  const bl = parseFloat(getComputedStyle(pageEl).borderLeftWidth) || 0;
+  const bt = parseFloat(getComputedStyle(pageEl).borderTopWidth)  || 0;
+  return { left: pr.left + bl, top: pr.top + bt, width: pageEl.clientWidth, height: pageEl.clientHeight };
 }
 
 // Mover y redimensionar un rectángulo (campo o zona).
 function attachBoxInteraction(box, pageEl, rect, { onSelect, isSelected }) {
   box.addEventListener('pointerdown', e => {
-    if (activeTool) return; // en modo dibujo, la página gestiona el evento
+    if (activeTool || pendingAmItem) return; // en modo dibujo, la página gestiona el evento
     e.stopPropagation();
     e.preventDefault();
     onSelect();
 
     const resizing = e.target.classList.contains('handle');
-    const pr = pageEl.getBoundingClientRect();
+    const pr = pageContentSize(pageEl);
     const startX = e.clientX, startY = e.clientY;
     const orig = { ...rect };
     let moved = false;
@@ -276,7 +358,7 @@ function attachBoxInteraction(box, pageEl, rect, { onSelect, isSelected }) {
 // Dibujar un campo nuevo (o una zona) sobre la página.
 function attachDrawInteraction(pageEl, pi) {
   pageEl.addEventListener('pointerdown', e => {
-    if (!activeTool) {
+    if (!activeTool && !pendingAmItem) {
       // Clic en el fondo (la imagen no recibe eventos): deseleccionar.
       if (e.target === pageEl) {
         sel = null;
@@ -286,7 +368,7 @@ function attachDrawInteraction(pageEl, pi) {
       return;
     }
     e.preventDefault();
-    const pr = pageEl.getBoundingClientRect();
+    const pr = pageContentSize(pageEl);
     const x0 = clamp((e.clientX - pr.left) / pr.width, 0, 1);
     const y0 = clamp((e.clientY - pr.top) / pr.height, 0, 1);
     const rubber = el('div', { class: 'ed-rubber' });
@@ -307,6 +389,28 @@ function attachDrawInteraction(pageEl, pi) {
       window.removeEventListener('pointerup', onUp);
       rubber.remove();
       let r = normRect(x0, y0, x1, y1);
+
+      if (pendingAmItem) {
+        const item = pendingAmItem;
+        const nextItem = pendingAmNext;
+        pendingAmItem = null;
+        pendingAmNext = null;
+        if (r.w < 0.02 || r.h < 0.015) r = { x: clamp(x0 - 0.06, 0, 0.88), y: clamp(y0 - 0.025, 0, 0.95), w: 0.12, h: 0.05 };
+        item.rect = r;
+        markDirty();
+        const fieldId = sel?.fieldId || getFieldIdForItem(pi, item.id);
+        renderCanvas();
+        selectField(pi, fieldId);
+        if (nextItem && !nextItem.rect) {
+          pendingAmItem = nextItem;
+          refreshPaletteState();
+          toast(t('toast.amDrawAreaTip'), 'info');
+        } else {
+          refreshPaletteState();
+        }
+        return;
+      }
+
       const tool = activeTool;
       activeTool = null;
       refreshPaletteState();
@@ -329,6 +433,13 @@ function attachDrawInteraction(pageEl, pi) {
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
   });
+}
+
+function getFieldIdForItem(pi, itemId) {
+  const page = manifest.pages[pi];
+  if (!page) return null;
+  const field = page.fields.find(f => f.type === 'arrowmatch' && (f.config.items || []).some(i => i.id === itemId));
+  return field?.id || null;
 }
 
 function normRect(x0, y0, x1, y1) {
@@ -387,12 +498,22 @@ function selectZone(pi, fieldId, zoneId) {
   renderPanel();
 }
 
+function selectAmItem(pi, fieldId, amItemId) {
+  sel = { kind: 'amitem', pageIndex: pi, fieldId, amItemId };
+  refreshSelectionStyles();
+  renderPanel(); // muestra el panel del campo (pairs list)
+}
+
 function deleteSelected() {
   if (!sel) return;
   const field = getField(sel.pageIndex, sel.fieldId);
   if (!field) return;
   if (sel.kind === 'zone') {
     field.config.zones = field.config.zones.filter(z => z.id !== sel.zoneId);
+    sel = { kind: 'field', pageIndex: sel.pageIndex, fieldId: field.id };
+  } else if (sel.kind === 'amitem') {
+    const item = (field.config.items || []).find(i => i.id === sel.amItemId);
+    if (item) delete item.rect;
     sel = { kind: 'field', pageIndex: sel.pageIndex, fieldId: field.id };
   } else {
     const page = manifest.pages[sel.pageIndex];
@@ -436,7 +557,9 @@ document.addEventListener('keydown', e => {
   if (!field) return;
   const rect = sel.kind === 'zone'
     ? field.config.zones.find(z => z.id === sel.zoneId)?.rect
-    : field.rect;
+    : sel.kind === 'amitem'
+      ? (field.config.items || []).find(i => i.id === sel.amItemId)?.rect
+      : field.rect;
   if (!rect) return;
 
   if (e.key === 'Delete' || e.key === 'Backspace') {
@@ -450,7 +573,7 @@ document.addEventListener('keydown', e => {
     if (e.key === 'ArrowUp') rect.y = clamp(rect.y - step, 0, 1 - rect.h);
     if (e.key === 'ArrowDown') rect.y = clamp(rect.y + step, 0, 1 - rect.h);
     markDirty();
-    const id = sel.kind === 'zone' ? sel.zoneId : sel.fieldId;
+    const id = sel.kind === 'zone' ? sel.zoneId : sel.kind === 'amitem' ? sel.amItemId : sel.fieldId;
     const node = canvas.querySelector(`[data-id="${id}"]`);
     if (node) setRectStyle(node, rect);
   } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
@@ -467,7 +590,7 @@ function renderPanel() {
     const field = getField(sel.pageIndex, sel.fieldId);
     if (field) {
       if (sel.kind === 'zone') renderZonePanel(field);
-      else renderFieldPanel(field);
+      else renderFieldPanel(field); // 'field' y 'amitem' muestran el panel del campo
     } else {
       sel = null;
     }
@@ -530,7 +653,7 @@ function renderFieldPanel(field) {
     cont.appendChild(el('label', { class: 'check-row' }, noScoreCb, t('editor.noScore')));
     cont.appendChild(ptsRow);
   }
-  if (field.type !== 'cover') {
+  if (field.type !== 'cover' && !isShapeField(field.type)) {
     const fs = el('input', { type: 'range', min: '0.6', max: '2', step: '0.1', value: String(field.fontScale || 1) });
     fs.addEventListener('input', () => {
       field.fontScale = parseFloat(fs.value);
@@ -626,6 +749,21 @@ function renderZonePanel(field) {
   panel.appendChild(cont);
 }
 
+function renderAmItemPanel(field) {
+  const item = (field.config.items || []).find(i => i.id === sel.amItemId);
+  if (!item) { sel = { kind: 'field', pageIndex: sel.pageIndex, fieldId: field.id }; renderFieldPanel(field); return; }
+  const cont = el('div', {});
+  const sideLabel = item.side === 'left' ? t('cfg.amLeft') : t('cfg.amRight');
+  cont.appendChild(el('h3', {},
+    el('span', { class: 'tipo-chip' }, sideLabel),
+    t('editor.amItemTitle')));
+  cont.appendChild(el('p', { style: 'font-size:.85rem;color:var(--tinta-suave)' }, t('editor.amItemHint')));
+  cont.appendChild(el('div', { class: 'ed-acciones' },
+    el('button', { class: 'btn small', onclick: () => selectField(sel.pageIndex, field.id) }, t('editor.backToField')),
+    el('button', { class: 'btn small danger', onclick: deleteSelected }, t('editor.amItemDelete'))));
+  panel.appendChild(cont);
+}
+
 // Editor genérico de listas de opciones.
 function optionListEditor(cont, {
   label, items, render, add, remove, addLabel = '+ Añadir', min = 1
@@ -672,7 +810,96 @@ function textNormOptions(cont, cfg) {
   checkRow(cont, t('cfg.collapseSpaces'), cfg.collapseSpaces !== false, v => { cfg.collapseSpaces = v; });
 }
 
+// Sustituye la vista previa SVG de una forma tras cambiar su configuración.
+function refreshShapePrev(field) {
+  const old = canvas.querySelector(`.ed-field[data-id="${field.id}"] .wpf-shape`);
+  if (old) old.replaceWith(buildShapeSvg(field));
+}
+
+function selectRow(cont, label, value, options, onChange) {
+  cont.appendChild(el('label', { class: 'f-label' }, label));
+  const s = el('select', {}, ...options.map(([v, txt]) => el('option', { value: v }, txt)));
+  s.value = value;
+  s.addEventListener('change', () => { onChange(s.value); markDirty(); });
+  cont.appendChild(s);
+}
+
+// Color, grosor y estilo de trazo, comunes a las cuatro formas.
+function shapeStrokeConfig(cont, field) {
+  const cfg = field.config;
+  cont.appendChild(el('label', { class: 'f-label' }, t('cfg.strokeColor')));
+  const color = el('input', { type: 'color', value: cfg.color || '#1d2c42' });
+  color.addEventListener('input', () => { cfg.color = color.value; refreshShapePrev(field); markDirty(); });
+  cont.appendChild(color);
+  cont.appendChild(el('label', { class: 'f-label' }, t('cfg.strokeWidth')));
+  const w = el('input', { type: 'range', min: '1', max: '14', step: '1', value: String(cfg.width || 2) });
+  w.addEventListener('input', () => { cfg.width = parseFloat(w.value); refreshShapePrev(field); markDirty(); });
+  cont.appendChild(w);
+  selectRow(cont, t('cfg.strokeStyle'), cfg.style || 'solid', [
+    ['solid', t('cfg.styleSolid')],
+    ['dashed', t('cfg.styleDashed')],
+    ['dotted', t('cfg.styleDotted')]
+  ], v => { cfg.style = v; refreshShapePrev(field); });
+}
+
 const configForms = {
+
+  line(cont, field) {
+    shapeStrokeConfig(cont, field);
+    selectRow(cont, t('cfg.lineDir'), field.config.dir || 'h', [
+      ['h', t('cfg.dirH')],
+      ['v', t('cfg.dirV')],
+      ['d1', t('cfg.dirD1')],
+      ['d2', t('cfg.dirD2')]
+    ], v => { field.config.dir = v; refreshShapePrev(field); });
+  },
+
+  arrow(cont, field) {
+    configForms.line(cont, field);
+    checkRow(cont, t('cfg.arrowInvert'), Boolean(field.config.invert), v => {
+      field.config.invert = v;
+      refreshShapePrev(field);
+    });
+    checkRow(cont, t('cfg.arrowDouble'), Boolean(field.config.double), v => {
+      field.config.double = v;
+      refreshShapePrev(field);
+    });
+  },
+
+  rect(cont, field) {
+    const cfg = field.config;
+
+    // Borde (opcional)
+    const strokeBox = el('div', {});
+    checkRow(cont, t('cfg.shapeStroke'), !cfg.noStroke, v => {
+      cfg.noStroke = !v;
+      strokeBox.style.display = v ? '' : 'none';
+      refreshShapePrev(field);
+    });
+    shapeStrokeConfig(strokeBox, field);
+    if (cfg.noStroke) strokeBox.style.display = 'none';
+    cont.appendChild(strokeBox);
+
+    // Relleno (opcional), con color y opacidad
+    const fillColor = el('input', { type: 'color', value: cfg.fill || '#f8e3a1' });
+    fillColor.addEventListener('input', () => { cfg.fill = fillColor.value; refreshShapePrev(field); markDirty(); });
+    const fillOp = el('input', { type: 'range', min: '0', max: '1', step: '0.05', value: String(cfg.fillOpacity ?? 1) });
+    fillOp.addEventListener('input', () => { cfg.fillOpacity = parseFloat(fillOp.value); refreshShapePrev(field); markDirty(); });
+    const fillRow = el('div', {},
+      el('label', { class: 'f-label' }, t('cfg.fillColor')), fillColor,
+      el('label', { class: 'f-label' }, t('cfg.fillOpacity')), fillOp);
+    if (!cfg.fill) fillRow.style.display = 'none';
+    checkRow(cont, t('cfg.shapeFill'), Boolean(cfg.fill), v => {
+      cfg.fill = v ? fillColor.value : '';
+      fillRow.style.display = v ? '' : 'none';
+      refreshShapePrev(field);
+    });
+    cont.appendChild(fillRow);
+  },
+
+  ellipse(cont, field) {
+    configForms.rect(cont, field);
+  },
 
   label(cont, field) {
     const cfg = field.config;
@@ -889,93 +1116,108 @@ const configForms = {
 
   arrowmatch(cont, field) {
     const cfg = field.config;
-    if (!Array.isArray(cfg.items))  cfg.items = [];
-    if (!Array.isArray(cfg.pairs))  cfg.pairs = [];
+    if (!Array.isArray(cfg.items)) cfg.items = [];
+    if (!Array.isArray(cfg.pairs)) cfg.pairs = [];
 
-    function itemLabel(item) {
-      return item.src ? '🖼' : (item.label || '?');
+    // Lista de pares: cada par izquierda ↔ derecha
+    function getDisplayPairs() {
+      return cfg.items
+        .filter(i => i.side === 'left')
+        .map(left => {
+          const ref = cfg.pairs.find(p => p.from === left.id);
+          const right = ref ? cfg.items.find(i => i.id === ref.to) : null;
+          return { left, right };
+        });
     }
 
-    function renderSide(side, sectionLabel, addLabel) {
-      cont.appendChild(el('label', { class: 'f-label' }, sectionLabel));
-      const sideItems = cfg.items.filter(i => i.side === side);
-      sideItems.forEach(item => {
-        const row = el('div', { class: 'am-item-row' });
-
-        if (item.src && files.has(item.src)) {
-          row.appendChild(el('img', { src: fileUrl(item.src), class: 'tok-thumb-xs', alt: '' }));
-          const clrBtn = el('button', { class: 'btn small', type: 'button' }, '✕🖼');
-          clrBtn.addEventListener('click', () => {
-            urls.delete(item.src); files.delete(item.src);
-            item.src = ''; markDirty(); renderPanel();
-          });
-          row.appendChild(clrBtn);
-        } else {
-          const inp = el('input', { type: 'text', class: 'f-input', value: item.label, placeholder: '…' });
-          inp.addEventListener('input', () => { item.label = inp.value; markDirty(); });
-          row.appendChild(inp);
-        }
-
-        const imgBtn = el('button', { class: 'btn small ans-img-btn' + (item.src ? ' has-img' : ''), type: 'button' });
-        imgBtn.addEventListener('click', () => {
-          const inp2 = document.createElement('input');
-          inp2.type = 'file'; inp2.accept = 'image/png,image/jpeg,image/gif,image/webp';
-          inp2.addEventListener('change', () => {
-            const f = inp2.files[0]; if (!f) return;
-            const ext = f.name.split('.').pop().toLowerCase() || 'png';
-            const path = 'amitems/' + uid() + '.' + ext;
-            if (item.src) { urls.delete(item.src); files.delete(item.src); }
-            files.set(path, f); item.src = path; markDirty(); renderPanel();
-          });
-          inp2.click();
-        });
-        row.appendChild(imgBtn);
-
-        const delBtn = el('button', { class: 'btn small ghost', type: 'button' }, '✕');
-        delBtn.addEventListener('click', () => {
-          if (item.src) { urls.delete(item.src); files.delete(item.src); }
-          cfg.items  = cfg.items.filter(i => i.id !== item.id);
-          cfg.pairs  = cfg.pairs.filter(p => p.from !== item.id && p.to !== item.id);
-          markDirty(); renderPanel();
-        });
-        row.appendChild(delBtn);
-        cont.appendChild(row);
-      });
-
-      const addBtn = el('button', { class: 'btn small', type: 'button' }, addLabel);
-      addBtn.addEventListener('click', () => {
-        cfg.items.push({ id: uid('am'), side, label: '', src: '' });
-        markDirty(); renderPanel();
-      });
-      cont.appendChild(addBtn);
+    function startDraw(item, next) {
+      if (!manifest.pages.length) { toast(t('toast.addPdfFirst'), 'error'); return; }
+      pendingAmItem = item;
+      pendingAmNext = next || null;
+      refreshPaletteState();
+      toast(t('toast.amDrawAreaTip'), 'info');
     }
 
-    renderSide('left',  t('cfg.amLeft'),  t('cfg.addAmLeft'));
-    renderSide('right', t('cfg.amRight'), t('cfg.addAmRight'));
+    function makeAreaBtn(item, next) {
+      const hasArea = Boolean(item?.rect);
+      const btn = el('button', {
+        class: 'btn small am-area-btn' + (hasArea ? ' has-area' : ''),
+        type: 'button',
+        title: t(hasArea ? 'cfg.amRedrawArea' : 'cfg.amDrawArea')
+      }, hasArea ? '⊡' : '⊞');
+      btn.addEventListener('click', () => item && startDraw(item, next));
+      return btn;
+    }
 
-    // Pairs
     cont.appendChild(el('label', { class: 'f-label' }, t('cfg.amPairs')));
-    const leftItems  = cfg.items.filter(i => i.side === 'left');
-    const rightItems = cfg.items.filter(i => i.side === 'right');
-    leftItems.forEach(left => {
-      const row = el('div', { class: 'am-pair-row' });
-      row.appendChild(el('span', { class: 'am-pair-lbl' }, itemLabel(left)));
-      row.appendChild(el('span', {}, ' → '));
-      const sel = el('select', { class: 'wpf-select' });
-      sel.appendChild(el('option', { value: '' }, '—'));
-      rightItems.forEach(right => {
-        sel.appendChild(el('option', { value: right.id }, itemLabel(right)));
+    const list = el('div', { class: 'am-pairs-list' });
+    cont.appendChild(list);
+
+    function paint() {
+      list.textContent = '';
+      getDisplayPairs().forEach(({ left, right }, idx) => {
+        const row = el('div', { class: 'am-pair-row2' });
+        row.appendChild(el('span', { class: 'am-pair-num' }, String(idx + 1)));
+
+        // Lado izquierdo
+        const leftPart = el('div', { class: 'am-side am-side-left' });
+        if (left.src && files.has(left.src)) {
+          leftPart.appendChild(el('img', { src: fileUrl(left.src), class: 'tok-thumb-xs', alt: '' }));
+        } else if (!left.rect) {
+          const inp = el('input', { type: 'text', class: 'f-input-xs', value: left.label || '', placeholder: '…' });
+          inp.addEventListener('input', () => { left.label = inp.value; markDirty(); });
+          leftPart.appendChild(inp);
+        }
+        leftPart.appendChild(makeAreaBtn(left, right));
+        row.appendChild(leftPart);
+
+        row.appendChild(el('span', { class: 'am-arrow' }, '↔'));
+
+        // Lado derecho
+        const rightPart = el('div', { class: 'am-side am-side-right' });
+        if (right) {
+          if (right.src && files.has(right.src)) {
+            rightPart.appendChild(el('img', { src: fileUrl(right.src), class: 'tok-thumb-xs', alt: '' }));
+          } else if (!right.rect) {
+            const inp = el('input', { type: 'text', class: 'f-input-xs', value: right.label || '', placeholder: '…' });
+            inp.addEventListener('input', () => { right.label = inp.value; markDirty(); });
+            rightPart.appendChild(inp);
+          }
+          rightPart.appendChild(makeAreaBtn(right, null));
+        } else {
+          rightPart.appendChild(el('span', { style: 'opacity:.4;font-size:.85em' }, '?'));
+        }
+        row.appendChild(rightPart);
+
+        // Borrar par
+        const del = el('button', { class: 'btn small ghost', type: 'button', title: t('editor.delete') }, '✕');
+        del.addEventListener('click', () => {
+          [left, right].filter(Boolean).forEach(item => {
+            if (item.src) { urls.delete(item.src); files.delete(item.src); }
+          });
+          const delIds = new Set([left.id, right?.id].filter(Boolean));
+          cfg.items = cfg.items.filter(i => !delIds.has(i.id));
+          cfg.pairs = cfg.pairs.filter(p => !delIds.has(p.from) && !delIds.has(p.to));
+          markDirty(); paint(); renderCanvas();
+        });
+        row.appendChild(del);
+        list.appendChild(row);
       });
-      const existing = cfg.pairs.find(p => p.from === left.id);
-      if (existing) sel.value = existing.to;
-      sel.addEventListener('change', () => {
-        cfg.pairs = cfg.pairs.filter(p => p.from !== left.id);
-        if (sel.value) cfg.pairs.push({ from: left.id, to: sel.value });
-        markDirty();
-      });
-      row.appendChild(sel);
-      cont.appendChild(row);
+    }
+
+    paint();
+
+    const addBtn = el('button', { class: 'btn small add-row', type: 'button' }, t('cfg.addAmPair'));
+    addBtn.addEventListener('click', () => {
+      const left  = { id: uid('am'), side: 'left',  label: '', src: '' };
+      const right = { id: uid('am'), side: 'right', label: '', src: '' };
+      cfg.items.push(left, right);
+      cfg.pairs.push({ from: left.id, to: right.id });
+      markDirty();
+      paint();
+      startDraw(left, right);
     });
+    cont.appendChild(addBtn);
   },
 
   order(cont, field) {
@@ -1288,6 +1530,110 @@ $('#btnAjustes').addEventListener('click', openSettings);
 $('#btnCompartir').addEventListener('click', openShare);
 $('#btnPrevia').addEventListener('click', openPreview);
 $('#btnExportar').addEventListener('click', exportZip);
+
+// ---------- Pegar desde portapapeles ----------
+
+function currentPageIndex() {
+  if (sel) return sel.pageIndex;
+  const pages = Array.from(canvas.querySelectorAll('.wpf-page'));
+  if (!pages.length) return -1;
+  let best = 0, bestVis = -1;
+  pages.forEach(p => {
+    const r = p.getBoundingClientRect();
+    const vis = Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 0);
+    if (vis > bestVis) { bestVis = vis; best = parseInt(p.dataset.page, 10); }
+  });
+  return best;
+}
+
+async function pasteText(text) {
+  if (!manifest.pages.length) { toast(t('toast.addPdfFirst'), 'error'); return; }
+  const pi = currentPageIndex();
+  const field = {
+    id: uid('f'),
+    type: 'label',
+    rect: { x: 0.05, y: 0.05, w: 0.9, h: 0.1 },
+    points: 0,
+    fontScale: 1,
+    config: { text, color: '#1d2c42', bold: false }
+  };
+  manifest.pages[pi].fields.push(field);
+  markDirty();
+  renderCanvas();
+  selectField(pi, field.id);
+  toast(t('toast.pasteTextLabel'), 'ok');
+}
+
+async function pasteImage(blob, mimeType) {
+  if (!manifest.pages.length) { toast(t('toast.addPdfFirst'), 'error'); return; }
+  const pi = currentPageIndex();
+  const ext = mimeType.split('/')[1] || 'png';
+  const path = 'images/' + uid() + '.' + ext;
+  files.set(path, blob);
+  const def = FIELD_TYPES['image'].defRect;
+  const field = {
+    id: uid('f'),
+    type: 'image',
+    rect: { x: 0.05, y: 0.05, w: def.w, h: def.h },
+    points: 0,
+    fontScale: 1,
+    config: { src: path }
+  };
+  manifest.pages[pi].fields.push(field);
+  markDirty();
+  renderCanvas();
+  selectField(pi, field.id);
+  toast(t('toast.imgInserted'), 'ok');
+}
+
+async function handlePasteItems(items) {
+  const imgItem = items.find(i => i.type.startsWith('image/'));
+  if (imgItem) {
+    const file = imgItem.getAsFile ? imgItem.getAsFile() : null;
+    if (file) { await pasteImage(file, file.type || 'image/png'); return; }
+  }
+  const txtItem = items.find(i => i.type === 'text/plain');
+  if (txtItem) {
+    txtItem.getAsString(async str => {
+      const text = str.trim();
+      if (!text) { toast(t('toast.pasteEmpty'), 'error'); return; }
+      await pasteText(text);
+    });
+    return;
+  }
+  toast(t('toast.pasteEmpty'), 'error');
+}
+
+document.addEventListener('paste', async e => {
+  const inForm = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || '');
+  if (inForm) return;
+  e.preventDefault();
+  await handlePasteItems(Array.from(e.clipboardData?.items || []));
+});
+
+$('#btnPegar').addEventListener('click', async () => {
+  try {
+    const clipItems = await navigator.clipboard.read();
+    for (const item of clipItems) {
+      const imgType = item.types.find(tp => tp.startsWith('image/'));
+      if (imgType) {
+        const blob = await item.getType(imgType);
+        await pasteImage(blob, imgType);
+        return;
+      }
+    }
+    for (const item of clipItems) {
+      if (item.types.includes('text/plain')) {
+        const blob = await item.getType('text/plain');
+        const text = (await blob.text()).trim();
+        if (text) { await pasteText(text); return; }
+      }
+    }
+    toast(t('toast.pasteEmpty'), 'error');
+  } catch {
+    toast(t('toast.pasteUseCtrlV'), 'info');
+  }
+});
 
 // Arrastrar archivos al lienzo
 canvas.addEventListener('dragover', e => e.preventDefault());

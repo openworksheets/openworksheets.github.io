@@ -403,6 +403,72 @@ dialog .dlg-buttons {
   flex-direction: column;
   gap: 6px;
 }
+/* Grupos temáticos de la paleta (acordeón) */
+.ed-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radio);
+  padding: 8px 2px 5px;
+  cursor: pointer;
+  color: var(--tinta);
+  font-family: var(--cuerpo);
+}
+.ed-group + .ed-group, .ed-group-tools + .ed-group {
+  margin-top: 4px;
+  border-top: 1px solid var(--tinta-suave);
+  border-radius: 0;
+}
+.ed-group .glyph {
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: var(--display);
+  background: var(--tinta);
+  color: var(--papel-2);
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  width: 46px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  box-shadow: var(--sombra-mini);
+}
+.ed-group .name {
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: center;
+  line-height: 1.15;
+}
+.ed-group:hover .glyph { background: var(--tinta-suave); border-color: var(--tinta-suave); }
+.ed-group.open .glyph { background: var(--rojo); border-color: var(--rojo-oscuro); color: #fff; }
+.ed-group-tools {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.28s ease;
+}
+.ed-group-tools.open { grid-template-rows: 1fr; }
+.ed-group-tools-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  transition: visibility 0.28s, padding 0.28s ease;
+}
+.ed-group-tools.open .ed-group-tools-inner {
+  visibility: visible;
+  padding: 2px 0 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ed-group-tools, .ed-group-tools-inner { transition: none; }
+}
+
 .ed-tool {
   display: flex;
   flex-direction: column;
@@ -449,7 +515,49 @@ dialog .dlg-buttons {
 }
 
 
-.ed-pagebox { max-width: 860px; margin: 0 auto 30px; }
+.ed-pagebox {
+  width: calc(860px * var(--zoom, 1));
+  max-width: calc(100% * var(--zoom, 1));
+  margin: 0 auto 30px;
+}
+
+/* Control de zoom anclado arriba del lienzo */
+.ed-zoom-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+.zoom-ctrl {
+  display: inline-flex;
+  align-items: center;
+  background: var(--blanco);
+  border: 2px solid var(--tinta);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra-mini);
+  padding: 1px;
+}
+.zoom-ctrl button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--cuerpo);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--tinta);
+  padding: 2px 9px;
+  border-radius: 6px;
+  line-height: 1.3;
+}
+.zoom-ctrl button:hover { background: var(--azul-claro); }
+.zoom-ctrl .zoom-pct {
+  font-size: 0.8rem;
+  min-width: 48px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
 .ed-pagehead {
   display: flex;
   align-items: center;
@@ -772,6 +880,25 @@ dialog .dlg-buttons {
 .wpf-field-cover { z-index: 1; }
 .wpf-field-image { overflow: hidden; }
 .wpf-img-decor { width: 100%; height: 100%; object-fit: contain; display: block; }
+/* Formas de dibujo (línea, flecha, rectángulo, elipse) */
+.wpf-shape { display: block; width: 100%; height: 100%; overflow: visible; }
+.wpf-field-line, .wpf-field-arrow, .wpf-field-rect, .wpf-field-ellipse { pointer-events: none; }
+/* Editor: formas */
+.ed-field-line, .ed-field-arrow, .ed-field-rect, .ed-field-ellipse {
+  background: transparent;
+  border-style: dashed;
+  border-color: var(--tinta-tenue);
+  overflow: visible;
+}
+.ed-field .wpf-shape { position: absolute; inset: 0; pointer-events: none; }
+.ed-field-line .chip, .ed-field-arrow .chip, .ed-field-rect .chip, .ed-field-ellipse .chip {
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.ed-field-line:hover .chip, .ed-field-arrow:hover .chip, .ed-field-rect:hover .chip, .ed-field-ellipse:hover .chip,
+.ed-field-line.selected .chip, .ed-field-arrow.selected .chip, .ed-field-rect.selected .chip, .ed-field-ellipse.selected .chip {
+  opacity: 1;
+}
 /* Editor: campo imagen */
 .ed-field-image { background: rgba(83,119,173,0.06); border-style: dashed; overflow: hidden; }
 .ed-img-prev { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; display: block; }
@@ -1027,7 +1154,88 @@ input.wpf-gap-input {
 .wpf-am-line.am-line-ko      { stroke: var(--rojo); }
 .wpf-am-line.am-line-missing { stroke: #2a9d8f; stroke-dasharray: 6 4; opacity: 0.55; }
 
-/* Editor: filas de items y pares */
+/* Arrowmatch modo hotspot (player) */
+.wpf-am-hotspot-field { background: transparent !important; border: none !important; pointer-events: none; }
+.wpf-am-hotspot {
+  position: absolute;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  z-index: 3;
+}
+.wpf-am-hs-left  { border: 2px solid #5377ad; background: rgba(83,119,173,0.10); justify-content: flex-end; }
+.wpf-am-hs-right { border: 2px solid #2a9d8f; background: rgba(42,157,143,0.10); justify-content: flex-start; }
+.wpf-am-hs-left  .wpf-am-dot { right: -7px; left: auto; }
+.wpf-am-hs-right .wpf-am-dot { left: -7px; right: auto; }
+.wpf-am-hotspot .wpf-am-dot { position: absolute; top: 50%; transform: translateY(-50%); }
+.wpf-am-hotspot.am-dot-active { border-style: solid; }
+.wpf-am-svg-page {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Campo arrowmatch en modo hotspot: no arrastrable, solo muestra el chip */
+.ed-am-hotspot-field {
+  background: transparent !important;
+  border: none !important;
+  pointer-events: none;
+}
+.ed-am-hotspot-field .chip { pointer-events: auto; cursor: pointer; }
+.ed-am-hotspot-field .handle { display: none !important; }
+
+/* Editor: overlays de items arrowmatch sobre la página */
+.ed-amitem {
+  position: absolute;
+  border-radius: 4px;
+  cursor: grab;
+  font-size: calc(1.4cqw * var(--fs, 1));
+  border: 2px dashed;
+}
+.ed-amitem-left  { border-color: #5377ad; background: rgba(83,119,173,0.13); }
+.ed-amitem-right { border-color: #2a9d8f; background: rgba(42,157,143,0.13); }
+.ed-amitem .chip {
+  font-size: 0.62em; font-weight: 700;
+  color: #fff; padding: 1px 6px;
+  border-bottom-right-radius: 5px;
+  pointer-events: none;
+}
+.ed-amitem-left  .chip { background: #5377ad; }
+.ed-amitem-right .chip { background: #2a9d8f; }
+.ed-amitem.selected { border-style: solid; z-index: 5; }
+.ed-amitem-left.selected  { border-color: #3a5a8a; }
+.ed-amitem-right.selected { border-color: #1a7a70; }
+.ed-amitem .handle {
+  position: absolute;
+  right: -7px; bottom: -7px;
+  width: 14px; height: 14px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  cursor: nwse-resize;
+  display: none;
+}
+.ed-amitem-left  .handle { background: #5377ad; }
+.ed-amitem-right .handle { background: #2a9d8f; }
+.ed-amitem.selected .handle { display: block; }
+
+/* Editor: nueva lista de pares unificada */
+.am-pairs-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+.am-pair-row2 { display: flex; align-items: center; gap: 4px; }
+.am-pair-num { font-weight: 700; color: var(--tinta-suave); font-size: .82em; min-width: 1.4em; text-align: right; }
+.am-side { display: flex; align-items: center; gap: 3px; flex: 1; min-width: 0; }
+.am-side-left  { justify-content: flex-end; }
+.am-side-right { justify-content: flex-start; }
+.am-arrow { font-size: 1.1em; color: var(--tinta-suave); flex-shrink: 0; }
+.f-input-xs { flex: 1; min-width: 0; font-size: .82em; padding: 2px 5px; border: 1px solid var(--borde); border-radius: 4px; background: var(--fondo-panel); color: var(--tinta); }
+.am-area-btn { font-size: .9em; padding: 2px 5px; }
+.am-area-btn.has-area { background: rgba(83,119,173,.15); border-color: #5377ad; color: #3a5a8a; }
+
+/* Editor: filas de items y pares (legado, por compatibilidad) */
 .am-item-row { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
 .am-item-row .f-input { flex: 1; }
 .am-pair-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
@@ -1115,7 +1323,12 @@ input.wpf-gap-input {
   transition: width 0.2s ease;
 }
 
-.al-doc { max-width: 860px; margin: 0 auto; padding: 22px 14px 130px; }
+.al-doc {
+  width: calc(860px * var(--zoom, 1));
+  max-width: calc(100% * var(--zoom, 1));
+  margin: 0 auto;
+  padding: 22px 14px 130px;
+}
 .al-doc .wpf-page { margin-bottom: 26px; }
 
 .al-cabecera {
@@ -1264,7 +1477,8 @@ input.wpf-gap-input {
     border-top: 2px solid var(--tinta);
     max-height: 45vh;
   }
-  .ed-tool .name { display: none; }
+  .ed-tool .name, .ed-group .name { display: none; }
+  .ed-group .glyph { width: 40px; }
 }
 
 @media (max-width: 600px) {

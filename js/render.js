@@ -80,6 +80,96 @@ function emptyRenderer() {
   };
 }
 
+// Construye el SVG de una forma de dibujo (line, arrow, rect, ellipse).
+// Compartido por el editor (vista previa) y el modo alumno.
+export function buildShapeSvg(field) {
+  const cfg = field.config || {};
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('class', 'wpf-shape');
+  const sw = Math.max(0.5, parseFloat(cfg.width) || 2);
+  const color = cfg.color || '#1d2c42';
+  const dash = cfg.style === 'dashed' ? `${sw * 3} ${sw * 2}`
+    : cfg.style === 'dotted' ? `0.1 ${sw * 2.2}` : '';
+
+  function stroke(node) {
+    node.setAttribute('stroke', color);
+    node.setAttribute('stroke-width', sw);
+    if (dash) {
+      node.setAttribute('stroke-dasharray', dash);
+      node.setAttribute('stroke-linecap', 'round');
+    }
+  }
+
+  if (field.type === 'rect' || field.type === 'ellipse') {
+    let node;
+    if (field.type === 'rect') {
+      node = document.createElementNS(NS, 'rect');
+      node.setAttribute('x', '0');
+      node.setAttribute('y', '0');
+      node.setAttribute('width', '100%');
+      node.setAttribute('height', '100%');
+    } else {
+      node = document.createElementNS(NS, 'ellipse');
+      node.setAttribute('cx', '50%');
+      node.setAttribute('cy', '50%');
+      node.setAttribute('rx', '50%');
+      node.setAttribute('ry', '50%');
+    }
+    node.setAttribute('fill', cfg.fill || 'none');
+    if (cfg.fill) node.setAttribute('fill-opacity', String(cfg.fillOpacity ?? 1));
+    if (cfg.noStroke) node.setAttribute('stroke', 'none');
+    else stroke(node);
+    svg.appendChild(node);
+  } else {
+    // line y arrow: extremos según la dirección dentro de la caja
+    const dirs = {
+      h:  ['0%', '50%', '100%', '50%'],
+      v:  ['50%', '0%', '50%', '100%'],
+      d1: ['0%', '0%', '100%', '100%'],
+      d2: ['0%', '100%', '100%', '0%']
+    };
+    let [x1, y1, x2, y2] = dirs[cfg.dir] || dirs.h;
+    if (field.type === 'arrow' && cfg.invert) [x1, y1, x2, y2] = [x2, y2, x1, y1];
+    const ln = document.createElementNS(NS, 'line');
+    ln.setAttribute('x1', x1);
+    ln.setAttribute('y1', y1);
+    ln.setAttribute('x2', x2);
+    ln.setAttribute('y2', y2);
+    stroke(ln);
+    if (field.type === 'arrow') {
+      // id único: editor y vista previa pueden convivir en el mismo documento
+      const mid = 'wpfah-' + Math.random().toString(36).slice(2, 9);
+      const marker = document.createElementNS(NS, 'marker');
+      marker.setAttribute('id', mid);
+      marker.setAttribute('viewBox', '0 0 10 10');
+      marker.setAttribute('refX', '8');
+      marker.setAttribute('refY', '5');
+      marker.setAttribute('markerWidth', '5');
+      marker.setAttribute('markerHeight', '5');
+      marker.setAttribute('orient', 'auto-start-reverse');
+      const tip = document.createElementNS(NS, 'path');
+      tip.setAttribute('d', 'M0,0 L10,5 L0,10 z');
+      tip.setAttribute('fill', color);
+      marker.appendChild(tip);
+      const defs = document.createElementNS(NS, 'defs');
+      defs.appendChild(marker);
+      svg.appendChild(defs);
+      ln.setAttribute('marker-end', `url(#${mid})`);
+      if (cfg.double) ln.setAttribute('marker-start', `url(#${mid})`);
+    }
+    svg.appendChild(ln);
+  }
+  return svg;
+}
+
+function shapeRenderer(field, root) {
+  // Altura exacta (como image): la caja debe coincidir con la del editor.
+  root.style.height = (field.rect.h * 100) + '%';
+  root.appendChild(buildShapeSvg(field));
+  return emptyRenderer();
+}
+
 function notify(ctx) {
   if (ctx.onChange) ctx.onChange();
 }
@@ -107,12 +197,20 @@ const renderers = {
 
   image(field, root, ctx) {
     const src = field.config?.src;
+    // Altura exacta: con solo min-height la imagen tomaría su proporción
+    // natural y no coincidiría con la caja dibujada en el editor.
+    root.style.height = (field.rect.h * 100) + '%';
     if (src && ctx.fileUrl) {
       const url = ctx.fileUrl(src);
       if (url) root.appendChild(el('img', { src: url, class: 'wpf-img-decor', alt: '' }));
     }
     return emptyRenderer();
   },
+
+  line: shapeRenderer,
+  arrow: shapeRenderer,
+  rect: shapeRenderer,
+  ellipse: shapeRenderer,
 
   text(field, root, ctx) {
     const input = el('input', {
@@ -538,9 +636,157 @@ const renderers = {
     const rightItems = allItems.filter(i => i.side === 'right');
     const svgNS = 'http://www.w3.org/2000/svg';
 
+    // Modo hotspot: al menos un item tiene rect definido en coords de página.
+    const hotspotMode = allItems.some(i => i.rect);
+
     let connections = []; // [{from, to}]
     let pendingFrom = null;
     let disabled = false;
+
+    // Contenedor SVG y referencia al elemento de medición para el redraw.
+    let svg, svgContainer, dotMap;
+
+    if (hotspotMode) {
+      // El root del campo se hace transparente; los items y el SVG van en la página.
+      root.classList.add('wpf-am-hotspot-field');
+      const page = root.parentElement;
+
+      svg = document.createElementNS(svgNS, 'svg');
+      svg.setAttribute('class', 'wpf-am-svg wpf-am-svg-page');
+      page.appendChild(svg);
+      svgContainer = page;
+
+      dotMap = new Map();
+
+      // Origen del área de contenido de la página: el SVG se coloca dentro
+      // del borde, así que las coordenadas deben excluirlo.
+      function contentOrigin() {
+        const pr = svgContainer.getBoundingClientRect();
+        const cs = getComputedStyle(svgContainer);
+        return {
+          left: pr.left + (parseFloat(cs.borderLeftWidth) || 0),
+          top: pr.top + (parseFloat(cs.borderTopWidth) || 0)
+        };
+      }
+
+      function dotCenter(id) {
+        const dot = dotMap.get(id);
+        if (!dot) return null;
+        const o = contentOrigin();
+        const dr = dot.getBoundingClientRect();
+        if (!svgContainer.clientWidth) return null;
+        return { x: dr.left + dr.width / 2 - o.left, y: dr.top + dr.height / 2 - o.top };
+      }
+
+      function redraw() {
+        svg.setAttribute('width', svgContainer.clientWidth || 0);
+        svg.setAttribute('height', svgContainer.clientHeight || 0);
+        svg.textContent = '';
+        function drawLine(fromId, toId, extraClass) {
+          const f = dotCenter(fromId), t2 = dotCenter(toId);
+          if (!f || !t2) return;
+          const cx = (f.x + t2.x) / 2;
+          const d = `M${f.x},${f.y} C${cx},${f.y} ${cx},${t2.y} ${t2.x},${t2.y}`;
+          const vis = document.createElementNS(svgNS, 'path');
+          vis.setAttribute('d', d);
+          vis.setAttribute('class', 'wpf-am-line' + (extraClass ? ' ' + extraClass : ''));
+          vis.setAttribute('data-from', fromId);
+          vis.setAttribute('data-to', toId);
+          svg.appendChild(vis);
+          const hit = document.createElementNS(svgNS, 'path');
+          hit.setAttribute('d', d);
+          hit.setAttribute('class', 'wpf-am-hit');
+          hit.setAttribute('pointer-events', 'stroke');
+          hit.addEventListener('click', e => {
+            if (disabled) return;
+            e.stopPropagation();
+            connections = connections.filter(c => !(c.from === fromId && c.to === toId));
+            pendingFrom = null;
+            updateDots(); redraw(); notify(ctx);
+          });
+          svg.appendChild(hit);
+        }
+        connections.forEach(c => drawLine(c.from, c.to, ''));
+      }
+
+      function updateDots() {
+        dotMap.forEach((dot, id) => {
+          dot.classList.toggle('am-dot-active', id === pendingFrom);
+          dot.classList.toggle('am-dot-connected',
+            connections.some(c => c.from === id || c.to === id));
+        });
+      }
+
+      function handleHotspotClick(item) {
+        if (disabled) return;
+        if (item.side === 'left') {
+          if (pendingFrom === item.id) {
+            pendingFrom = null;
+          } else {
+            connections = connections.filter(c => c.from !== item.id);
+            pendingFrom = item.id;
+          }
+          updateDots(); redraw();
+        } else {
+          if (!pendingFrom) return;
+          connections = connections.filter(c => c.to !== item.id);
+          connections.push({ from: pendingFrom, to: item.id });
+          pendingFrom = null;
+          updateDots(); redraw(); notify(ctx);
+        }
+      }
+
+      // Crear overlays de hotspot para cada item con rect.
+      allItems.forEach(item => {
+        if (!item.rect) return;
+        const hs = el('div', { class: `wpf-am-hotspot wpf-am-hs-${item.side}`, dataset: { id: item.id } });
+        // Usar height exacto (no minHeight) para que el dot quede siempre centrado.
+        hs.style.left   = (item.rect.x * 100) + '%';
+        hs.style.top    = (item.rect.y * 100) + '%';
+        hs.style.width  = (item.rect.w * 100) + '%';
+        hs.style.height = (item.rect.h * 100) + '%';
+        // Dot en el borde: derecho para izquierda, izquierdo para derecha.
+        const dot = el('div', { class: 'wpf-am-dot' });
+        hs.appendChild(dot);
+        dotMap.set(item.id, dot);
+        hs.addEventListener('click', e => { e.stopPropagation(); handleHotspotClick(item); });
+        page.appendChild(hs);
+      });
+
+      const ro = new ResizeObserver(redraw);
+      ro.observe(svgContainer);
+      requestAnimationFrame(redraw);
+
+      return {
+        getAnswer: () => connections.slice(),
+        setAnswer: v => {
+          connections = Array.isArray(v) ? v.filter(c => c.from && c.to) : [];
+          updateDots(); requestAnimationFrame(redraw);
+        },
+        isAnswered: () => connections.length > 0,
+        setDisabled: b => { disabled = b; },
+        markDetail() {
+          svg.querySelectorAll('.wpf-am-line').forEach(line => {
+            const from = line.getAttribute('data-from');
+            const to   = line.getAttribute('data-to');
+            const ok   = (cfg.pairs || []).some(p => p.from === from && p.to === to);
+            line.classList.add(ok ? 'am-line-ok' : 'am-line-ko');
+          });
+          (cfg.pairs || []).forEach(pair => {
+            if (connections.some(c => c.from === pair.from && c.to === pair.to)) return;
+            const f = dotCenter(pair.from), t2 = dotCenter(pair.to);
+            if (!f || !t2) return;
+            const cx = (f.x + t2.x) / 2;
+            const miss = document.createElementNS(svgNS, 'path');
+            miss.setAttribute('d', `M${f.x},${f.y} C${cx},${f.y} ${cx},${t2.y} ${t2.x},${t2.y}`);
+            miss.setAttribute('class', 'wpf-am-line am-line-missing');
+            svg.insertBefore(miss, svg.firstChild);
+          });
+        }
+      };
+    }
+
+    // ── Modo columnas (comportamiento original) ───────────────────────────────
 
     const wrap = el('div', { class: 'wpf-arrowmatch' });
     root.appendChild(wrap);
@@ -551,23 +797,24 @@ const renderers = {
     wrap.appendChild(el('div', { class: 'wpf-am-gap' }));
     wrap.appendChild(rightCol);
 
-    const svg = document.createElementNS(svgNS, 'svg');
+    svg = document.createElementNS(svgNS, 'svg');
     svg.setAttribute('class', 'wpf-am-svg');
     wrap.appendChild(svg);
+    svgContainer = wrap;
 
-    const dotMap = new Map(); // id → dot element
+    dotMap = new Map();
 
     function dotCenter(id) {
       const dot = dotMap.get(id);
       if (!dot) return null;
-      const wr = wrap.getBoundingClientRect();
+      const wr = svgContainer.getBoundingClientRect();
       const dr = dot.getBoundingClientRect();
       if (!wr.width) return null;
       return { x: dr.left + dr.width / 2 - wr.left, y: dr.top + dr.height / 2 - wr.top };
     }
 
     function redraw() {
-      const wr = wrap.getBoundingClientRect();
+      const wr = svgContainer.getBoundingClientRect();
       svg.setAttribute('width', wr.width || 0);
       svg.setAttribute('height', wr.height || 0);
       svg.textContent = '';
@@ -583,7 +830,6 @@ const renderers = {
         vis.setAttribute('data-from', fromId);
         vis.setAttribute('data-to', toId);
         svg.appendChild(vis);
-        // wide hit area on top (pointer-events en atributo SVG para no heredar none del padre)
         const hit = document.createElementNS(svgNS, 'path');
         hit.setAttribute('d', d);
         hit.setAttribute('class', 'wpf-am-hit');
@@ -664,14 +910,12 @@ const renderers = {
       isAnswered: () => connections.length > 0,
       setDisabled: b => { disabled = b; wrap.classList.toggle('am-disabled', b); },
       markDetail() {
-        // color existing lines
         svg.querySelectorAll('.wpf-am-line').forEach(line => {
           const from = line.getAttribute('data-from');
           const to   = line.getAttribute('data-to');
           const ok   = (cfg.pairs || []).some(p => p.from === from && p.to === to);
           line.classList.add(ok ? 'am-line-ok' : 'am-line-ko');
         });
-        // dashed lines for missing correct pairs
         (cfg.pairs || []).forEach(pair => {
           if (connections.some(c => c.from === pair.from && c.to === pair.to)) return;
           const f = dotCenter(pair.from), t2 = dotCenter(pair.to);

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Test posiciones arrowmatch</title>
+  <link rel="stylesheet" href="../css/app.css">
+</head>
+<body>
+<div id="app"></div>
+<pre id="out"></pre>
+<script src="../config.js"></script>
+<script type="module">
+import { mountPlayer } from '../js/player.js';
+
+const out = [];
+const log = (...a) => { out.push(a.join(' ')); document.getElementById('out').textContent = out.join('\n'); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function makeImage() {
+  return new Promise(res => {
+    const c = document.createElement('canvas');
+    c.width = 800; c.height = 1000;
+    const g = c.getContext('2d');
+    g.fillStyle = '#fff'; g.fillRect(0, 0, 800, 1000);
+    c.toBlob(b => res(b), 'image/png');
+  });
+}
+
+async function main() {
+  try {
+    localStorage.clear();
+    const blob = await makeImage();
+    const items = [
+      { id: 'l1', side: 'left',  label: 'A', rect: { x: 0.10, y: 0.25, w: 0.20, h: 0.05 } },
+      { id: 'r1', side: 'right', label: '1', rect: { x: 0.60, y: 0.25, w: 0.20, h: 0.05 } },
+      { id: 'l2', side: 'left',  label: 'B', rect: { x: 0.10, y: 0.60, w: 0.20, h: 0.05 } },
+      { id: 'r2', side: 'right', label: '2', rect: { x: 0.60, y: 0.60, w: 0.20, h: 0.05 } }
+    ];
+    const manifest = {
+      format: 'workpdf-ficha', version: 1, id: 'wpftestam',
+      title: 'Test AM', settings: {},
+      pages: [{
+        image: 'pages/page-1.png', w: 800, h: 1000, fields: [
+          { id: 'f1', type: 'arrowmatch', rect: { x: 0.05, y: 0.2, w: 0.9, h: 0.5 }, points: 1, fontScale: 1,
+            config: { items, pairs: [{ from: 'l1', to: 'r1' }, { from: 'l2', to: 'r2' }] } }
+        ]
+      }]
+    };
+    const files = new Map([['pages/page-1.png', blob]]);
+    const root = document.getElementById('app');
+    mountPlayer(root, { manifest, files }, { preview: true });
+    await sleep(400);
+
+    const page = root.querySelector('.wpf-page');
+    const img = page.querySelector('img.fondo');
+    const ir = img.getBoundingClientRect();
+    log('img rect:', JSON.stringify({ left: ir.left, top: ir.top, w: ir.width, h: ir.height }));
+    const pr = page.getBoundingClientRect();
+    log('page rect:', JSON.stringify({ left: pr.left, top: pr.top, w: pr.width, h: pr.height }));
+
+    let maxDiff = 0;
+    items.forEach(item => {
+      const hs = page.querySelector(`.wpf-am-hotspot[data-id="${item.id}"]`);
+      if (!hs) { log('FALTA hotspot', item.id); maxDiff = 999; return; }
+      const hr = hs.getBoundingClientRect();
+      const gotX = (hr.left - ir.left) / ir.width;
+      const gotY = (hr.top - ir.top) / ir.height;
+      const gotW = hr.width / ir.width;
+      const gotH = hr.height / ir.height;
+      const dx = Math.abs(gotX - item.rect.x) * ir.width;
+      const dy = Math.abs(gotY - item.rect.y) * ir.height;
+      maxDiff = Math.max(maxDiff, dx, dy);
+      log(item.id, '→ esperado', JSON.stringify(item.rect),
+        '| medido x:', gotX.toFixed(4), 'y:', gotY.toFixed(4),
+        'w:', gotW.toFixed(4), 'h:', gotH.toFixed(4),
+        '| desvío px x:', dx.toFixed(2), 'y:', dy.toFixed(2));
+    });
+
+    // El SVG de líneas debe cubrir exactamente la página
+    const svg = page.querySelector('.wpf-am-svg-page');
+    if (svg) {
+      const sr = svg.getBoundingClientRect();
+      log('svg rect:', JSON.stringify({ left: sr.left, top: sr.top, w: sr.width, h: sr.height }),
+        '| attr w:', svg.getAttribute('width'), 'h:', svg.getAttribute('height'));
+    }
+
+    log(maxDiff < 1 ? '__TEST_OK__' : '__TEST_FAIL__', 'maxDiff px:', maxDiff.toFixed(2));
+  } catch (e) {
+    log('__TEST_FAIL__', e.message, e.stack);
+  }
+}
+main();
+</script>
+</body>
+</html>

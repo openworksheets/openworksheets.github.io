@@ -121,17 +121,61 @@ export const FIELD_TYPES = {
     decor: true,
     defRect: { w: 0.4, h: 0.3 },
     defaults: () => ({ src: '' })
+  },
+  // Formas de dibujo: para componer fichas desde una hoja en blanco.
+  line: {
+    name: 'Línea',
+    glyph: '─',
+    decor: true,
+    defRect: { w: 0.25, h: 0.02 },
+    defaults: () => ({ color: '#1d2c42', width: 2, style: 'solid', dir: 'h' })
+  },
+  arrow: {
+    name: 'Flecha',
+    glyph: '→',
+    decor: true,
+    defRect: { w: 0.25, h: 0.02 },
+    defaults: () => ({ color: '#1d2c42', width: 2, style: 'solid', dir: 'h', invert: false, double: false })
+  },
+  rect: {
+    name: 'Rectángulo',
+    glyph: '▭',
+    decor: true,
+    defRect: { w: 0.25, h: 0.12 },
+    defaults: () => ({ color: '#1d2c42', width: 2, style: 'solid', noStroke: false, fill: '', fillOpacity: 1 })
+  },
+  ellipse: {
+    name: 'Elipse',
+    glyph: '◯',
+    decor: true,
+    defRect: { w: 0.2, h: 0.12 },
+    defaults: () => ({ color: '#1d2c42', width: 2, style: 'solid', noStroke: false, fill: '', fillOpacity: 1 })
   }
 };
 
 export const FIELD_ORDER = [
   'text', 'number', 'single', 'truefalse', 'multi',
   'select', 'gaps', 'match', 'order', 'dragdrop', 'arrowmatch',
-  'label', 'cover', 'image'
+  'label', 'cover', 'image', 'line', 'arrow', 'rect', 'ellipse'
+];
+
+// Grupos temáticos de la paleta del editor. El nombre visible
+// se obtiene de i18n con la clave 'palette.<id>'.
+export const PALETTE_GROUPS = [
+  { id: 'write',  glyph: '✎', types: ['text', 'number', 'gaps'] },
+  { id: 'choose', glyph: '☑', types: ['single', 'multi', 'truefalse', 'select'] },
+  { id: 'relate', glyph: '⇄', types: ['match', 'order', 'dragdrop', 'arrowmatch'] },
+  { id: 'design', glyph: '✦', types: ['label', 'image', 'cover', 'line', 'arrow', 'rect', 'ellipse'] }
 ];
 
 export function isDecorField(type) {
   return Boolean(FIELD_TYPES[type]?.decor);
+}
+
+const SHAPE_TYPES = new Set(['line', 'arrow', 'rect', 'ellipse']);
+
+export function isShapeField(type) {
+  return SHAPE_TYPES.has(type);
 }
 
 export function fieldTypeName(type) {
