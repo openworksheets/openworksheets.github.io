@@ -154,7 +154,7 @@ function renderCanvas() {
     page.fields.forEach(field => {
       const decor = Boolean(FIELD_TYPES[field.type]?.decor);
       const box = el('div', { class: `ed-field ed-field-${field.type}`, dataset: { id: field.id } },
-        el('span', { class: 'chip' }, decor ? fieldTypeName(field.type) : `${fieldTypeName(field.type)} · ${field.points} pt`),
+        el('span', { class: 'chip' }, decor ? fieldTypeName(field.type) : field.noScore ? `${fieldTypeName(field.type)} · —` : `${fieldTypeName(field.type)} · ${field.points} pt`),
         el('span', { class: 'handle' }));
       // Vista previa real de los elementos decorativos
       if (field.type === 'label') {
@@ -473,7 +473,9 @@ function refreshChip(field) {
   if (!node) return;
   node.textContent = FIELD_TYPES[field.type]?.decor
     ? fieldTypeName(field.type)
-    : `${fieldTypeName(field.type)} · ${field.points} pt`;
+    : field.noScore
+      ? `${fieldTypeName(field.type)} · —`
+      : `${fieldTypeName(field.type)} · ${field.points} pt`;
 }
 
 function renderFieldPanel(field) {
@@ -486,14 +488,26 @@ function renderFieldPanel(field) {
 
   // Puntos (los decorativos no puntúan) y tamaño del texto
   if (!decor) {
+    const noScoreCb = el('input', { type: 'checkbox' });
+    noScoreCb.checked = Boolean(field.noScore);
+    const ptsRow = el('div', {});
     const pts = el('input', { type: 'number', min: '0', step: '0.5', value: String(field.points) });
     pts.addEventListener('input', () => {
       field.points = Math.max(0, parseFloat(pts.value.replace(',', '.')) || 0);
       refreshChip(field);
       markDirty();
     });
-    cont.appendChild(el('label', { class: 'f-label' }, t('editor.points')));
-    cont.appendChild(pts);
+    ptsRow.appendChild(el('label', { class: 'f-label' }, t('editor.points')));
+    ptsRow.appendChild(pts);
+    if (field.noScore) ptsRow.style.display = 'none';
+    noScoreCb.addEventListener('change', () => {
+      field.noScore = noScoreCb.checked;
+      ptsRow.style.display = field.noScore ? 'none' : '';
+      refreshChip(field);
+      markDirty();
+    });
+    cont.appendChild(el('label', { class: 'check-row' }, noScoreCb, t('editor.noScore')));
+    cont.appendChild(ptsRow);
   }
   if (field.type !== 'cover') {
     const fs = el('input', { type: 'range', min: '0.6', max: '2', step: '0.1', value: String(field.fontScale || 1) });
@@ -948,7 +962,7 @@ function renderFieldList() {
       const item = el('div', { class: 'item' + (sel?.kind === 'field' && sel.fieldId === field.id ? ' sel' : '') },
         el('span', { class: 'g' }, FIELD_TYPES[field.type]?.glyph || '?'),
         el('span', { class: 'resumen' }, `P${pi + 1} · ${resumen}`),
-        decor ? null : el('span', { class: 'pts' }, field.points + ' pt'));
+        decor ? null : el('span', { class: 'pts' }, field.noScore ? '—' : field.points + ' pt'));
       item.addEventListener('click', () => {
         selectField(pi, field.id);
         canvas.querySelector(`[data-id="${field.id}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });

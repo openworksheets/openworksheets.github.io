@@ -32,7 +32,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     return urls.get(path);
   }
 
-  const gradable = f => !isDecorField(f.type);
+  const gradable = f => !isDecorField(f.type) && !f.noScore;
   const totalPoints = manifest.pages.reduce(
     (sum, p) => sum + p.fields.filter(gradable).reduce((s, f) => s + (Number(f.points) || 0), 0), 0);
   const totalFields = manifest.pages.reduce((s, p) => s + p.fields.filter(gradable).length, 0);
@@ -235,7 +235,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
         el('img', { class: 'fondo', src: fileUrl(page.image), alt: 'Página ' + (pi + 1) }));
       page.fields.forEach(field => {
         const ctl = renderField(field, pageEl, ctx);
-        if (!gradable(field)) return; // decorativos: se muestran pero no puntúan
+        if (!gradable(field)) return; // decorativos o noScore: se muestran pero no puntúan
         ctl.pageIndex = pi;
         controllers.push(ctl);
       });
