@@ -234,7 +234,7 @@ const STRINGS = {
     'dlg.access.autoEntrega': 'Entregar automáticamente si el plazo termina mientras el alumnado responde',
     'dlg.access.tiempo': 'Tiempo límite por intento en minutos (0 = sin límite)',
     'dlg.access.password': 'Contraseña para que el alumnado abra la ficha (vacía = sin contraseña)',
-    'dlg.access.hint': 'Esta contraseña es solo para abrir la ficha. No debe ser igual a la contraseña de cifrado que protege las entregas. Las restricciones se aplican en el navegador del alumnado: ayudan a organizar la actividad, no son una medida de seguridad.',
+    'dlg.access.hint': 'Esta contraseña es solo para abrir la ficha. No debe ser igual a la contraseña de cifrado que protege las entregas.',
 
     // Editor — vista previa
     'preview.banner': 'Vista previa: así lo verá el alumnado',
@@ -610,7 +610,7 @@ const STRINGS = {
     'dlg.access.autoEntrega': 'Submit automatically if the deadline passes while the student is answering',
     'dlg.access.tiempo': 'Time limit per attempt in minutes (0 = no limit)',
     'dlg.access.password': 'Password for students to open the worksheet (empty = none)',
-    'dlg.access.hint': "This password is only for opening the worksheet. It should not be the same as the encryption password that protects submissions. Restrictions are enforced in the student's browser: they help organize the activity, they are not a security measure.",
+    'dlg.access.hint': 'This password is only for opening the worksheet. It should not be the same as the encryption password that protects submissions.',
 
     'preview.banner': 'Preview: this is how students will see it',
     'preview.back': '← Back to editor',
@@ -995,7 +995,7 @@ const STRINGS = {
     'dlg.access.autoEntrega': 'Lliurar automàticament si el termini acaba mentre l\'alumnat respon',
     'dlg.access.tiempo': 'Temps límit per intent en minuts (0 = sense límit)',
     'dlg.access.password': 'Contrasenya perquè l\'alumnat obri la fitxa (buida = sense contrasenya)',
-    'dlg.access.hint': 'Aquesta contrasenya només serveix per obrir la fitxa. No ha de ser igual que la contrasenya de xifratge que protegeix els lliuraments. Les restriccions s\'apliquen al navegador de l\'alumnat: ajuden a organitzar l\'activitat, no són una mesura de seguretat.',
+    'dlg.access.hint': 'Aquesta contrasenya només serveix per obrir la fitxa. No ha de ser igual que la contrasenya de xifratge que protegeix els lliuraments.',
 
     'preview.banner': 'Vista prèvia: així ho veurà l\'alumnat',
     'preview.back': '← Tornar a l\'editor',
@@ -1380,7 +1380,7 @@ const STRINGS = {
     'dlg.access.autoEntrega': 'Entregar automaticamente se o prazo remata mentres o alumnado responde',
     'dlg.access.tiempo': 'Tempo límite por intento en minutos (0 = sen límite)',
     'dlg.access.password': 'Contrasinal para que o alumnado abra a ficha (baleiro = sen contrasinal)',
-    'dlg.access.hint': 'Este contrasinal é só para abrir a ficha. Non debe ser igual ao contrasinal de cifrado que protexe as entregas. As restricións aplícanse no navegador do alumnado: axudan a organizar a actividade, non son unha medida de seguridade.',
+    'dlg.access.hint': 'Este contrasinal é só para abrir a ficha. Non debe ser igual ao contrasinal de cifrado que protexe as entregas.',
 
     'preview.banner': 'Vista previa: así o verá o alumnado',
     'preview.back': '← Volver ao editor',
@@ -1765,7 +1765,7 @@ const STRINGS = {
     'dlg.access.autoEntrega': 'Automatikoki entregatu epea amaitzen bada ikasleek erantzuten duten bitartean',
     'dlg.access.tiempo': 'Saialdi bakoitzeko denbora-muga minututan (0 = mugarik ez)',
     'dlg.access.password': 'Ikasleak fitxa irekitzeko pasahitza (hutsik = pasahitzik ez)',
-    'dlg.access.hint': 'Pasahitz hau fitxa irekitzeko bakarrik da. Ez du entregak babesten dituen zifratzeko pasahitzaren berdina izan behar. Murrizketak ikasleen nabigatzailean aplikatzen dira: jarduera antolatzen laguntzen dute, ez dira segurtasun-neurri bat.',
+    'dlg.access.hint': 'Pasahitz hau fitxa irekitzeko bakarrik da. Ez du entregak babesten dituen zifratzeko pasahitzaren berdina izan behar.',
 
     'preview.banner': 'Aurrebista: ikasleek honela ikusiko dute',
     'preview.back': '← Editorera itzuli',
