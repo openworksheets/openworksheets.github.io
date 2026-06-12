@@ -3,6 +3,7 @@
 // abrir un ZIP local o pegar un enlace.
 
 import { el, toast } from './util.js';
+import { toDirectUrl } from './drive.js';
 import { downloadZip } from './download.js';
 import { importFichaZip } from './zipio.js';
 import { mountPlayer } from './player.js';
@@ -101,7 +102,7 @@ async function main() {
       const { resolveShortToken } = await import('./drive.js');
       zipUrl = await resolveShortToken(shortToken);
     }
-    const bytes = await downloadZip(zipUrl, {
+    const bytes = await downloadZip(toDirectUrl(zipUrl), {
       onStatus: loading.setStatus,
       onProgress: loading.setProgress
     });

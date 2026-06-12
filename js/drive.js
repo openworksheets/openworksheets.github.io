@@ -17,15 +17,42 @@ export function parseDriveId(url) {
   return null;
 }
 
+// Detecta enlaces compartidos de Nextcloud/ownCloud: tienen «/s/<token>»
+// en la ruta. Se excluyen los servicios conocidos que también usan /s/.
+function isNextcloudShare(url) {
+  let host = '';
+  let path = '';
+  try {
+    const parsed = new URL(url);
+    host = (parsed.hostname || '').toLowerCase();
+    path = parsed.pathname || '';
+  } catch {
+    return false;
+  }
+  if (!/\/s\/[^/]+/.test(path)) return false;
+  if (/(^|\.)(box\.com|drive\.google\.com|dropbox\.com)$/.test(host)) return false;
+  return true;
+}
+
 // Normaliza una URL pública a una URL de descarga directa.
 export function toDirectUrl(url) {
+  url = (url || '').trim();
   const id = parseDriveId(url);
   if (id) return `https://drive.google.com/uc?export=download&id=${id}`;
   // Dropbox: forzar descarga directa.
   if (/dropbox\.com/.test(url)) {
     return url.replace(/[?&]dl=0/, '').replace('www.dropbox.com', 'dl.dropboxusercontent.com');
   }
-  return url.trim();
+  // Nextcloud/ownCloud: añadir /download al enlace compartido.
+  if (isNextcloudShare(url) && !url.includes('/download') && !url.includes('download=1')) {
+    const [baseAndQuery, ...hashParts] = url.split('#');
+    const hash = hashParts.length ? '#' + hashParts.join('#') : '';
+    const qIdx = baseAndQuery.indexOf('?');
+    const base = (qIdx === -1 ? baseAndQuery : baseAndQuery.slice(0, qIdx)).replace(/\/$/, '');
+    const query = qIdx === -1 ? '' : baseAndQuery.slice(qIdx);
+    return base + '/download' + query + hash;
+  }
+  return url;
 }
 
 // Construye el enlace largo para el alumnado (fallback sin GAS).
