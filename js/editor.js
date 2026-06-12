@@ -482,6 +482,11 @@ function renderPanel() {
   renderFieldList();
 }
 
+function refreshFieldList() {
+  panel.querySelector('.lista-campos')?.remove();
+  renderFieldList();
+}
+
 function refreshChip(field) {
   const node = canvas.querySelector(`.ed-field[data-id="${field.id}"] .chip`);
   if (!node) return;
@@ -509,6 +514,7 @@ function renderFieldPanel(field) {
     pts.addEventListener('input', () => {
       field.points = Math.max(0, parseFloat(pts.value.replace(',', '.')) || 0);
       refreshChip(field);
+      refreshFieldList();
       markDirty();
     });
     ptsRow.appendChild(el('label', { class: 'f-label' }, t('editor.points')));
@@ -518,6 +524,7 @@ function renderFieldPanel(field) {
       field.noScore = noScoreCb.checked;
       ptsRow.style.display = field.noScore ? 'none' : '';
       refreshChip(field);
+      refreshFieldList();
       markDirty();
     });
     cont.appendChild(el('label', { class: 'check-row' }, noScoreCb, t('editor.noScore')));
