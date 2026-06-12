@@ -176,7 +176,7 @@ function renderCanvas() {
       if (field.type === 'dragdrop') {
         (field.config.zones || []).forEach(zone => {
           const zChipText = Array.isArray(zone.answers) && zone.answers.length
-            ? zone.answers[0] : (zone.answer || 'zona');
+            ? firstAnswerLabel(zone.answers) : (zone.answer || 'zona');
           const zEl = el('div', { class: 'ed-zone', dataset: { id: zone.id } },
             el('span', { class: 'chip' }, zChipText),
             el('span', { class: 'handle' }));
@@ -536,12 +536,48 @@ function renderZonePanel(field) {
   optionListEditor(cont, {
     label: t('editor.zoneAnswer'),
     items: () => zone.answers,
-    render: (row, item, i) => row.appendChild(textCell(item, v => {
-      zone.answers[i] = v;
-      updateZoneChip();
-    }, t('cfg.zoneLabelPlaceholder'))),
+    render: (row, item, i, repaint) => {
+      const isImg = item.startsWith('dtokens/');
+      // Botón/preview de imagen.
+      const imgBtn = el('button', { class: 'ans-img-btn' + (isImg ? ' has-img' : ''), type: 'button', title: t('cfg.uploadTokenImg') });
+      if (isImg && files.has(item)) {
+        imgBtn.appendChild(el('img', { src: fileUrl(item), class: 'tok-thumb', alt: '' }));
+      }
+      imgBtn.addEventListener('click', () => {
+        const pick = document.createElement('input');
+        pick.type = 'file'; pick.accept = 'image/png,image/jpeg,image/gif,image/webp';
+        pick.addEventListener('change', () => {
+          const f = pick.files[0]; if (!f) return;
+          const ext = f.name.split('.').pop().toLowerCase() || 'png';
+          const path = 'dtokens/' + uid() + '.' + ext;
+          if (isImg) { urls.delete(item); files.delete(item); }
+          files.set(path, f);
+          zone.answers[i] = path;
+          updateZoneChip(); markDirty(); repaint();
+        });
+        pick.click();
+      });
+      row.appendChild(imgBtn);
+      // Input de texto (solo cuando no hay imagen).
+      if (!isImg) {
+        row.appendChild(textCell(item, v => { zone.answers[i] = v; updateZoneChip(); }, t('cfg.zoneLabelPlaceholder')));
+      } else {
+        // Botón para quitar la imagen y volver a texto.
+        const quitImg = el('button', { class: 'btn small', type: 'button', title: t('cfg.removeImage') }, '✕🖼');
+        quitImg.addEventListener('click', e => {
+          e.stopPropagation();
+          urls.delete(item); files.delete(item);
+          zone.answers[i] = ''; updateZoneChip(); markDirty(); repaint();
+        });
+        row.appendChild(quitImg);
+      }
+    },
     add: () => zone.answers.push(''),
-    remove: i => { zone.answers.splice(i, 1); updateZoneChip(); },
+    remove: i => {
+      const a = zone.answers[i];
+      if (a.startsWith('dtokens/')) { urls.delete(a); files.delete(a); }
+      zone.answers.splice(i, 1); updateZoneChip();
+    },
     addLabel: t('cfg.addZoneAnswer'),
     min: 1
   });
@@ -806,48 +842,6 @@ const configForms = {
   dragdrop(cont, field) {
     const cfg = field.config;
 
-    // Sección de imágenes para tokens.
-    if (!Array.isArray(cfg.tokenDefs)) cfg.tokenDefs = [];
-    optionListEditor(cont, {
-      label: t('cfg.tokenImages'),
-      items: () => cfg.tokenDefs,
-      render: (row, def, i) => {
-        // Preview de imagen.
-        const preview = el('div', { class: 'tok-preview' });
-        if (def.src && files.has(def.src)) {
-          preview.appendChild(el('img', { src: fileUrl(def.src), class: 'tok-thumb', alt: def.label || '' }));
-        }
-        // Botón subir imagen.
-        const upBtn = el('button', { class: 'btn small', type: 'button', title: t('cfg.uploadTokenImg') }, '🖼');
-        upBtn.addEventListener('click', () => {
-          const inp = document.createElement('input');
-          inp.type = 'file'; inp.accept = 'image/png,image/jpeg,image/gif,image/webp';
-          inp.addEventListener('change', () => {
-            const f = inp.files[0]; if (!f) return;
-            const ext = f.name.split('.').pop().toLowerCase() || 'png';
-            const path = 'dtokens/' + uid() + '.' + ext;
-            if (def.src) { urls.delete(def.src); files.delete(def.src); }
-            files.set(path, f);
-            def.src = path;
-            markDirty();
-            renderFieldPanel(getField(sel.pageIndex, sel.fieldId));
-          });
-          inp.click();
-        });
-        row.appendChild(preview);
-        row.appendChild(upBtn);
-        row.appendChild(textCell(def.label || '', v => { def.label = v; }, t('cfg.tokenLabel')));
-      },
-      add: () => cfg.tokenDefs.push({ label: '', src: '' }),
-      remove: i => {
-        const def = cfg.tokenDefs[i];
-        if (def.src) { urls.delete(def.src); files.delete(def.src); }
-        cfg.tokenDefs.splice(i, 1);
-      },
-      addLabel: t('cfg.addTokenImage'),
-      min: 0
-    });
-
     cont.appendChild(el('div', { class: 'zona-bloque' },
       t('cfg.dragdropZones', { n: cfg.zones.length })));
     optionListEditor(cont, {
@@ -858,14 +852,20 @@ const configForms = {
           zone.answers = zone.answer ? [String(zone.answer)] : [''];
           delete zone.answer;
         }
-        const inp = textCell(zone.answers.join(', '), v => {
-          zone.answers = v.split(',').map(s => s.trim()).filter(Boolean);
+        const textAnswers = zone.answers.filter(a => !a.startsWith('dtokens/'));
+        const imgAnswers  = zone.answers.filter(a =>  a.startsWith('dtokens/'));
+        const inp = textCell(textAnswers.join(', '), v => {
+          const newText = v.split(',').map(s => s.trim()).filter(Boolean);
+          zone.answers = [...imgAnswers, ...newText];
           if (!zone.answers.length) zone.answers = [''];
           const chip = canvas.querySelector(`.ed-zone[data-id="${zone.id}"] .chip`);
-          if (chip) chip.textContent = zone.answers[0] || 'zona';
+          if (chip) chip.textContent = firstAnswerLabel(zone.answers) || 'zona';
         }, t('cfg.zoneLabelPlaceholder'));
         inp.addEventListener('focus', () => selectZoneSoft(zone.id));
         row.appendChild(inp);
+        imgAnswers.forEach(p => {
+          if (files.has(p)) row.appendChild(el('img', { src: fileUrl(p), class: 'tok-thumb-xs', alt: '🖼', title: p }));
+        });
       },
       add: () => {
         activeTool = 'zone';
@@ -894,6 +894,11 @@ const configForms = {
 };
 
 // Resalta una zona sin reconstruir el panel (para no perder el foco del input).
+function firstAnswerLabel(answers) {
+  const first = (answers || []).find(Boolean) || '';
+  return first.startsWith('dtokens/') ? '🖼' : first;
+}
+
 function selectZoneSoft(zoneId) {
   canvas.querySelectorAll('.ed-zone').forEach(n =>
     n.classList.toggle('selected', n.dataset.id === zoneId));

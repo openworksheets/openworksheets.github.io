@@ -321,26 +321,25 @@ const renderers = {
   dragdrop(field, root, ctx) {
     const cfg = field.config;
     const zones = cfg.zones || [];
-    const tokenDefs = cfg.tokenDefs || [];
     const zoneAnswers = z => Array.isArray(z.answers) && z.answers.length
       ? z.answers.map(String) : z.answer ? [String(z.answer)] : [];
     const tokens = zones.flatMap(zoneAnswers).concat(cfg.distractors || []);
     const tokenOrder = shuffledIndices(tokens.length, ctx.rng);
 
-    function tokenImg(label) {
-      const def = tokenDefs.find(d => d.label === label);
-      if (!def?.src || !ctx.fileUrl) return null;
-      const url = ctx.fileUrl(def.src);
-      if (!url) return null;
-      const img = document.createElement('img');
-      img.src = url; img.alt = label; img.className = 'wpf-token-img';
-      return img;
+    function tokenImgUrl(label) {
+      if (!label.startsWith('dtokens/') || !ctx.fileUrl) return null;
+      return ctx.fileUrl(label) || null;
     }
     function tokenContent(label) {
-      const img = tokenImg(label);
-      return img || document.createTextNode(label);
+      const url = tokenImgUrl(label);
+      if (url) {
+        const img = document.createElement('img');
+        img.src = url; img.alt = label; img.className = 'wpf-token-img';
+        return img;
+      }
+      return document.createTextNode(label);
     }
-    function hasImg(label) { return Boolean(tokenImg(label)); }
+    function hasImg(label) { return Boolean(tokenImgUrl(label)); }
 
     // assignment: zoneId → string[]
     const assignment = {};
