@@ -858,8 +858,10 @@ input.wpf-gap-input {
 }
 .wpf-zone.armed { border-color: var(--rojo); background: rgba(198, 61, 44, 0.10); }
 .wpf-zone.filled { border-style: solid; background: rgba(255, 253, 248, 0.97); }
+.wpf-zone.drag-over { border-style: solid; border-color: var(--tinta); background: var(--azul-claro); transform: scale(1.03); }
 .wpf-zone.mark-ok { border-color: var(--verde); background: var(--verde-claro); }
 .wpf-zone.mark-ko { border-color: var(--rojo); background: var(--rojo-claro); }
+.wpf-token.dragging, .wpf-zone-chip.dragging { opacity: 0.4; }
 .wpf-zone-chip {
   border: 1.5px solid var(--tinta);
   background: var(--azul-claro);

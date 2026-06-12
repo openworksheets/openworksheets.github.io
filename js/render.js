@@ -329,6 +329,7 @@ const renderers = {
     const assignment = {};
     zones.forEach(z => { assignment[z.id] = []; });
     let selectedToken = null;
+    let dragToken = null;
     let disabled = false;
 
     root.classList.add('wpf-tray');
@@ -337,28 +338,95 @@ const renderers = {
     root.appendChild(trayLabel);
     root.appendChild(trayBox);
 
+    // Devuelve un token a la bandeja eliminándolo de donde esté.
+    function releaseToken(tk) {
+      for (const id of Object.keys(assignment)) {
+        assignment[id] = assignment[id].filter(t => t !== tk);
+      }
+    }
+
+    // Coloca un token en una zona.
+    function placeToken(tk, zoneId) {
+      releaseToken(tk);
+      assignment[zoneId] = [...assignment[zoneId], tk];
+    }
+
     // Las zonas de destino se colocan directamente sobre la página.
     const zoneEls = {};
     zones.forEach(z => {
       const zEl = el('div', { class: 'wpf-zone', dataset: { zone: z.id } });
       positionRect(zEl, z.rect);
       zEl.style.setProperty('--fs', field.fontScale || 1);
+
+      // Clic: coloca el token seleccionado por clic.
       zEl.addEventListener('click', () => {
         if (disabled || selectedToken === null) return;
-        for (const id of Object.keys(assignment)) {
-          assignment[id] = assignment[id].filter(tk => tk !== selectedToken);
-        }
-        assignment[z.id] = [...assignment[z.id], selectedToken];
+        placeToken(selectedToken, z.id);
         selectedToken = null;
-        paint();
-        notify(ctx);
+        paint(); notify(ctx);
       });
+
+      // Drag-and-drop sobre zona.
+      zEl.addEventListener('dragover', e => {
+        if (disabled || !dragToken) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        zEl.classList.add('drag-over');
+      });
+      zEl.addEventListener('dragleave', e => {
+        if (!zEl.contains(e.relatedTarget)) zEl.classList.remove('drag-over');
+      });
+      zEl.addEventListener('drop', e => {
+        e.preventDefault();
+        zEl.classList.remove('drag-over');
+        if (disabled || !dragToken) return;
+        placeToken(dragToken, z.id);
+        dragToken = null; selectedToken = null;
+        paint(); notify(ctx);
+      });
+
       root.parentElement.appendChild(zEl);
       zoneEls[z.id] = zEl;
     });
 
+    // Permite soltar un token en la bandeja para devolverlo.
+    trayBox.addEventListener('dragover', e => { if (!disabled && dragToken) e.preventDefault(); });
+    trayBox.addEventListener('drop', e => {
+      e.preventDefault();
+      if (disabled || !dragToken) return;
+      releaseToken(dragToken);
+      dragToken = null; selectedToken = null;
+      paint(); notify(ctx);
+    });
+
     function usedTokens() {
       return new Set(Object.values(assignment).flat());
+    }
+
+    function makeTokenBtn(tk, opts = {}) {
+      const btn = el('button', { class: 'wpf-token', type: 'button', draggable: 'true' }, tk);
+      if (opts.selected) btn.classList.add('selected');
+      btn.disabled = disabled;
+
+      // Clic para seleccionar/deseleccionar.
+      btn.addEventListener('click', () => {
+        if (disabled) return;
+        selectedToken = selectedToken === tk ? null : tk;
+        paint();
+      });
+      // Drag desde la bandeja.
+      btn.addEventListener('dragstart', e => {
+        dragToken = tk; selectedToken = null;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', tk);
+        requestAnimationFrame(() => btn.classList.add('dragging'));
+      });
+      btn.addEventListener('dragend', () => {
+        dragToken = null;
+        btn.classList.remove('dragging');
+        paint();
+      });
+      return btn;
     }
 
     function paint() {
@@ -367,14 +435,7 @@ const renderers = {
       tokenOrder.forEach(ti => {
         const tk = tokens[ti];
         if (used.has(tk)) return;
-        const btn = el('button', { class: 'wpf-token', type: 'button' }, tk);
-        if (selectedToken === tk) btn.classList.add('selected');
-        btn.disabled = disabled;
-        btn.addEventListener('click', () => {
-          selectedToken = selectedToken === tk ? null : tk;
-          paint();
-        });
-        trayBox.appendChild(btn);
+        trayBox.appendChild(makeTokenBtn(tk, { selected: selectedToken === tk }));
       });
       if (!trayBox.children.length) {
         trayBox.appendChild(el('span', { class: 'wpf-tray-empty' }, t('render.allPlaced')));
@@ -383,15 +444,28 @@ const renderers = {
         const zEl = zoneEls[z.id];
         zEl.textContent = '';
         assignment[z.id].forEach(tk => {
-          const chip = el('button', { class: 'wpf-zone-chip', type: 'button' }, tk);
+          const chip = el('button', { class: 'wpf-zone-chip', type: 'button', draggable: 'true' }, tk);
           chip.disabled = disabled;
+
+          // Clic para devolver a la bandeja.
           chip.addEventListener('click', e => {
             e.stopPropagation();
             if (disabled) return;
-            assignment[z.id] = assignment[z.id].filter(t => t !== tk);
+            releaseToken(tk);
             if (selectedToken === tk) selectedToken = null;
+            paint(); notify(ctx);
+          });
+          // Drag desde la zona.
+          chip.addEventListener('dragstart', e => {
+            e.stopPropagation();
+            dragToken = tk; selectedToken = null;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', tk);
+            requestAnimationFrame(() => chip.classList.add('dragging'));
+          });
+          chip.addEventListener('dragend', () => {
+            dragToken = null;
             paint();
-            notify(ctx);
           });
           zEl.appendChild(chip);
         });
