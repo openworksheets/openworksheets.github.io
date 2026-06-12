@@ -320,13 +320,14 @@ const renderers = {
 
   dragdrop(field, root, ctx) {
     const zones = field.config.zones || [];
-    const tokens = zones.map(z => String(z.answer ?? '')).filter(Boolean)
-      .concat(field.config.distractors || []);
+    const zoneAnswers = z => Array.isArray(z.answers) && z.answers.length
+      ? z.answers.map(String) : z.answer ? [String(z.answer)] : [];
+    const tokens = zones.flatMap(zoneAnswers).concat(field.config.distractors || []);
     const tokenOrder = shuffledIndices(tokens.length, ctx.rng);
 
-    // assignment: zoneId → token (string) | null
+    // assignment: zoneId → string[]
     const assignment = {};
-    zones.forEach(z => { assignment[z.id] = null; });
+    zones.forEach(z => { assignment[z.id] = []; });
     let selectedToken = null;
     let disabled = false;
 
@@ -343,17 +344,12 @@ const renderers = {
       positionRect(zEl, z.rect);
       zEl.style.setProperty('--fs', field.fontScale || 1);
       zEl.addEventListener('click', () => {
-        if (disabled) return;
-        if (selectedToken !== null) {
-          // Si la etiqueta estaba en otra zona, se libera.
-          for (const id of Object.keys(assignment)) {
-            if (assignment[id] === selectedToken) assignment[id] = null;
-          }
-          assignment[z.id] = selectedToken;
-          selectedToken = null;
-        } else if (assignment[z.id]) {
-          assignment[z.id] = null;
+        if (disabled || selectedToken === null) return;
+        for (const id of Object.keys(assignment)) {
+          assignment[id] = assignment[id].filter(tk => tk !== selectedToken);
         }
+        assignment[z.id] = [...assignment[z.id], selectedToken];
+        selectedToken = null;
         paint();
         notify(ctx);
       });
@@ -362,7 +358,7 @@ const renderers = {
     });
 
     function usedTokens() {
-      return new Set(Object.values(assignment).filter(Boolean));
+      return new Set(Object.values(assignment).flat());
     }
 
     function paint() {
@@ -385,27 +381,51 @@ const renderers = {
       }
       zones.forEach(z => {
         const zEl = zoneEls[z.id];
-        zEl.textContent = assignment[z.id] || '';
-        zEl.classList.toggle('filled', Boolean(assignment[z.id]));
+        zEl.textContent = '';
+        assignment[z.id].forEach(tk => {
+          const chip = el('button', { class: 'wpf-zone-chip', type: 'button' }, tk);
+          chip.disabled = disabled;
+          chip.addEventListener('click', e => {
+            e.stopPropagation();
+            if (disabled) return;
+            assignment[z.id] = assignment[z.id].filter(t => t !== tk);
+            if (selectedToken === tk) selectedToken = null;
+            paint();
+            notify(ctx);
+          });
+          zEl.appendChild(chip);
+        });
+        zEl.classList.toggle('filled', assignment[z.id].length > 0);
         zEl.classList.toggle('armed', selectedToken !== null);
       });
     }
     paint();
 
     return {
-      getAnswer: () => ({ ...assignment }),
+      getAnswer: () => {
+        const out = {};
+        zones.forEach(z => { out[z.id] = [...assignment[z.id]]; });
+        return out;
+      },
       setAnswer: v => {
         const obj = v && typeof v === 'object' ? v : {};
-        zones.forEach(z => { assignment[z.id] = obj[z.id] ?? null; });
+        zones.forEach(z => {
+          const val = obj[z.id];
+          assignment[z.id] = Array.isArray(val) ? [...val] : (val ? [String(val)] : []);
+        });
         selectedToken = null;
         paint();
       },
-      isAnswered: () => Object.values(assignment).some(Boolean),
+      isAnswered: () => Object.values(assignment).some(arr => arr.length > 0),
       setDisabled: b => { disabled = b; selectedToken = null; paint(); },
-      markDetail(result) {
+      markDetail() {
         zones.forEach(z => {
-          const ok = String(assignment[z.id] ?? '') === String(z.answer ?? '');
-          zoneEls[z.id].classList.add(ok ? 'mark-ok' : 'mark-ko');
+          const correct = zoneAnswers(z);
+          const zEl = zoneEls[z.id];
+          zEl.querySelectorAll('.wpf-zone-chip').forEach(chip => {
+            chip.classList.add(correct.includes(chip.textContent) ? 'mark-ok' : 'mark-ko');
+          });
+          if (!assignment[z.id].length) zEl.classList.add('mark-ko');
         });
       }
     };

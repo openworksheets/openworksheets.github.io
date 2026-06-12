@@ -114,12 +114,20 @@ const graders = {
     const zones = cfg.zones || [];
     const given = answer && typeof answer === 'object' ? answer : {};
     if (!zones.length) return { ratio: 0, blank: true };
-    if (zones.every(z => !given[z.id])) return { ratio: 0, blank: true };
-    let hits = 0;
+    const zoneCorrect = z => Array.isArray(z.answers) && z.answers.length
+      ? z.answers.map(String) : z.answer ? [String(z.answer)] : [];
+    const getPlaced = id => {
+      const v = given[id];
+      return Array.isArray(v) ? v.map(String) : (v ? [String(v)] : []);
+    };
+    if (zones.every(z => getPlaced(z.id).length === 0)) return { ratio: 0, blank: true };
+    let hits = 0, total = 0;
     zones.forEach(z => {
-      if (String(given[z.id] ?? '') === String(z.answer ?? '')) hits++;
+      const correct = zoneCorrect(z);
+      total += correct.length;
+      hits += getPlaced(z.id).filter(t => correct.includes(t)).length;
     });
-    return { ratio: hits / zones.length };
+    return { ratio: total ? hits / total : 0 };
   }
 };
 
@@ -136,7 +144,10 @@ export function expectedText(field) {
     case 'gaps': return parseGaps(cfg.text || '').filter(s => s.kind === 'gap').map(g => g.answers[0]).join(', ');
     case 'match': return (cfg.pairs || []).map(p => `${p.left} → ${p.right}`).join(' · ');
     case 'order': return (cfg.items || []).join(' → ');
-    case 'dragdrop': return (cfg.zones || []).map(z => z.answer).join(', ');
+    case 'dragdrop': return (cfg.zones || []).map(z => {
+      const ans = Array.isArray(z.answers) && z.answers.length ? z.answers : z.answer ? [z.answer] : [];
+      return ans.join('+');
+    }).join(', ');
     default: return '';
   }
 }

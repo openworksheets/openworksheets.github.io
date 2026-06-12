@@ -844,19 +844,36 @@ input.wpf-gap-input {
   background: rgba(227, 235, 245, 0.5);
   border-radius: 6px;
   display: flex;
+  flex-wrap: wrap;
+  align-content: center;
   align-items: center;
   justify-content: center;
-  text-align: center;
+  gap: 0.25em;
   cursor: pointer;
   font-size: calc(1.5cqw * var(--fs, 1));
-  padding: 0.1em 0.3em;
+  padding: 0.2em 0.3em;
   z-index: 2;
+  overflow-y: auto;
   transition: border-color 0.12s ease, background 0.12s ease;
 }
 .wpf-zone.armed { border-color: var(--rojo); background: rgba(198, 61, 44, 0.10); }
-.wpf-zone.filled { border-style: solid; background: rgba(255, 253, 248, 0.97); font-weight: 700; }
+.wpf-zone.filled { border-style: solid; background: rgba(255, 253, 248, 0.97); }
 .wpf-zone.mark-ok { border-color: var(--verde); background: var(--verde-claro); }
 .wpf-zone.mark-ko { border-color: var(--rojo); background: var(--rojo-claro); }
+.wpf-zone-chip {
+  border: 1.5px solid var(--tinta);
+  background: var(--azul-claro);
+  border-radius: 20px;
+  padding: 0.05em 0.55em;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 700;
+  color: var(--tinta);
+  line-height: 1.3;
+}
+.wpf-zone-chip:not(:disabled):hover { background: var(--ambar-claro); border-color: var(--ambar); }
+.wpf-zone-chip.mark-ok { border-color: var(--verde); background: var(--verde-claro); cursor: default; }
+.wpf-zone-chip.mark-ko { border-color: var(--rojo); background: var(--rojo-claro); cursor: default; }
 
 /* Marcas de corrección */
 .wpf-field.disabled { pointer-events: none; }

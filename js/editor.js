@@ -175,8 +175,10 @@ function renderCanvas() {
 
       if (field.type === 'dragdrop') {
         (field.config.zones || []).forEach(zone => {
+          const zChipText = Array.isArray(zone.answers) && zone.answers.length
+            ? zone.answers[0] : (zone.answer || 'zona');
           const zEl = el('div', { class: 'ed-zone', dataset: { id: zone.id } },
-            el('span', { class: 'chip' }, zone.answer || 'zona'),
+            el('span', { class: 'chip' }, zChipText),
             el('span', { class: 'handle' }));
           setRectStyle(zEl, zone.rect);
           attachBoxInteraction(zEl, pageEl, zone.rect, {
@@ -346,7 +348,7 @@ function createZone(pi, rect) {
     renderCanvas();
     return;
   }
-  const zone = { id: uid('z'), rect, answer: 'Etiqueta ' + (field.config.zones.length + 1) };
+  const zone = { id: uid('z'), rect, answers: ['Etiqueta ' + (field.config.zones.length + 1)] };
   field.config.zones.push(zone);
   markDirty();
   renderCanvas();
@@ -518,19 +520,31 @@ function renderFieldPanel(field) {
 function renderZonePanel(field) {
   const zone = field.config.zones.find(z => z.id === sel.zoneId);
   if (!zone) { sel = { kind: 'field', pageIndex: sel.pageIndex, fieldId: field.id }; renderFieldPanel(field); return; }
+  // Normaliza formato antiguo (answer: string) → nuevo (answers: string[])
+  if (!Array.isArray(zone.answers)) {
+    zone.answers = zone.answer ? [String(zone.answer)] : [''];
+    delete zone.answer;
+  }
+  function updateZoneChip() {
+    const chip = canvas.querySelector(`.ed-zone[data-id="${zone.id}"] .chip`);
+    if (chip) chip.textContent = zone.answers[0] || 'zona';
+  }
   const cont = el('div', {});
   cont.appendChild(el('h3', {},
     el('span', { class: 'tipo-chip' }, t('editor.zoneChip')),
     t('editor.zoneTitle')));
-  cont.appendChild(el('label', { class: 'f-label' }, t('editor.zoneAnswer')));
-  const inp = el('input', { type: 'text', value: zone.answer || '' });
-  inp.addEventListener('input', () => {
-    zone.answer = inp.value;
-    const chip = canvas.querySelector(`.ed-zone[data-id="${zone.id}"] .chip`);
-    if (chip) chip.textContent = zone.answer || 'zona';
-    markDirty();
+  optionListEditor(cont, {
+    label: t('editor.zoneAnswer'),
+    items: () => zone.answers,
+    render: (row, item, i) => row.appendChild(textCell(item, v => {
+      zone.answers[i] = v;
+      updateZoneChip();
+    }, t('cfg.zoneLabelPlaceholder'))),
+    add: () => zone.answers.push(''),
+    remove: i => { zone.answers.splice(i, 1); updateZoneChip(); },
+    addLabel: t('cfg.addZoneAnswer'),
+    min: 1
   });
-  cont.appendChild(inp);
   cont.appendChild(el('p', { style: 'font-size:.85rem;color:var(--tinta-suave);margin-top:8px' },
     t('editor.zoneHint')));
   cont.appendChild(el('div', { class: 'ed-acciones' },
@@ -806,10 +820,15 @@ const configForms = {
       label: t('cfg.zoneLabels'),
       items: () => cfg.zones,
       render: (row, zone) => {
-        const inp = textCell(zone.answer || '', v => {
-          zone.answer = v;
+        if (!Array.isArray(zone.answers)) {
+          zone.answers = zone.answer ? [String(zone.answer)] : [''];
+          delete zone.answer;
+        }
+        const inp = textCell(zone.answers.join(', '), v => {
+          zone.answers = v.split(',').map(s => s.trim()).filter(Boolean);
+          if (!zone.answers.length) zone.answers = [''];
           const chip = canvas.querySelector(`.ed-zone[data-id="${zone.id}"] .chip`);
-          if (chip) chip.textContent = v || 'zona';
+          if (chip) chip.textContent = zone.answers[0] || 'zona';
         }, t('cfg.zoneLabelPlaceholder'));
         inp.addEventListener('focus', () => selectZoneSoft(zone.id));
         row.appendChild(inp);
