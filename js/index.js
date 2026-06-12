@@ -2,7 +2,7 @@
 // verificación de entregas.
 
 import { toast, copyToClipboard, fechaHora, formatNum } from './util.js';
-import { buildStudentLink, parseDriveId } from './drive.js';
+import { buildShortLink, parseDriveId } from './drive.js';
 import { verifyEntrega } from './entrega.js';
 import { t, applyI18n, initLangSelector } from './i18n.js';
 
@@ -21,7 +21,11 @@ $('#btnGenerar').addEventListener('click', async () => {
     toast(t('toast.driveError'), 'error');
     return;
   }
-  const link = buildStudentLink(url);
+  const btn = $('#btnGenerar');
+  btn.disabled = true;
+  toast(t('toast.generating'), 'info');
+  const { link } = await buildShortLink(url);
+  btn.disabled = false;
   $('#enlaceAlumnos').textContent = link;
   $('#salidaEnlace').style.display = 'block';
   const ok = await copyToClipboard(link);

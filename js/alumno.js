@@ -89,11 +89,18 @@ function showOpener() {
 
 async function main() {
   const params = new URLSearchParams(window.location.search);
-  const zipUrl = params.get('z') || params.get('url');
-  if (!zipUrl) { showOpener(); return; }
+  let zipUrl = params.get('z') || params.get('url');
+  const shortToken = params.get('s');
+
+  if (!zipUrl && !shortToken) { showOpener(); return; }
 
   const loading = showLoading();
   try {
+    if (shortToken) {
+      loading.setStatus(t('alumno.connecting'));
+      const { resolveShortToken } = await import('./drive.js');
+      zipUrl = await resolveShortToken(shortToken);
+    }
     const bytes = await downloadZip(zipUrl, {
       onStatus: loading.setStatus,
       onProgress: loading.setProgress

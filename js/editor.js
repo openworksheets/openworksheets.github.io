@@ -5,7 +5,7 @@ import { FIELD_TYPES, FIELD_ORDER, fieldTypeName, gapCount } from './fieldtypes.
 import { expectedText } from './grading.js';
 import { pdfToPages, imageToPage, isPdf, isImage } from './pdfimport.js';
 import { exportFichaZip, importFichaZip, newManifest } from './zipio.js';
-import { buildStudentLink, parseDriveId } from './drive.js';
+import { buildShortLink, parseDriveId } from './drive.js';
 import { mountPlayer } from './player.js';
 import { t, getLang, applyI18n, initLangSelector } from './i18n.js';
 
@@ -838,7 +838,11 @@ $('#btnGenerarEnlace')?.addEventListener('click', async () => {
     toast(t('toast.driveError'), 'error');
     return;
   }
-  const link = buildStudentLink(url);
+  const btn = $('#btnGenerarEnlace');
+  btn.disabled = true;
+  toast(t('toast.generating'), 'info');
+  const { link } = await buildShortLink(url);
+  btn.disabled = false;
   $('#compEnlace').textContent = link;
   $('#compSalida').style.display = 'block';
   const ok = await copyToClipboard(link);

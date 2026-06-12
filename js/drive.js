@@ -28,10 +28,44 @@ export function toDirectUrl(url) {
   return url.trim();
 }
 
-// Construye el enlace para el alumnado a partir de la URL pública del ZIP.
+// Construye el enlace largo para el alumnado (fallback sin GAS).
 export function buildStudentLink(zipUrl) {
   const direct = toDirectUrl(zipUrl);
   const base = new URL('alumno.html', window.location.href);
   base.search = '?z=' + encodeURIComponent(direct);
   return base.href;
+}
+
+// Genera un enlace corto opaco mediante el GAS.
+// Devuelve { link, short: true } si el GAS responde con token,
+// o { link, short: false } con el enlace largo si falla.
+export async function buildShortLink(zipUrl) {
+  const direct = toDirectUrl(zipUrl);
+  const gasUrl = window.WORKPDF_CONFIG?.gasUrl;
+  if (gasUrl) {
+    try {
+      const res = await fetch(
+        gasUrl + '?short=1&url=' + encodeURIComponent(direct),
+        { redirect: 'follow' }
+      );
+      const json = await res.json();
+      if (json.token) {
+        const base = new URL('alumno.html', window.location.href);
+        base.search = '?s=' + json.token;
+        return { link: base.href, short: true };
+      }
+    } catch (_) { /* si falla el GAS, usar enlace largo */ }
+  }
+  return { link: buildStudentLink(zipUrl), short: false };
+}
+
+// Resuelve un token corto a la URL original llamando al GAS.
+// Devuelve la URL o lanza un error.
+export async function resolveShortToken(token) {
+  const gasUrl = window.WORKPDF_CONFIG?.gasUrl;
+  if (!gasUrl) throw new Error('GAS no configurado');
+  const res = await fetch(gasUrl + '?short=' + encodeURIComponent(token), { redirect: 'follow' });
+  const json = await res.json();
+  if (json.url) return json.url;
+  throw new Error(json.error || 'Token no encontrado');
 }
