@@ -454,10 +454,10 @@ dialog .dlg-buttons {
 
 /* ---------- Fecha + hora (restricciones de acceso) ---------- */
 
-.fecha-hora { display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: 4px; }
-.fecha-hora input[type='date'] { min-width: 0; width: 100%; }
-.fecha-hora select { width: auto; padding: 8px 4px; }
-.fecha-hora span { font-weight: 700; }
+.fecha-hora { display: grid; grid-template-columns: auto auto auto; gap: 4px; align-items: center; }
+.fecha-hora input[type='date'] { grid-column: 1 / -1; width: 100%; min-width: 0; }
+.fecha-hora select { padding: 4px 2px; font-size: 0.85rem; width: auto; }
+.fecha-hora span { font-weight: 700; font-size: 0.85rem; }
 
 /* ---------- Verificación de entrega ---------- */
 
