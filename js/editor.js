@@ -825,7 +825,10 @@ const configForms = {
         row.appendChild(inp);
       },
       add: () => {
-        toast(t('cfg.useDrawZone'), 'error');
+        activeTool = 'zone';
+        refreshPaletteState();
+        canvas.classList.add('drawing');
+        toast(t('toast.drawZoneTip'));
       },
       remove: i => {
         cfg.zones.splice(i, 1);
