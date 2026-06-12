@@ -105,6 +105,15 @@ const renderers = {
     return emptyRenderer();
   },
 
+  image(field, root, ctx) {
+    const src = field.config?.src;
+    if (src && ctx.fileUrl) {
+      const url = ctx.fileUrl(src);
+      if (url) root.appendChild(el('img', { src: url, class: 'wpf-img-decor', alt: '' }));
+    }
+    return emptyRenderer();
+  },
+
   text(field, root, ctx) {
     const input = el('input', {
       class: 'wpf-input', type: 'text', autocomplete: 'off',

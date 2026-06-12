@@ -766,8 +766,15 @@ dialog .dlg-buttons {
   position: absolute;
   inset: 0;
 }
-.wpf-field-label, .wpf-field-cover { pointer-events: none; }
-.wpf-field-cover { z-index: 1; } /* bajo los campos interactivos (z-index 2) */
+.wpf-field-label, .wpf-field-cover, .wpf-field-image { pointer-events: none; }
+.wpf-field-cover { z-index: 1; }
+.wpf-field-image { overflow: hidden; }
+.wpf-img-decor { width: 100%; height: 100%; object-fit: contain; display: block; }
+/* Editor: campo imagen */
+.ed-field-image { background: rgba(83,119,173,0.06); border-style: dashed; overflow: hidden; }
+.ed-img-prev { width: 100%; height: 100%; object-fit: contain; pointer-events: none; display: block; }
+.img-field-preview { margin-bottom: 8px; border: 1px solid var(--tinta-suave); border-radius: 4px; overflow: hidden; max-height: 12em; display: flex; align-items: center; justify-content: center; background: var(--azul-claro); }
+.img-field-thumb { max-width: 100%; max-height: 12em; object-fit: contain; display: block; }
 
 .wpf-gaps {
   background: rgba(255, 253, 248, 0.94);

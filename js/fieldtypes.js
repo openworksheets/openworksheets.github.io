@@ -96,13 +96,20 @@ export const FIELD_TYPES = {
     decor: true,
     defRect: { w: 0.25, h: 0.07 },
     defaults: () => ({ color: '#ffffff' })
+  },
+  image: {
+    name: 'Imagen',
+    glyph: '🖼',
+    decor: true,
+    defRect: { w: 0.4, h: 0.3 },
+    defaults: () => ({ src: '' })
   }
 };
 
 export const FIELD_ORDER = [
   'text', 'number', 'single', 'truefalse', 'multi',
   'select', 'gaps', 'match', 'order', 'dragdrop',
-  'label', 'cover'
+  'label', 'cover', 'image'
 ];
 
 export function isDecorField(type) {

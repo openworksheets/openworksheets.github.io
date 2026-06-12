@@ -164,6 +164,8 @@ function renderCanvas() {
         }, field.config.text || ''));
       } else if (field.type === 'cover') {
         box.style.background = field.config.color || '#ffffff';
+      } else if (field.type === 'image' && field.config?.src && files.has(field.config.src)) {
+        box.appendChild(el('img', { src: fileUrl(field.config.src), class: 'ed-img-prev', alt: '' }));
       }
       setRectStyle(box, field.rect);
       box.style.setProperty('--fs', field.fontScale || 1);
@@ -681,6 +683,35 @@ const configForms = {
       t('cfg.coverHint')));
   },
 
+  image(cont, field) {
+    const cfg = field.config;
+    if (cfg.src && files.has(cfg.src)) {
+      const prev = el('div', { class: 'img-field-preview' });
+      prev.appendChild(el('img', { src: fileUrl(cfg.src), alt: '', class: 'img-field-thumb' }));
+      cont.appendChild(prev);
+    }
+    const btn = el('button', { class: 'btn small', type: 'button' }, t('cfg.changeImage'));
+    btn.addEventListener('click', () => {
+      const inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = 'image/png,image/jpeg,image/gif,image/webp';
+      inp.addEventListener('change', () => {
+        const f = inp.files[0]; if (!f) return;
+        const ext = f.name.split('.').pop().toLowerCase() || 'png';
+        const path = 'images/' + uid() + '.' + ext;
+        if (cfg.src) { urls.delete(cfg.src); files.delete(cfg.src); }
+        files.set(path, f);
+        cfg.src = path;
+        markDirty();
+        renderCanvas();
+        renderFieldPanel(field);
+      });
+      inp.click();
+    });
+    cont.appendChild(btn);
+    cont.appendChild(el('p', { style: 'font-size:.85rem;color:var(--tinta-suave);margin-top:8px' },
+      t('cfg.imageHint')));
+  },
+
   text(cont, field) {
     const cfg = field.config;
     optionListEditor(cont, {
@@ -1122,6 +1153,28 @@ titleInput.addEventListener('input', () => { manifest.title = titleInput.value; 
 
 $('#btnPaginas').addEventListener('click', () => $('#inputPaginas').click());
 $('#inputPaginas').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
+$('#btnAddImg').addEventListener('click', () => {
+  if (!manifest.pages.length) { toast(t('toast.addPageFirst'), 'error'); return; }
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/png,image/jpeg,image/gif,image/webp';
+  inp.addEventListener('change', () => {
+    const f = inp.files[0]; if (!f) return;
+    const ext = f.name.split('.').pop().toLowerCase() || 'png';
+    const path = 'images/' + uid() + '.' + ext;
+    files.set(path, f);
+    const pi = sel?.pageIndex ?? manifest.pages.length - 1;
+    const field = {
+      id: uid('f'), type: 'image',
+      rect: { x: 0.1, y: 0.1, w: 0.4, h: 0.3 },
+      points: 0, fontScale: 1,
+      config: { src: path }
+    };
+    manifest.pages[pi].fields.push(field);
+    markDirty(); renderCanvas(); selectField(pi, field.id);
+    toast(t('toast.imgInserted'), 'ok');
+  });
+  inp.click();
+});
 $('#btnZip').addEventListener('click', () => $('#inputZip').click());
 $('#inputZip').addEventListener('change', e => {
   if (e.target.files[0]) openZipFile(e.target.files[0]);
