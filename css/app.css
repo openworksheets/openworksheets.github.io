@@ -516,9 +516,11 @@ dialog .dlg-buttons {
   line-height: 1.35;
   pointer-events: none;
 }
-.ed-field.ed-field-label .chip, .ed-field.ed-field-cover .chip { opacity: 0; transition: opacity 0.15s; }
-.ed-field.ed-field-label:hover .chip, .ed-field.ed-field-cover:hover .chip,
-.ed-field.ed-field-label.selected .chip, .ed-field.ed-field-cover.selected .chip { opacity: 1; }
+.ed-field.ed-field-label .chip,
+.ed-field.ed-field-cover .chip,
+.ed-field.ed-field-image .chip { opacity: 0; transition: opacity 0.15s; }
+.ed-field.ed-field-label:hover .chip, .ed-field.ed-field-cover:hover .chip, .ed-field.ed-field-image:hover .chip,
+.ed-field.ed-field-label.selected .chip, .ed-field.ed-field-cover.selected .chip, .ed-field.ed-field-image.selected .chip { opacity: 1; }
 .ed-field .chip {
   font-size: 0.62em;
   font-weight: 700;
@@ -772,7 +774,7 @@ dialog .dlg-buttons {
 .wpf-img-decor { width: 100%; height: 100%; object-fit: contain; display: block; }
 /* Editor: campo imagen */
 .ed-field-image { background: rgba(83,119,173,0.06); border-style: dashed; overflow: hidden; }
-.ed-img-prev { width: 100%; height: 100%; object-fit: contain; pointer-events: none; display: block; }
+.ed-img-prev { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; display: block; }
 .img-field-preview { margin-bottom: 8px; border: 1px solid var(--tinta-suave); border-radius: 4px; overflow: hidden; max-height: 12em; display: flex; align-items: center; justify-content: center; background: var(--azul-claro); }
 .img-field-thumb { max-width: 100%; max-height: 12em; object-fit: contain; display: block; }
 
