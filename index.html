@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WorkPDF · Fichas interactivas autocorregibles</title>
   <meta name="description" content="Crea fichas, ejercicios y actividades autocorregibles a partir de un PDF o una imagen. Sin servidor: exporta un ZIP, súbelo a Drive y comparte el enlace.">
+  <meta name="analytics-endpoint" content="https://bilateria.org/app/estadistica/workpdf/track.php">
+  <meta name="analytics-stats-url" content="https://bilateria.org/app/estadistica/workpdf/admin-stats.php">
+  <meta name="analytics-site-id" content="workpdf">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/app.css">
   <script>(function(){var t=localStorage.getItem('wpf-tema');if(t)document.documentElement.setAttribute('data-theme',t);})();</script>
@@ -101,12 +104,32 @@
   </main>
 
   <footer class="pie">
-    <span data-i18n="index.footer">WorkPDF · aplicación web estática para crear fichas autocorregibles ·</span>
-    <a href="https://github.com/jjdeharo" target="_blank" rel="noopener">GitHub</a>
+    <span data-i18n="index.footer">WorkPDF · aplicación web estática para crear fichas autocorregibles</span>
+    <span class="pie-linea">
+      <a href="https://bilateria.org" target="_blank" rel="noopener">© 2026 Juan José de Haro</a>
+      <span class="pie-sep">·</span>
+      <a href="https://github.com/workpdf/workpdf.github.io" target="_blank" rel="noopener">GitHub</a>
+      <span class="pie-sep">·</span>
+      <a href="https://github.com/workpdf/workpdf.github.io/issues" target="_blank" rel="noopener" data-i18n="footer.issues">Problemas y sugerencias</a>
+      <span class="pie-sep">·</span>
+      <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener">AGPLv3</a>
+      <span class="pie-sep">·</span>
+      <details class="pie-priv">
+        <summary data-i18n="footer.privacy">Privacidad</summary>
+        <p data-i18n="footer.analyticsNotice">Esta aplicación recoge únicamente estadísticas de uso agregadas con un sistema propio para conocer su utilización y mejorar la herramienta. No se almacenan direcciones IP ni se usan cookies de analítica para los visitantes.</p>
+      </details>
+      <span data-analytics-summary hidden style="display:none">
+        <span class="pie-sep">·</span>
+        <span data-i18n="footer.visits">Visitas</span>&nbsp;<strong data-analytics-total>-</strong>
+        <span class="pie-sep">·</span>
+        <span data-i18n="footer.today">Hoy</span>&nbsp;<strong data-analytics-today>-</strong>
+      </span>
+    </span>
   </footer>
 
   <script src="config.js"></script>
   <script src="js/theme.js"></script>
+  <script src="js/analytics.js" defer></script>
   <script type="module" src="js/index.js"></script>
 </body>
 </html>

@@ -302,6 +302,38 @@ footer.pie {
   color: var(--tinta-suave);
 }
 footer.pie a { color: var(--tinta-suave); }
+footer.pie .pie-linea {
+  display: block;
+  margin-top: 6px;
+}
+footer.pie .pie-sep { margin: 0 4px; }
+footer.pie .pie-priv {
+  display: inline-block;
+  position: relative;
+}
+footer.pie .pie-priv summary {
+  cursor: pointer;
+  text-decoration: underline;
+  list-style: none;
+}
+footer.pie .pie-priv summary::-webkit-details-marker { display: none; }
+footer.pie .pie-priv p {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(340px, 86vw);
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  background: var(--blanco);
+  border: 2px solid var(--tinta);
+  border-radius: 8px;
+  box-shadow: var(--sombra);
+  color: var(--tinta);
+  text-align: left;
+  font-size: 0.8rem;
+  z-index: 50;
+}
 
 /* ---------- Diálogos ---------- */
 
