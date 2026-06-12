@@ -6,16 +6,27 @@
   <title>Ficha · WorkPDF</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/app.css">
+  <script>(function(){var t=localStorage.getItem('wpf-tema');if(t)document.documentElement.setAttribute('data-theme',t);})();</script>
 </head>
 <body>
 
   <header class="topbar">
-    <a class="brand" href="index.html">WorkPDF <span class="tag">modo alumno</span></a>
+    <a class="brand" href="index.html">WorkPDF <span class="tag" data-i18n="nav.modoAlumno">modo alumno</span></a>
+    <span class="spacer"></span>
+    <select id="selLang" class="sel-lang" aria-label="Idioma / Language">
+      <option value="es">Español</option>
+      <option value="ca">Català</option>
+      <option value="gl">Galego</option>
+      <option value="eu">Euskara</option>
+      <option value="en">English</option>
+    </select>
+    <button class="btn small ghost" id="btnTema" title="Tema: automático (sigue al sistema)">⊙</button>
   </header>
 
   <div id="app"></div>
 
   <script src="config.js"></script>
+  <script src="js/theme.js"></script>
   <script src="vendor/jszip.min.js"></script>
   <script type="module" src="js/alumno.js"></script>
 </body>

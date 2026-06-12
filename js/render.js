@@ -12,6 +12,7 @@
 
 import { el, shuffled, shuffledIndices } from './util.js';
 import { parseGaps } from './fieldtypes.js';
+import { t } from './i18n.js';
 
 export function renderField(field, pageLayer, ctx) {
   const root = el('div', { class: `wpf-field wpf-field-${field.type}`, dataset: { id: field.id } });
@@ -88,7 +89,7 @@ const renderers = {
   text(field, root, ctx) {
     const input = el('input', {
       class: 'wpf-input', type: 'text', autocomplete: 'off',
-      'aria-label': 'Respuesta de texto'
+      'aria-label': t('render.textAria')
     });
     input.addEventListener('input', () => notify(ctx));
     root.appendChild(input);
@@ -103,7 +104,7 @@ const renderers = {
   number(field, root, ctx) {
     const input = el('input', {
       class: 'wpf-input', type: 'text', inputmode: 'decimal', autocomplete: 'off',
-      'aria-label': 'Respuesta numérica'
+      'aria-label': t('render.numberAria')
     });
     input.addEventListener('input', () => notify(ctx));
     root.appendChild(input);
@@ -169,7 +170,7 @@ const renderers = {
   select(field, root, ctx) {
     const options = field.config.options || [];
     const order = ctx.shuffle ? shuffled(options.map((_, i) => i), ctx.rng) : options.map((_, i) => i);
-    const sel = el('select', { class: 'wpf-select', 'aria-label': 'Desplegable' },
+    const sel = el('select', { class: 'wpf-select', 'aria-label': t('render.selectAria') },
       el('option', { value: '' }, '—'));
     order.forEach(origIdx => {
       sel.appendChild(el('option', { value: String(origIdx) }, options[origIdx]));
@@ -195,7 +196,7 @@ const renderers = {
         const size = Math.max(4, Math.min(20, (seg.answers[0] || '').length + 2));
         const input = el('input', {
           class: 'wpf-gap-input', type: 'text', size: String(size), autocomplete: 'off',
-          'aria-label': 'Hueco ' + (inputs.length + 1)
+          'aria-label': t('render.gapAria', { n: inputs.length + 1 })
         });
         input.addEventListener('input', () => notify(ctx));
         inputs.push(input);
@@ -222,7 +223,7 @@ const renderers = {
     const selects = [];
     const wrap = el('div', { class: 'wpf-match' });
     pairs.forEach((pair, i) => {
-      const sel = el('select', { class: 'wpf-select', 'aria-label': 'Pareja de ' + pair.left },
+      const sel = el('select', { class: 'wpf-select', 'aria-label': t('render.matchAria', { left: pair.left }) },
         el('option', { value: '' }, '—'));
       order.forEach(ri => {
         sel.appendChild(el('option', { value: String(ri) }, rights[ri]));
@@ -267,8 +268,8 @@ const renderers = {
     function paint() {
       list.textContent = '';
       arrangement.forEach((orig, pos) => {
-        const up = el('button', { class: 'wpf-mini-btn', type: 'button', 'aria-label': 'Subir' }, '▲');
-        const down = el('button', { class: 'wpf-mini-btn', type: 'button', 'aria-label': 'Bajar' }, '▼');
+        const up = el('button', { class: 'wpf-mini-btn', type: 'button', 'aria-label': t('render.moveUp') }, '▲');
+        const down = el('button', { class: 'wpf-mini-btn', type: 'button', 'aria-label': t('render.moveDown') }, '▼');
         up.disabled = disabled || pos === 0;
         down.disabled = disabled || pos === arrangement.length - 1;
         up.addEventListener('click', () => move(pos, -1));
@@ -308,7 +309,7 @@ const renderers = {
     let disabled = false;
 
     root.classList.add('wpf-tray');
-    const trayLabel = el('div', { class: 'wpf-tray-label' }, 'Toca una etiqueta y luego su lugar');
+    const trayLabel = el('div', { class: 'wpf-tray-label' }, t('render.trayLabel'));
     const trayBox = el('div', { class: 'wpf-tray-tokens' });
     root.appendChild(trayLabel);
     root.appendChild(trayBox);
@@ -358,7 +359,7 @@ const renderers = {
         trayBox.appendChild(btn);
       });
       if (!trayBox.children.length) {
-        trayBox.appendChild(el('span', { class: 'wpf-tray-empty' }, 'Todas colocadas'));
+        trayBox.appendChild(el('span', { class: 'wpf-tray-empty' }, t('render.allPlaced')));
       }
       zones.forEach(z => {
         const zEl = zoneEls[z.id];

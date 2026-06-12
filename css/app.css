@@ -4,7 +4,7 @@
    tinta azul noche, acento rojo bolígrafo y verde de corrección.
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap');
 
 :root {
   --papel: #f7f2e7;
@@ -24,13 +24,60 @@
   --sombra: 5px 5px 0 rgba(29, 44, 66, 0.10);
   --sombra-mini: 3px 3px 0 rgba(29, 44, 66, 0.10);
   --radio: 8px;
-  --display: 'Fraunces', Georgia, serif;
+  --display: 'Nunito', 'Trebuchet MS', sans-serif;
   --cuerpo: 'Atkinson Hyperlegible', 'Trebuchet MS', sans-serif;
+  --cuadricula: rgba(83, 119, 173, 0.07);
+}
+
+/* Modo oscuro automático (sigue preferencia del sistema) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --papel: #1d2235;
+    --papel-2: #161a27;
+    --blanco: #252b3b;
+    --tinta: #ece4d4;
+    --tinta-suave: #9aaabe;
+    --tinta-tenue: rgba(236, 228, 212, 0.15);
+    --rojo: #d44f3c;
+    --rojo-oscuro: #b33828;
+    --verde: #3da065;
+    --verde-claro: rgba(58, 160, 96, 0.18);
+    --ambar: #c98b18;
+    --ambar-claro: rgba(201, 139, 24, 0.18);
+    --rojo-claro: rgba(212, 79, 60, 0.18);
+    --azul-claro: rgba(83, 119, 173, 0.22);
+    --sombra: 5px 5px 0 rgba(0, 0, 0, 0.40);
+    --sombra-mini: 3px 3px 0 rgba(0, 0, 0, 0.35);
+    --cuadricula: rgba(180, 200, 240, 0.05);
+  }
+}
+
+/* Modo oscuro forzado manualmente */
+:root[data-theme='dark'] {
+  --papel: #1d2235;
+  --papel-2: #161a27;
+  --blanco: #252b3b;
+  --tinta: #ece4d4;
+  --tinta-suave: #9aaabe;
+  --tinta-tenue: rgba(236, 228, 212, 0.15);
+  --rojo: #d44f3c;
+  --rojo-oscuro: #b33828;
+  --verde: #3da065;
+  --verde-claro: rgba(58, 160, 96, 0.18);
+  --ambar: #c98b18;
+  --ambar-claro: rgba(201, 139, 24, 0.18);
+  --rojo-claro: rgba(212, 79, 60, 0.18);
+  --azul-claro: rgba(83, 119, 173, 0.22);
+  --sombra: 5px 5px 0 rgba(0, 0, 0, 0.40);
+  --sombra-mini: 3px 3px 0 rgba(0, 0, 0, 0.35);
+  --cuadricula: rgba(180, 200, 240, 0.05);
 }
 
 * { box-sizing: border-box; }
 
-html { height: 100%; }
+html { height: 100%; color-scheme: light dark; }
+:root[data-theme='light'] { color-scheme: light; }
+:root[data-theme='dark']  { color-scheme: dark; }
 
 body {
   margin: 0;
@@ -41,8 +88,8 @@ body {
   color: var(--tinta);
   background-color: var(--papel);
   background-image:
-    linear-gradient(rgba(83, 119, 173, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(83, 119, 173, 0.07) 1px, transparent 1px);
+    linear-gradient(var(--cuadricula) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cuadricula) 1px, transparent 1px);
   background-size: 28px 28px;
 }
 
@@ -86,6 +133,36 @@ small { color: var(--tinta-suave); }
   letter-spacing: 0.04em;
 }
 .topbar .spacer { flex: 1; }
+/* El topbar ya es oscuro: se mantiene igual en ambos modos */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .topbar { background: #1d2c42; color: #f7f2e7; }
+  :root:not([data-theme='light']) .topbar .title-input { color: #f7f2e7; border-bottom-color: rgba(247, 242, 231, 0.4); }
+  :root:not([data-theme='light']) .topbar .title-input::placeholder { color: #93a2b8; }
+  :root:not([data-theme='light']) .topbar .brand { color: #f7f2e7; }
+}
+:root[data-theme='dark'] .topbar { background: #1d2c42; color: #f7f2e7; }
+:root[data-theme='dark'] .topbar .title-input { color: #f7f2e7; border-bottom-color: rgba(247, 242, 231, 0.4); }
+:root[data-theme='dark'] .topbar .title-input::placeholder { color: #93a2b8; }
+:root[data-theme='dark'] .topbar .brand { color: #f7f2e7; }
+
+#btnTema { color: #f7f2e7; border-color: rgba(247, 242, 231, 0.3); font-size: 1rem; padding: 5px 9px; }
+#btnTema:hover { border-color: #f7f2e7; background: transparent; }
+
+.sel-lang {
+  background: transparent;
+  border: 1px solid rgba(247, 242, 231, 0.3);
+  color: #f7f2e7;
+  border-radius: 5px;
+  padding: 3px 6px;
+  font-size: 0.76rem;
+  font-family: var(--cuerpo);
+  cursor: pointer;
+  flex: 0 0 auto;
+  width: auto;
+  max-width: 120px;
+}
+.sel-lang:focus { outline: 1px solid #f7f2e7; outline-offset: 1px; }
+.sel-lang option { background: #1d2c42; color: #f7f2e7; }
 .topbar .title-input {
   background: transparent;
   border: none;
@@ -257,6 +334,25 @@ dialog .dlg-buttons {
   margin: 10px 0;
 }
 
+/* ---------- Verificación de entrega ---------- */
+
+.verify-card { font-family: inherit; font-size: 0.88rem; }
+.verify-header { margin-bottom: 12px; }
+.verify-meta { line-height: 1.7; }
+.verify-meta strong { color: var(--tinta); }
+
+.verify-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.82rem; }
+.verify-table th { text-align: left; padding: 5px 8px; border-bottom: 2px solid var(--tinta-tenue); color: var(--tinta-suave); font-weight: 600; white-space: nowrap; }
+.verify-table td { padding: 5px 8px; border-bottom: 1px solid var(--tinta-tenue); vertical-align: top; }
+.verify-table td.vr-ans { word-break: break-word; max-width: 260px; }
+.verify-table tr:last-child td { border-bottom: none; }
+
+.vr-badge { display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.78rem; font-weight: 600; white-space: nowrap; }
+.vr-badge.ok  { background: var(--verde-claro); color: var(--verde); }
+.vr-badge.err { background: var(--rojo-claro);  color: var(--rojo); }
+.vr-badge.partial { background: var(--ambar-claro); color: var(--ambar); }
+.vr-badge.blank { background: var(--tinta-tenue); color: var(--tinta-suave); }
+
 /* ---------- Toast ---------- */
 
 .wpf-toast {
@@ -344,7 +440,7 @@ dialog .dlg-buttons {
   margin: 60px auto;
   text-align: center;
 }
-.ed-empty .icono { font-size: 3rem; font-family: var(--display); color: var(--tinta-tenue); }
+
 
 .ed-pagebox { max-width: 860px; margin: 0 auto 30px; }
 .ed-pagehead {
@@ -366,6 +462,19 @@ dialog .dlg-buttons {
   box-shadow: var(--sombra);
   border-radius: 4px;
   overflow: visible;
+  color-scheme: light;
+  /* Fijar variables al modo claro para que los campos siempre se vean sobre el PDF blanco */
+  --tinta: #1d2c42;
+  --tinta-suave: #4a5870;
+  --tinta-tenue: rgba(29, 44, 66, 0.18);
+  --rojo: #c63d2c;
+  --verde: #2c7a4b;
+  --verde-claro: #e2f0e6;
+  --ambar: #b97f10;
+  --ambar-claro: #f7ecd4;
+  --rojo-claro: #f9e3df;
+  --azul-claro: #e3ebf5;
+  --sombra-mini: 3px 3px 0 rgba(29, 44, 66, 0.10);
 }
 .wpf-page > img.fondo {
   display: block;
@@ -877,8 +986,8 @@ dialog .dlg-buttons {
   inset: 0;
   background: var(--papel);
   background-image:
-    linear-gradient(rgba(83, 119, 173, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(83, 119, 173, 0.07) 1px, transparent 1px);
+    linear-gradient(var(--cuadricula) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cuadricula) 1px, transparent 1px);
   background-size: 28px 28px;
   z-index: 200;
   overflow: auto;

@@ -6,19 +6,28 @@
   <title>Editor · WorkPDF</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/app.css">
+  <script>(function(){var t=localStorage.getItem('wpf-tema');if(t)document.documentElement.setAttribute('data-theme',t);})();</script>
 </head>
 <body>
 
   <header class="topbar">
     <a class="brand" href="index.html" title="Volver al inicio">WorkPDF</a>
-    <input type="text" class="title-input" id="titulo" placeholder="Título de la ficha…" maxlength="120">
+    <input type="text" class="title-input" id="titulo" data-i18n-placeholder="nav.titlePlaceholder" placeholder="Título de la ficha…" maxlength="120">
     <span class="spacer"></span>
-    <button class="btn small" id="btnZip" title="Abrir una ficha exportada para seguir editándola">⤒ Abrir ZIP</button>
-    <button class="btn small" id="btnPaginas" title="Añadir un PDF o imágenes como páginas">+ PDF / imagen</button>
-    <button class="btn small" id="btnAjustes" title="Opciones de corrección y visualización">⚙ Ajustes</button>
-    <button class="btn small" id="btnPrevia" title="Ver la ficha como la verá el alumnado">▶ Vista previa</button>
-    <button class="btn small" id="btnCompartir" title="Generar el enlace para el alumnado">🔗 Compartir</button>
-    <button class="btn small primary" id="btnExportar" title="Descargar la ficha como ZIP">⬇ Exportar ZIP</button>
+    <select id="selLang" class="sel-lang" aria-label="Idioma / Language">
+      <option value="es">Español</option>
+      <option value="ca">Català</option>
+      <option value="gl">Galego</option>
+      <option value="eu">Euskara</option>
+      <option value="en">English</option>
+    </select>
+    <button class="btn small ghost" id="btnTema" title="Tema: automático (sigue al sistema)">⊙</button>
+    <button class="btn small" id="btnZip" data-i18n="nav.abrirZip" data-i18n-title="nav.abrirZip" title="Abrir una ficha exportada para seguir editándola">⤒ Abrir ZIP</button>
+    <button class="btn small" id="btnPaginas" data-i18n="nav.addPdf" title="Añadir un PDF o imágenes como páginas">+ PDF / imagen</button>
+    <button class="btn small" id="btnAjustes" data-i18n="nav.ajustes" title="Opciones de corrección y visualización">⚙ Ajustes</button>
+    <button class="btn small" id="btnPrevia" data-i18n="nav.preview" title="Ver la ficha como la verá el alumnado">▶ Vista previa</button>
+    <button class="btn small" id="btnCompartir" data-i18n="nav.share" title="Generar el enlace para el alumnado">🔗 Compartir</button>
+    <button class="btn small primary" id="btnExportar" data-i18n="nav.export" title="Descargar la ficha como ZIP">⬇ Exportar ZIP</button>
   </header>
 
   <div class="ed-layout">
@@ -32,47 +41,48 @@
 
   <dialog id="dlgAjustes">
     <form method="dialog">
-      <h2>Ajustes de la ficha</h2>
-      <label class="f-label" for="ajAutor">Autor/a</label>
+      <h2 data-i18n="dlg.settings.title">Ajustes de la ficha</h2>
+      <label class="f-label" for="ajAutor" data-i18n="dlg.settings.author">Autor/a</label>
       <input type="text" id="ajAutor" maxlength="80">
-      <label class="f-label" for="ajInstrucciones">Instrucciones para el alumnado</label>
-      <textarea id="ajInstrucciones" rows="3" placeholder="Lee el documento y completa los campos…"></textarea>
-      <label class="f-label">Corrección</label>
-      <label class="check-row"><input type="checkbox" id="ajNota"> <span>Mostrar la nota al alumno al finalizar</span></label>
-      <label class="check-row"><input type="checkbox" id="ajCorreccion"> <span>Mostrar la corrección detallada (aciertos y soluciones)</span></label>
-      <label class="check-row"><input type="checkbox" id="ajBarajar"> <span>Barajar las opciones de las preguntas</span></label>
-      <label class="f-label" for="ajIntentos">Intentos permitidos (0 = ilimitados)</label>
+      <label class="f-label" for="ajInstrucciones" data-i18n="dlg.settings.instructions">Instrucciones para el alumnado</label>
+      <textarea id="ajInstrucciones" rows="3" data-i18n-placeholder="dlg.settings.instructionsPlaceholder" placeholder="Lee el documento y completa los campos…"></textarea>
+      <label class="f-label" data-i18n="dlg.settings.correction">Corrección</label>
+      <label class="check-row"><input type="checkbox" id="ajNota"> <span data-i18n="dlg.settings.showScore">Mostrar la nota al alumno al finalizar</span></label>
+      <label class="check-row"><input type="checkbox" id="ajCorreccion"> <span data-i18n="dlg.settings.showCorrection">Mostrar la corrección detallada (aciertos y soluciones)</span></label>
+      <label class="check-row"><input type="checkbox" id="ajBarajar"> <span data-i18n="dlg.settings.shuffle">Barajar las opciones de las preguntas</span></label>
+      <label class="f-label" for="ajIntentos" data-i18n="dlg.settings.attempts">Intentos permitidos (0 = ilimitados)</label>
       <input type="number" id="ajIntentos" min="0" step="1" value="0">
-      <p><small>El límite de intentos se guarda en el navegador del alumno: es orientativo, no una medida de seguridad.</small></p>
+      <p><small data-i18n="dlg.settings.attemptsHint">El límite de intentos se guarda en el navegador del alumno: es orientativo, no una medida de seguridad.</small></p>
       <div class="dlg-buttons">
-        <button class="btn" value="cancel">Cancelar</button>
-        <button class="btn primary" value="ok">Guardar</button>
+        <button class="btn" value="cancel" data-i18n="dlg.cancel">Cancelar</button>
+        <button class="btn primary" value="ok" data-i18n="dlg.save">Guardar</button>
       </div>
     </form>
   </dialog>
 
   <dialog id="dlgCompartir">
-    <h2>Compartir con el alumnado</h2>
+    <h2 data-i18n="dlg.share.title">Compartir con el alumnado</h2>
     <ol style="padding-left:20px;font-size:.92rem">
-      <li>Exporta la ficha como ZIP (botón «Exportar ZIP»).</li>
-      <li>Sube el ZIP a Google Drive.</li>
-      <li>En Drive: <em>Compartir → Cualquier persona con el enlace → Copiar enlace</em>.</li>
-      <li>Pega aquí ese enlace:</li>
+      <li data-i18n="dlg.share.step1">Exporta la ficha como ZIP (botón «Exportar ZIP»).</li>
+      <li data-i18n="dlg.share.step2">Sube el ZIP a Google Drive.</li>
+      <li data-i18n-html="dlg.share.step3">En Drive: <em>Compartir → Cualquier persona con el enlace → Copiar enlace</em>.</li>
+      <li data-i18n="dlg.share.step4">Pega aquí ese enlace:</li>
     </ol>
-    <input type="url" id="compUrl" placeholder="https://drive.google.com/file/d/…">
+    <input type="url" id="compUrl" data-i18n-placeholder="dlg.share.urlPlaceholder" placeholder="https://drive.google.com/file/d/…">
     <div style="margin-top:10px">
-      <button class="btn primary" id="btnGenerarEnlace">Generar enlace para alumnos</button>
+      <button class="btn primary" id="btnGenerarEnlace" data-i18n="dlg.share.generateBtn">Generar enlace para alumnos</button>
     </div>
     <div id="compSalida" style="display:none">
       <div class="link-out" id="compEnlace"></div>
-      <button class="btn small" id="btnCopiarEnlace">⧉ Copiar enlace</button>
+      <button class="btn small" id="btnCopiarEnlace" data-i18n="dlg.share.copyLink">⧉ Copiar enlace</button>
     </div>
     <div class="dlg-buttons">
-      <form method="dialog"><button class="btn" value="cancel">Cerrar</button></form>
+      <form method="dialog"><button class="btn" value="cancel" data-i18n="dlg.close">Cerrar</button></form>
     </div>
   </dialog>
 
   <script src="config.js"></script>
+  <script src="js/theme.js"></script>
   <script src="vendor/jszip.min.js"></script>
   <script src="vendor/pdf.min.js"></script>
   <script type="module" src="js/editor.js"></script>

@@ -8,6 +8,7 @@ import { el, toast, mulberry32, formatNum, downloadBlob, copyToClipboard, fechaH
 import { renderField } from './render.js';
 import { gradeField, expectedText } from './grading.js';
 import { buildEntrega, entregaFilename, entregaResumen } from './entrega.js';
+import { t } from './i18n.js';
 
 export function mountPlayer(rootEl, ficha, opts = {}) {
   const { manifest, files } = ficha;
@@ -95,26 +96,26 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     grupo.value = datos.grupo;
 
     const form = el('form', {},
-      el('label', { class: 'f-label' }, 'Nombre y apellidos *'), nombre,
-      el('label', { class: 'f-label' }, 'Grupo o identificador (opcional)'), grupo,
+      el('label', { class: 'f-label' }, t('player.nameLabel')), nombre,
+      el('label', { class: 'f-label' }, t('player.groupLabel')), grupo,
       el('div', { style: 'margin-top:18px;text-align:center' },
-        el('button', { class: 'btn primary', type: 'submit' }, 'Comenzar la ficha')));
+        el('button', { class: 'btn primary', type: 'submit' }, t('player.startBtn'))));
     form.addEventListener('submit', e => {
       e.preventDefault();
-      if (!nombre.value.trim()) { toast('Escribe tu nombre para empezar.', 'error'); return; }
+      if (!nombre.value.trim()) { toast(t('player.enterName'), 'error'); return; }
       startActivity(nombre.value.trim(), grupo.value.trim());
     });
 
+    const pn = manifest.pages.length, fn = totalFields, pp = totalPoints;
     const restored = state && state.answers && Object.keys(state.answers).length;
     rootEl.appendChild(el('div', { class: 'al-centro' },
       el('div', { class: 'card al-tarjeta anim-in' },
-        el('div', { class: 'icono' }, '¶'),
-        el('h1', {}, manifest.title || 'Ficha interactiva'),
-        manifest.author ? el('p', { class: 'quien' }, 'Por ' + manifest.author) : null,
-        el('p', {}, `${manifest.pages.length} página${manifest.pages.length === 1 ? '' : 's'} · ${totalFields} pregunta${totalFields === 1 ? '' : 's'} · ${formatNum(totalPoints)} punto${totalPoints === 1 ? '' : 's'}`),
-        restored ? el('p', { style: 'color:var(--verde);font-weight:700' }, '✓ Se recuperará tu progreso guardado.') : null,
+        el('h1', {}, manifest.title || 'WorkPDF'),
+        manifest.author ? el('p', { class: 'quien' }, t('player.authorPrefix') + manifest.author) : null,
+        el('p', {}, t('player.statsLine', { pages: pn, ps: pn === 1 ? '' : 's', fields: fn, fs: fn === 1 ? '' : 's', points: formatNum(pp), pts: pp === 1 ? '' : 's' })),
+        restored ? el('p', { style: 'color:var(--verde);font-weight:700' }, t('player.savedProgress')) : null,
         Number(settings.maxAttempts) > 0
-          ? el('p', {}, `Intentos disponibles: ${attemptsLeft()} de ${settings.maxAttempts}`)
+          ? el('p', {}, t('player.attemptsLeft', { left: attemptsLeft(), max: settings.maxAttempts }))
           : null,
         form)));
   }
@@ -125,12 +126,12 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     rootEl.appendChild(el('div', { class: 'al-centro' },
       el('div', { class: 'card al-tarjeta' },
         el('div', { class: 'icono' }, '✕'),
-        el('h1', {}, 'Sin intentos disponibles'),
-        el('p', {}, 'Ya has agotado los intentos permitidos para esta ficha en este navegador.'),
-        last ? el('p', {}, `Última puntuación: ${formatNum(last.nota)} / ${formatNum(last.total)} · Código: ${last.codigo}`) : null,
+        el('h1', {}, t('player.noAttempts')),
+        el('p', {}, t('player.noAttemptsDesc')),
+        last ? el('p', {}, t('player.lastScore', { nota: formatNum(last.nota), total: formatNum(last.total), code: last.codigo })) : null,
         last ? el('div', { style: 'display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px' },
-          el('button', { class: 'btn', onclick: () => downloadEntrega(last) }, '⬇ Descargar entrega'),
-          el('button', { class: 'btn', onclick: () => copyResumen(last) }, '⧉ Copiar resumen')) : null)));
+          el('button', { class: 'btn', onclick: () => downloadEntrega(last) }, t('player.downloadBtn')),
+          el('button', { class: 'btn', onclick: () => copyResumen(last) }, t('player.copyBtn'))) : null)));
   }
 
   // ---------- Actividad ----------
@@ -146,9 +147,9 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     const doc = el('div', { class: 'al-doc' });
 
     doc.appendChild(el('div', { class: 'al-cabecera' },
-      el('h1', {}, manifest.title || 'Ficha interactiva'),
+      el('h1', {}, manifest.title || 'WorkPDF'),
       el('span', { class: 'quien' },
-        preview ? 'Vista previa del alumno' : `${alumno}${grupo ? ' · ' + grupo : ''}`)));
+        preview ? t('player.previewLabel') : `${alumno}${grupo ? ' · ' + grupo : ''}`)));
 
     if (manifest.instructions) {
       doc.appendChild(el('div', { class: 'al-instrucciones' }, manifest.instructions));
@@ -174,7 +175,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     // Barra inferior
     const progTxt = el('span', {}, '');
     const progBar = el('div', {});
-    const btnFin = el('button', { class: 'btn primary' }, 'Finalizar y corregir');
+    const btnFin = el('button', { class: 'btn primary' }, t('player.finishBtn'));
     btnFin.addEventListener('click', confirmFinish);
     const barra = el('div', { class: 'al-barra' },
       el('div', { class: 'estado' }, progTxt, el('div', { class: 'mini-prog' }, progBar)),
@@ -201,7 +202,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
 
     function updateProgress() {
       const done = controllers.filter(c => c.isAnswered()).length;
-      progTxt.textContent = `Respondidas: ${done} de ${controllers.length}`;
+      progTxt.textContent = t('player.progress', { done, total: controllers.length });
       progBar.style.width = controllers.length ? (done / controllers.length * 100) + '%' : '0%';
     }
 
@@ -209,8 +210,8 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
       if (finished) return;
       const pending = controllers.filter(c => !c.isAnswered()).length;
       const msg = pending > 0
-        ? `Te quedan ${pending} pregunta${pending === 1 ? '' : 's'} sin responder. ¿Quieres entregar de todas formas?`
-        : '¿Entregar la ficha y ver la corrección?';
+        ? t('player.confirmPending', { n: pending, s: pending === 1 ? '' : 's' })
+        : t('player.confirmFinish');
       if (window.confirm(msg)) finish(doc, barra, btnFin);
     }
   }
@@ -264,8 +265,8 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     const nota10 = entrega.nota10;
     const showScore = settings.showScore !== false;
     const acciones = el('div', { class: 'acciones' });
-    acciones.appendChild(el('button', { class: 'btn dark', onclick: () => downloadEntrega(entrega) }, '⬇ Descargar entrega'));
-    acciones.appendChild(el('button', { class: 'btn', onclick: () => copyResumen(entrega) }, '⧉ Copiar resumen'));
+    acciones.appendChild(el('button', { class: 'btn dark', onclick: () => downloadEntrega(entrega) }, t('player.downloadBtn')));
+    acciones.appendChild(el('button', { class: 'btn', onclick: () => copyResumen(entrega) }, t('player.copyBtn')));
     if (preview || attemptsLeft() > 0) {
       acciones.appendChild(el('button', {
         class: 'btn', onclick: () => {
@@ -275,26 +276,25 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
           startActivity(datos.alumno, datos.grupo);
           window.scrollTo({ top: 0 });
         }
-      }, '↻ Intentar de nuevo'));
+      }, t('player.retryBtn')));
     }
 
     const tarjeta = el('div', { class: 'al-resultado anim-in' },
-      el('h2', {}, preview ? 'Resultado (vista previa)' : 'Ficha entregada'),
+      el('h2', {}, preview ? t('player.resultTitlePreview') : t('player.resultTitle')),
       showScore
         ? el('div', { class: 'notaza' + (totalPoints > 0 && entrega.nota / totalPoints >= 0.5 ? ' bien' : '') },
             `${formatNum(entrega.nota)} / ${formatNum(entrega.total)}`)
-        : el('p', {}, 'Tu profesor o profesora revisará el resultado.'),
-      showScore ? el('div', { class: 'detalle' }, `Equivale a un ${formatNum(nota10)} sobre 10.`) : null,
+        : el('p', {}, t('player.teacherCheck')),
+      showScore ? el('div', { class: 'detalle' }, t('player.equiv', { nota: formatNum(nota10) })) : null,
       el('div', { class: 'detalle' },
-        `${datos.alumno}${datos.grupo ? ' · ' + datos.grupo : ''} · ${fechaHora(new Date(entrega.fecha))} · Código: `,
+        `${datos.alumno}${datos.grupo ? ' · ' + datos.grupo : ''} · ${fechaHora(new Date(entrega.fecha))} · ${t('entrega.code')}: `,
         el('span', { class: 'codigo' }, entrega.codigo)),
-      el('p', { style: 'margin-top:12px' },
-        'Descarga tu archivo de entrega y adjúntalo en Classroom, o copia el resumen y pégalo donde te indique tu docente.'),
+      el('p', { style: 'margin-top:12px' }, t('player.submissionInfo')),
       acciones);
 
     if (showScore && totalPoints > 0) {
       const pct = Math.round(entrega.nota / totalPoints * 100);
-      tarjeta.querySelector('.detalle').append(` (${pct} % de aciertos)`);
+      tarjeta.querySelector('.detalle').append(t('player.pct', { pct }));
     }
 
     doc.insertBefore(tarjeta, doc.firstChild);
@@ -309,7 +309,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
 
   async function copyResumen(entrega) {
     const ok = await copyToClipboard(entregaResumen(entrega));
-    toast(ok ? 'Resumen copiado al portapapeles.' : 'No se pudo copiar. Descarga la entrega.', ok ? 'ok' : 'error');
+    toast(ok ? t('toast.resumeCopied') : t('toast.resumeError'), ok ? 'ok' : 'error');
   }
 
   showStart();

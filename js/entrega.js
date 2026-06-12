@@ -8,6 +8,7 @@
 
 import { shortCode, formatNum, fechaHora, slugify } from './util.js';
 import { fieldTypeName } from './fieldtypes.js';
+import { t } from './i18n.js';
 
 const SALT = 'workpdf-entrega-v1';
 
@@ -53,11 +54,11 @@ export async function buildEntrega({ manifest, alumno, grupo, resultados, earned
 
 export async function verifyEntrega(data) {
   if (!data || data.formato !== 'workpdf-entrega') {
-    return { valid: false, reason: 'El archivo no es una entrega de WorkPDF.' };
+    return { valid: false, reason: t('verify.notWorkpdf') };
   }
   const expected = await shortCode(SALT + canonicalPayload(data));
   if (expected !== data.codigo) {
-    return { valid: false, reason: 'El código de verificación no coincide: la entrega pudo ser modificada.' };
+    return { valid: false, reason: t('verify.tampered') };
   }
   return { valid: true };
 }
@@ -70,23 +71,22 @@ export function entregaFilename(data) {
 // Resumen de texto para pegar en Classroom, correo, etc.
 export function entregaResumen(data) {
   const lines = [
-    `Ficha: ${data.titulo}`,
-    `Alumno/a: ${data.alumno}` + (data.grupo ? ` (${data.grupo})` : ''),
-    `Fecha: ${fechaHora(new Date(data.fecha))}`,
-    `Puntuación: ${formatNum(data.nota)} / ${formatNum(data.total)}  (${formatNum(data.nota10)} sobre 10)`,
-    `Código de verificación: ${data.codigo}`,
+    `${t('entrega.sheet')}: ${data.titulo}`,
+    `${t('entrega.student')}: ${data.alumno}` + (data.grupo ? ` (${data.grupo})` : ''),
+    `${t('entrega.date')}: ${fechaHora(new Date(data.fecha))}`,
+    `${t('entrega.score')}: ${formatNum(data.nota)} / ${formatNum(data.total)}  (${formatNum(data.nota10)} ${t('entrega.over10')})`,
+    `${t('entrega.code')}: ${data.codigo}`,
     ''
   ];
-  const plural = {
-    correcta: 'correctas', incorrecta: 'incorrectas',
-    parcial: 'parciales', 'en blanco': 'en blanco'
-  };
+  // mapa resultado (almacenado en español) → claves i18n
+  const singKey = { correcta: 'entrega.correct', incorrecta: 'entrega.incorrect', parcial: 'entrega.partial', 'en blanco': 'entrega.blank' };
+  const plurKey = { correcta: 'entrega.corrects', incorrecta: 'entrega.incorrects', parcial: 'entrega.partials', 'en blanco': 'entrega.blanks' };
   const porTipo = {};
   for (const r of data.respuestas) {
     porTipo[r.resultado] = (porTipo[r.resultado] || 0) + 1;
   }
-  lines.push('Resultados: ' + Object.entries(porTipo)
-    .map(([k, v]) => `${v} ${v === 1 ? k : (plural[k] || k)}`).join(', '));
+  lines.push(t('entrega.results') + ': ' + Object.entries(porTipo)
+    .map(([k, v]) => `${v} ${t(v === 1 ? (singKey[k] || k) : (plurKey[k] || k))}`).join(', '));
   return lines.join('\n');
 }
 

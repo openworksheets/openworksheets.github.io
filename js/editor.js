@@ -7,6 +7,10 @@ import { pdfToPages, imageToPage, isPdf, isImage } from './pdfimport.js';
 import { exportFichaZip, importFichaZip, newManifest } from './zipio.js';
 import { buildStudentLink, parseDriveId } from './drive.js';
 import { mountPlayer } from './player.js';
+import { t, getLang, applyI18n, initLangSelector } from './i18n.js';
+
+applyI18n();
+initLangSelector();
 
 // ---------- Estado ----------
 
@@ -49,7 +53,7 @@ function renderPalette() {
       activeTool = activeTool === type ? null : type;
       refreshPaletteState();
       if (activeTool && !manifest.pages.length) {
-        toast('Primero añade un PDF o una imagen.', 'error');
+        toast(t('toast.addPdfFirst'), 'error');
         activeTool = null;
         refreshPaletteState();
       }
@@ -75,21 +79,21 @@ async function addFiles(fileList) {
   for (const file of list) {
     try {
       if (isPdf(file)) {
-        toast('Convirtiendo el PDF en imágenes…');
+        toast(t('toast.convertingPdf'));
         const pages = await pdfToPages(file, (n, total) => {
-          toast(`Convirtiendo página ${n} de ${total}…`);
+          toast(t('toast.convertingPage', { n, total }));
         });
         pages.forEach(p => addPage(p));
-        toast(`PDF añadido: ${pages.length} página${pages.length === 1 ? '' : 's'}.`, 'ok');
+        toast(t('toast.pdfAdded', { n: pages.length, s: pages.length === 1 ? '' : 's' }), 'ok');
       } else if (isImage(file)) {
         addPage(await imageToPage(file));
-        toast('Imagen añadida como página.', 'ok');
+        toast(t('toast.imageAdded'), 'ok');
       } else {
-        toast(`"${file.name}" no es un PDF ni una imagen.`, 'error');
+        toast(t('toast.notMedia', { name: file.name }), 'error');
       }
     } catch (e) {
       console.error(e);
-      toast('Error al procesar ' + file.name + ': ' + e.message, 'error');
+      toast(t('toast.errorFile', { name: file.name, msg: e.message }), 'error');
     }
   }
   markDirty();
@@ -106,7 +110,8 @@ function addPage({ blob, ext, w, h }) {
 function deletePage(pi) {
   const page = manifest.pages[pi];
   const n = page.fields.length;
-  if (!window.confirm(`¿Eliminar la página ${pi + 1}${n ? ` y sus ${n} campos` : ''}?`)) return;
+  const fields = n ? t('editor.confirmDeleteFields', { n }) : '';
+  if (!window.confirm(t('editor.confirmDelete', { n: pi + 1, fields }))) return;
   files.delete(page.image);
   if (urls.has(page.image)) { URL.revokeObjectURL(urls.get(page.image)); urls.delete(page.image); }
   manifest.pages.splice(pi, 1);
@@ -133,18 +138,17 @@ function renderCanvas() {
   canvas.textContent = '';
   if (!manifest.pages.length) {
     canvas.appendChild(el('div', { class: 'ed-empty card anim-in' },
-      el('div', { class: 'icono' }, '¶'),
-      el('h2', {}, 'Empieza tu ficha'),
-      el('p', {}, 'Sube un PDF (cada página se convertirá en una imagen de fondo) o una imagen suelta. Después dibuja encima los campos autocorregibles.'),
+      el('h2', {}, t('editor.emptyTitle')),
+      el('p', {}, t('editor.emptyDesc')),
       el('div', { style: 'display:flex;gap:10px;justify-content:center;flex-wrap:wrap' },
-        el('button', { class: 'btn primary', onclick: () => $('#inputPaginas').click() }, '+ Añadir PDF o imagen'),
-        el('button', { class: 'btn', onclick: () => $('#inputZip').click() }, 'Abrir ficha (ZIP)'))));
+        el('button', { class: 'btn primary', onclick: () => $('#inputPaginas').click() }, t('editor.addPdf')),
+        el('button', { class: 'btn', onclick: () => $('#inputZip').click() }, t('editor.openZip')))));
     return;
   }
 
   manifest.pages.forEach((page, pi) => {
     const pageEl = el('div', { class: 'wpf-page', dataset: { page: pi } },
-      el('img', { class: 'fondo', src: fileUrl(page.image), alt: 'Página ' + (pi + 1), draggable: 'false' }));
+      el('img', { class: 'fondo', src: fileUrl(page.image), alt: t('editor.pageN', { n: pi + 1, total: manifest.pages.length }), draggable: 'false' }));
 
     page.fields.forEach(field => {
       const box = el('div', { class: 'ed-field', dataset: { id: field.id } },
@@ -176,11 +180,11 @@ function renderCanvas() {
     attachDrawInteraction(pageEl, pi);
 
     const head = el('div', { class: 'ed-pagehead' },
-      el('span', {}, `Página ${pi + 1} de ${manifest.pages.length}`),
+      el('span', {}, t('editor.pageN', { n: pi + 1, total: manifest.pages.length })),
       el('span', { class: 'spacer' }),
-      el('button', { class: 'btn small ghost', title: 'Subir página', onclick: () => movePage(pi, -1) }, '▲'),
-      el('button', { class: 'btn small ghost', title: 'Bajar página', onclick: () => movePage(pi, 1) }, '▼'),
-      el('button', { class: 'btn small ghost danger', title: 'Eliminar página', onclick: () => deletePage(pi) }, '✕'));
+      el('button', { class: 'btn small ghost', title: t('editor.moveUp'), onclick: () => movePage(pi, -1) }, '▲'),
+      el('button', { class: 'btn small ghost', title: t('editor.moveDown'), onclick: () => movePage(pi, 1) }, '▼'),
+      el('button', { class: 'btn small ghost danger', title: t('editor.deletePage'), onclick: () => deletePage(pi) }, '✕'));
 
     canvas.appendChild(el('div', { class: 'ed-pagebox' }, head, pageEl));
   });
@@ -327,7 +331,7 @@ function createField(pi, type, rect) {
 function createZone(pi, rect) {
   const field = sel ? getField(sel.pageIndex, sel.fieldId) : null;
   if (!field || field.type !== 'dragdrop' || sel.pageIndex !== pi) {
-    toast('Selecciona primero el campo "Arrastrar a zonas" de esta página.', 'error');
+    toast(t('toast.selectDragFirst'), 'error');
     renderCanvas();
     return;
   }
@@ -441,10 +445,10 @@ function renderPanel() {
   }
   if (!sel) {
     panel.appendChild(el('div', { class: 'ed-panel-vacio' },
-      el('h3', {}, 'Sin campo seleccionado'),
+      el('h3', {}, t('editor.noField')),
       el('p', {}, manifest.pages.length
-        ? 'Elige un tipo de campo en la paleta de la izquierda y dibuja un rectángulo sobre la página. Haz clic en un campo para configurarlo.'
-        : 'Añade primero un PDF o una imagen con el botón superior.')));
+        ? t('editor.noFieldDesc')
+        : t('editor.noFieldDescNoPages'))));
   }
   renderFieldList();
 }
@@ -458,7 +462,7 @@ function renderFieldPanel(field) {
   const cont = el('div', {});
   cont.appendChild(el('h3', {},
     el('span', { class: 'tipo-chip' }, fieldTypeName(field.type)),
-    'Configuración'));
+    t('editor.fieldConfig')));
 
   // Puntos y tamaño del texto
   const pts = el('input', { type: 'number', min: '0', step: '0.5', value: String(field.points) });
@@ -474,9 +478,9 @@ function renderFieldPanel(field) {
     if (node) node.style.setProperty('--fs', field.fontScale);
     markDirty();
   });
-  cont.appendChild(el('label', { class: 'f-label' }, 'Puntuación'));
+  cont.appendChild(el('label', { class: 'f-label' }, t('editor.points')));
   cont.appendChild(pts);
-  cont.appendChild(el('label', { class: 'f-label' }, 'Tamaño del texto'));
+  cont.appendChild(el('label', { class: 'f-label' }, t('editor.fontSize')));
   cont.appendChild(fs);
 
   // Configuración específica del tipo
@@ -485,8 +489,8 @@ function renderFieldPanel(field) {
 
   // Acciones
   cont.appendChild(el('div', { class: 'ed-acciones' },
-    el('button', { class: 'btn small', onclick: duplicateSelected }, '⧉ Duplicar'),
-    el('button', { class: 'btn small danger', onclick: deleteSelected }, '✕ Eliminar')));
+    el('button', { class: 'btn small', onclick: duplicateSelected }, t('editor.duplicate')),
+    el('button', { class: 'btn small danger', onclick: deleteSelected }, t('editor.delete'))));
 
   panel.appendChild(cont);
 }
@@ -496,9 +500,9 @@ function renderZonePanel(field) {
   if (!zone) { sel = { kind: 'field', pageIndex: sel.pageIndex, fieldId: field.id }; renderFieldPanel(field); return; }
   const cont = el('div', {});
   cont.appendChild(el('h3', {},
-    el('span', { class: 'tipo-chip' }, 'Zona de destino'),
-    'Arrastrar a zonas'));
-  cont.appendChild(el('label', { class: 'f-label' }, 'Etiqueta correcta de esta zona'));
+    el('span', { class: 'tipo-chip' }, t('editor.zoneChip')),
+    t('editor.zoneTitle')));
+  cont.appendChild(el('label', { class: 'f-label' }, t('editor.zoneAnswer')));
   const inp = el('input', { type: 'text', value: zone.answer || '' });
   inp.addEventListener('input', () => {
     zone.answer = inp.value;
@@ -508,10 +512,10 @@ function renderZonePanel(field) {
   });
   cont.appendChild(inp);
   cont.appendChild(el('p', { style: 'font-size:.85rem;color:var(--tinta-suave);margin-top:8px' },
-    'El alumno deberá colocar exactamente esta etiqueta en esta zona.'));
+    t('editor.zoneHint')));
   cont.appendChild(el('div', { class: 'ed-acciones' },
-    el('button', { class: 'btn small', onclick: () => selectField(sel.pageIndex, field.id) }, '← Volver al campo'),
-    el('button', { class: 'btn small danger', onclick: deleteSelected }, '✕ Eliminar zona')));
+    el('button', { class: 'btn small', onclick: () => selectField(sel.pageIndex, field.id) }, t('editor.backToField')),
+    el('button', { class: 'btn small danger', onclick: deleteSelected }, t('editor.deleteZone'))));
   panel.appendChild(cont);
 }
 
@@ -556,9 +560,9 @@ function checkRow(cont, label, checked, onChange) {
 }
 
 function textNormOptions(cont, cfg) {
-  checkRow(cont, 'Ignorar mayúsculas y minúsculas', cfg.ignoreCase !== false, v => { cfg.ignoreCase = v; });
-  checkRow(cont, 'Ignorar tildes', cfg.ignoreAccents !== false, v => { cfg.ignoreAccents = v; });
-  checkRow(cont, 'Ignorar espacios sobrantes', cfg.collapseSpaces !== false, v => { cfg.collapseSpaces = v; });
+  checkRow(cont, t('cfg.ignoreCase'), cfg.ignoreCase !== false, v => { cfg.ignoreCase = v; });
+  checkRow(cont, t('cfg.ignoreAccents'), cfg.ignoreAccents !== false, v => { cfg.ignoreAccents = v; });
+  checkRow(cont, t('cfg.collapseSpaces'), cfg.collapseSpaces !== false, v => { cfg.collapseSpaces = v; });
 }
 
 const configForms = {
@@ -566,30 +570,31 @@ const configForms = {
   text(cont, field) {
     const cfg = field.config;
     optionListEditor(cont, {
-      label: 'Respuestas aceptadas',
+      label: t('cfg.answers'),
       items: () => cfg.answers,
-      render: (row, item, i) => row.appendChild(textCell(item, v => { cfg.answers[i] = v; }, 'Respuesta válida')),
+      render: (row, item, i) => row.appendChild(textCell(item, v => { cfg.answers[i] = v; }, t('cfg.answerPlaceholder'))),
       add: () => cfg.answers.push(''),
-      remove: i => cfg.answers.splice(i, 1)
+      remove: i => cfg.answers.splice(i, 1),
+      addLabel: t('cfg.addAnswer')
     });
-    cont.appendChild(el('label', { class: 'f-label' }, 'Corrección'));
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.correction')));
     textNormOptions(cont, cfg);
   },
 
   number(cont, field) {
     const cfg = field.config;
-    cont.appendChild(el('label', { class: 'f-label' }, 'Respuesta correcta'));
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.correctAnswer')));
     cont.appendChild(textCell(String(cfg.answer ?? ''), v => { cfg.answer = v; }, 'Ej.: 3,14'));
-    cont.appendChild(el('label', { class: 'f-label' }, 'Tolerancia (±)'));
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.tolerance')));
     cont.appendChild(textCell(String(cfg.tolerance ?? 0), v => { cfg.tolerance = v; }, '0'));
     cont.appendChild(el('p', { style: 'font-size:.82rem;color:var(--tinta-suave)' },
-      'El alumno podrá escribir coma o punto decimal.'));
+      t('cfg.numHint')));
   },
 
   single(cont, field) {
     const cfg = field.config;
     optionListEditor(cont, {
-      label: 'Opciones (marca la correcta)',
+      label: t('cfg.singleOpts'),
       items: () => cfg.options,
       render: (row, item, i, paint) => {
         const radio = el('input', { type: 'radio', class: 'marca', name: 'cfg-correct' });
@@ -610,14 +615,14 @@ const configForms = {
 
   truefalse(cont, field) {
     const cfg = field.config;
-    cont.appendChild(el('label', { class: 'f-label' }, 'Respuesta correcta'));
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.correctAnswer')));
     const sel1 = el('select', {},
       el('option', { value: 'true' }, cfg.labels?.[0] || 'Verdadero'),
       el('option', { value: 'false' }, cfg.labels?.[1] || 'Falso'));
     sel1.value = String(Boolean(cfg.correct));
     sel1.addEventListener('change', () => { cfg.correct = sel1.value === 'true'; markDirty(); });
     cont.appendChild(sel1);
-    cont.appendChild(el('label', { class: 'f-label' }, 'Texto de las opciones'));
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.truefalseLabels')));
     cont.appendChild(textCell(cfg.labels?.[0] || 'Verdadero', v => {
       cfg.labels = [v, cfg.labels?.[1] || 'Falso'];
       sel1.options[0].textContent = v;
@@ -631,7 +636,7 @@ const configForms = {
   multi(cont, field) {
     const cfg = field.config;
     optionListEditor(cont, {
-      label: 'Opciones (marca las correctas)',
+      label: t('cfg.multiOpts'),
       items: () => cfg.options,
       render: (row, item, i) => {
         const chk = el('input', { type: 'checkbox', class: 'marca' });
@@ -652,7 +657,7 @@ const configForms = {
       },
       min: 2
     });
-    checkRow(cont, 'Puntuación parcial (aciertos − errores)', Boolean(cfg.partial), v => { cfg.partial = v; });
+    checkRow(cont, t('cfg.partialScore'), Boolean(cfg.partial), v => { cfg.partial = v; });
   },
 
   select(cont, field) {
@@ -661,43 +666,43 @@ const configForms = {
 
   gaps(cont, field) {
     const cfg = field.config;
-    cont.appendChild(el('label', { class: 'f-label' }, 'Texto con huecos'));
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.gapsText')));
     const ta = el('textarea', { rows: '4' });
     ta.value = cfg.text || '';
     const info = el('p', { style: 'font-size:.82rem;color:var(--tinta-suave)' });
     function updateInfo() {
       const n = gapCount(ta.value);
-      info.textContent = `Escribe las respuestas entre corchetes: [respuesta] o [una|otra]. Huecos detectados: ${n}.`;
+      info.textContent = t('cfg.gapsHint', { n });
     }
     ta.addEventListener('input', () => { cfg.text = ta.value; updateInfo(); markDirty(); });
     updateInfo();
     cont.appendChild(ta);
     cont.appendChild(info);
-    cont.appendChild(el('label', { class: 'f-label' }, 'Corrección'));
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.correction')));
     textNormOptions(cont, cfg);
   },
 
   match(cont, field) {
     const cfg = field.config;
     optionListEditor(cont, {
-      label: 'Parejas (izquierda → derecha)',
+      label: t('cfg.matchPairs'),
       items: () => cfg.pairs,
       render: (row, item, i) => {
-        row.appendChild(textCell(item.left, v => { item.left = v; }, 'Izquierda'));
-        row.appendChild(textCell(item.right, v => { item.right = v; }, 'Derecha'));
+        row.appendChild(textCell(item.left, v => { item.left = v; }, t('cfg.matchLeft')));
+        row.appendChild(textCell(item.right, v => { item.right = v; }, t('cfg.matchRight')));
       },
       add: () => cfg.pairs.push({ left: '', right: '' }),
       remove: i => cfg.pairs.splice(i, 1),
-      addLabel: '+ Añadir pareja',
+      addLabel: t('cfg.addPair'),
       min: 2
     });
     optionListEditor(cont, {
-      label: 'Distractores (opcional)',
+      label: t('cfg.matchDistractors'),
       items: () => cfg.distractors,
-      render: (row, item, i) => row.appendChild(textCell(item, v => { cfg.distractors[i] = v; }, 'Opción falsa')),
+      render: (row, item, i) => row.appendChild(textCell(item, v => { cfg.distractors[i] = v; }, t('cfg.matchDistractorPlaceholder'))),
       add: () => cfg.distractors.push(''),
       remove: i => cfg.distractors.splice(i, 1),
-      addLabel: '+ Añadir distractor',
+      addLabel: t('cfg.addDistractor'),
       min: 0
     });
   },
@@ -705,7 +710,7 @@ const configForms = {
   order(cont, field) {
     const cfg = field.config;
     optionListEditor(cont, {
-      label: 'Elementos en el orden correcto',
+      label: t('cfg.orderItems'),
       items: () => cfg.items,
       render: (row, item, i) => {
         row.appendChild(el('span', { style: 'font-weight:700;color:var(--rojo);width:18px' }, String(i + 1)));
@@ -713,57 +718,56 @@ const configForms = {
       },
       add: () => cfg.items.push(''),
       remove: i => cfg.items.splice(i, 1),
-      addLabel: '+ Añadir elemento',
+      addLabel: t('cfg.addItem'),
       min: 2
     });
     cont.appendChild(el('p', { style: 'font-size:.82rem;color:var(--tinta-suave);margin-top:8px' },
-      'Al alumno se le mostrarán barajados.'));
+      t('cfg.orderHint')));
   },
 
   dragdrop(cont, field) {
     const cfg = field.config;
     cont.appendChild(el('div', { class: 'zona-bloque' },
-      `Zonas de destino: ${cfg.zones.length}. `,
-      'El rectángulo del campo es la bandeja de etiquetas; las zonas se dibujan sobre la página.'));
-    const btnZona = el('button', { class: 'btn small add-row', type: 'button' }, '+ Dibujar zona de destino');
+      t('cfg.dragdropZones', { n: cfg.zones.length })));
+    const btnZona = el('button', { class: 'btn small add-row', type: 'button' }, t('cfg.drawZone'));
     btnZona.addEventListener('click', () => {
       activeTool = 'zone';
       refreshPaletteState();
       canvas.classList.add('drawing');
-      toast('Dibuja un rectángulo sobre la página para crear la zona.');
+      toast(t('toast.drawZoneTip'));
     });
     cont.appendChild(btnZona);
 
     optionListEditor(cont, {
-      label: 'Etiquetas correctas (una por zona)',
+      label: t('cfg.zoneLabels'),
       items: () => cfg.zones,
       render: (row, zone) => {
         const inp = textCell(zone.answer || '', v => {
           zone.answer = v;
           const chip = canvas.querySelector(`.ed-zone[data-id="${zone.id}"] .chip`);
           if (chip) chip.textContent = v || 'zona';
-        }, 'Etiqueta');
+        }, t('cfg.zoneLabelPlaceholder'));
         inp.addEventListener('focus', () => selectZoneSoft(zone.id));
         row.appendChild(inp);
       },
       add: () => {
-        toast('Usa "+ Dibujar zona de destino" para añadir zonas.', 'error');
+        toast(t('cfg.useDrawZone'), 'error');
       },
       remove: i => {
         cfg.zones.splice(i, 1);
         renderCanvas();
       },
-      addLabel: '+ Dibujar zona de destino',
+      addLabel: t('cfg.drawZone'),
       min: 0
     });
 
     optionListEditor(cont, {
-      label: 'Distractores (etiquetas falsas, opcional)',
+      label: t('cfg.dragDistractors'),
       items: () => cfg.distractors,
-      render: (row, item, i) => row.appendChild(textCell(item, v => { cfg.distractors[i] = v; }, 'Etiqueta falsa')),
+      render: (row, item, i) => row.appendChild(textCell(item, v => { cfg.distractors[i] = v; }, t('cfg.dragDistractorPlaceholder'))),
       add: () => cfg.distractors.push(''),
       remove: i => cfg.distractors.splice(i, 1),
-      addLabel: '+ Añadir distractor',
+      addLabel: t('cfg.addDragDistractor'),
       min: 0
     });
   }
@@ -778,7 +782,7 @@ function selectZoneSoft(zoneId) {
 // Lista de todos los campos de la ficha.
 function renderFieldList() {
   if (!manifest.pages.some(p => p.fields.length)) return;
-  const box = el('div', { class: 'lista-campos' }, el('h3', {}, 'Campos de la ficha'));
+  const box = el('div', { class: 'lista-campos' }, el('h3', {}, t('editor.fieldsTitle')));
   manifest.pages.forEach((page, pi) => {
     page.fields.forEach(field => {
       const item = el('div', { class: 'item' + (sel?.kind === 'field' && sel.fieldId === field.id ? ' sel' : '') },
@@ -828,37 +832,37 @@ function openShare() {
 
 $('#btnGenerarEnlace')?.addEventListener('click', async () => {
   const url = $('#compUrl').value.trim();
-  if (!url) { toast('Pega primero la URL pública del ZIP.', 'error'); return; }
-  if (!/^https?:\/\//i.test(url)) { toast('La URL no parece válida.', 'error'); return; }
+  if (!url) { toast(t('toast.pasteUrl'), 'error'); return; }
+  if (!/^https?:\/\//i.test(url)) { toast(t('toast.invalidUrl'), 'error'); return; }
   if (/drive\.google\.com/.test(url) && !parseDriveId(url)) {
-    toast('No se reconoce el enlace de Drive. Usa "Compartir → Copiar enlace" del archivo.', 'error');
+    toast(t('toast.driveError'), 'error');
     return;
   }
   const link = buildStudentLink(url);
   $('#compEnlace').textContent = link;
   $('#compSalida').style.display = 'block';
   const ok = await copyToClipboard(link);
-  if (ok) toast('Enlace copiado al portapapeles.', 'ok');
+  if (ok) toast(t('toast.linkCopied'), 'ok');
 });
 
 $('#btnCopiarEnlace')?.addEventListener('click', async () => {
   const ok = await copyToClipboard($('#compEnlace').textContent);
-  toast(ok ? 'Enlace copiado.' : 'No se pudo copiar.', ok ? 'ok' : 'error');
+  toast(ok ? t('toast.copied') : t('toast.notCopied'), ok ? 'ok' : 'error');
 });
 
 // ---------- Exportar / importar ----------
 
 function validate() {
   const problems = [];
-  if (!manifest.title.trim()) problems.push('La ficha no tiene título.');
-  if (!manifest.pages.length) problems.push('La ficha no tiene páginas.');
-  if (!manifest.pages.some(p => p.fields.length)) problems.push('No hay ningún campo sobre las páginas.');
+  if (!manifest.title.trim()) problems.push(t('validate.noTitle'));
+  if (!manifest.pages.length) problems.push(t('validate.noPages'));
+  if (!manifest.pages.some(p => p.fields.length)) problems.push(t('validate.noFields'));
   manifest.pages.forEach((p, pi) => {
     p.fields.forEach(f => {
       const e = expectedText(f);
-      if (!e || !e.trim()) problems.push(`Página ${pi + 1}: un campo "${fieldTypeName(f.type)}" no tiene respuesta correcta definida.`);
+      if (!e || !e.trim()) problems.push(t('validate.noAnswer', { n: pi + 1, type: fieldTypeName(f.type) }));
       if (f.type === 'dragdrop' && !(f.config.zones || []).length) {
-        problems.push(`Página ${pi + 1}: el campo "Arrastrar a zonas" no tiene zonas de destino.`);
+        problems.push(t('validate.noZones', { n: pi + 1 }));
       }
     });
   });
@@ -870,19 +874,20 @@ async function exportZip() {
   const problems = validate();
   if (problems.length) {
     const blocking = !manifest.pages.length;
-    const msg = 'Antes de exportar, revisa:\n\n· ' + problems.join('\n· ');
+    const msg = t('validate.review', { problems: problems.join('\n· ') });
     if (blocking) { window.alert(msg); return; }
-    if (!window.confirm(msg + '\n\n¿Exportar de todas formas?')) return;
+    if (!window.confirm(msg + t('validate.anyway'))) return;
   }
+  manifest.lang = getLang();
   try {
-    toast('Generando el ZIP…');
+    toast(t('toast.generating'));
     const blob = await exportFichaZip({ manifest, files });
     downloadBlob(blob, slugify(manifest.title || 'ficha') + '.zip');
     dirty = false;
-    toast('ZIP exportado. Súbelo a Drive y hazlo público para compartirlo.', 'ok');
+    toast(t('toast.exported'), 'ok');
   } catch (e) {
     console.error(e);
-    toast('Error al exportar: ' + e.message, 'error');
+    toast(t('toast.exportError', { msg: e.message }), 'error');
   }
 }
 
@@ -905,7 +910,7 @@ async function openZipFile(file) {
     renderCanvas();
     renderPanel();
     refreshPaletteState();
-    toast('Ficha cargada: ' + (manifest.title || file.name), 'ok');
+    toast(t('toast.fichaLoaded', { title: manifest.title || file.name }), 'ok');
   } catch (e) {
     console.error(e);
     toast(e.message, 'error');
@@ -916,11 +921,11 @@ async function openZipFile(file) {
 
 function openPreview() {
   manifest.title = titleInput.value.trim();
-  if (!manifest.pages.length) { toast('Añade alguna página primero.', 'error'); return; }
+  if (!manifest.pages.length) { toast(t('toast.addPageFirst'), 'error'); return; }
   const overlay = el('div', { class: 'prev-overlay' });
   const root = el('div', {});
-  const cerrar = el('button', { class: 'btn small' }, '← Volver al editor');
-  overlay.appendChild(el('div', { class: 'prev-aviso' }, 'Vista previa: así lo verá el alumnado', cerrar));
+  const cerrar = el('button', { class: 'btn small' }, t('preview.back'));
+  overlay.appendChild(el('div', { class: 'prev-aviso' }, t('preview.banner'), cerrar));
   overlay.appendChild(root);
   document.body.appendChild(overlay);
   document.body.style.overflow = 'hidden';

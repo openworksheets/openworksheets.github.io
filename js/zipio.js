@@ -6,6 +6,8 @@
 //
 // Usa JSZip (vendor/jszip.min.js → window.JSZip).
 
+import { t } from './i18n.js';
+
 export const FORMAT = 'workpdf-ficha';
 export const FORMAT_VERSION = 1;
 
@@ -26,15 +28,15 @@ export async function exportFichaZip(ficha) {
 export async function importFichaZip(data) {
   const zip = await window.JSZip.loadAsync(data);
   const manifestFile = zip.file('manifest.json');
-  if (!manifestFile) throw new Error('El ZIP no contiene manifest.json: no es una ficha de WorkPDF.');
+  if (!manifestFile) throw new Error(t('zipio.noManifest'));
   let manifest;
   try {
     manifest = JSON.parse(await manifestFile.async('string'));
   } catch {
-    throw new Error('El manifest.json del ZIP no es válido.');
+    throw new Error(t('zipio.badManifest'));
   }
   if (manifest.format !== FORMAT) {
-    throw new Error('El ZIP no es una ficha de WorkPDF.');
+    throw new Error(t('zipio.notWorkpdf'));
   }
   const files = new Map();
   const entries = [];
@@ -46,7 +48,7 @@ export async function importFichaZip(data) {
   }
   for (const page of manifest.pages || []) {
     if (!files.has(page.image)) {
-      throw new Error(`Falta la imagen ${page.image} dentro del ZIP.`);
+      throw new Error(t('zipio.missingImage', { path: page.image }));
     }
   }
   return { manifest, files };
@@ -60,6 +62,7 @@ export function newManifest() {
     title: '',
     author: '',
     instructions: '',
+    lang: '',
     settings: {
       showScore: true,
       showCorrection: true,

@@ -6,6 +6,10 @@ import { el, toast } from './util.js';
 import { downloadZip } from './download.js';
 import { importFichaZip } from './zipio.js';
 import { mountPlayer } from './player.js';
+import { t, getLang, setLang, applyI18n, initLangSelector } from './i18n.js';
+
+applyI18n();
+initLangSelector();
 
 const root = document.getElementById('app');
 
@@ -15,23 +19,23 @@ function formatMB(bytes) {
 
 function showLoading() {
   root.textContent = '';
-  const status = el('p', {}, 'Conectando…');
+  const status = el('p', {}, t('alumno.connecting'));
   const barra = el('div', {});
   root.appendChild(el('div', { class: 'al-centro' },
     el('div', { class: 'card al-tarjeta al-carga' },
       el('div', { class: 'spinner' }),
-      el('h1', {}, 'Cargando la ficha'),
+      el('h1', {}, t('alumno.loadingTitle')),
       status,
       el('div', { class: 'al-progreso' }, barra))));
   return {
-    setStatus: t => { status.textContent = t; },
+    setStatus: msg => { status.textContent = msg; },
     setProgress: (recibido, total) => {
       if (total > 0) {
         barra.style.width = Math.min(100, recibido / total * 100) + '%';
-        status.textContent = `Descargando: ${formatMB(recibido)} de ${formatMB(total)}`;
+        status.textContent = t('alumno.downloading', { received: formatMB(recibido), total: formatMB(total) });
       } else {
         barra.style.width = '100%';
-        status.textContent = `Descargando: ${formatMB(recibido)}`;
+        status.textContent = t('alumno.downloadingUnk', { received: formatMB(recibido) });
       }
     }
   };
@@ -42,9 +46,9 @@ function showError(message) {
   root.appendChild(el('div', { class: 'al-centro' },
     el('div', { class: 'card al-tarjeta' },
       el('div', { class: 'icono' }, '✕'),
-      el('h1', {}, 'No se pudo abrir la ficha'),
+      el('h1', {}, t('alumno.errorTitle')),
       el('p', { style: 'white-space:pre-wrap;text-align:left;font-size:.92rem' }, message),
-      el('button', { class: 'btn', onclick: () => window.location.reload() }, '↻ Reintentar'))));
+      el('button', { class: 'btn', onclick: () => window.location.reload() }, t('alumno.retry')))));
 }
 
 function showOpener() {
@@ -61,25 +65,24 @@ function showOpener() {
     }
   });
 
-  const urlInput = el('input', { type: 'url', placeholder: 'https://drive.google.com/file/d/…' });
+  const urlInput = el('input', { type: 'url', placeholder: t('alumno.urlPlaceholder') });
   const form = el('form', {},
-    el('label', { class: 'f-label' }, 'Enlace de la ficha'),
+    el('label', { class: 'f-label' }, t('alumno.linkLabel')),
     urlInput,
     el('div', { style: 'margin-top:12px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap' },
-      el('button', { class: 'btn primary', type: 'submit' }, 'Abrir ficha'),
-      el('button', { class: 'btn', type: 'button', onclick: () => inputZip.click() }, 'Abrir ZIP local')));
+      el('button', { class: 'btn primary', type: 'submit' }, t('alumno.openBtn')),
+      el('button', { class: 'btn', type: 'button', onclick: () => inputZip.click() }, t('alumno.openZipBtn'))));
   form.addEventListener('submit', e => {
     e.preventDefault();
     const url = urlInput.value.trim();
-    if (!url) { toast('Pega el enlace que te han compartido.', 'error'); return; }
+    if (!url) { toast(t('alumno.pasteLink'), 'error'); return; }
     window.location.search = '?z=' + encodeURIComponent(url);
   });
 
   root.appendChild(el('div', { class: 'al-centro' },
     el('div', { class: 'card al-tarjeta anim-in' },
-      el('div', { class: 'icono' }, '¶'),
-      el('h1', {}, 'Abrir una ficha'),
-      el('p', {}, 'Pega el enlace que te ha dado tu docente o abre un archivo ZIP de ficha.'),
+      el('h1', {}, t('alumno.openTitle')),
+      el('p', {}, t('alumno.openDesc')),
       form,
       inputZip)));
 }
@@ -95,8 +98,13 @@ async function main() {
       onStatus: loading.setStatus,
       onProgress: loading.setProgress
     });
-    loading.setStatus('Abriendo la ficha…');
+    loading.setStatus(t('alumno.opening'));
     const ficha = await importFichaZip(bytes);
+    // Herencia de idioma: si el alumno no tiene preferencia manual, usa el del profesor
+    if (!localStorage.getItem('wpf-lang') && ficha.manifest.lang) {
+      setLang(ficha.manifest.lang, { save: false, reload: false });
+      applyI18n();
+    }
     mountPlayer(root, ficha);
   } catch (e) {
     console.error(e);

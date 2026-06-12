@@ -3,6 +3,8 @@
 // el tamaño inicial del rectángulo (en fracciones de página) y su
 // configuración por defecto.
 
+import { t } from './i18n.js';
+
 export const FIELD_TYPES = {
   text: {
     name: 'Respuesta corta',
@@ -88,7 +90,7 @@ export const FIELD_ORDER = [
 ];
 
 export function fieldTypeName(type) {
-  return FIELD_TYPES[type] ? FIELD_TYPES[type].name : type;
+  return t('field.' + type) || (FIELD_TYPES[type] ? FIELD_TYPES[type].name : type);
 }
 
 // Extrae los huecos de un texto con marcadores [respuesta|alternativa].
