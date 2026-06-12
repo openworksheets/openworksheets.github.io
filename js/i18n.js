@@ -161,6 +161,15 @@ const STRINGS = {
     'dlg.share.generateBtn': 'Generar enlace para alumnos',
     'dlg.share.copyLink': '⧉ Copiar enlace',
 
+    // Editor — restricciones de acceso
+    'dlg.access.section': 'Restricciones de acceso',
+    'dlg.access.desde': 'Disponible desde (opcional)',
+    'dlg.access.hasta': 'Disponible hasta (opcional)',
+    'dlg.access.autoEntrega': 'Entregar automáticamente si el plazo termina mientras el alumno responde',
+    'dlg.access.tiempo': 'Tiempo límite por intento en minutos (0 = sin límite)',
+    'dlg.access.password': 'Contraseña de acceso (vacía = sin contraseña)',
+    'dlg.access.hint': 'Las restricciones se aplican en el navegador del alumno: ayudan a organizar la actividad, no son una medida de seguridad.',
+
     // Editor — vista previa
     'preview.banner': 'Vista previa: así lo verá el alumnado',
     'preview.back': '← Volver al editor',
@@ -230,6 +239,18 @@ const STRINGS = {
     'player.pct': ' ({pct} % de aciertos)',
     'player.teacherCheck': 'Tu profesor o profesora revisará el resultado.',
     'player.submissionInfo': 'Descarga tu archivo de entrega y adjúntalo en Classroom, o copia el resumen y pégalo donde te indique tu docente.',
+
+    // Player — restricciones de acceso
+    'player.notYet': 'Todavía no disponible',
+    'player.notYetDesc': 'Esta ficha se abrirá el {fecha}.',
+    'player.closed': 'Plazo finalizado',
+    'player.closedDesc': 'Esta ficha dejó de estar disponible el {fecha}.',
+    'player.passwordLabel': 'Contraseña de acceso',
+    'player.passwordWrong': 'Contraseña incorrecta.',
+    'player.untilInfo': 'Disponible hasta: {fecha}',
+    'player.timeLimitInfo': 'Tiempo límite: {min} min',
+    'player.timeWarning': 'Quedan {min} minutos.',
+    'player.autoSubmitted': 'Tiempo agotado: la ficha se ha entregado automáticamente.',
 
     // Alumno.js
     'alumno.loadingTitle': 'Cargando la ficha',
@@ -434,6 +455,14 @@ const STRINGS = {
     'dlg.share.generateBtn': 'Generate student link',
     'dlg.share.copyLink': '⧉ Copy link',
 
+    'dlg.access.section': 'Access restrictions',
+    'dlg.access.desde': 'Available from (optional)',
+    'dlg.access.hasta': 'Available until (optional)',
+    'dlg.access.autoEntrega': 'Submit automatically if the deadline passes while the student is answering',
+    'dlg.access.tiempo': 'Time limit per attempt in minutes (0 = no limit)',
+    'dlg.access.password': 'Access password (empty = none)',
+    'dlg.access.hint': "Restrictions are enforced in the student's browser: they help organize the activity, they are not a security measure.",
+
     'preview.banner': 'Preview: this is how students will see it',
     'preview.back': '← Back to editor',
 
@@ -493,6 +522,17 @@ const STRINGS = {
     'player.pct': ' ({pct}% correct)',
     'player.teacherCheck': 'Your teacher will review the result.',
     'player.submissionInfo': 'Download your submission file and attach it in Classroom, or copy the summary and paste it where your teacher indicates.',
+
+    'player.notYet': 'Not available yet',
+    'player.notYetDesc': 'This worksheet opens on {fecha}.',
+    'player.closed': 'Deadline passed',
+    'player.closedDesc': 'This worksheet stopped being available on {fecha}.',
+    'player.passwordLabel': 'Access password',
+    'player.passwordWrong': 'Wrong password.',
+    'player.untilInfo': 'Available until: {fecha}',
+    'player.timeLimitInfo': 'Time limit: {min} min',
+    'player.timeWarning': '{min} minutes left.',
+    'player.autoSubmitted': 'Time is up: the worksheet was submitted automatically.',
 
     'alumno.loadingTitle': 'Loading worksheet',
     'alumno.connecting': 'Connecting…',
@@ -691,6 +731,14 @@ const STRINGS = {
     'dlg.share.generateBtn': 'Generar enllaç per a alumnes',
     'dlg.share.copyLink': '⧉ Copiar enllaç',
 
+    'dlg.access.section': 'Restriccions d\'accés',
+    'dlg.access.desde': 'Disponible des de (opcional)',
+    'dlg.access.hasta': 'Disponible fins a (opcional)',
+    'dlg.access.autoEntrega': 'Lliurar automàticament si el termini acaba mentre l\'alumne respon',
+    'dlg.access.tiempo': 'Temps límit per intent en minuts (0 = sense límit)',
+    'dlg.access.password': 'Contrasenya d\'accés (buida = sense contrasenya)',
+    'dlg.access.hint': 'Les restriccions s\'apliquen al navegador de l\'alumne: ajuden a organitzar l\'activitat, no són una mesura de seguretat.',
+
     'preview.banner': 'Vista prèvia: així ho veurà l\'alumnat',
     'preview.back': '← Tornar a l\'editor',
 
@@ -750,6 +798,17 @@ const STRINGS = {
     'player.pct': ' ({pct} % d\'encerts)',
     'player.teacherCheck': 'El teu professor o professora revisarà el resultat.',
     'player.submissionInfo': 'Descarrega el teu fitxer de lliurament i adjunta\'l a Classroom, o copia el resum i enganxa\'l on t\'indiqui el teu docent.',
+
+    'player.notYet': 'Encara no disponible',
+    'player.notYetDesc': 'Aquesta fitxa s\'obrirà el {fecha}.',
+    'player.closed': 'Termini finalitzat',
+    'player.closedDesc': 'Aquesta fitxa va deixar d\'estar disponible el {fecha}.',
+    'player.passwordLabel': 'Contrasenya d\'accés',
+    'player.passwordWrong': 'Contrasenya incorrecta.',
+    'player.untilInfo': 'Disponible fins a: {fecha}',
+    'player.timeLimitInfo': 'Temps límit: {min} min',
+    'player.timeWarning': 'Queden {min} minuts.',
+    'player.autoSubmitted': 'Temps esgotat: la fitxa s\'ha lliurat automàticament.',
 
     'alumno.loadingTitle': 'Carregant la fitxa',
     'alumno.connecting': 'Connectant…',
@@ -948,6 +1007,14 @@ const STRINGS = {
     'dlg.share.generateBtn': 'Xerar enlace para alumnos',
     'dlg.share.copyLink': '⧉ Copiar enlace',
 
+    'dlg.access.section': 'Restricións de acceso',
+    'dlg.access.desde': 'Dispoñible desde (opcional)',
+    'dlg.access.hasta': 'Dispoñible ata (opcional)',
+    'dlg.access.autoEntrega': 'Entregar automaticamente se o prazo remata mentres o alumno responde',
+    'dlg.access.tiempo': 'Tempo límite por intento en minutos (0 = sen límite)',
+    'dlg.access.password': 'Contrasinal de acceso (baleiro = sen contrasinal)',
+    'dlg.access.hint': 'As restricións aplícanse no navegador do alumno: axudan a organizar a actividade, non son unha medida de seguridade.',
+
     'preview.banner': 'Vista previa: así o verá o alumnado',
     'preview.back': '← Volver ao editor',
 
@@ -1007,6 +1074,17 @@ const STRINGS = {
     'player.pct': ' ({pct} % de acertos)',
     'player.teacherCheck': 'O teu profesor ou profesora revisará o resultado.',
     'player.submissionInfo': 'Descarga o teu ficheiro de entrega e adxúntao en Classroom, ou copia o resumo e pégao onde che indique o teu docente.',
+
+    'player.notYet': 'Aínda non dispoñible',
+    'player.notYetDesc': 'Esta ficha abrirase o {fecha}.',
+    'player.closed': 'Prazo rematado',
+    'player.closedDesc': 'Esta ficha deixou de estar dispoñible o {fecha}.',
+    'player.passwordLabel': 'Contrasinal de acceso',
+    'player.passwordWrong': 'Contrasinal incorrecto.',
+    'player.untilInfo': 'Dispoñible ata: {fecha}',
+    'player.timeLimitInfo': 'Tempo límite: {min} min',
+    'player.timeWarning': 'Quedan {min} minutos.',
+    'player.autoSubmitted': 'Tempo esgotado: a ficha entregouse automaticamente.',
 
     'alumno.loadingTitle': 'Cargando a ficha',
     'alumno.connecting': 'Conectando…',
@@ -1205,6 +1283,14 @@ const STRINGS = {
     'dlg.share.generateBtn': 'Ikasleentzako esteka sortu',
     'dlg.share.copyLink': '⧉ Esteka kopiatu',
 
+    'dlg.access.section': 'Sarbide-murrizketak',
+    'dlg.access.desde': 'Noiztik erabilgarri (aukerakoa)',
+    'dlg.access.hasta': 'Noiz arte erabilgarri (aukerakoa)',
+    'dlg.access.autoEntrega': 'Automatikoki entregatu epea amaitzen bada ikasleak erantzuten duen bitartean',
+    'dlg.access.tiempo': 'Saialdi bakoitzeko denbora-muga minututan (0 = mugarik ez)',
+    'dlg.access.password': 'Sarbide-pasahitza (hutsik = pasahitzik ez)',
+    'dlg.access.hint': 'Murrizketak ikaslearen nabigatzailean aplikatzen dira: jarduera antolatzen laguntzen dute, ez dira segurtasun-neurri bat.',
+
     'preview.banner': 'Aurrebista: ikasleek honela ikusiko dute',
     'preview.back': '← Editorera itzuli',
 
@@ -1264,6 +1350,17 @@ const STRINGS = {
     'player.pct': ' ({pct} % asmatutakoak)',
     'player.teacherCheck': 'Zure irakasleak emaitza berrikusiko du.',
     'player.submissionInfo': 'Deskargatu zure entrega-fitxategia eta erantsi Classroom-en, edo kopiatu laburpena eta itsatsi zure irakasleak adierazten dizun lekuan.',
+
+    'player.notYet': 'Oraindik ez dago erabilgarri',
+    'player.notYetDesc': 'Fitxa hau {fecha}(e)an irekiko da.',
+    'player.closed': 'Epea amaituta',
+    'player.closedDesc': 'Fitxa hau {fecha}(e)an utzi zen erabilgarri egoteari.',
+    'player.passwordLabel': 'Sarbide-pasahitza',
+    'player.passwordWrong': 'Pasahitz okerra.',
+    'player.untilInfo': 'Erabilgarri noiz arte: {fecha}',
+    'player.timeLimitInfo': 'Denbora-muga: {min} min',
+    'player.timeWarning': '{min} minutu geratzen dira.',
+    'player.autoSubmitted': 'Denbora agortu da: fitxa automatikoki entregatu da.',
 
     'alumno.loadingTitle': 'Fitxa kargatzen',
     'alumno.connecting': 'Konektatzen…',

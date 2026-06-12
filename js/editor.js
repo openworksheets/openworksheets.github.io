@@ -809,6 +809,12 @@ function openSettings() {
   $('#ajCorreccion').checked = manifest.settings.showCorrection !== false;
   $('#ajBarajar').checked = Boolean(manifest.settings.shuffle);
   $('#ajIntentos').value = String(manifest.settings.maxAttempts || 0);
+  const acc = manifest.access || {};
+  $('#ajDesde').value = acc.desde || '';
+  $('#ajHasta').value = acc.hasta || '';
+  $('#ajAutoEntrega').checked = Boolean(acc.autoEntrega);
+  $('#ajTiempo').value = String(acc.tiempoLimite || 0);
+  $('#ajPassword').value = acc.password || '';
   dlg.showModal();
 }
 
@@ -820,6 +826,13 @@ $('#dlgAjustes')?.addEventListener('close', () => {
   manifest.settings.showCorrection = $('#ajCorreccion').checked;
   manifest.settings.shuffle = $('#ajBarajar').checked;
   manifest.settings.maxAttempts = Math.max(0, parseInt($('#ajIntentos').value, 10) || 0);
+  manifest.access = {
+    desde: $('#ajDesde').value || '',
+    hasta: $('#ajHasta').value || '',
+    autoEntrega: $('#ajAutoEntrega').checked,
+    tiempoLimite: Math.max(0, parseInt($('#ajTiempo').value, 10) || 0),
+    password: $('#ajPassword').value.trim()
+  };
   markDirty();
 });
 

@@ -10,9 +10,18 @@ import { gradeField, expectedText } from './grading.js';
 import { buildEntrega, entregaFilename, entregaResumen } from './entrega.js';
 import { t } from './i18n.js';
 
+function formatCountdown(ms) {
+  const s = Math.max(0, Math.ceil(ms / 1000));
+  const d = Math.floor(s / 86400);
+  const pad = n => String(n).padStart(2, '0');
+  const hms = pad(Math.floor((s % 86400) / 3600)) + ':' + pad(Math.floor((s % 3600) / 60)) + ':' + pad(s % 60);
+  return d > 0 ? d + 'd ' + hms : hms;
+}
+
 export function mountPlayer(rootEl, ficha, opts = {}) {
   const { manifest, files } = ficha;
   const settings = manifest.settings || {};
+  const access = manifest.access || {};
   const preview = Boolean(opts.preview);
   const storageKey = 'workpdf:al:' + manifest.id;
 
@@ -29,6 +38,8 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
   let state = loadState();
   let controllers = [];
   let finished = false;
+  let cronoTimer = null;
+  let aperturaTimer = null;
 
   function loadState() {
     if (preview) return null;
@@ -46,6 +57,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
         grupo: datos.grupo,
         seed: datos.seed,
         attempts: datos.attempts,
+        startedAt: datos.startedAt || 0,
         answers: collectAnswers(),
         lastEntrega: datos.lastEntrega || null,
         ...extra
@@ -67,6 +79,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     grupo: state?.grupo || '',
     seed: state?.seed || ((Math.random() * 2 ** 31) | 0),
     attempts: state?.attempts || 0,
+    startedAt: state?.startedAt || 0,
     lastEntrega: state?.lastEntrega || null
   };
 
@@ -82,11 +95,52 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     return Math.max(0, max - datos.attempts);
   }
 
+  // ---------- Restricciones de acceso ----------
+
+  function accessState() {
+    if (preview) return 'ok';
+    if (access.desde && Date.now() < Date.parse(access.desde)) return 'before';
+    if (access.hasta && Date.now() > Date.parse(access.hasta)) return 'after';
+    return 'ok';
+  }
+
+  function showNotYet() {
+    rootEl.textContent = '';
+    const cuenta = el('div', { style: 'font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums;margin-top:10px' });
+    rootEl.appendChild(el('div', { class: 'al-centro' },
+      el('div', { class: 'card al-tarjeta' },
+        el('div', { class: 'icono' }, '⏳'),
+        el('h1', {}, t('player.notYet')),
+        el('p', {}, t('player.notYetDesc', { fecha: fechaHora(new Date(access.desde)) })),
+        cuenta)));
+    function tick() {
+      const left = Date.parse(access.desde) - Date.now();
+      if (left <= 0) { clearInterval(aperturaTimer); showStart(); return; }
+      cuenta.textContent = formatCountdown(left);
+    }
+    clearInterval(aperturaTimer);
+    aperturaTimer = setInterval(tick, 1000);
+    tick();
+  }
+
+  function showClosed() {
+    rootEl.textContent = '';
+    rootEl.appendChild(el('div', { class: 'al-centro' },
+      el('div', { class: 'card al-tarjeta' },
+        el('div', { class: 'icono' }, '✕'),
+        el('h1', {}, t('player.closed')),
+        el('p', {}, t('player.closedDesc', { fecha: fechaHora(new Date(access.hasta)) })))));
+  }
+
   // ---------- Pantalla de identificación ----------
 
   function showStart() {
     rootEl.textContent = '';
     if (preview) { startActivity('Vista previa', ''); return; }
+
+    const st = accessState();
+    if (st === 'before') { showNotYet(); return; }
+    if (st === 'after') { showClosed(); return; }
 
     if (attemptsLeft() <= 0) { showBlocked(); return; }
 
@@ -94,15 +148,25 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     const grupo = el('input', { type: 'text' });
     nombre.value = datos.alumno;
     grupo.value = datos.grupo;
+    const passInput = access.password
+      ? el('input', { type: 'password', autocomplete: 'off' })
+      : null;
 
     const form = el('form', {},
       el('label', { class: 'f-label' }, t('player.nameLabel')), nombre,
       el('label', { class: 'f-label' }, t('player.groupLabel')), grupo,
+      passInput ? el('label', { class: 'f-label' }, t('player.passwordLabel')) : null,
+      passInput,
       el('div', { style: 'margin-top:18px;text-align:center' },
         el('button', { class: 'btn primary', type: 'submit' }, t('player.startBtn'))));
     form.addEventListener('submit', e => {
       e.preventDefault();
       if (!nombre.value.trim()) { toast(t('player.enterName'), 'error'); return; }
+      if (accessState() === 'after') { showClosed(); return; }
+      if (passInput && passInput.value !== access.password) {
+        toast(t('player.passwordWrong'), 'error');
+        return;
+      }
       startActivity(nombre.value.trim(), grupo.value.trim());
     });
 
@@ -113,6 +177,8 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
         el('h1', {}, manifest.title || 'WorkPDF'),
         manifest.author ? el('p', { class: 'quien' }, t('player.authorPrefix') + manifest.author) : null,
         el('p', {}, t('player.statsLine', { pages: pn, ps: pn === 1 ? '' : 's', fields: fn, fs: fn === 1 ? '' : 's', points: formatNum(pp), pts: pp === 1 ? '' : 's' })),
+        access.hasta ? el('p', {}, t('player.untilInfo', { fecha: fechaHora(new Date(access.hasta)) })) : null,
+        Number(access.tiempoLimite) > 0 ? el('p', {}, t('player.timeLimitInfo', { min: access.tiempoLimite })) : null,
         restored ? el('p', { style: 'color:var(--verde);font-weight:700' }, t('player.savedProgress')) : null,
         Number(settings.maxAttempts) > 0
           ? el('p', {}, t('player.attemptsLeft', { left: attemptsLeft(), max: settings.maxAttempts }))
@@ -172,13 +238,29 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
       doc.appendChild(pageEl);
     });
 
+    // Plazo efectivo del intento: tiempo límite y/o cierre con auto-entrega
+    clearInterval(cronoTimer);
+    let deadline = 0;
+    if (!preview) {
+      if (Number(access.tiempoLimite) > 0) {
+        if (!datos.startedAt) { datos.startedAt = Date.now(); saveState(); }
+        deadline = datos.startedAt + Number(access.tiempoLimite) * 60000;
+      }
+      if (access.hasta && access.autoEntrega) {
+        const end = Date.parse(access.hasta);
+        if (!isNaN(end)) deadline = deadline ? Math.min(deadline, end) : end;
+      }
+    }
+
     // Barra inferior
     const progTxt = el('span', {}, '');
     const progBar = el('div', {});
+    const crono = el('span', { class: 'al-crono' });
     const btnFin = el('button', { class: 'btn primary' }, t('player.finishBtn'));
     btnFin.addEventListener('click', confirmFinish);
     const barra = el('div', { class: 'al-barra' },
       el('div', { class: 'estado' }, progTxt, el('div', { class: 'mini-prog' }, progBar)),
+      deadline ? crono : null,
       btnFin);
     rootEl.appendChild(doc);
     rootEl.appendChild(barra);
@@ -192,6 +274,30 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
       });
     }
     updateProgress();
+
+    // Cuenta atrás: aviso a 5 minutos y entrega automática al agotarse
+    if (deadline) {
+      let warned = false;
+      const tick = () => {
+        const left = deadline - Date.now();
+        if (left <= 0) {
+          clearInterval(cronoTimer);
+          if (!finished) {
+            toast(t('player.autoSubmitted'), 'error');
+            finish(doc, barra, btnFin);
+          }
+          return;
+        }
+        crono.textContent = '⏱ ' + formatCountdown(left);
+        crono.classList.toggle('urgente', left < 5 * 60000);
+        if (!warned && left <= 5 * 60000) {
+          warned = true;
+          toast(t('player.timeWarning', { min: Math.ceil(left / 60000) }), 'error');
+        }
+      };
+      cronoTimer = setInterval(tick, 1000);
+      tick();
+    }
 
     let saveTimer = null;
     function scheduleSave() {
@@ -220,6 +326,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
 
   async function finish(doc, barra, btnFin) {
     finished = true;
+    clearInterval(cronoTimer);
     btnFin.disabled = true;
 
     const resultados = [];
@@ -254,6 +361,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
 
     if (!preview) {
       datos.attempts += 1;
+      datos.startedAt = 0;
       datos.lastEntrega = {
         nota: entrega.nota, total: entrega.total, codigo: entrega.codigo, fecha: entrega.fecha
       };
@@ -270,7 +378,9 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     if (preview || attemptsLeft() > 0) {
       acciones.appendChild(el('button', {
         class: 'btn', onclick: () => {
+          if (!preview && accessState() === 'after') { showClosed(); return; }
           datos.seed = (Math.random() * 2 ** 31) | 0;
+          datos.startedAt = 0;
           state = null;
           if (!preview) saveState();
           startActivity(datos.alumno, datos.grupo);
@@ -316,6 +426,8 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
 
   return {
     destroy() {
+      clearInterval(cronoTimer);
+      clearInterval(aperturaTimer);
       urls.forEach(u => URL.revokeObjectURL(u));
       urls.clear();
       rootEl.textContent = '';

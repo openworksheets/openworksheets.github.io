@@ -53,6 +53,23 @@
       <label class="f-label" for="ajIntentos" data-i18n="dlg.settings.attempts">Intentos permitidos (0 = ilimitados)</label>
       <input type="number" id="ajIntentos" min="0" step="1" value="0">
       <p><small data-i18n="dlg.settings.attemptsHint">El límite de intentos se guarda en el navegador del alumno: es orientativo, no una medida de seguridad.</small></p>
+      <label class="f-label" data-i18n="dlg.access.section">Restricciones de acceso</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label class="f-label" for="ajDesde" data-i18n="dlg.access.desde">Disponible desde (opcional)</label>
+          <input type="datetime-local" id="ajDesde">
+        </div>
+        <div>
+          <label class="f-label" for="ajHasta" data-i18n="dlg.access.hasta">Disponible hasta (opcional)</label>
+          <input type="datetime-local" id="ajHasta">
+        </div>
+      </div>
+      <label class="check-row"><input type="checkbox" id="ajAutoEntrega"> <span data-i18n="dlg.access.autoEntrega">Entregar automáticamente si el plazo termina mientras el alumno responde</span></label>
+      <label class="f-label" for="ajTiempo" data-i18n="dlg.access.tiempo">Tiempo límite por intento en minutos (0 = sin límite)</label>
+      <input type="number" id="ajTiempo" min="0" step="1" value="0">
+      <label class="f-label" for="ajPassword" data-i18n="dlg.access.password">Contraseña de acceso (vacía = sin contraseña)</label>
+      <input type="text" id="ajPassword" maxlength="60" autocomplete="off">
+      <p><small data-i18n="dlg.access.hint">Las restricciones se aplican en el navegador del alumno: ayudan a organizar la actividad, no son una medida de seguridad.</small></p>
       <div class="dlg-buttons">
         <button class="btn" value="cancel" data-i18n="dlg.cancel">Cancelar</button>
         <button class="btn primary" value="ok" data-i18n="dlg.save">Guardar</button>

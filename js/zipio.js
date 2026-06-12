@@ -69,6 +69,13 @@ export function newManifest() {
       shuffle: false,
       maxAttempts: 0
     },
+    access: {
+      desde: '',
+      hasta: '',
+      autoEntrega: false,
+      tiempoLimite: 0,
+      password: ''
+    },
     pages: []
   };
 }

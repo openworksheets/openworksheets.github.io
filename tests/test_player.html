@@ -32,6 +32,7 @@ function makeImage() {
 async function main() {
   try {
     localStorage.clear();
+    localStorage.setItem('wpf-lang', 'es'); // el test comprueba textos en español
     const blob = await makeImage();
     const manifest = {
       format: 'workpdf-ficha', version: 1, id: 'wpftest1',
@@ -121,7 +122,55 @@ async function main() {
     log('botón reintentar (queda 1 intento):', retry);
 
     const pass = nota === '5 / 7' && marks.ok === 2 && marks.partial === 2 && marks.ko === 0 && codigo && retry;
-    log(pass ? '__TEST_OK__' : '__TEST_FAIL__');
+
+    // ---- Restricciones de acceso ----
+    root.textContent = '';
+    localStorage.removeItem('workpdf:al:wpftest1');
+
+    // Plazo cerrado
+    let m2 = { ...manifest, access: { hasta: '2000-01-01T00:00' } };
+    let p2 = mountPlayer(root, { manifest: m2, files });
+    const cerrado = root.textContent.includes('Plazo finalizado');
+    log('plazo cerrado detectado:', cerrado);
+    p2.destroy();
+
+    // Aún no disponible (cuenta atrás)
+    m2 = { ...manifest, access: { desde: '2099-01-01T00:00' } };
+    p2 = mountPlayer(root, { manifest: m2, files });
+    const pendiente = root.textContent.includes('Todavía no disponible');
+    log('apertura futura detectada:', pendiente);
+    p2.destroy();
+
+    // Contraseña
+    m2 = { ...manifest, access: { password: 'clave123' } };
+    p2 = mountPlayer(root, { manifest: m2, files });
+    const inputs = root.querySelectorAll('input');
+    const passInput = root.querySelector('input[type="password"]');
+    inputs[0].value = 'Alumno Pass';
+    passInput.value = 'mala';
+    root.querySelector('form button').click();
+    await sleep(50);
+    const sigueEnInicio = !!root.querySelector('input[type="password"]');
+    passInput.value = 'clave123';
+    root.querySelector('form button').click();
+    await sleep(50);
+    const entro = !root.querySelector('input[type="password"]');
+    log('contraseña incorrecta bloquea:', sigueEnInicio, '| correcta entra:', entro);
+    p2.destroy();
+
+    // Tiempo límite: cronómetro visible
+    localStorage.removeItem('workpdf:al:wpftest1');
+    m2 = { ...manifest, settings: { ...manifest.settings, maxAttempts: 0 }, access: { tiempoLimite: 10 } };
+    p2 = mountPlayer(root, { manifest: m2, files });
+    root.querySelectorAll('input')[0].value = 'Alumno Crono';
+    root.querySelector('form button').click();
+    await sleep(1200);
+    const cronoTxt = root.querySelector('.al-crono')?.textContent || '';
+    log('cronómetro visible:', /⏱ 00:09:5\d/.test(cronoTxt), '|', cronoTxt);
+    p2.destroy();
+
+    const passAcceso = cerrado && pendiente && sigueEnInicio && entro && /⏱/.test(cronoTxt);
+    log(pass && passAcceso ? '__TEST_OK__' : '__TEST_FAIL__');
   } catch (e) {
     log('__TEST_FAIL__', e.message, e.stack);
   }

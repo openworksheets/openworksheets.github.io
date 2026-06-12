@@ -953,6 +953,14 @@ dialog .dlg-buttons {
   max-width: 280px;
 }
 .al-barra .mini-prog > div { height: 100%; background: var(--papel); width: 0%; transition: width 0.2s; }
+.al-crono {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  font-size: 0.95rem;
+}
+.al-crono.urgente { color: #ff8a76; animation: cronoPulso 1s ease-in-out infinite; }
+@keyframes cronoPulso { 50% { opacity: 0.55; } }
 
 /* Resultados */
 .al-resultado {
