@@ -196,7 +196,11 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
         el('div', { class: 'icono' }, '✕'),
         el('h1', {}, t('player.noAttempts')),
         el('p', {}, t('player.noAttemptsDesc')),
-        last ? el('p', {}, t('player.lastScore', { nota: formatNum(last.nota), total: formatNum(last.total), code: last.codigo })) : null,
+        last
+          ? el('p', {}, settings.showScore !== false
+              ? t('player.lastScore', { nota: formatNum(last.nota), total: formatNum(last.total), code: last.codigo })
+              : `${t('entrega.code')}: ${last.codigo}`)
+          : null,
         last ? el('div', { style: 'display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px' },
           el('button', { class: 'btn', onclick: () => downloadEntrega(last) }, t('player.downloadBtn')),
           el('button', { class: 'btn', onclick: () => copyResumen(last) }, t('player.copyBtn'))) : null)));
@@ -434,7 +438,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
   }
 
   async function copyResumen(entrega) {
-    const ok = await copyToClipboard(entregaResumen(entrega));
+    const ok = await copyToClipboard(entregaResumen(entrega, { includeScore: settings.showScore !== false }));
     toast(ok ? t('toast.resumeCopied') : t('toast.resumeError'), ok ? 'ok' : 'error');
   }
 

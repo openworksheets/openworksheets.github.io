@@ -69,24 +69,30 @@ export function entregaFilename(data) {
 }
 
 // Resumen de texto para pegar en Classroom, correo, etc.
-export function entregaResumen(data) {
+// Con includeScore false (la ficha oculta la nota al alumno) se omiten
+// la puntuación y el recuento de aciertos; el docente la obtiene del
+// archivo de entrega.
+export function entregaResumen(data, { includeScore = true } = {}) {
   const lines = [
     `${t('entrega.sheet')}: ${data.titulo}`,
     `${t('entrega.student')}: ${data.alumno}` + (data.grupo ? ` (${data.grupo})` : ''),
     `${t('entrega.date')}: ${fechaHora(new Date(data.fecha))}`,
-    `${t('entrega.score')}: ${formatNum(data.nota)} / ${formatNum(data.total)}  (${formatNum(data.nota10)} ${t('entrega.over10')})`,
-    `${t('entrega.code')}: ${data.codigo}`,
-    ''
-  ];
-  // mapa resultado (almacenado en español) → claves i18n
-  const singKey = { correcta: 'entrega.correct', incorrecta: 'entrega.incorrect', parcial: 'entrega.partial', 'en blanco': 'entrega.blank' };
-  const plurKey = { correcta: 'entrega.corrects', incorrecta: 'entrega.incorrects', parcial: 'entrega.partials', 'en blanco': 'entrega.blanks' };
-  const porTipo = {};
-  for (const r of data.respuestas) {
-    porTipo[r.resultado] = (porTipo[r.resultado] || 0) + 1;
+    includeScore
+      ? `${t('entrega.score')}: ${formatNum(data.nota)} / ${formatNum(data.total)}  (${formatNum(data.nota10)} ${t('entrega.over10')})`
+      : null,
+    `${t('entrega.code')}: ${data.codigo}`
+  ].filter(l => l !== null);
+  if (includeScore) {
+    // mapa resultado (almacenado en español) → claves i18n
+    const singKey = { correcta: 'entrega.correct', incorrecta: 'entrega.incorrect', parcial: 'entrega.partial', 'en blanco': 'entrega.blank' };
+    const plurKey = { correcta: 'entrega.corrects', incorrecta: 'entrega.incorrects', parcial: 'entrega.partials', 'en blanco': 'entrega.blanks' };
+    const porTipo = {};
+    for (const r of data.respuestas || []) {
+      porTipo[r.resultado] = (porTipo[r.resultado] || 0) + 1;
+    }
+    lines.push('', t('entrega.results') + ': ' + Object.entries(porTipo)
+      .map(([k, v]) => `${v} ${t(v === 1 ? (singKey[k] || k) : (plurKey[k] || k))}`).join(', '));
   }
-  lines.push(t('entrega.results') + ': ' + Object.entries(porTipo)
-    .map(([k, v]) => `${v} ${t(v === 1 ? (singKey[k] || k) : (plurKey[k] || k))}`).join(', '));
   return lines.join('\n');
 }
 
