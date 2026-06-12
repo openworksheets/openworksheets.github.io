@@ -807,15 +807,6 @@ const configForms = {
     const cfg = field.config;
     cont.appendChild(el('div', { class: 'zona-bloque' },
       t('cfg.dragdropZones', { n: cfg.zones.length })));
-    const btnZona = el('button', { class: 'btn small add-row', type: 'button' }, t('cfg.drawZone'));
-    btnZona.addEventListener('click', () => {
-      activeTool = 'zone';
-      refreshPaletteState();
-      canvas.classList.add('drawing');
-      toast(t('toast.drawZoneTip'));
-    });
-    cont.appendChild(btnZona);
-
     optionListEditor(cont, {
       label: t('cfg.zoneLabels'),
       items: () => cfg.zones,
