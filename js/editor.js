@@ -1432,6 +1432,7 @@ function updateCryptoSettingsUi() {
 function openSettings() {
   const dlg = $('#dlgAjustes');
   fillTimeSelects();
+  $('#ajTitulo').value = manifest.title || '';
   $('#ajAutor').value = manifest.author || '';
   $('#ajInstrucciones').value = manifest.instructions || '';
   $('#ajNota').checked = manifest.settings.showScore !== false;
@@ -1471,6 +1472,9 @@ $('#dlgAjustes form')?.addEventListener('submit', ev => {
 
 $('#dlgAjustes')?.addEventListener('close', () => {
   if ($('#dlgAjustes').returnValue !== 'ok') return;
+  const newTitle = $('#ajTitulo').value.trim();
+  manifest.title = newTitle;
+  titleInput.value = newTitle;
   manifest.author = $('#ajAutor').value.trim();
   manifest.instructions = $('#ajInstrucciones').value.trim();
   manifest.settings.showScore = $('#ajNota').checked;

@@ -199,6 +199,7 @@ const STRINGS = {
     // Editor — diálogo ajustes
     'dlg.settings.title': 'Ajustes de la ficha',
     'dlg.settings.basic': 'Datos básicos',
+    'dlg.settings.fichaTitle': 'Título de la ficha',
     'dlg.settings.author': 'Autor/a',
     'dlg.settings.instructions': 'Instrucciones para el alumnado',
     'dlg.settings.instructionsPlaceholder': 'Lee el documento y completa los campos…',
@@ -577,6 +578,7 @@ const STRINGS = {
 
     'dlg.settings.title': 'Worksheet settings',
     'dlg.settings.basic': 'Basic details',
+    'dlg.settings.fichaTitle': 'Worksheet title',
     'dlg.settings.author': 'Author',
     'dlg.settings.instructions': 'Instructions for students',
     'dlg.settings.instructionsPlaceholder': 'Read the document and complete the fields…',
@@ -962,6 +964,7 @@ const STRINGS = {
 
     'dlg.settings.title': 'Ajustos de la fitxa',
     'dlg.settings.basic': 'Dades bàsiques',
+    'dlg.settings.fichaTitle': 'Títol de la fitxa',
     'dlg.settings.author': 'Autor/a',
     'dlg.settings.instructions': 'Instruccions per a l\'alumnat',
     'dlg.settings.instructionsPlaceholder': 'Llegeix el document i completa els camps…',
@@ -1347,6 +1350,7 @@ const STRINGS = {
 
     'dlg.settings.title': 'Axustes da ficha',
     'dlg.settings.basic': 'Datos básicos',
+    'dlg.settings.fichaTitle': 'Título da ficha',
     'dlg.settings.author': 'Autor/a',
     'dlg.settings.instructions': 'Instrucións para o alumnado',
     'dlg.settings.instructionsPlaceholder': 'Le o documento e completa os campos…',
@@ -1732,6 +1736,7 @@ const STRINGS = {
 
     'dlg.settings.title': 'Fitxaren ezarpenak',
     'dlg.settings.basic': 'Oinarrizko datuak',
+    'dlg.settings.fichaTitle': 'Fitxaren izenburua',
     'dlg.settings.author': 'Egilea',
     'dlg.settings.instructions': 'Ikasleentzako argibideak',
     'dlg.settings.instructionsPlaceholder': 'Irakurri dokumentua eta bete eremuak…',
