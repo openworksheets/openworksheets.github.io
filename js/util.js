@@ -112,6 +112,30 @@ export function loadImageSize(blob) {
   });
 }
 
+export async function compressToBase64url(data) {
+  const json = JSON.stringify(data);
+  const cs = new CompressionStream('deflate-raw');
+  const writer = cs.writable.getWriter();
+  writer.write(new TextEncoder().encode(json));
+  writer.close();
+  const compressed = await new Response(cs.readable).arrayBuffer();
+  const bytes = new Uint8Array(compressed);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+export async function decompressFromBase64url(str) {
+  const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  const binary = atob(base64);
+  const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+  const ds = new DecompressionStream('deflate-raw');
+  const writer = ds.writable.getWriter();
+  writer.write(bytes);
+  writer.close();
+  return JSON.parse(await new Response(ds.readable).text());
+}
+
 export async function copyToClipboard(text) {
   try {
     await navigator.clipboard.writeText(text);

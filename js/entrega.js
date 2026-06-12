@@ -9,6 +9,7 @@
 import { shortCode, formatNum, fechaHora, slugify } from './util.js';
 import { fieldTypeName } from './fieldtypes.js';
 import { t } from './i18n.js';
+import { encryptSubmission, isEncryptedSubmission } from './submissionCrypto.js';
 
 const SALT = 'workpdf-entrega-v1';
 
@@ -26,7 +27,7 @@ function canonicalPayload(data) {
 }
 
 // resultados: [{ id, type, page, answer, earned, max, ok }]
-export async function buildEntrega({ manifest, alumno, grupo, resultados, earned, total }) {
+export async function buildEntregaData({ manifest, alumno, grupo, resultados, earned, total }) {
   const data = {
     formato: 'workpdf-entrega',
     version: 1,
@@ -52,7 +53,15 @@ export async function buildEntrega({ manifest, alumno, grupo, resultados, earned
   return data;
 }
 
+export async function buildEntrega({ manifest, alumno, grupo, resultados, earned, total }) {
+  const data = await buildEntregaData({ manifest, alumno, grupo, resultados, earned, total });
+  return encryptSubmission(data, manifest.submissionCrypto);
+}
+
 export async function verifyEntrega(data) {
+  if (isEncryptedSubmission(data)) {
+    return { valid: false, encrypted: true, reason: t('verify.encrypted') };
+  }
   if (!data || data.formato !== 'workpdf-entrega') {
     return { valid: false, reason: t('verify.notWorkpdf') };
   }
@@ -65,6 +74,9 @@ export async function verifyEntrega(data) {
 
 export function entregaFilename(data) {
   const fecha = (data.fecha || '').slice(0, 10);
+  if (isEncryptedSubmission(data)) {
+    return `entrega_cifrada_${slugify(data.alumno)}_${slugify(data.titulo)}_${fecha}.json`;
+  }
   return `entrega_${slugify(data.alumno)}_${slugify(data.titulo)}_${fecha}.json`;
 }
 
@@ -79,8 +91,7 @@ export function entregaResumen(data, { includeScore = true } = {}) {
     `${t('entrega.date')}: ${fechaHora(new Date(data.fecha))}`,
     includeScore
       ? `${t('entrega.score')}: ${formatNum(data.nota)} / ${formatNum(data.total)}  (${formatNum(data.nota10)} ${t('entrega.over10')})`
-      : null,
-    `${t('entrega.code')}: ${data.codigo}`
+      : null
   ].filter(l => l !== null);
   if (includeScore) {
     // mapa resultado (almacenado en español) → claves i18n

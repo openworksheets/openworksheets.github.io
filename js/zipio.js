@@ -64,10 +64,11 @@ export function newManifest() {
     instructions: '',
     lang: '',
     settings: {
-      showScore: true,
-      showCorrection: true,
+      showScore: false,
+      showCorrection: false,
       shuffle: false,
-      maxAttempts: 0
+      maxAttempts: 0,
+      encryptSubmissions: true
     },
     access: {
       desde: '',

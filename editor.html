@@ -46,44 +46,69 @@
   <dialog id="dlgAjustes">
     <form method="dialog">
       <h2 data-i18n="dlg.settings.title">Ajustes de la ficha</h2>
-      <label class="f-label" for="ajAutor" data-i18n="dlg.settings.author">Autor/a</label>
-      <input type="text" id="ajAutor" maxlength="80">
-      <label class="f-label" for="ajInstrucciones" data-i18n="dlg.settings.instructions">Instrucciones para el alumnado</label>
-      <textarea id="ajInstrucciones" rows="3" data-i18n-placeholder="dlg.settings.instructionsPlaceholder" placeholder="Lee el documento y completa los campos…"></textarea>
-      <label class="f-label" data-i18n="dlg.settings.correction">Corrección</label>
-      <label class="check-row"><input type="checkbox" id="ajNota"> <span data-i18n="dlg.settings.showScore">Mostrar la nota al alumno al finalizar</span></label>
-      <label class="check-row"><input type="checkbox" id="ajCorreccion"> <span data-i18n="dlg.settings.showCorrection">Mostrar la corrección detallada (aciertos y soluciones)</span></label>
-      <label class="check-row"><input type="checkbox" id="ajBarajar"> <span data-i18n="dlg.settings.shuffle">Barajar las opciones de las preguntas</span></label>
-      <label class="f-label" for="ajIntentos" data-i18n="dlg.settings.attempts">Intentos permitidos (0 = ilimitados)</label>
-      <input type="number" id="ajIntentos" min="0" step="1" value="0">
-      <p><small data-i18n="dlg.settings.attemptsHint">El límite de intentos se guarda en el navegador del alumno: es orientativo, no una medida de seguridad.</small></p>
-      <label class="f-label" data-i18n="dlg.access.section">Restricciones de acceso</label>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div>
-          <label class="f-label" for="ajDesdeFecha" data-i18n="dlg.access.desde">Disponible desde (opcional)</label>
-          <div class="fecha-hora">
-            <input type="date" id="ajDesdeFecha">
-            <select id="ajDesdeH"></select>
-            <span>:</span>
-            <select id="ajDesdeM"></select>
+      <div class="settings-grid">
+        <fieldset>
+          <legend data-i18n="dlg.settings.basic">Datos básicos</legend>
+          <label class="f-label" for="ajAutor" data-i18n="dlg.settings.author">Autor/a</label>
+          <input type="text" id="ajAutor" maxlength="80">
+          <label class="f-label" for="ajInstrucciones" data-i18n="dlg.settings.instructions">Instrucciones para el alumnado</label>
+          <textarea id="ajInstrucciones" rows="4" data-i18n-placeholder="dlg.settings.instructionsPlaceholder" placeholder="Lee el documento y completa los campos…"></textarea>
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="dlg.settings.correction">Corrección</legend>
+          <label class="check-row"><input type="checkbox" id="ajNota"> <span data-i18n="dlg.settings.showScore">Mostrar la nota al alumno al finalizar</span></label>
+          <label class="check-row"><input type="checkbox" id="ajCorreccion"> <span data-i18n="dlg.settings.showCorrection">Mostrar la corrección detallada (aciertos y soluciones)</span></label>
+          <label class="check-row"><input type="checkbox" id="ajBarajar"> <span data-i18n="dlg.settings.shuffle">Barajar las opciones de las preguntas</span></label>
+          <label class="f-label" for="ajIntentos" data-i18n="dlg.settings.attempts">Intentos permitidos (0 = ilimitados)</label>
+          <input type="number" id="ajIntentos" min="0" step="1" value="0">
+          <p><small data-i18n="dlg.settings.attemptsHint">El límite de intentos se guarda en el navegador del alumno: es orientativo, no una medida de seguridad.</small></p>
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="dlg.crypto.section">Privacidad de la entrega</legend>
+          <label class="check-row"><input type="checkbox" id="ajCifrarEntregas"> <span data-i18n="dlg.crypto.encryptSubmissions">Cifrar el JSON de entrega para el profesor</span></label>
+          <div id="ajCryptoPasswordBlock">
+            <label class="f-label" for="ajCryptoPassword" data-i18n="dlg.crypto.settingsPassword">Contraseña de cifrado</label>
+            <div class="password-row">
+              <input type="password" id="ajCryptoPassword" autocomplete="new-password">
+              <button type="button" class="pw-toggle" data-target="ajCryptoPassword" data-i18n-title="crypto.showPassword" title="Mostrar contraseña"><svg class="eye-show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
+            </div>
+            <p><small data-i18n="dlg.crypto.settingsHint">WorkPDF usará esta contraseña al exportar y no la volverá a pedir. No debe ser igual a la contraseña de acceso de los alumnos. Si olvidas esta contraseña, no podrás ver las entregas cifradas.</small></p>
           </div>
-        </div>
-        <div>
-          <label class="f-label" for="ajHastaFecha" data-i18n="dlg.access.hasta">Disponible hasta (opcional)</label>
-          <div class="fecha-hora">
-            <input type="date" id="ajHastaFecha">
-            <select id="ajHastaH"></select>
-            <span>:</span>
-            <select id="ajHastaM"></select>
+          <p id="ajCryptoDisabledWarning" class="settings-warning"><small data-i18n="dlg.crypto.disabledWarning">Si desactivas el cifrado, los alumnos descargarán entregas JSON normales. Podrán abrir el archivo con un editor de texto y ver respuestas, nota y corrección guardadas.</small></p>
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="dlg.access.section">Restricciones de acceso</legend>
+          <div class="settings-two">
+            <div>
+              <label class="f-label" for="ajDesdeFecha" data-i18n="dlg.access.desde">Disponible desde (opcional)</label>
+              <div class="fecha-hora">
+                <input type="date" id="ajDesdeFecha">
+                <select id="ajDesdeH"></select>
+                <span>:</span>
+                <select id="ajDesdeM"></select>
+              </div>
+            </div>
+            <div>
+              <label class="f-label" for="ajHastaFecha" data-i18n="dlg.access.hasta">Disponible hasta (opcional)</label>
+              <div class="fecha-hora">
+                <input type="date" id="ajHastaFecha">
+                <select id="ajHastaH"></select>
+                <span>:</span>
+                <select id="ajHastaM"></select>
+              </div>
+            </div>
           </div>
-        </div>
+          <label class="check-row"><input type="checkbox" id="ajAutoEntrega"> <span data-i18n="dlg.access.autoEntrega">Entregar automáticamente si el plazo termina mientras el alumno responde</span></label>
+          <label class="f-label" for="ajTiempo" data-i18n="dlg.access.tiempo">Tiempo límite por intento en minutos (0 = sin límite)</label>
+          <input type="number" id="ajTiempo" min="0" step="1" value="0">
+          <label class="f-label" for="ajPassword" data-i18n="dlg.access.password">Contraseña para que el alumno abra la ficha (vacía = sin contraseña)</label>
+          <div class="password-row">
+            <input type="password" id="ajPassword" maxlength="60" autocomplete="off">
+            <button type="button" class="pw-toggle" data-target="ajPassword" data-i18n-title="crypto.showPassword" title="Mostrar contraseña"><svg class="eye-show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
+          </div>
+          <p><small data-i18n="dlg.access.hint">Esta contraseña es solo para abrir la ficha. No debe ser igual a la contraseña de cifrado que protege las entregas. Las restricciones se aplican en el navegador del alumno: ayudan a organizar la actividad, no son una medida de seguridad.</small></p>
+        </fieldset>
       </div>
-      <label class="check-row"><input type="checkbox" id="ajAutoEntrega"> <span data-i18n="dlg.access.autoEntrega">Entregar automáticamente si el plazo termina mientras el alumno responde</span></label>
-      <label class="f-label" for="ajTiempo" data-i18n="dlg.access.tiempo">Tiempo límite por intento en minutos (0 = sin límite)</label>
-      <input type="number" id="ajTiempo" min="0" step="1" value="0">
-      <label class="f-label" for="ajPassword" data-i18n="dlg.access.password">Contraseña de acceso (vacía = sin contraseña)</label>
-      <input type="text" id="ajPassword" maxlength="60" autocomplete="off">
-      <p><small data-i18n="dlg.access.hint">Las restricciones se aplican en el navegador del alumno: ayudan a organizar la actividad, no son una medida de seguridad.</small></p>
       <div class="dlg-buttons">
         <button class="btn" value="cancel" data-i18n="dlg.cancel">Cancelar</button>
         <button class="btn primary" value="ok" data-i18n="dlg.save">Guardar</button>

@@ -9,9 +9,17 @@ import { exportFichaZip, importFichaZip, newManifest } from './zipio.js';
 import { buildShortLink, parseDriveId } from './drive.js';
 import { mountPlayer } from './player.js';
 import { t, getLang, applyI18n, initLangSelector } from './i18n.js';
+import { createSubmissionCrypto } from './submissionCrypto.js';
 
 applyI18n();
 initLangSelector();
+
+const EYE_SVG = '<svg class="eye-show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+function pwToggleBtn(title) {
+  const btn = el('button', { type: 'button', class: 'pw-toggle', title });
+  btn.innerHTML = EYE_SVG;
+  return btn;
+}
 
 // ---------- Estado ----------
 
@@ -24,6 +32,7 @@ let pendingAmNext = null;       // item que se dibujará automáticamente tras p
 let sel = null;                 // {kind:'field'|'zone'|'amitem', pageIndex, fieldId, zoneId?, amItemId?}
 let dirty = false;
 let preview = null;
+let submissionCryptoPassword = '';
 
 const urls = new Map();
 function fileUrl(path) {
@@ -36,6 +45,60 @@ const canvas = $('#canvas');
 const panel = $('#panel');
 const palette = $('#palette');
 const titleInput = $('#titulo');
+
+function askExportPassword() {
+  return new Promise(resolve => {
+    const dlg = el('dialog', { class: 'crypto-dialog' },
+      el('form', { method: 'dialog' },
+        el('h2', {}, t('crypto.exportTitle')),
+        el('p', {}, t('crypto.exportIntro')),
+        el('p', { class: 'warn' }, t('crypto.exportWarning')),
+        el('label', { class: 'f-label' }, t('crypto.exportPasswordLabel')),
+        el('div', { class: 'password-row' },
+          el('input', { type: 'password', autocomplete: 'new-password', required: '' }),
+          pwToggleBtn(t('crypto.showPassword'))),
+        el('label', { class: 'f-label' }, t('crypto.exportPasswordRepeatLabel')),
+        el('div', { class: 'password-row' },
+          el('input', { type: 'password', autocomplete: 'new-password', required: '' }),
+          pwToggleBtn(t('crypto.showPassword'))),
+        el('p', { class: 'crypto-error', hidden: '' }, t('crypto.passwordMismatch')),
+        el('div', { class: 'dlg-buttons' },
+          el('button', { class: 'btn', value: 'cancel', formnovalidate: '' }, t('dlg.cancel')),
+          el('button', { class: 'btn primary', value: 'ok' }, t('crypto.exportContinue')))));
+    const form = dlg.querySelector('form');
+    const inputs = dlg.querySelectorAll('input[type="password"]');
+    const error = dlg.querySelector('.crypto-error');
+    form.addEventListener('submit', ev => {
+      if (ev.submitter?.value !== 'ok') return;
+      if (inputs[0].value !== inputs[1].value) {
+        ev.preventDefault();
+        error.hidden = false;
+        inputs[1].focus();
+        return;
+      }
+    });
+    dlg.addEventListener('close', () => {
+      const pass = dlg.returnValue === 'ok' ? inputs[0].value : '';
+      dlg.remove();
+      resolve(pass);
+    });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    inputs[0].focus();
+  });
+}
+
+document.addEventListener('click', ev => {
+  const btn = ev.target.closest?.('.pw-toggle');
+  if (!btn) return;
+  const input = btn.dataset.target
+    ? document.getElementById(btn.dataset.target)
+    : btn.parentElement?.querySelector('input');
+  if (!input) return;
+  input.type = input.type === 'password' ? 'text' : 'password';
+  btn.classList.toggle('on', input.type === 'text');
+  btn.title = input.type === 'password' ? t('crypto.showPassword') : t('crypto.hidePassword');
+});
 
 function markDirty() { dirty = true; }
 
@@ -1358,6 +1421,14 @@ function getDateTime(prefix) {
   return fecha + 'T' + $('#' + prefix + 'H').value + ':' + $('#' + prefix + 'M').value;
 }
 
+function updateCryptoSettingsUi() {
+  const enabled = $('#ajCifrarEntregas').checked;
+  $('#ajCryptoPasswordBlock').hidden = !enabled;
+  $('#ajCryptoDisabledWarning').hidden = enabled;
+  $('#ajCryptoPassword').required = enabled;
+  $('#ajCryptoPassword').disabled = !enabled;
+}
+
 function openSettings() {
   const dlg = $('#dlgAjustes');
   fillTimeSelects();
@@ -1367,6 +1438,9 @@ function openSettings() {
   $('#ajCorreccion').checked = manifest.settings.showCorrection !== false;
   $('#ajBarajar').checked = Boolean(manifest.settings.shuffle);
   $('#ajIntentos').value = String(manifest.settings.maxAttempts || 0);
+  $('#ajCifrarEntregas').checked = manifest.settings.encryptSubmissions !== false;
+  $('#ajCryptoPassword').value = submissionCryptoPassword;
+  updateCryptoSettingsUi();
   const acc = manifest.access || {};
   setDateTime(acc.desde, 'ajDesde', '08', '00');
   setDateTime(acc.hasta, 'ajHasta', '23', '59');
@@ -1376,6 +1450,25 @@ function openSettings() {
   dlg.showModal();
 }
 
+$('#ajCifrarEntregas')?.addEventListener('change', updateCryptoSettingsUi);
+
+$('#dlgAjustes form')?.addEventListener('submit', ev => {
+  if (ev.submitter?.value !== 'ok') return;
+  const accessPassword = $('#ajPassword').value.trim();
+  const cryptoPassword = $('#ajCryptoPassword').value;
+  if ($('#ajCifrarEntregas').checked && !cryptoPassword) {
+    ev.preventDefault();
+    toast(t('crypto.passwordRequired'), 'error');
+    $('#ajCryptoPassword').focus();
+    return;
+  }
+  if ($('#ajCifrarEntregas').checked && accessPassword && cryptoPassword && accessPassword === cryptoPassword) {
+    ev.preventDefault();
+    toast(t('crypto.sameAsAccess'), 'error');
+    $('#ajCryptoPassword').focus();
+  }
+});
+
 $('#dlgAjustes')?.addEventListener('close', () => {
   if ($('#dlgAjustes').returnValue !== 'ok') return;
   manifest.author = $('#ajAutor').value.trim();
@@ -1384,6 +1477,9 @@ $('#dlgAjustes')?.addEventListener('close', () => {
   manifest.settings.showCorrection = $('#ajCorreccion').checked;
   manifest.settings.shuffle = $('#ajBarajar').checked;
   manifest.settings.maxAttempts = Math.max(0, parseInt($('#ajIntentos').value, 10) || 0);
+  manifest.settings.encryptSubmissions = $('#ajCifrarEntregas').checked;
+  submissionCryptoPassword = manifest.settings.encryptSubmissions ? $('#ajCryptoPassword').value : '';
+  if (!manifest.settings.encryptSubmissions) delete manifest.submissionCrypto;
   manifest.access = {
     desde: getDateTime('ajDesde'),
     hasta: getDateTime('ajHasta'),
@@ -1457,7 +1553,18 @@ async function exportZip() {
   manifest.lang = getLang();
   try {
     toast(t('toast.generating'));
-    const blob = await exportFichaZip({ manifest, files });
+    const exportManifest = JSON.parse(JSON.stringify(manifest));
+    if (exportManifest.settings?.encryptSubmissions !== false) {
+      if (!submissionCryptoPassword) {
+        toast(t('crypto.passwordRequired'), 'error');
+        openSettings();
+        return;
+      }
+      exportManifest.submissionCrypto = await createSubmissionCrypto(submissionCryptoPassword);
+    } else {
+      delete exportManifest.submissionCrypto;
+    }
+    const blob = await exportFichaZip({ manifest: exportManifest, files });
     downloadBlob(blob, slugify(manifest.title || 'ficha') + '.zip');
     dirty = false;
     toast(t('toast.exported'), 'ok');
@@ -1472,6 +1579,7 @@ async function openZipFile(file) {
     const ficha = await importFichaZip(file);
     manifest = ficha.manifest;
     files = ficha.files;
+    submissionCryptoPassword = '';
     urls.forEach(u => URL.revokeObjectURL(u));
     urls.clear();
     // Recalcular numeración de páginas para nuevas incorporaciones.

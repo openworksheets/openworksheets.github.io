@@ -86,11 +86,13 @@
       </div>
     </section>
 
-    <section class="card steps-box anim-in" style="margin-top:24px">
+    <section id="verifySection" class="card steps-box anim-in" style="margin-top:24px">
       <h2 data-i18n="index.verifyTitle">Ver y verificar una entrega</h2>
       <p data-i18n="index.verifyDesc">Abre el archivo .json que te ha enviado un alumno para ver su puntuación, las respuestas a cada pregunta y comprobar que el archivo no ha sido modificado.</p>
-      <button class="btn" id="btnVerificar" data-i18n="index.verifyBtn">Abrir archivo de entrega (.json)</button>
-      <input type="file" id="inputEntrega" accept=".json,application/json" style="display:none">
+      <button class="btn" id="btnVerificar" data-i18n="index.btnOpenEntregas">Abrir archivos de entrega (.json)</button>
+      <input type="file" id="inputEntrega" accept=".json,application/json" multiple style="display:none">
+      <p class="drop-hint" data-i18n="index.dropHint">También puedes arrastrar y soltar los archivos aquí.</p>
+      <div id="classTbl" style="display:none"></div>
       <div id="salidaVerificacion" class="link-out" style="display:none"></div>
     </section>
 

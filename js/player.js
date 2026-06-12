@@ -4,11 +4,12 @@
 //   ficha = { manifest, files: Map<ruta, Blob> }
 //   opts  = { preview: bool }
 
-import { el, toast, mulberry32, formatNum, downloadBlob, copyToClipboard, fechaHora, zoomControl } from './util.js';
+import { el, toast, mulberry32, formatNum, downloadBlob, copyToClipboard, compressToBase64url, fechaHora, zoomControl } from './util.js';
 import { isDecorField } from './fieldtypes.js';
 import { renderField } from './render.js';
 import { gradeField, expectedText } from './grading.js';
-import { buildEntrega, entregaFilename, entregaResumen } from './entrega.js';
+import { buildEntregaData, entregaFilename, entregaResumen } from './entrega.js';
+import { encryptSubmission } from './submissionCrypto.js';
 import { t } from './i18n.js';
 
 function formatCountdown(ms) {
@@ -198,12 +199,12 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
         el('p', {}, t('player.noAttemptsDesc')),
         last
           ? el('p', {}, settings.showScore !== false
-              ? t('player.lastScore', { nota: formatNum(last.nota), total: formatNum(last.total), code: last.codigo })
-              : `${t('entrega.code')}: ${last.codigo}`)
+              ? t('player.lastScore', { nota: formatNum(last.nota), total: formatNum(last.total) })
+              : null)
           : null,
         last ? el('div', { style: 'display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px' },
           el('button', { class: 'btn', onclick: () => downloadEntrega(last) }, t('player.downloadBtn')),
-          el('button', { class: 'btn', onclick: () => copyResumen(last) }, t('player.copyBtn'))) : null)));
+          el('button', { class: 'btn', disabled: settings.showScore === false || null, onclick: () => copyResumen(last) }, t('player.copyBtn'))) : null)));
   }
 
   // ---------- Actividad ----------
@@ -369,7 +370,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     });
     earned = Math.round(earned * 100) / 100;
 
-    const entrega = await buildEntrega({
+    const entrega = await buildEntregaData({
       manifest,
       alumno: datos.alumno,
       grupo: datos.grupo,
@@ -377,6 +378,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
       earned,
       total: totalPoints
     });
+    const entregaArchivo = await encryptSubmission(entrega, manifest.submissionCrypto);
 
     if (!preview) {
       datos.attempts += 1;
@@ -392,9 +394,13 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     const nota10 = entrega.nota10;
     const showScore = settings.showScore !== false;
     const acciones = el('div', { class: 'acciones' });
-    acciones.appendChild(el('button', { class: 'btn dark', onclick: () => downloadEntrega(entrega) }, t('player.downloadBtn')));
-    acciones.appendChild(el('button', { class: 'btn', onclick: () => copyResumen(entrega) }, t('player.copyBtn')));
-    acciones.appendChild(el('button', { class: 'btn', onclick: () => window.print() }, t('player.printBtn')));
+    acciones.appendChild(el('button', { class: 'btn dark', onclick: () => downloadEntrega(entregaArchivo) }, t('player.downloadBtn')));
+    acciones.appendChild(el('button', { class: 'btn', onclick: () => shareEntrega(entregaArchivo) }, t('player.shareBtn')));
+    const copyBtn = el('button', { class: 'btn', onclick: () => copyResumen(entrega) }, t('player.copyBtn'));
+    const printBtn = el('button', { class: 'btn', onclick: () => window.print() }, t('player.printBtn'));
+    if (!showScore) { copyBtn.disabled = true; printBtn.disabled = true; }
+    acciones.appendChild(copyBtn);
+    acciones.appendChild(printBtn);
     if (preview || attemptsLeft() > 0) {
       acciones.appendChild(el('button', {
         class: 'btn', onclick: () => {
@@ -414,12 +420,11 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
       showScore
         ? el('div', { class: 'notaza' + (totalPoints > 0 && entrega.nota / totalPoints >= 0.5 ? ' bien' : '') },
             `${formatNum(entrega.nota)} / ${formatNum(entrega.total)}`)
-        : el('p', {}, t('player.teacherCheck')),
+        : (() => { const p = el('p'); p.innerHTML = t('player.teacherCheck'); return p; })(),
       showScore ? el('div', { class: 'detalle' }, t('player.equiv', { nota: formatNum(nota10) })) : null,
       el('div', { class: 'detalle' },
-        `${datos.alumno}${datos.grupo ? ' · ' + datos.grupo : ''} · ${fechaHora(new Date(entrega.fecha))} · ${t('entrega.code')}: `,
-        el('span', { class: 'codigo' }, entrega.codigo)),
-      el('p', { class: 'al-info', style: 'margin-top:12px' }, t('player.submissionInfo')),
+        `${datos.alumno}${datos.grupo ? ' · ' + datos.grupo : ''} · ${fechaHora(new Date(entrega.fecha))}`),
+      (() => { const p = el('p', { class: 'al-info', style: 'margin-top:12px' }); p.innerHTML = t('player.submissionInfo'); return p; })(),
       acciones);
 
     if (showScore && totalPoints > 0) {
@@ -428,6 +433,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     }
 
     doc.insertBefore(tarjeta, doc.firstChild);
+    doc.classList.add('al-entregado');
     barra.remove();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -435,6 +441,18 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
   function downloadEntrega(entrega) {
     const blob = new Blob([JSON.stringify(entrega, null, 2)], { type: 'application/json' });
     downloadBlob(blob, entregaFilename(entrega));
+  }
+
+  async function shareEntrega(entregaArchivo) {
+    try {
+      const encoded = await compressToBase64url(entregaArchivo);
+      const indexUrl = new URL('./index.html', window.location.href);
+      indexUrl.hash = 'e=' + encoded;
+      const ok = await copyToClipboard(indexUrl.href);
+      toast(ok ? t('toast.shareUrlCopied') : t('toast.shareUrlError'), ok ? 'ok' : 'error');
+    } catch {
+      toast(t('toast.shareUrlError'), 'error');
+    }
   }
 
   async function copyResumen(entrega) {
