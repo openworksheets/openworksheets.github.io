@@ -109,7 +109,7 @@ export const FIELD_TYPES = {
 export const FIELD_ORDER = [
   'text', 'number', 'single', 'truefalse', 'multi',
   'select', 'gaps', 'match', 'order', 'dragdrop',
-  'label', 'cover'
+  'label', 'cover', 'image'
 ];
 
 export function isDecorField(type) {
