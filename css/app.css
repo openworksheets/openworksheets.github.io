@@ -334,6 +334,13 @@ dialog .dlg-buttons {
   margin: 10px 0;
 }
 
+/* ---------- Fecha + hora (restricciones de acceso) ---------- */
+
+.fecha-hora { display: flex; align-items: center; gap: 4px; }
+.fecha-hora input[type='date'] { flex: 1; min-width: 0; }
+.fecha-hora select { width: auto; padding: 8px 4px; }
+.fecha-hora span { font-weight: 700; }
+
 /* ---------- Verificación de entrega ---------- */
 
 .verify-card { font-family: inherit; font-size: 0.88rem; }

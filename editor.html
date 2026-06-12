@@ -56,12 +56,22 @@
       <label class="f-label" data-i18n="dlg.access.section">Restricciones de acceso</label>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div>
-          <label class="f-label" for="ajDesde" data-i18n="dlg.access.desde">Disponible desde (opcional)</label>
-          <input type="datetime-local" id="ajDesde">
+          <label class="f-label" for="ajDesdeFecha" data-i18n="dlg.access.desde">Disponible desde (opcional)</label>
+          <div class="fecha-hora">
+            <input type="date" id="ajDesdeFecha">
+            <select id="ajDesdeH"></select>
+            <span>:</span>
+            <select id="ajDesdeM"></select>
+          </div>
         </div>
         <div>
-          <label class="f-label" for="ajHasta" data-i18n="dlg.access.hasta">Disponible hasta (opcional)</label>
-          <input type="datetime-local" id="ajHasta">
+          <label class="f-label" for="ajHastaFecha" data-i18n="dlg.access.hasta">Disponible hasta (opcional)</label>
+          <div class="fecha-hora">
+            <input type="date" id="ajHastaFecha">
+            <select id="ajHastaH"></select>
+            <span>:</span>
+            <select id="ajHastaM"></select>
+          </div>
         </div>
       </div>
       <label class="check-row"><input type="checkbox" id="ajAutoEntrega"> <span data-i18n="dlg.access.autoEntrega">Entregar automáticamente si el plazo termina mientras el alumno responde</span></label>

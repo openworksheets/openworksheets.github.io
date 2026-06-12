@@ -801,8 +801,39 @@ function renderFieldList() {
 
 // ---------- Ajustes ----------
 
+// Selectores de hora/minutos (los datetime-local obligan a teclear la hora en Firefox)
+function fillTimeSelects() {
+  const pad = n => String(n).padStart(2, '0');
+  for (const id of ['ajDesdeH', 'ajHastaH']) {
+    const sel = $('#' + id);
+    if (sel.options.length) continue;
+    for (let h = 0; h < 24; h++) sel.add(new Option(pad(h), pad(h)));
+  }
+  for (const id of ['ajDesdeM', 'ajHastaM']) {
+    const sel = $('#' + id);
+    if (sel.options.length) continue;
+    for (let m = 0; m < 60; m += 5) sel.add(new Option(pad(m), pad(m)));
+  }
+}
+
+function setDateTime(value, prefix, defH, defM) {
+  const [fecha, hora] = (value || '').split('T');
+  $('#' + prefix + 'Fecha').value = fecha || '';
+  const [h, m] = (hora || defH + ':' + defM).split(':');
+  $('#' + prefix + 'H').value = h;
+  // Redondear el minuto al paso de 5 del desplegable
+  $('#' + prefix + 'M').value = String(Math.min(55, Math.round(parseInt(m, 10) / 5) * 5)).padStart(2, '0');
+}
+
+function getDateTime(prefix) {
+  const fecha = $('#' + prefix + 'Fecha').value;
+  if (!fecha) return '';
+  return fecha + 'T' + $('#' + prefix + 'H').value + ':' + $('#' + prefix + 'M').value;
+}
+
 function openSettings() {
   const dlg = $('#dlgAjustes');
+  fillTimeSelects();
   $('#ajAutor').value = manifest.author || '';
   $('#ajInstrucciones').value = manifest.instructions || '';
   $('#ajNota').checked = manifest.settings.showScore !== false;
@@ -810,8 +841,8 @@ function openSettings() {
   $('#ajBarajar').checked = Boolean(manifest.settings.shuffle);
   $('#ajIntentos').value = String(manifest.settings.maxAttempts || 0);
   const acc = manifest.access || {};
-  $('#ajDesde').value = acc.desde || '';
-  $('#ajHasta').value = acc.hasta || '';
+  setDateTime(acc.desde, 'ajDesde', '08', '00');
+  setDateTime(acc.hasta, 'ajHasta', '23', '55');
   $('#ajAutoEntrega').checked = Boolean(acc.autoEntrega);
   $('#ajTiempo').value = String(acc.tiempoLimite || 0);
   $('#ajPassword').value = acc.password || '';
@@ -827,8 +858,8 @@ $('#dlgAjustes')?.addEventListener('close', () => {
   manifest.settings.shuffle = $('#ajBarajar').checked;
   manifest.settings.maxAttempts = Math.max(0, parseInt($('#ajIntentos').value, 10) || 0);
   manifest.access = {
-    desde: $('#ajDesde').value || '',
-    hasta: $('#ajHasta').value || '',
+    desde: getDateTime('ajDesde'),
+    hasta: getDateTime('ajHasta'),
     autoEntrega: $('#ajAutoEntrega').checked,
     tiempoLimite: Math.max(0, parseInt($('#ajTiempo').value, 10) || 0),
     password: $('#ajPassword').value.trim()
