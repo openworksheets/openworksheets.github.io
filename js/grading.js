@@ -110,6 +110,18 @@ const graders = {
     return { ratio: hits / items.length };
   },
 
+  arrowmatch(cfg, answer) {
+    const pairs = cfg.pairs || [];
+    const given = Array.isArray(answer) ? answer : [];
+    if (!pairs.length) return { ratio: 0, blank: true };
+    if (!given.length) return { ratio: 0, blank: true };
+    let hits = 0;
+    pairs.forEach(p => {
+      if (given.some(c => c.from === p.from && c.to === p.to)) hits++;
+    });
+    return { ratio: hits / pairs.length };
+  },
+
   dragdrop(cfg, answer) {
     const zones = cfg.zones || [];
     const given = answer && typeof answer === 'object' ? answer : {};
@@ -144,6 +156,12 @@ export function expectedText(field) {
     case 'gaps': return parseGaps(cfg.text || '').filter(s => s.kind === 'gap').map(g => g.answers[0]).join(', ');
     case 'match': return (cfg.pairs || []).map(p => `${p.left} → ${p.right}`).join(' · ');
     case 'order': return (cfg.items || []).join(' → ');
+    case 'arrowmatch': return (cfg.pairs || []).map(p => {
+      const items = cfg.items || [];
+      const from = items.find(i => i.id === p.from);
+      const to   = items.find(i => i.id === p.to);
+      return `${from?.label || '🖼'} → ${to?.label || '🖼'}`;
+    }).join(', ');
     case 'dragdrop': return (cfg.zones || []).map(z => {
       const ans = Array.isArray(z.answers) && z.answers.length ? z.answers : z.answer ? [z.answer] : [];
       return ans.join('+');

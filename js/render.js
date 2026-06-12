@@ -529,6 +529,161 @@ const renderers = {
         });
       }
     };
+  },
+
+  arrowmatch(field, root, ctx) {
+    const cfg = field.config || {};
+    const allItems = cfg.items || [];
+    const leftItems = allItems.filter(i => i.side === 'left');
+    const rightItems = allItems.filter(i => i.side === 'right');
+    const svgNS = 'http://www.w3.org/2000/svg';
+
+    let connections = []; // [{from, to}]
+    let pendingFrom = null;
+    let disabled = false;
+
+    const wrap = el('div', { class: 'wpf-arrowmatch' });
+    root.appendChild(wrap);
+
+    const leftCol  = el('div', { class: 'wpf-am-col wpf-am-left-col'  });
+    const rightCol = el('div', { class: 'wpf-am-col wpf-am-right-col' });
+    wrap.appendChild(leftCol);
+    wrap.appendChild(el('div', { class: 'wpf-am-gap' }));
+    wrap.appendChild(rightCol);
+
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('class', 'wpf-am-svg');
+    wrap.appendChild(svg);
+
+    const dotMap = new Map(); // id → dot element
+
+    function dotCenter(id) {
+      const dot = dotMap.get(id);
+      if (!dot) return null;
+      const wr = wrap.getBoundingClientRect();
+      const dr = dot.getBoundingClientRect();
+      if (!wr.width) return null;
+      return { x: dr.left + dr.width / 2 - wr.left, y: dr.top + dr.height / 2 - wr.top };
+    }
+
+    function redraw() {
+      const wr = wrap.getBoundingClientRect();
+      svg.setAttribute('width', wr.width || 0);
+      svg.setAttribute('height', wr.height || 0);
+      svg.textContent = '';
+
+      function drawLine(fromId, toId, extraClass) {
+        const f = dotCenter(fromId), t2 = dotCenter(toId);
+        if (!f || !t2) return;
+        const cx = (f.x + t2.x) / 2;
+        const d = `M${f.x},${f.y} C${cx},${f.y} ${cx},${t2.y} ${t2.x},${t2.y}`;
+        const vis = document.createElementNS(svgNS, 'path');
+        vis.setAttribute('d', d);
+        vis.setAttribute('class', 'wpf-am-line' + (extraClass ? ' ' + extraClass : ''));
+        vis.setAttribute('data-from', fromId);
+        vis.setAttribute('data-to', toId);
+        svg.appendChild(vis);
+        // wide hit area on top (pointer-events en atributo SVG para no heredar none del padre)
+        const hit = document.createElementNS(svgNS, 'path');
+        hit.setAttribute('d', d);
+        hit.setAttribute('class', 'wpf-am-hit');
+        hit.setAttribute('pointer-events', 'stroke');
+        hit.addEventListener('click', e => {
+          if (disabled) return;
+          e.stopPropagation();
+          connections = connections.filter(c => !(c.from === fromId && c.to === toId));
+          pendingFrom = null;
+          wrap.classList.remove('am-pending');
+          updateDots(); redraw(); notify(ctx);
+        });
+        svg.appendChild(hit);
+      }
+
+      connections.forEach(c => drawLine(c.from, c.to, ''));
+    }
+
+    function updateDots() {
+      dotMap.forEach((dot, id) => {
+        dot.classList.toggle('am-dot-active', id === pendingFrom);
+        dot.classList.toggle('am-dot-connected',
+          connections.some(c => c.from === id || c.to === id));
+      });
+    }
+
+    function handleDotClick(item) {
+      if (disabled) return;
+      if (item.side === 'left') {
+        if (pendingFrom === item.id) {
+          pendingFrom = null; wrap.classList.remove('am-pending');
+        } else {
+          connections = connections.filter(c => c.from !== item.id);
+          pendingFrom = item.id; wrap.classList.add('am-pending');
+        }
+        updateDots(); redraw();
+      } else {
+        if (!pendingFrom) return;
+        connections = connections.filter(c => c.to !== item.id);
+        connections.push({ from: pendingFrom, to: item.id });
+        pendingFrom = null; wrap.classList.remove('am-pending');
+        updateDots(); redraw(); notify(ctx);
+      }
+    }
+
+    function makeItem(item) {
+      const div = el('div', { class: 'wpf-am-item' });
+      const content = el('div', { class: 'wpf-am-content' });
+      if (item.src && ctx.fileUrl) {
+        content.appendChild(el('img', { src: ctx.fileUrl(item.src), class: 'wpf-am-img', alt: item.label || '' }));
+      } else {
+        content.appendChild(el('span', { class: 'wpf-am-text' }, item.label || ''));
+      }
+      div.appendChild(content);
+      const dot = el('div', { class: 'wpf-am-dot' });
+      div.appendChild(dot);
+      dotMap.set(item.id, dot);
+      dot.addEventListener('click', e => { e.stopPropagation(); handleDotClick(item); });
+      return div;
+    }
+
+    if (!leftItems.length && !rightItems.length) {
+      wrap.appendChild(el('p', { class: 'wpf-am-empty' }, t('render.amEmpty')));
+    }
+    leftItems.forEach(item => leftCol.appendChild(makeItem(item)));
+    rightItems.forEach(item => rightCol.appendChild(makeItem(item)));
+
+    const ro = new ResizeObserver(redraw);
+    ro.observe(wrap);
+    requestAnimationFrame(redraw);
+
+    return {
+      getAnswer: () => connections.slice(),
+      setAnswer: v => {
+        connections = Array.isArray(v) ? v.filter(c => c.from && c.to) : [];
+        updateDots(); requestAnimationFrame(redraw);
+      },
+      isAnswered: () => connections.length > 0,
+      setDisabled: b => { disabled = b; wrap.classList.toggle('am-disabled', b); },
+      markDetail() {
+        // color existing lines
+        svg.querySelectorAll('.wpf-am-line').forEach(line => {
+          const from = line.getAttribute('data-from');
+          const to   = line.getAttribute('data-to');
+          const ok   = (cfg.pairs || []).some(p => p.from === from && p.to === to);
+          line.classList.add(ok ? 'am-line-ok' : 'am-line-ko');
+        });
+        // dashed lines for missing correct pairs
+        (cfg.pairs || []).forEach(pair => {
+          if (connections.some(c => c.from === pair.from && c.to === pair.to)) return;
+          const f = dotCenter(pair.from), t2 = dotCenter(pair.to);
+          if (!f || !t2) return;
+          const cx = (f.x + t2.x) / 2;
+          const miss = document.createElementNS(svgNS, 'path');
+          miss.setAttribute('d', `M${f.x},${f.y} C${cx},${f.y} ${cx},${t2.y} ${t2.x},${t2.y}`);
+          miss.setAttribute('class', 'wpf-am-line am-line-missing');
+          svg.insertBefore(miss, svg.firstChild);
+        });
+      }
+    };
   }
 };
 

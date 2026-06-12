@@ -887,6 +887,97 @@ const configForms = {
     });
   },
 
+  arrowmatch(cont, field) {
+    const cfg = field.config;
+    if (!Array.isArray(cfg.items))  cfg.items = [];
+    if (!Array.isArray(cfg.pairs))  cfg.pairs = [];
+
+    function itemLabel(item) {
+      return item.src ? '🖼' : (item.label || '?');
+    }
+
+    function renderSide(side, sectionLabel, addLabel) {
+      cont.appendChild(el('label', { class: 'f-label' }, sectionLabel));
+      const sideItems = cfg.items.filter(i => i.side === side);
+      sideItems.forEach(item => {
+        const row = el('div', { class: 'am-item-row' });
+
+        if (item.src && files.has(item.src)) {
+          row.appendChild(el('img', { src: fileUrl(item.src), class: 'tok-thumb-xs', alt: '' }));
+          const clrBtn = el('button', { class: 'btn small', type: 'button' }, '✕🖼');
+          clrBtn.addEventListener('click', () => {
+            urls.delete(item.src); files.delete(item.src);
+            item.src = ''; markDirty(); renderPanel();
+          });
+          row.appendChild(clrBtn);
+        } else {
+          const inp = el('input', { type: 'text', class: 'f-input', value: item.label, placeholder: '…' });
+          inp.addEventListener('input', () => { item.label = inp.value; markDirty(); });
+          row.appendChild(inp);
+        }
+
+        const imgBtn = el('button', { class: 'btn small ans-img-btn' + (item.src ? ' has-img' : ''), type: 'button' });
+        imgBtn.addEventListener('click', () => {
+          const inp2 = document.createElement('input');
+          inp2.type = 'file'; inp2.accept = 'image/png,image/jpeg,image/gif,image/webp';
+          inp2.addEventListener('change', () => {
+            const f = inp2.files[0]; if (!f) return;
+            const ext = f.name.split('.').pop().toLowerCase() || 'png';
+            const path = 'amitems/' + uid() + '.' + ext;
+            if (item.src) { urls.delete(item.src); files.delete(item.src); }
+            files.set(path, f); item.src = path; markDirty(); renderPanel();
+          });
+          inp2.click();
+        });
+        row.appendChild(imgBtn);
+
+        const delBtn = el('button', { class: 'btn small ghost', type: 'button' }, '✕');
+        delBtn.addEventListener('click', () => {
+          if (item.src) { urls.delete(item.src); files.delete(item.src); }
+          cfg.items  = cfg.items.filter(i => i.id !== item.id);
+          cfg.pairs  = cfg.pairs.filter(p => p.from !== item.id && p.to !== item.id);
+          markDirty(); renderPanel();
+        });
+        row.appendChild(delBtn);
+        cont.appendChild(row);
+      });
+
+      const addBtn = el('button', { class: 'btn small', type: 'button' }, addLabel);
+      addBtn.addEventListener('click', () => {
+        cfg.items.push({ id: uid('am'), side, label: '', src: '' });
+        markDirty(); renderPanel();
+      });
+      cont.appendChild(addBtn);
+    }
+
+    renderSide('left',  t('cfg.amLeft'),  t('cfg.addAmLeft'));
+    renderSide('right', t('cfg.amRight'), t('cfg.addAmRight'));
+
+    // Pairs
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.amPairs')));
+    const leftItems  = cfg.items.filter(i => i.side === 'left');
+    const rightItems = cfg.items.filter(i => i.side === 'right');
+    leftItems.forEach(left => {
+      const row = el('div', { class: 'am-pair-row' });
+      row.appendChild(el('span', { class: 'am-pair-lbl' }, itemLabel(left)));
+      row.appendChild(el('span', {}, ' → '));
+      const sel = el('select', { class: 'wpf-select' });
+      sel.appendChild(el('option', { value: '' }, '—'));
+      rightItems.forEach(right => {
+        sel.appendChild(el('option', { value: right.id }, itemLabel(right)));
+      });
+      const existing = cfg.pairs.find(p => p.from === left.id);
+      if (existing) sel.value = existing.to;
+      sel.addEventListener('change', () => {
+        cfg.pairs = cfg.pairs.filter(p => p.from !== left.id);
+        if (sel.value) cfg.pairs.push({ from: left.id, to: sel.value });
+        markDirty();
+      });
+      row.appendChild(sel);
+      cont.appendChild(row);
+    });
+  },
+
   order(cont, field) {
     const cfg = field.config;
     optionListEditor(cont, {

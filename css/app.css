@@ -941,6 +941,98 @@ input.wpf-gap-input {
 .wpf-zone-chip.mark-ok { border-color: var(--verde); background: var(--verde-claro); cursor: default; }
 .wpf-zone-chip.mark-ko { border-color: var(--rojo); background: var(--rojo-claro); cursor: default; }
 
+/* ── Arrowmatch ─────────────────────── */
+.wpf-field-arrowmatch { overflow: visible; }
+
+.wpf-arrowmatch {
+  display: grid;
+  grid-template-columns: 44% 12% 44%;
+  position: relative;
+  min-height: 6em;
+  padding: 4px 0;
+  user-select: none;
+}
+
+.wpf-am-col { display: flex; flex-direction: column; gap: 5px; padding: 4px 0; }
+
+.wpf-am-item {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  min-height: 2.2em;
+}
+
+.wpf-am-left-col  .wpf-am-item { justify-content: flex-start; }
+.wpf-am-right-col .wpf-am-item { justify-content: flex-end; }
+
+.wpf-am-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0,0,0,0.18);
+  border-radius: 5px;
+  background: rgba(255,253,248,0.95);
+  padding: 4px 6px;
+  overflow: hidden;
+  box-shadow: var(--sombra-mini);
+}
+
+.wpf-am-dot {
+  position: absolute;
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: #5377ad;
+  cursor: pointer;
+  z-index: 3;
+  top: 50%; transform: translateY(-50%);
+  transition: background 0.12s, transform 0.1s;
+}
+.wpf-am-left-col  .wpf-am-dot { right: -7px; }
+.wpf-am-right-col .wpf-am-dot { left:  -7px; }
+
+.wpf-am-dot.am-dot-active {
+  background: var(--rojo);
+  transform: translateY(-50%) scale(1.25);
+  box-shadow: 0 0 0 4px rgba(198,61,44,0.2);
+}
+.wpf-am-dot.am-dot-connected { background: #2a9d8f; }
+
+.am-disabled .wpf-am-dot { cursor: default; pointer-events: none; }
+
+.wpf-arrowmatch.am-pending .wpf-am-right-col .wpf-am-dot {
+  animation: am-pulse 0.9s ease infinite;
+}
+@keyframes am-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(83,119,173,0.5); }
+  50%       { box-shadow: 0 0 0 6px rgba(83,119,173,0); }
+}
+
+.wpf-am-img  { max-width: 100%; max-height: 100%; object-fit: contain; }
+.wpf-am-text { font-size: calc(0.85em * var(--fs, 1)); text-align: center; word-break: break-word; line-height: 1.2; }
+.wpf-am-empty { font-size: 0.8em; color: var(--tinta-suave); font-style: italic; grid-column: 1/-1; text-align: center; }
+
+.wpf-am-svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  overflow: visible;
+  pointer-events: none; /* SVG transparente; los hit-paths usan atributo SVG propio */
+  z-index: 2;
+}
+.wpf-am-line { fill: none; stroke: #3a7bcc; stroke-width: 2; pointer-events: none; }
+.wpf-am-hit  { fill: none; stroke: transparent; stroke-width: 14; cursor: pointer; }
+.wpf-am-line.am-line-ok      { stroke: #2a9d8f; stroke-width: 2.5; }
+.wpf-am-line.am-line-ko      { stroke: var(--rojo); }
+.wpf-am-line.am-line-missing { stroke: #2a9d8f; stroke-dasharray: 6 4; opacity: 0.55; }
+
+/* Editor: filas de items y pares */
+.am-item-row { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
+.am-item-row .f-input { flex: 1; }
+.am-pair-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.am-pair-lbl { font-weight: 600; min-width: 2em; }
+
 /* Marcas de corrección */
 .wpf-field.disabled { pointer-events: none; }
 .wpf-field.mark-ok > :first-child,

@@ -82,6 +82,24 @@ export const FIELD_TYPES = {
     defRect: { w: 0.4, h: 0.09 },
     defaults: () => ({ zones: [], distractors: [] })
   },
+  arrowmatch: {
+    name: 'Unir con flechas',
+    glyph: '↔',
+    defRect: { w: 0.6, h: 0.4 },
+    defaults: () => {
+      const mk = () => Math.random().toString(36).slice(2, 9);
+      const [la, lb, ra, rb] = [mk(), mk(), mk(), mk()];
+      return {
+        items: [
+          { id: la, side: 'left',  label: 'Elemento A', src: '' },
+          { id: lb, side: 'left',  label: 'Elemento B', src: '' },
+          { id: ra, side: 'right', label: 'Pareja A',   src: '' },
+          { id: rb, side: 'right', label: 'Pareja B',   src: '' },
+        ],
+        pairs: [{ from: la, to: ra }, { from: lb, to: rb }]
+      };
+    }
+  },
   // Elementos decorativos: no puntúan ni cuentan como preguntas.
   label: {
     name: 'Texto',
@@ -108,7 +126,7 @@ export const FIELD_TYPES = {
 
 export const FIELD_ORDER = [
   'text', 'number', 'single', 'truefalse', 'multi',
-  'select', 'gaps', 'match', 'order', 'dragdrop',
+  'select', 'gaps', 'match', 'order', 'dragdrop', 'arrowmatch',
   'label', 'cover', 'image'
 ];
 
