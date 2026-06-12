@@ -389,7 +389,7 @@ dialog .dlg-buttons {
 }
 .settings-two {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(200px, 1fr));
   gap: 10px;
 }
 .password-row {
@@ -454,8 +454,8 @@ dialog .dlg-buttons {
 
 /* ---------- Fecha + hora (restricciones de acceso) ---------- */
 
-.fecha-hora { display: flex; align-items: center; gap: 4px; }
-.fecha-hora input[type='date'] { flex: 1; min-width: 0; }
+.fecha-hora { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.fecha-hora input[type='date'] { flex: 1; min-width: 130px; }
 .fecha-hora select { width: auto; padding: 8px 4px; }
 .fecha-hora span { font-weight: 700; }
 
