@@ -108,6 +108,19 @@ function addPage({ blob, ext, w, h }) {
   manifest.pages.push({ image: path, w, h, fields: [] });
 }
 
+function addBlankPage() {
+  const W = 794, H = 1123; // A4 a 96 dpi
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx2d = cv.getContext('2d');
+  ctx2d.fillStyle = '#ffffff';
+  ctx2d.fillRect(0, 0, W, H);
+  cv.toBlob(blob => {
+    addPage({ blob, ext: 'png', w: W, h: H });
+    markDirty(); renderCanvas(); renderPanel();
+  }, 'image/png');
+}
+
 function deletePage(pi) {
   const page = manifest.pages[pi];
   const n = page.fields.length;
@@ -143,6 +156,7 @@ function renderCanvas() {
       el('p', {}, t('editor.emptyDesc')),
       el('div', { style: 'display:flex;gap:10px;justify-content:center;flex-wrap:wrap' },
         el('button', { class: 'btn primary', onclick: () => $('#inputPaginas').click() }, t('editor.addPdf')),
+        el('button', { class: 'btn', onclick: () => addBlankPage() }, t('editor.addBlank')),
         el('button', { class: 'btn', onclick: () => $('#inputZip').click() }, t('editor.openZip')))));
     return;
   }
