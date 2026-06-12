@@ -319,11 +319,28 @@ const renderers = {
   },
 
   dragdrop(field, root, ctx) {
-    const zones = field.config.zones || [];
+    const cfg = field.config;
+    const zones = cfg.zones || [];
+    const tokenDefs = cfg.tokenDefs || [];
     const zoneAnswers = z => Array.isArray(z.answers) && z.answers.length
       ? z.answers.map(String) : z.answer ? [String(z.answer)] : [];
-    const tokens = zones.flatMap(zoneAnswers).concat(field.config.distractors || []);
+    const tokens = zones.flatMap(zoneAnswers).concat(cfg.distractors || []);
     const tokenOrder = shuffledIndices(tokens.length, ctx.rng);
+
+    function tokenImg(label) {
+      const def = tokenDefs.find(d => d.label === label);
+      if (!def?.src || !ctx.fileUrl) return null;
+      const url = ctx.fileUrl(def.src);
+      if (!url) return null;
+      const img = document.createElement('img');
+      img.src = url; img.alt = label; img.className = 'wpf-token-img';
+      return img;
+    }
+    function tokenContent(label) {
+      const img = tokenImg(label);
+      return img || document.createTextNode(label);
+    }
+    function hasImg(label) { return Boolean(tokenImg(label)); }
 
     // assignment: zoneId → string[]
     const assignment = {};
@@ -404,17 +421,17 @@ const renderers = {
     }
 
     function makeTokenBtn(tk, opts = {}) {
-      const btn = el('button', { class: 'wpf-token', type: 'button', draggable: 'true' }, tk);
+      const cls = 'wpf-token' + (hasImg(tk) ? ' has-img' : '');
+      const btn = el('button', { class: cls, type: 'button', draggable: 'true', title: tk, dataset: { label: tk } });
+      btn.appendChild(tokenContent(tk));
       if (opts.selected) btn.classList.add('selected');
       btn.disabled = disabled;
 
-      // Clic para seleccionar/deseleccionar.
       btn.addEventListener('click', () => {
         if (disabled) return;
         selectedToken = selectedToken === tk ? null : tk;
         paint();
       });
-      // Drag desde la bandeja.
       btn.addEventListener('dragstart', e => {
         dragToken = tk; selectedToken = null;
         e.dataTransfer.effectAllowed = 'move';
@@ -444,10 +461,11 @@ const renderers = {
         const zEl = zoneEls[z.id];
         zEl.textContent = '';
         assignment[z.id].forEach(tk => {
-          const chip = el('button', { class: 'wpf-zone-chip', type: 'button', draggable: 'true' }, tk);
+          const chipCls = 'wpf-zone-chip' + (hasImg(tk) ? ' has-img' : '');
+          const chip = el('button', { class: chipCls, type: 'button', draggable: 'true', title: tk, dataset: { label: tk } });
+          chip.appendChild(tokenContent(tk));
           chip.disabled = disabled;
 
-          // Clic para devolver a la bandeja.
           chip.addEventListener('click', e => {
             e.stopPropagation();
             if (disabled) return;
@@ -497,7 +515,7 @@ const renderers = {
           const correct = zoneAnswers(z);
           const zEl = zoneEls[z.id];
           zEl.querySelectorAll('.wpf-zone-chip').forEach(chip => {
-            chip.classList.add(correct.includes(chip.textContent) ? 'mark-ok' : 'mark-ko');
+            chip.classList.add(correct.includes(chip.dataset.label) ? 'mark-ok' : 'mark-ko');
           });
           if (!assignment[z.id].length) zEl.classList.add('mark-ko');
         });

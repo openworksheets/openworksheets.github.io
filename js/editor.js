@@ -805,6 +805,49 @@ const configForms = {
 
   dragdrop(cont, field) {
     const cfg = field.config;
+
+    // Sección de imágenes para tokens.
+    if (!Array.isArray(cfg.tokenDefs)) cfg.tokenDefs = [];
+    optionListEditor(cont, {
+      label: t('cfg.tokenImages'),
+      items: () => cfg.tokenDefs,
+      render: (row, def, i) => {
+        // Preview de imagen.
+        const preview = el('div', { class: 'tok-preview' });
+        if (def.src && files.has(def.src)) {
+          preview.appendChild(el('img', { src: fileUrl(def.src), class: 'tok-thumb', alt: def.label || '' }));
+        }
+        // Botón subir imagen.
+        const upBtn = el('button', { class: 'btn small', type: 'button', title: t('cfg.uploadTokenImg') }, '🖼');
+        upBtn.addEventListener('click', () => {
+          const inp = document.createElement('input');
+          inp.type = 'file'; inp.accept = 'image/png,image/jpeg,image/gif,image/webp';
+          inp.addEventListener('change', () => {
+            const f = inp.files[0]; if (!f) return;
+            const ext = f.name.split('.').pop().toLowerCase() || 'png';
+            const path = 'dtokens/' + uid() + '.' + ext;
+            if (def.src) { urls.delete(def.src); files.delete(def.src); }
+            files.set(path, f);
+            def.src = path;
+            markDirty();
+            renderFieldPanel(getField(sel.pageIndex, sel.fieldId));
+          });
+          inp.click();
+        });
+        row.appendChild(preview);
+        row.appendChild(upBtn);
+        row.appendChild(textCell(def.label || '', v => { def.label = v; }, t('cfg.tokenLabel')));
+      },
+      add: () => cfg.tokenDefs.push({ label: '', src: '' }),
+      remove: i => {
+        const def = cfg.tokenDefs[i];
+        if (def.src) { urls.delete(def.src); files.delete(def.src); }
+        cfg.tokenDefs.splice(i, 1);
+      },
+      addLabel: t('cfg.addTokenImage'),
+      min: 0
+    });
+
     cont.appendChild(el('div', { class: 'zona-bloque' },
       t('cfg.dragdropZones', { n: cfg.zones.length })));
     optionListEditor(cont, {

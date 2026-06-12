@@ -226,7 +226,8 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     const ctx = {
       rng,
       shuffle: Boolean(settings.shuffle),
-      onChange: () => { updateProgress(); scheduleSave(); }
+      onChange: () => { updateProgress(); scheduleSave(); },
+      fileUrl
     };
 
     manifest.pages.forEach((page, pi) => {

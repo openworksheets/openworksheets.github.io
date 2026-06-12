@@ -665,6 +665,20 @@ dialog .dlg-buttons {
   background: var(--ambar-claro);
   font-size: 0.85rem;
 }
+.tok-preview {
+  width: 2.8em; height: 2.4em;
+  border: 1px dashed var(--tinta-suave);
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  background: var(--azul-claro);
+  overflow: hidden;
+}
+.tok-thumb {
+  max-width: 100%; max-height: 100%;
+  object-fit: contain;
+  display: block;
+}
 
 /* ============================================================
    CAMPOS DEL ALUMNO
@@ -837,7 +851,23 @@ input.wpf-gap-input {
   color: var(--tinta);
   box-shadow: var(--sombra-mini);
 }
+.wpf-token.has-img {
+  border-radius: 8px;
+  padding: 0.2em;
+  background: #fff;
+  line-height: 0;
+}
+.wpf-token-img {
+  display: block;
+  max-width: 5em;
+  max-height: 4em;
+  width: auto;
+  height: auto;
+  border-radius: 4px;
+  pointer-events: none;
+}
 .wpf-token.selected { background: var(--rojo); color: #fff; border-color: var(--rojo-oscuro); }
+.wpf-token.has-img.selected { background: var(--rojo); }
 .wpf-zone {
   position: absolute;
   border: 2px dashed var(--tinta-suave);
@@ -872,6 +902,16 @@ input.wpf-gap-input {
   font-weight: 700;
   color: var(--tinta);
   line-height: 1.3;
+}
+.wpf-zone-chip.has-img {
+  border-radius: 6px;
+  padding: 0.1em;
+  background: #fff;
+  line-height: 0;
+}
+.wpf-zone-chip .wpf-token-img {
+  max-width: 3.5em;
+  max-height: 3em;
 }
 .wpf-zone-chip:not(:disabled):hover { background: var(--ambar-claro); border-color: var(--ambar); }
 .wpf-zone-chip.mark-ok { border-color: var(--verde); background: var(--verde-claro); cursor: default; }
