@@ -45,10 +45,11 @@ window.addEventListener('beforeunload', e => {
 function renderPalette() {
   palette.textContent = '';
   FIELD_ORDER.forEach(type => {
-    const t = FIELD_TYPES[type];
-    const btn = el('button', { class: 'ed-tool', type: 'button', title: t.name },
-      el('span', { class: 'glyph' }, t.glyph),
-      el('span', { class: 'name' }, t.name));
+    const ft = FIELD_TYPES[type];
+    const name = fieldTypeName(type);
+    const btn = el('button', { class: 'ed-tool', type: 'button', title: name },
+      el('span', { class: 'glyph' }, ft.glyph),
+      el('span', { class: 'name' }, name));
     btn.addEventListener('click', () => {
       activeTool = activeTool === type ? null : type;
       refreshPaletteState();
@@ -151,9 +152,19 @@ function renderCanvas() {
       el('img', { class: 'fondo', src: fileUrl(page.image), alt: t('editor.pageN', { n: pi + 1, total: manifest.pages.length }), draggable: 'false' }));
 
     page.fields.forEach(field => {
-      const box = el('div', { class: 'ed-field', dataset: { id: field.id } },
-        el('span', { class: 'chip' }, `${fieldTypeName(field.type)} · ${field.points} pt`),
+      const decor = Boolean(FIELD_TYPES[field.type]?.decor);
+      const box = el('div', { class: `ed-field ed-field-${field.type}`, dataset: { id: field.id } },
+        el('span', { class: 'chip' }, decor ? fieldTypeName(field.type) : `${fieldTypeName(field.type)} · ${field.points} pt`),
         el('span', { class: 'handle' }));
+      // Vista previa real de los elementos decorativos
+      if (field.type === 'label') {
+        box.appendChild(el('div', {
+          class: 'ed-label-prev',
+          style: `color:${field.config.color || 'inherit'};font-weight:${field.config.bold ? '700' : '400'}`
+        }, field.config.text || ''));
+      } else if (field.type === 'cover') {
+        box.style.background = field.config.color || '#ffffff';
+      }
       setRectStyle(box, field.rect);
       box.style.setProperty('--fs', field.fontScale || 1);
       attachBoxInteraction(box, pageEl, field.rect, {
@@ -318,7 +329,7 @@ function createField(pi, type, rect) {
     id: uid('f'),
     type,
     rect,
-    points: 1,
+    points: FIELD_TYPES[type].decor ? 0 : 1,
     fontScale: 1,
     config: FIELD_TYPES[type].defaults()
   };
@@ -455,7 +466,10 @@ function renderPanel() {
 
 function refreshChip(field) {
   const node = canvas.querySelector(`.ed-field[data-id="${field.id}"] .chip`);
-  if (node) node.textContent = `${fieldTypeName(field.type)} · ${field.points} pt`;
+  if (!node) return;
+  node.textContent = FIELD_TYPES[field.type]?.decor
+    ? fieldTypeName(field.type)
+    : `${fieldTypeName(field.type)} · ${field.points} pt`;
 }
 
 function renderFieldPanel(field) {
@@ -464,24 +478,30 @@ function renderFieldPanel(field) {
     el('span', { class: 'tipo-chip' }, fieldTypeName(field.type)),
     t('editor.fieldConfig')));
 
-  // Puntos y tamaño del texto
-  const pts = el('input', { type: 'number', min: '0', step: '0.5', value: String(field.points) });
-  pts.addEventListener('input', () => {
-    field.points = Math.max(0, parseFloat(pts.value.replace(',', '.')) || 0);
-    refreshChip(field);
-    markDirty();
-  });
-  const fs = el('input', { type: 'range', min: '0.6', max: '2', step: '0.1', value: String(field.fontScale || 1) });
-  fs.addEventListener('input', () => {
-    field.fontScale = parseFloat(fs.value);
-    const node = canvas.querySelector(`[data-id="${field.id}"]`);
-    if (node) node.style.setProperty('--fs', field.fontScale);
-    markDirty();
-  });
-  cont.appendChild(el('label', { class: 'f-label' }, t('editor.points')));
-  cont.appendChild(pts);
-  cont.appendChild(el('label', { class: 'f-label' }, t('editor.fontSize')));
-  cont.appendChild(fs);
+  const decor = Boolean(FIELD_TYPES[field.type]?.decor);
+
+  // Puntos (los decorativos no puntúan) y tamaño del texto
+  if (!decor) {
+    const pts = el('input', { type: 'number', min: '0', step: '0.5', value: String(field.points) });
+    pts.addEventListener('input', () => {
+      field.points = Math.max(0, parseFloat(pts.value.replace(',', '.')) || 0);
+      refreshChip(field);
+      markDirty();
+    });
+    cont.appendChild(el('label', { class: 'f-label' }, t('editor.points')));
+    cont.appendChild(pts);
+  }
+  if (field.type !== 'cover') {
+    const fs = el('input', { type: 'range', min: '0.6', max: '2', step: '0.1', value: String(field.fontScale || 1) });
+    fs.addEventListener('input', () => {
+      field.fontScale = parseFloat(fs.value);
+      const node = canvas.querySelector(`[data-id="${field.id}"]`);
+      if (node) node.style.setProperty('--fs', field.fontScale);
+      markDirty();
+    });
+    cont.appendChild(el('label', { class: 'f-label' }, t('editor.fontSize')));
+    cont.appendChild(fs);
+  }
 
   // Configuración específica del tipo
   const formBuilder = configForms[field.type];
@@ -566,6 +586,50 @@ function textNormOptions(cont, cfg) {
 }
 
 const configForms = {
+
+  label(cont, field) {
+    const cfg = field.config;
+    const prev = () => canvas.querySelector(`.ed-field[data-id="${field.id}"] .ed-label-prev`);
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.labelText')));
+    const ta = el('textarea', { rows: '3' });
+    ta.value = cfg.text || '';
+    ta.addEventListener('input', () => {
+      cfg.text = ta.value;
+      const p = prev();
+      if (p) p.textContent = cfg.text;
+      markDirty();
+    });
+    cont.appendChild(ta);
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.labelColor')));
+    const color = el('input', { type: 'color', value: cfg.color || '#1d2c42' });
+    color.addEventListener('input', () => {
+      cfg.color = color.value;
+      const p = prev();
+      if (p) p.style.color = cfg.color;
+      markDirty();
+    });
+    cont.appendChild(color);
+    checkRow(cont, t('cfg.labelBold'), Boolean(cfg.bold), v => {
+      cfg.bold = v;
+      const p = prev();
+      if (p) p.style.fontWeight = v ? '700' : '400';
+    });
+  },
+
+  cover(cont, field) {
+    const cfg = field.config;
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.coverColor')));
+    const color = el('input', { type: 'color', value: cfg.color || '#ffffff' });
+    color.addEventListener('input', () => {
+      cfg.color = color.value;
+      const box = canvas.querySelector(`.ed-field[data-id="${field.id}"]`);
+      if (box) box.style.background = cfg.color;
+      markDirty();
+    });
+    cont.appendChild(color);
+    cont.appendChild(el('p', { style: 'font-size:.85rem;color:var(--tinta-suave);margin-top:8px' },
+      t('cfg.coverHint')));
+  },
 
   text(cont, field) {
     const cfg = field.config;
@@ -785,10 +849,14 @@ function renderFieldList() {
   const box = el('div', { class: 'lista-campos' }, el('h3', {}, t('editor.fieldsTitle')));
   manifest.pages.forEach((page, pi) => {
     page.fields.forEach(field => {
+      const decor = Boolean(FIELD_TYPES[field.type]?.decor);
+      const resumen = field.type === 'label'
+        ? (field.config.text || fieldTypeName(field.type))
+        : (expectedText(field) || fieldTypeName(field.type));
       const item = el('div', { class: 'item' + (sel?.kind === 'field' && sel.fieldId === field.id ? ' sel' : '') },
         el('span', { class: 'g' }, FIELD_TYPES[field.type]?.glyph || '?'),
-        el('span', { class: 'resumen' }, `P${pi + 1} · ${expectedText(field) || fieldTypeName(field.type)}`),
-        el('span', { class: 'pts' }, field.points + ' pt'));
+        el('span', { class: 'resumen' }, `P${pi + 1} · ${resumen}`),
+        decor ? null : el('span', { class: 'pts' }, field.points + ' pt'));
       item.addEventListener('click', () => {
         selectField(pi, field.id);
         canvas.querySelector(`[data-id="${field.id}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -907,6 +975,7 @@ function validate() {
   if (!manifest.pages.some(p => p.fields.length)) problems.push(t('validate.noFields'));
   manifest.pages.forEach((p, pi) => {
     p.fields.forEach(f => {
+      if (FIELD_TYPES[f.type]?.decor) return; // los decorativos no necesitan respuesta
       const e = expectedText(f);
       if (!e || !e.trim()) problems.push(t('validate.noAnswer', { n: pi + 1, type: fieldTypeName(f.type) }));
       if (f.type === 'dragdrop' && !(f.config.zones || []).length) {

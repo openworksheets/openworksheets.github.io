@@ -158,6 +158,26 @@ async function main() {
     log('contraseña incorrecta bloquea:', sigueEnInicio, '| correcta entra:', entro);
     p2.destroy();
 
+    // Decorativos (texto y tapar zona): se muestran pero no cuentan como preguntas
+    localStorage.removeItem('workpdf:al:wpftest1');
+    m2 = JSON.parse(JSON.stringify(manifest));
+    m2.settings.maxAttempts = 0;
+    m2.pages[0].fields.push(
+      { id: 'fl1', type: 'label', rect: { x: 0.1, y: 0.8, w: 0.3, h: 0.05 }, points: 0, fontScale: 1,
+        config: { text: 'Nota del docente', color: '#c63d2c', bold: true } },
+      { id: 'fc1', type: 'cover', rect: { x: 0.5, y: 0.8, w: 0.2, h: 0.05 }, points: 0, fontScale: 1,
+        config: { color: '#ffffff' } });
+    p2 = mountPlayer(root, { manifest: m2, files });
+    root.querySelectorAll('input')[0].value = 'Alumno Decor';
+    root.querySelector('form button').click();
+    await sleep(100);
+    const labelOk = root.querySelector('.wpf-label-text')?.textContent === 'Nota del docente';
+    const coverOk = !!root.querySelector('.wpf-cover-fill');
+    const progDecor = root.querySelector('.al-barra .estado').textContent;
+    const noCuentan = progDecor.includes('de 4'); // 4 preguntas, no 6
+    log('decorativos → texto:', labelOk, '| tapado:', coverOk, '| no cuentan como preguntas:', noCuentan);
+    p2.destroy();
+
     // Tiempo límite: cronómetro visible
     localStorage.removeItem('workpdf:al:wpftest1');
     m2 = { ...manifest, settings: { ...manifest.settings, maxAttempts: 0 }, access: { tiempoLimite: 10 } };
@@ -170,7 +190,8 @@ async function main() {
     p2.destroy();
 
     const passAcceso = cerrado && pendiente && sigueEnInicio && entro && /⏱/.test(cronoTxt);
-    log(pass && passAcceso ? '__TEST_OK__' : '__TEST_FAIL__');
+    const passDecor = labelOk && coverOk && noCuentan;
+    log(pass && passAcceso && passDecor ? '__TEST_OK__' : '__TEST_FAIL__');
   } catch (e) {
     log('__TEST_FAIL__', e.message, e.stack);
   }

@@ -5,6 +5,7 @@
 //   opts  = { preview: bool }
 
 import { el, toast, mulberry32, formatNum, downloadBlob, copyToClipboard, fechaHora } from './util.js';
+import { isDecorField } from './fieldtypes.js';
 import { renderField } from './render.js';
 import { gradeField, expectedText } from './grading.js';
 import { buildEntrega, entregaFilename, entregaResumen } from './entrega.js';
@@ -31,9 +32,10 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     return urls.get(path);
   }
 
+  const gradable = f => !isDecorField(f.type);
   const totalPoints = manifest.pages.reduce(
-    (sum, p) => sum + p.fields.reduce((s, f) => s + (Number(f.points) || 0), 0), 0);
-  const totalFields = manifest.pages.reduce((s, p) => s + p.fields.length, 0);
+    (sum, p) => sum + p.fields.filter(gradable).reduce((s, f) => s + (Number(f.points) || 0), 0), 0);
+  const totalFields = manifest.pages.reduce((s, p) => s + p.fields.filter(gradable).length, 0);
 
   let state = loadState();
   let controllers = [];
@@ -232,6 +234,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
         el('img', { class: 'fondo', src: fileUrl(page.image), alt: 'Página ' + (pi + 1) }));
       page.fields.forEach(field => {
         const ctl = renderField(field, pageEl, ctx);
+        if (!gradable(field)) return; // decorativos: se muestran pero no puntúan
         ctl.pageIndex = pi;
         controllers.push(ctl);
       });

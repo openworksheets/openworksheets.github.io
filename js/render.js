@@ -86,6 +86,25 @@ function notify(ctx) {
 
 const renderers = {
 
+  // Decorativos: no son preguntas, solo se muestran.
+  label(field, root) {
+    const cfg = field.config || {};
+    root.appendChild(el('div', {
+      class: 'wpf-label-text',
+      style: `color:${cfg.color || 'inherit'};font-weight:${cfg.bold ? '700' : '400'}`
+    }, cfg.text || ''));
+    return emptyRenderer();
+  },
+
+  cover(field, root) {
+    const cfg = field.config || {};
+    root.appendChild(el('div', {
+      class: 'wpf-cover-fill',
+      style: `background:${cfg.color || '#ffffff'}`
+    }));
+    return emptyRenderer();
+  },
+
   text(field, root, ctx) {
     const input = el('input', {
       class: 'wpf-input', type: 'text', autocomplete: 'off',

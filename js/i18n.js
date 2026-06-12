@@ -135,6 +135,11 @@ const STRINGS = {
     'cfg.dragDistractorPlaceholder': 'Etiqueta falsa',
     'cfg.addDragDistractor': '+ Añadir distractor',
     'cfg.useDrawZone': 'Usa "+ Dibujar zona de destino" para añadir zonas.',
+    'cfg.labelText': 'Texto',
+    'cfg.labelColor': 'Color del texto',
+    'cfg.labelBold': 'Negrita',
+    'cfg.coverColor': 'Color del rectángulo',
+    'cfg.coverHint': 'Tapa lo que haya debajo. Útil para ocultar respuestas o partes del documento que no quieres mostrar.',
 
     // Editor — diálogo ajustes
     'dlg.settings.title': 'Ajustes de la ficha',
@@ -279,6 +284,8 @@ const STRINGS = {
     'field.match': 'Emparejar',
     'field.order': 'Ordenar',
     'field.dragdrop': 'Arrastrar a zonas',
+    'field.label': 'Texto',
+    'field.cover': 'Tapar zona',
 
     // Render — aria-labels
     'render.textAria': 'Respuesta de texto',
@@ -431,6 +438,11 @@ const STRINGS = {
     'cfg.dragDistractorPlaceholder': 'False label',
     'cfg.addDragDistractor': '+ Add distractor',
     'cfg.useDrawZone': 'Use "+ Draw drop zone" to add zones.',
+    'cfg.labelText': 'Text',
+    'cfg.labelColor': 'Text color',
+    'cfg.labelBold': 'Bold',
+    'cfg.coverColor': 'Rectangle color',
+    'cfg.coverHint': 'Covers whatever is underneath. Useful for hiding answers or parts of the document you do not want to show.',
 
     'dlg.settings.title': 'Worksheet settings',
     'dlg.settings.author': 'Author',
@@ -559,6 +571,8 @@ const STRINGS = {
     'field.match': 'Matching',
     'field.order': 'Ordering',
     'field.dragdrop': 'Drag to zones',
+    'field.label': 'Text',
+    'field.cover': 'Cover area',
 
     'render.textAria': 'Text answer',
     'render.numberAria': 'Numeric answer',
@@ -707,6 +721,11 @@ const STRINGS = {
     'cfg.dragDistractorPlaceholder': 'Etiqueta falsa',
     'cfg.addDragDistractor': '+ Afegir distractor',
     'cfg.useDrawZone': 'Usa "+ Dibuixar zona de destí" per afegir zones.',
+    'cfg.labelText': 'Text',
+    'cfg.labelColor': 'Color del text',
+    'cfg.labelBold': 'Negreta',
+    'cfg.coverColor': 'Color del rectangle',
+    'cfg.coverHint': 'Tapa el que hi hagi a sota. Útil per ocultar respostes o parts del document que no vols mostrar.',
 
     'dlg.settings.title': 'Ajustos de la fitxa',
     'dlg.settings.author': 'Autor/a',
@@ -835,6 +854,8 @@ const STRINGS = {
     'field.match': 'Emparellar',
     'field.order': 'Ordenar',
     'field.dragdrop': 'Arrossegar a zones',
+    'field.label': 'Text',
+    'field.cover': 'Tapar zona',
 
     'render.textAria': 'Resposta de text',
     'render.numberAria': 'Resposta numèrica',
@@ -983,6 +1004,11 @@ const STRINGS = {
     'cfg.dragDistractorPlaceholder': 'Etiqueta falsa',
     'cfg.addDragDistractor': '+ Engadir distractor',
     'cfg.useDrawZone': 'Usa "+ Debuxar zona de destino" para engadir zonas.',
+    'cfg.labelText': 'Texto',
+    'cfg.labelColor': 'Cor do texto',
+    'cfg.labelBold': 'Grosa',
+    'cfg.coverColor': 'Cor do rectángulo',
+    'cfg.coverHint': 'Tapa o que haxa debaixo. Útil para ocultar respostas ou partes do documento que non queres mostrar.',
 
     'dlg.settings.title': 'Axustes da ficha',
     'dlg.settings.author': 'Autor/a',
@@ -1111,6 +1137,8 @@ const STRINGS = {
     'field.match': 'Emparestar',
     'field.order': 'Ordenar',
     'field.dragdrop': 'Arrastrar a zonas',
+    'field.label': 'Texto',
+    'field.cover': 'Tapar zona',
 
     'render.textAria': 'Resposta de texto',
     'render.numberAria': 'Resposta numérica',
@@ -1259,6 +1287,11 @@ const STRINGS = {
     'cfg.dragDistractorPlaceholder': 'Etiketa faltsua',
     'cfg.addDragDistractor': '+ Distraktorea gehitu',
     'cfg.useDrawZone': 'Erabili "+ Helmuga-gunea marraztu" guneak gehitzeko.',
+    'cfg.labelText': 'Testua',
+    'cfg.labelColor': 'Testuaren kolorea',
+    'cfg.labelBold': 'Lodia',
+    'cfg.coverColor': 'Laukizuzenaren kolorea',
+    'cfg.coverHint': 'Azpian dagoena estaltzen du. Erakutsi nahi ez dituzun erantzunak edo dokumentu-zatiak ezkutatzeko erabilgarria.',
 
     'dlg.settings.title': 'Fitxaren ezarpenak',
     'dlg.settings.author': 'Egilea',
@@ -1387,6 +1420,8 @@ const STRINGS = {
     'field.match': 'Bikotekatu',
     'field.order': 'Ordenatu',
     'field.dragdrop': 'Guneetara arrastatu',
+    'field.label': 'Testua',
+    'field.cover': 'Eremua estali',
 
     'render.textAria': 'Testu-erantzuna',
     'render.numberAria': 'Erantzun numerikoa',

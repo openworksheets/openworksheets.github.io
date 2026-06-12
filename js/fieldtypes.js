@@ -81,13 +81,33 @@ export const FIELD_TYPES = {
     glyph: '⊞',
     defRect: { w: 0.4, h: 0.09 },
     defaults: () => ({ zones: [], distractors: [] })
+  },
+  // Elementos decorativos: no puntúan ni cuentan como preguntas.
+  label: {
+    name: 'Texto',
+    glyph: 'T',
+    decor: true,
+    defRect: { w: 0.3, h: 0.05 },
+    defaults: () => ({ text: 'Texto', color: '#1d2c42', bold: false })
+  },
+  cover: {
+    name: 'Tapar zona',
+    glyph: '▩',
+    decor: true,
+    defRect: { w: 0.25, h: 0.07 },
+    defaults: () => ({ color: '#ffffff' })
   }
 };
 
 export const FIELD_ORDER = [
   'text', 'number', 'single', 'truefalse', 'multi',
-  'select', 'gaps', 'match', 'order', 'dragdrop'
+  'select', 'gaps', 'match', 'order', 'dragdrop',
+  'label', 'cover'
 ];
+
+export function isDecorField(type) {
+  return Boolean(FIELD_TYPES[type]?.decor);
+}
 
 export function fieldTypeName(type) {
   return t('field.' + type) || (FIELD_TYPES[type] ? FIELD_TYPES[type].name : type);

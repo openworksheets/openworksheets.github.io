@@ -505,6 +505,20 @@ dialog .dlg-buttons {
   overflow: hidden;
 }
 .ed-field:active { cursor: grabbing; }
+/* Decorativos en el editor: vista fiel de lo que verá el alumno */
+.ed-field.ed-field-cover { background: #fff; border-style: dashed; }
+.ed-field.ed-field-label { background: transparent; border-style: dashed; }
+.ed-label-prev {
+  position: absolute;
+  inset: 0;
+  padding: 0.15em 0.3em;
+  white-space: pre-wrap;
+  line-height: 1.35;
+  pointer-events: none;
+}
+.ed-field.ed-field-label .chip, .ed-field.ed-field-cover .chip { opacity: 0; transition: opacity 0.15s; }
+.ed-field.ed-field-label:hover .chip, .ed-field.ed-field-cover:hover .chip,
+.ed-field.ed-field-label.selected .chip, .ed-field.ed-field-cover.selected .chip { opacity: 1; }
 .ed-field .chip {
   font-size: 0.62em;
   font-weight: 700;
@@ -713,6 +727,18 @@ dialog .dlg-buttons {
   line-height: 1.35;
 }
 .wpf-choice input { transform: scale(1.05); accent-color: var(--rojo); flex: none; }
+
+/* Elementos decorativos: texto libre y tapado de zonas */
+.wpf-label-text {
+  white-space: pre-wrap;
+  line-height: 1.35;
+}
+.wpf-cover-fill {
+  position: absolute;
+  inset: 0;
+}
+.wpf-field-label, .wpf-field-cover { pointer-events: none; }
+.wpf-field-cover { z-index: 1; } /* bajo los campos interactivos (z-index 2) */
 
 .wpf-gaps {
   background: rgba(255, 253, 248, 0.94);
