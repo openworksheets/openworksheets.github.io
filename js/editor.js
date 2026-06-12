@@ -1340,7 +1340,7 @@ function fillTimeSelects() {
   for (const id of ['ajDesdeM', 'ajHastaM']) {
     const sel = $('#' + id);
     if (sel.options.length) continue;
-    for (let m = 0; m < 60; m += 5) sel.add(new Option(pad(m), pad(m)));
+    for (let m = 0; m < 60; m += 1) sel.add(new Option(pad(m), pad(m)));
   }
 }
 
@@ -1349,8 +1349,7 @@ function setDateTime(value, prefix, defH, defM) {
   $('#' + prefix + 'Fecha').value = fecha || '';
   const [h, m] = (hora || defH + ':' + defM).split(':');
   $('#' + prefix + 'H').value = h;
-  // Redondear el minuto al paso de 5 del desplegable
-  $('#' + prefix + 'M').value = String(Math.min(55, Math.round(parseInt(m, 10) / 5) * 5)).padStart(2, '0');
+  $('#' + prefix + 'M').value = String(Math.min(59, parseInt(m, 10) || 0)).padStart(2, '0');
 }
 
 function getDateTime(prefix) {
@@ -1370,7 +1369,7 @@ function openSettings() {
   $('#ajIntentos').value = String(manifest.settings.maxAttempts || 0);
   const acc = manifest.access || {};
   setDateTime(acc.desde, 'ajDesde', '08', '00');
-  setDateTime(acc.hasta, 'ajHasta', '23', '55');
+  setDateTime(acc.hasta, 'ajHasta', '23', '59');
   $('#ajAutoEntrega').checked = Boolean(acc.autoEntrega);
   $('#ajTiempo').value = String(acc.tiempoLimite || 0);
   $('#ajPassword').value = acc.password || '';
