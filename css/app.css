@@ -1487,3 +1487,38 @@ input.wpf-gap-input {
   .hero h1 { font-size: 2rem; }
   .wpf-field { font-size: calc(2cqw * var(--fs, 1)); }
 }
+
+/* Impresión de la ficha entregada (botón «Imprimir / PDF» del resultado):
+   solo la tarjeta de la nota y las páginas con las respuestas corregidas. */
+@media print {
+  .topbar, .al-barra, .al-instrucciones, .toast,
+  .al-resultado .acciones, .al-resultado .al-info { display: none !important; }
+  * { animation: none !important; transition: none !important; }
+  body { background: #fff; }
+  #app, .al-doc * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .al-doc {
+    --zoom: 1;
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+  }
+  .al-resultado {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+  /* Cada página de la ficha en su propia hoja, escalada para caber entera
+     (si se fragmenta, Chromium pierde los campos con posición absoluta).
+     Ancho fijo: .wpf-page es contenedor de container queries y no puede
+     dimensionarse por su contenido (fit-content colapsaría a 0). */
+  .al-doc .wpf-page {
+    break-before: page;
+    break-inside: avoid;
+    box-shadow: none;
+    border-width: 1px;
+    width: 190mm;
+    margin: 0 auto 12px;
+  }
+}

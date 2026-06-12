@@ -390,6 +390,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     const acciones = el('div', { class: 'acciones' });
     acciones.appendChild(el('button', { class: 'btn dark', onclick: () => downloadEntrega(entrega) }, t('player.downloadBtn')));
     acciones.appendChild(el('button', { class: 'btn', onclick: () => copyResumen(entrega) }, t('player.copyBtn')));
+    acciones.appendChild(el('button', { class: 'btn', onclick: () => window.print() }, t('player.printBtn')));
     if (preview || attemptsLeft() > 0) {
       acciones.appendChild(el('button', {
         class: 'btn', onclick: () => {
@@ -414,7 +415,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
       el('div', { class: 'detalle' },
         `${datos.alumno}${datos.grupo ? ' · ' + datos.grupo : ''} · ${fechaHora(new Date(entrega.fecha))} · ${t('entrega.code')}: `,
         el('span', { class: 'codigo' }, entrega.codigo)),
-      el('p', { style: 'margin-top:12px' }, t('player.submissionInfo')),
+      el('p', { class: 'al-info', style: 'margin-top:12px' }, t('player.submissionInfo')),
       acciones);
 
     if (showScore && totalPoints > 0) {
