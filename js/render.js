@@ -193,9 +193,12 @@ const renderers = {
       if (seg.kind === 'text') {
         wrap.appendChild(document.createTextNode(seg.value));
       } else {
-        const size = Math.max(4, Math.min(20, (seg.answers[0] || '').length + 2));
+        // Ancho proporcional a la respuesta más larga del hueco
+        const len = Math.max(...seg.answers.map(a => a.length), 1);
+        const ch = Math.max(4, Math.min(28, len + 2));
         const input = el('input', {
-          class: 'wpf-gap-input', type: 'text', size: String(size), autocomplete: 'off',
+          class: 'wpf-gap-input', type: 'text', autocomplete: 'off',
+          style: 'width:' + ch + 'ch',
           'aria-label': t('render.gapAria', { n: inputs.length + 1 })
         });
         input.addEventListener('input', () => notify(ctx));

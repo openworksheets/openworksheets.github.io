@@ -721,8 +721,11 @@ dialog .dlg-buttons {
   padding: 0.4em 0.6em;
   box-shadow: var(--sombra-mini);
   line-height: 2;
+  white-space: pre-wrap; /* respeta los saltos de línea del texto del docente */
 }
-.wpf-gap-input {
+/* input.* para ganar a la regla global input[type='text'] { width: 100% } */
+input.wpf-gap-input {
+  display: inline-block;
   border: none;
   border-bottom: 2px solid var(--tinta);
   background: var(--azul-claro);
