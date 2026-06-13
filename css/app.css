@@ -273,7 +273,7 @@ textarea { resize: vertical; min-height: 70px; }
   margin-top: 26px;
 }
 .home-card { display: flex; flex-direction: column; gap: 8px; }
-.home-card .num {
+.home-card .num, .card > .num {
   font-family: var(--display);
   font-weight: 900;
   font-size: 2rem;
