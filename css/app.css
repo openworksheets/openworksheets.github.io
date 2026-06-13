@@ -1332,11 +1332,11 @@ input.wpf-gap-input {
   grid-template-columns: 44% 12% 44%;
   position: relative;
   min-height: 6em;
-  padding: 4px 0;
+  padding: 0.3em 0;
   user-select: none;
 }
 
-.wpf-am-col { display: flex; flex-direction: column; gap: 5px; padding: 4px 0; }
+.wpf-am-col { display: flex; flex-direction: column; gap: 0.35em; padding: 0.3em 0; }
 
 .wpf-am-item {
   flex: 1;
@@ -1357,14 +1357,17 @@ input.wpf-gap-input {
   border: 1px solid rgba(0,0,0,0.18);
   border-radius: 5px;
   background: rgba(255,253,248,0.95);
-  padding: 4px 6px;
+  padding: 0.3em 0.45em;
   overflow: hidden;
   box-shadow: var(--sombra-mini);
 }
 
 .wpf-am-dot {
   position: absolute;
-  width: 13px; height: 13px;
+  /* En cqw (relativo al ancho de la página) para que el punto escale con
+     la ficha: los hotspots se colocan sobre la página, no dentro del campo,
+     así que no heredan su font-size en cqw y un tamaño en em/px no escalaría. */
+  width: calc(1.5cqw * var(--fs, 1)); height: calc(1.5cqw * var(--fs, 1));
   border-radius: 50%;
   background: #5377ad;
   cursor: pointer;
@@ -1372,8 +1375,8 @@ input.wpf-gap-input {
   top: 50%; transform: translateY(-50%);
   transition: background 0.12s, transform 0.1s;
 }
-.wpf-am-left-col  .wpf-am-dot { right: -7px; }
-.wpf-am-right-col .wpf-am-dot { left:  -7px; }
+.wpf-am-left-col  .wpf-am-dot { right: calc(-0.75cqw * var(--fs, 1)); }
+.wpf-am-right-col .wpf-am-dot { left:  calc(-0.75cqw * var(--fs, 1)); }
 
 .wpf-am-dot.am-dot-active {
   background: var(--rojo);
@@ -1423,8 +1426,8 @@ input.wpf-gap-input {
 }
 .wpf-am-hs-left  { border: 2px solid #5377ad; background: rgba(83,119,173,0.10); justify-content: flex-end; }
 .wpf-am-hs-right { border: 2px solid #2a9d8f; background: rgba(42,157,143,0.10); justify-content: flex-start; }
-.wpf-am-hs-left  .wpf-am-dot { right: -7px; left: auto; }
-.wpf-am-hs-right .wpf-am-dot { left: -7px; right: auto; }
+.wpf-am-hs-left  .wpf-am-dot { right: calc(-0.75cqw * var(--fs, 1)); left: auto; }
+.wpf-am-hs-right .wpf-am-dot { left: calc(-0.75cqw * var(--fs, 1)); right: auto; }
 .wpf-am-hotspot .wpf-am-dot { position: absolute; top: 50%; transform: translateY(-50%); }
 .wpf-am-hotspot.am-dot-active { border-style: solid; }
 .wpf-am-svg-page {
