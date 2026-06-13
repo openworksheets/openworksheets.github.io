@@ -314,6 +314,7 @@ const STRINGS = {
     'player.pct': ' ({pct} % de aciertos)',
     'player.teacherCheck': 'Envía el archivo de entrega o el enlace a tu profesor o profesora, según te hayan indicado.',
     'player.submissionInfo': 'Usa el botón <strong>Descargar entrega</strong> para obtener el archivo .json y enviárselo a tu docente, o pulsa <strong>Compartir enlace</strong> para copiar un enlace que puedes enviar directamente. Tu docente te habrá indicado cuál de las dos opciones usar.',
+    'player.correctionHint': 'Desplázate hacia abajo para ver la corrección detallada de tus respuestas.',
 
     // Player — restricciones de acceso
     'player.notYet': 'Todavía no disponible',
@@ -402,6 +403,8 @@ const STRINGS = {
     'entrega.incorrects': 'incorrectas',
     'entrega.partials': 'parciales',
     'entrega.blanks': 'en blanco',
+    'entrega.detail': 'Detalle de respuestas',
+    'entrega.solution': 'Solución',
 
     // zipio — errores
     'zipio.noManifest': 'El ZIP no contiene manifest.json: no es una ficha de OpenWorksheets.',
@@ -683,6 +686,7 @@ const STRINGS = {
     'player.pct': ' ({pct}% correct)',
     'player.teacherCheck': 'Send the submission file or the link to your teacher, as they have indicated.',
     'player.submissionInfo': 'Use the <strong>Download submission</strong> button to get the .json file and send it to your teacher, or press <strong>Share link</strong> to copy a link you can send directly. Your teacher will have told you which option to use.',
+    'player.correctionHint': 'Scroll down to see the detailed correction of your answers.',
 
     'player.notYet': 'Not available yet',
     'player.notYetDesc': 'This worksheet opens on {fecha}.',
@@ -791,6 +795,8 @@ const STRINGS = {
     'entrega.incorrects': 'incorrect',
     'entrega.partials': 'partial',
     'entrega.blanks': 'blank',
+    'entrega.detail': 'Answer details',
+    'entrega.solution': 'Solution',
 
     'zipio.noManifest': 'The ZIP does not contain manifest.json: not a OpenWorksheets worksheet.',
     'zipio.badManifest': 'The manifest.json in the ZIP is not valid.',
@@ -1070,6 +1076,7 @@ const STRINGS = {
     'player.pct': ' ({pct} % d\'encerts)',
     'player.teacherCheck': 'Envia el fitxer de lliurament o l\'enllaç al teu professor o professora, segons t\'hagin indicat.',
     'player.submissionInfo': 'Utilitza el botó <strong>Descarregar lliurament</strong> per obtenir el fitxer .json i enviar-lo al teu docent, o prem <strong>Compartir enllaç</strong> per copiar un enllaç que pots enviar directament. El teu docent t\'haurà indicat quina de les dues opcions fer servir.',
+    'player.correctionHint': 'Desplaça\'t cap avall per veure la correcció detallada de les teves respostes.',
 
     'player.notYet': 'Encara no disponible',
     'player.notYetDesc': 'Aquesta fitxa s\'obrirà el {fecha}.',
@@ -1178,6 +1185,8 @@ const STRINGS = {
     'entrega.incorrects': 'incorrectes',
     'entrega.partials': 'parcials',
     'entrega.blanks': 'en blanc',
+    'entrega.detail': 'Detall de respostes',
+    'entrega.solution': 'Solució',
 
     'zipio.noManifest': 'El ZIP no conté manifest.json: no és una fitxa de OpenWorksheets.',
     'zipio.badManifest': 'El manifest.json del ZIP no és vàlid.',
@@ -1457,6 +1466,7 @@ const STRINGS = {
     'player.pct': ' ({pct} % de acertos)',
     'player.teacherCheck': 'Envía o ficheiro de entrega ou o enlace ao teu profesor ou profesora, segundo che teñan indicado.',
     'player.submissionInfo': 'Usa o botón <strong>Descargar entrega</strong> para obter o ficheiro .json e enviárselo ao teu docente, ou preme <strong>Compartir enlace</strong> para copiar un enlace que podes enviar directamente. O teu docente indicarache cal das dúas opcións usar.',
+    'player.correctionHint': 'Desprázate cara abaixo para ver a corrección detallada das túas respostas.',
 
     'player.notYet': 'Aínda non dispoñible',
     'player.notYetDesc': 'Esta ficha abrirase o {fecha}.',
@@ -1565,6 +1575,8 @@ const STRINGS = {
     'entrega.incorrects': 'incorrectas',
     'entrega.partials': 'parciais',
     'entrega.blanks': 'en branco',
+    'entrega.detail': 'Detalle de respostas',
+    'entrega.solution': 'Solución',
 
     'zipio.noManifest': 'O ZIP non contén manifest.json: non é unha ficha de OpenWorksheets.',
     'zipio.badManifest': 'O manifest.json do ZIP non é válido.',
@@ -1844,6 +1856,7 @@ const STRINGS = {
     'player.pct': ' ({pct} % asmatutakoak)',
     'player.teacherCheck': 'Bidali entrega-fitxategia edo esteka zure irakasleari, adierazi dizuten moduan.',
     'player.submissionInfo': 'Erabili <strong>Entrega deskargatu</strong> botoia .json fitxategia lortzeko eta irakasleari bidaltzeko, edo sakatu <strong>Esteka partekatu</strong> zuzenean bidal dezakezun esteka kopiatzeko. Zure irakasleak esango dizu bi aukeretatik zein erabili.',
+    'player.correctionHint': 'Mugitu behera zure erantzunen zuzenketaren xehetasunak ikusteko.',
 
     'player.notYet': 'Oraindik ez dago erabilgarri',
     'player.notYetDesc': 'Fitxa hau {fecha}(e)an irekiko da.',
@@ -1952,6 +1965,8 @@ const STRINGS = {
     'entrega.incorrects': 'okerrak',
     'entrega.partials': 'partzialak',
     'entrega.blanks': 'hutsik',
+    'entrega.detail': 'Erantzunen xehetasuna',
+    'entrega.solution': 'Irtenbidea',
 
     'zipio.noManifest': 'ZIPak ez du manifest.json-rik: ez da OpenWorksheets fitxa bat.',
     'zipio.badManifest': 'ZIPeko manifest.json ez da baliogarria.',

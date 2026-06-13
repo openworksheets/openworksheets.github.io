@@ -1478,7 +1478,7 @@ input.wpf-gap-input {
   padding: 22px 14px 130px;
 }
 .al-doc .wpf-page { margin-bottom: 26px; }
-.al-doc.al-entregado .wpf-page { display: none; }
+.al-doc.al-entregado:not(.al-show-correction) .wpf-page { display: none; }
 
 .al-cabecera {
   display: flex;

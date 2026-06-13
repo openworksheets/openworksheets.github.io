@@ -350,13 +350,17 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     btnFin.disabled = true;
 
     const resultados = [];
+    const detalleCorreccion = [];
     let earned = 0;
+    const showCorrection = settings.showCorrection !== false;
     controllers.forEach(c => {
       const res = gradeField(c.field, c.getAnswer());
       earned += res.earned;
       c.setDisabled(true);
-      if (settings.showCorrection !== false) {
-        c.mark(res, expectedText(c.field));
+      const exp = expectedText(c.field);
+      if (showCorrection) {
+        c.mark(res, exp);
+        detalleCorreccion.push({ answer: c.getAnswer(), ok: res.ok, expected: exp });
       }
       resultados.push({
         id: c.field.id,
@@ -396,7 +400,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     const acciones = el('div', { class: 'acciones' });
     acciones.appendChild(el('button', { class: 'btn dark', onclick: () => downloadEntrega(entregaArchivo) }, t('player.downloadBtn')));
     acciones.appendChild(el('button', { class: 'btn', onclick: () => shareEntrega(entregaArchivo) }, t('player.shareBtn')));
-    const copyBtn = el('button', { class: 'btn', onclick: () => copyResumen(entrega) }, t('player.copyBtn'));
+    const copyBtn = el('button', { class: 'btn', onclick: () => copyResumen(entrega, detalleCorreccion) }, t('player.copyBtn'));
     const printBtn = el('button', { class: 'btn', onclick: () => window.print() }, t('player.printBtn'));
     if (!showScore) { copyBtn.disabled = true; printBtn.disabled = true; }
     acciones.appendChild(copyBtn);
@@ -425,6 +429,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
       el('div', { class: 'detalle' },
         `${datos.alumno}${datos.grupo ? ' · ' + datos.grupo : ''} · ${fechaHora(new Date(entrega.fecha))}`),
       (() => { const p = el('p', { class: 'al-info', style: 'margin-top:12px' }); p.innerHTML = t('player.submissionInfo'); return p; })(),
+      showCorrection ? el('p', { class: 'al-info al-correction-hint', style: 'margin-top:8px' }, t('player.correctionHint')) : null,
       acciones);
 
     if (showScore && totalPoints > 0) {
@@ -434,6 +439,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
 
     doc.insertBefore(tarjeta, doc.firstChild);
     doc.classList.add('al-entregado');
+    if (showCorrection) doc.classList.add('al-show-correction');
     barra.remove();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -455,8 +461,8 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     }
   }
 
-  async function copyResumen(entrega) {
-    const ok = await copyToClipboard(entregaResumen(entrega, { includeScore: settings.showScore !== false }));
+  async function copyResumen(entrega, detalle = []) {
+    const ok = await copyToClipboard(entregaResumen(entrega, { includeScore: settings.showScore !== false, detail: detalle }));
     toast(ok ? t('toast.resumeCopied') : t('toast.resumeError'), ok ? 'ok' : 'error');
   }
 

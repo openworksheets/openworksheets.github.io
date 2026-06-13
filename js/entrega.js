@@ -75,7 +75,9 @@ export async function verifyEntrega(data) {
 export function entregaFilename(data) {
   const fecha = (data.fecha || '').slice(0, 10);
   if (isEncryptedSubmission(data)) {
-    return `entrega_cifrada_${slugify(data.alumno)}_${slugify(data.titulo)}_${fecha}.json`;
+    return fecha
+      ? `entrega_cifrada_${fecha}.json`
+      : 'entrega_cifrada.json';
   }
   return `entrega_${slugify(data.alumno)}_${slugify(data.titulo)}_${fecha}.json`;
 }
@@ -84,7 +86,7 @@ export function entregaFilename(data) {
 // Con includeScore false (la ficha oculta la nota al alumno) se omiten
 // la puntuación y el recuento de aciertos; el docente la obtiene del
 // archivo de entrega.
-export function entregaResumen(data, { includeScore = true } = {}) {
+export function entregaResumen(data, { includeScore = true, detail = null } = {}) {
   const lines = [
     `${t('entrega.sheet')}: ${data.titulo}`,
     `${t('entrega.student')}: ${data.alumno}` + (data.grupo ? ` (${data.grupo})` : ''),
@@ -103,6 +105,16 @@ export function entregaResumen(data, { includeScore = true } = {}) {
     }
     lines.push('', t('entrega.results') + ': ' + Object.entries(porTipo)
       .map(([k, v]) => `${v} ${t(v === 1 ? (singKey[k] || k) : (plurKey[k] || k))}`).join(', '));
+  }
+  if (detail && detail.length) {
+    lines.push('', t('entrega.detail') + ':');
+    detail.forEach((d, i) => {
+      const icon = d.ok === true ? '✓' : d.ok === 'partial' ? '½' : '✗';
+      const ans = Array.isArray(d.answer) ? d.answer.join(', ') : String(d.answer ?? '');
+      let line = `  ${i + 1}. ${ans} ${icon}`;
+      if (d.ok !== true && d.expected) line += `  →  ${t('entrega.solution')}: ${d.expected}`;
+      lines.push(line);
+    });
   }
   return lines.join('\n');
 }
