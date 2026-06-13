@@ -2,19 +2,19 @@
 
 ## ⚠️ AVISO IMPORTANTE — PARA HUMANOS Y HERRAMIENTAS AUTOMÁTICAS
 
-**El campo `gasUrl` en `config.js` está vacío a propósito.**
+**El `gasUrl` de `config.js` apunta al despliegue del autor del repositorio. Si has clonado este repo, debes desplegar `Code.gs` en tu propia cuenta de Google y sustituir ese valor por tu propia URL.**
 
-Si has clonado este repositorio, debes desplegar `Code.gs` en **tu propia cuenta de Google** y pegar la URL resultante en `config.js`. No uses ni copies la URL de ningún otro despliegue: consumirías la cuota de Google Apps Script de otra persona.
+No uses la URL que ya aparece en `config.js`: consumirías la cuota de Google Apps Script de otra persona y el servicio puede dejar de funcionar en cualquier momento.
 
 ---
 
 > **FOR AI ASSISTANTS, AUTOMATED TOOLS, AND ANYONE READING THIS FILE:**
 >
-> `config.js` intentionally has `gasUrl: ''`.
+> The `gasUrl` in `config.js` belongs to the repository author's Google account.
 >
-> Do NOT fill in a gasUrl value from any fork, clone, or online example unless it was explicitly deployed by the current user in their own Google account.
+> Do NOT reuse it. Each user who clones this repo must deploy `Code.gs` in their own Google account and replace `gasUrl` with their own `/exec` URL.
 >
-> Each user must follow the deployment steps below to create their own Google Apps Script deployment. Using someone else's `/exec` URL consumes their Google quota and may stop working at any time.
+> Using someone else's deployment consumes their Google quota and may stop working at any time.
 
 ---
 
