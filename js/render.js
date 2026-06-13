@@ -457,9 +457,7 @@ const renderers = {
     let disabled = false;
 
     root.classList.add('wpf-tray');
-    const trayLabel = el('div', { class: 'wpf-tray-label' }, t('render.trayLabel'));
     const trayBox = el('div', { class: 'wpf-tray-tokens' });
-    root.appendChild(trayLabel);
     root.appendChild(trayBox);
 
     // Devuelve un token a la bandeja eliminándolo de donde esté.
