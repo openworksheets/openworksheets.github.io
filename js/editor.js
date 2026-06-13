@@ -754,15 +754,22 @@ function renderFieldPanel(field) {
     cont.appendChild(ptsRow);
   }
   if (field.type !== 'cover' && !isShapeField(field.type)) {
-    const fs = el('input', { type: 'range', min: '0.6', max: '2', step: '0.1', value: String(field.fontScale || 1) });
-    fs.addEventListener('input', () => {
-      field.fontScale = parseFloat(fs.value);
+    const fsVal = field.fontScale || 1;
+    const fsRange = el('input', { type: 'range', min: '0.6', max: '5', step: '0.1', value: String(fsVal) });
+    const fsNum = el('input', { type: 'number', min: '0.1', max: '20', step: '0.1', value: String(fsVal), style: 'width:72px' });
+    const applyFs = v => {
+      v = Math.max(0.1, parseFloat(v) || 1);
+      field.fontScale = v;
+      fsRange.value = Math.min(v, 5);
+      fsNum.value = v;
       const node = canvas.querySelector(`[data-id="${field.id}"]`);
-      if (node) node.style.setProperty('--fs', field.fontScale);
+      if (node) node.style.setProperty('--fs', v);
       markDirty();
-    });
+    };
+    fsRange.addEventListener('input', () => applyFs(fsRange.value));
+    fsNum.addEventListener('input', () => applyFs(fsNum.value));
     cont.appendChild(el('label', { class: 'f-label' }, t('editor.fontSize')));
-    cont.appendChild(fs);
+    cont.appendChild(el('div', { class: 'rot-row' }, fsRange, fsNum, el('span', {}, '×')));
   }
 
   // Configuración específica del tipo
