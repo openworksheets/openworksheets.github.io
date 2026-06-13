@@ -515,6 +515,13 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .score-high:hover td, .score-mid:hover td, .score-low:hover td { color: inherit; }
 
 .dup-warn { color: var(--ambar); font-size: 0.82rem; cursor: help; }
+.cl-del { width: 24px; }
+.cl-del-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--tinta-tenue); font-size: 0.85rem; padding: 2px 4px;
+  border-radius: 4px; line-height: 1; transition: color 0.15s, background 0.15s;
+}
+.cl-del-btn:hover { color: var(--rojo); background: var(--rojo-claro); }
 
 /* ---------- Toast ---------- */
 

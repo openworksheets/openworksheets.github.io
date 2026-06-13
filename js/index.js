@@ -241,10 +241,11 @@ function renderClassTable() {
       <td class="cl-num">${r.pct}%</td>
       <td class="cl-date">${esc(fechaHora(new Date(d.fecha)))}</td>
       <td class="cl-num">${badge}</td>
+      <td class="cl-del"><button class="cl-del-btn" data-ri="${r._i}" title="${esc(t('index.delRow'))}">✕</button></td>
     </tr>`;
   }).join('');
 
-  const colspan = 7 + (hasGroups ? 1 : 0) + (hasManySheets ? 1 : 0);
+  const colspan = 8 + (hasGroups ? 1 : 0) + (hasManySheets ? 1 : 0);
 
   container.innerHTML = `
     <div class="class-toolbar">
@@ -265,6 +266,7 @@ function renderClassTable() {
           ${thSort('pct',    t('index.colPct'),    true)}
           <th>${esc(t('entrega.date'))}</th>
           <th class="cl-num">${esc(t('index.colValid'))}</th>
+          <th></th>
         </tr></thead>
         <tbody>${rows}</tbody>
         <tfoot><tr><td colspan="${colspan}" class="class-stats">
@@ -282,9 +284,20 @@ function renderClassTable() {
   });
 
   container.querySelectorAll('tbody tr').forEach(tr => {
-    tr.addEventListener('click', () => {
+    tr.addEventListener('click', e => {
+      if (e.target.closest('.cl-del-btn')) return;
       const r = classResults[Number(tr.dataset.ri)];
       showDetail(r.data, r.valid);
+    });
+  });
+
+  container.querySelectorAll('.cl-del-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const ri = Number(btn.dataset.ri);
+      classResults.splice(ri, 1);
+      saveClassResults();
+      renderClassTable();
     });
   });
 
