@@ -383,6 +383,7 @@ const renderers = {
     let arrangement = shuffledIndices(items.length, ctx.rng);
     let disabled = false;
     let touched = false;
+    let dragPos = null;
     const list = el('div', { class: 'wpf-order' });
     root.appendChild(list);
 
@@ -395,19 +396,60 @@ const renderers = {
       notify(ctx);
     }
 
+    function moveTo(from, to) {
+      if (from === to || from < 0 || to < 0 || from >= arrangement.length || to >= arrangement.length) return;
+      const next = arrangement.slice();
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      arrangement = next;
+      touched = true;
+      paint();
+      notify(ctx);
+    }
+
     function paint() {
       list.textContent = '';
       arrangement.forEach((orig, pos) => {
+        const item = el('div', { class: 'wpf-order-item', draggable: disabled ? null : 'true' });
         const up = el('button', { class: 'wpf-mini-btn', type: 'button', 'aria-label': t('render.moveUp') }, '▲');
         const down = el('button', { class: 'wpf-mini-btn', type: 'button', 'aria-label': t('render.moveDown') }, '▼');
         up.disabled = disabled || pos === 0;
         down.disabled = disabled || pos === arrangement.length - 1;
         up.addEventListener('click', () => move(pos, -1));
         down.addEventListener('click', () => move(pos, 1));
-        list.appendChild(el('div', { class: 'wpf-order-item' },
+        item.addEventListener('dragstart', e => {
+          if (disabled) return;
+          dragPos = pos;
+          item.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', String(pos));
+        });
+        item.addEventListener('dragend', () => {
+          dragPos = null;
+          item.classList.remove('dragging');
+          list.querySelectorAll('.drag-over').forEach(n => n.classList.remove('drag-over'));
+        });
+        item.addEventListener('dragover', e => {
+          if (disabled || dragPos === null || dragPos === pos) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          item.classList.add('drag-over');
+        });
+        item.addEventListener('dragleave', e => {
+          if (!item.contains(e.relatedTarget)) item.classList.remove('drag-over');
+        });
+        item.addEventListener('drop', e => {
+          e.preventDefault();
+          item.classList.remove('drag-over');
+          if (disabled || dragPos === null) return;
+          moveTo(dragPos, pos);
+          dragPos = null;
+        });
+        item.append(
           el('span', { class: 'wpf-order-num' }, String(pos + 1)),
           el('span', { class: 'wpf-order-text' }, items[orig]),
-          el('span', { class: 'wpf-order-btns' }, up, down)));
+          el('span', { class: 'wpf-order-btns' }, up, down));
+        list.appendChild(item);
       });
     }
     paint();

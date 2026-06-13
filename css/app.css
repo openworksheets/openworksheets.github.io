@@ -1154,6 +1154,15 @@ input.wpf-gap-input {
   border: 1.5px solid var(--tinta-tenue);
   border-radius: 5px;
   padding: 0.12em 0.45em;
+  cursor: grab;
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+}
+.wpf-order-item:active { cursor: grabbing; }
+.wpf-order-item.dragging { opacity: 0.45; }
+.wpf-order-item.drag-over {
+  border-color: var(--rojo);
+  background: var(--ambar-claro);
+  transform: scale(1.02);
 }
 .wpf-order-num {
   font-family: var(--display);
