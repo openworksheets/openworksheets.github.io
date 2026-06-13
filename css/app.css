@@ -758,7 +758,8 @@ dialog .dlg-buttons {
   font-size: calc(1.6cqw * var(--fs, 1));
   display: flex;
   align-items: flex-start;
-  overflow: hidden;
+  overflow: visible;
+  transform-origin: center center;
 }
 .ed-field:active { cursor: grabbing; }
 /* Decorativos en el editor: vista fiel de lo que verá el alumno */
@@ -771,6 +772,7 @@ dialog .dlg-buttons {
   white-space: pre-wrap;
   line-height: 1.35;
   pointer-events: none;
+  overflow: hidden;
 }
 .ed-field.ed-field-label .chip,
 .ed-field.ed-field-cover .chip,
@@ -805,6 +807,29 @@ dialog .dlg-buttons {
   display: none;
 }
 .ed-field.selected .handle { display: block; }
+.ed-field .rot-handle {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 20px;
+  background: var(--tinta);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 13px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  user-select: none;
+  z-index: 10;
+  line-height: 1;
+}
+.ed-field .rot-handle::after { content: '↻'; }
+.ed-field.selected .rot-handle { display: flex; }
+.rot-row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
+.rot-row input[type=number] { width: 78px; }
 
 .ed-zone {
   position: absolute;
@@ -961,6 +986,7 @@ dialog .dlg-buttons {
   position: absolute;
   font-size: calc(1.6cqw * var(--fs, 1));
   z-index: 2;
+  transform-origin: center center;
 }
 .wpf-field input, .wpf-field select, .wpf-field button {
   font-family: var(--cuerpo);

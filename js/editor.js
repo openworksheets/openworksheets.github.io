@@ -291,6 +291,12 @@ function renderCanvas() {
       } else if (isShapeField(field.type)) {
         box.appendChild(buildShapeSvg(field));
       }
+      if (field.type === 'image' || field.type === 'label') {
+        const rotHandle = el('span', { class: 'rot-handle', title: t('editor.rotate') });
+        box.appendChild(rotHandle);
+        if (field.rotate) box.style.transform = `rotate(${field.rotate}deg)`;
+        attachRotateHandle(rotHandle, box, field);
+      }
       setRectStyle(box, field.rect);
       box.style.setProperty('--fs', field.fontScale || 1);
       // En modo hotspot (arrowmatch con áreas definidas), el campo principal no se arrastra:
@@ -412,6 +418,37 @@ function attachBoxInteraction(box, pageEl, rect, { onSelect, isSelected }) {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
       if (moved) markDirty();
+    }
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  });
+}
+
+// Handle de rotación para elementos decorativos (image, label).
+function attachRotateHandle(rotHandle, box, field) {
+  rotHandle.addEventListener('pointerdown', e => {
+    if (activeTool) return;
+    e.stopPropagation();
+    e.preventDefault();
+    rotHandle.setPointerCapture(e.pointerId);
+    const br = box.getBoundingClientRect();
+    const cx = (br.left + br.right) / 2;
+    const cy = (br.top + br.bottom) / 2;
+    const startAngle = Math.atan2(e.clientY - cy, e.clientX - cx) * 180 / Math.PI + 90;
+    const startRotate = field.rotate || 0;
+    const offset = startRotate - startAngle;
+    function onMove(ev) {
+      const angle = Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI + 90;
+      const deg = Math.round(((angle + offset) % 360 + 360) % 360);
+      field.rotate = deg;
+      box.style.transform = deg ? `rotate(${deg}deg)` : '';
+      const inp = panel.querySelector('.rot-input');
+      if (inp) inp.value = deg;
+      markDirty();
+    }
+    function onUp() {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
     }
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
@@ -731,6 +768,26 @@ function renderFieldPanel(field) {
   // Configuración específica del tipo
   const formBuilder = configForms[field.type];
   if (formBuilder) formBuilder(cont, field);
+
+  // Rotación (solo image y label)
+  if (field.type === 'image' || field.type === 'label') {
+    const rotInp = el('input', { type: 'number', class: 'rot-input', step: '1', value: String(field.rotate || 0) });
+    const applyRot = (deg, fromInput = false) => {
+      field.rotate = deg;
+      if (!fromInput) rotInp.value = deg;
+      const box = canvas.querySelector(`[data-id="${field.id}"]`);
+      if (box) box.style.transform = deg ? `rotate(${deg}deg)` : '';
+      markDirty();
+    };
+    rotInp.addEventListener('input', () => applyRot(parseInt(rotInp.value, 10) || 0, true));
+    const row = el('div', { class: 'rot-row' },
+      el('label', { class: 'f-label' }, t('editor.rotate')),
+      rotInp,
+      el('button', { class: 'btn small', type: 'button', onclick: () => applyRot((field.rotate || 0) - 90) }, '-90°'),
+      el('button', { class: 'btn small', type: 'button', onclick: () => applyRot((field.rotate || 0) + 90) }, '+90°'),
+      el('button', { class: 'btn small', type: 'button', onclick: () => applyRot(0) }, '↺'));
+    cont.appendChild(row);
+  }
 
   // Acciones
   cont.appendChild(el('div', { class: 'ed-acciones' },

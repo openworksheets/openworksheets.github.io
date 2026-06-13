@@ -17,6 +17,7 @@ import { t } from './i18n.js';
 export function renderField(field, pageLayer, ctx) {
   const root = el('div', { class: `wpf-field wpf-field-${field.type}`, dataset: { id: field.id } });
   positionRect(root, field.rect);
+  if (field.rotate) root.style.transform = `rotate(${field.rotate}deg)`;
   root.style.setProperty('--fs', field.fontScale || 1);
   pageLayer.appendChild(root);
 
