@@ -165,13 +165,27 @@ function renderVerificacion(data, valid) {
   </div>`;
 }
 
-// Estado acumulado de la clase
-const classResults = [];
+// Estado acumulado de la clase (persistido en localStorage)
+const CLASS_STORAGE_KEY = 'openworksheets:classResults';
+
+function loadClassResults() {
+  try {
+    const raw = localStorage.getItem(CLASS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function saveClassResults() {
+  try { localStorage.setItem(CLASS_STORAGE_KEY, JSON.stringify(classResults)); } catch { /* cuota llena */ }
+}
+
+const classResults = loadClassResults();
 let classSort = { col: 'fecha', dir: -1 };
 
 function addToClass(data, valid) {
   const pct = data.total > 0 ? Math.round(data.nota / data.total * 100) : 0;
   classResults.push({ data, valid, pct });
+  saveClassResults();
   renderClassTable();
 }
 
@@ -277,6 +291,7 @@ function renderClassTable() {
   $('#btnExportCsv').addEventListener('click', exportClassCsv);
   $('#btnClearClass').addEventListener('click', () => {
     classResults.length = 0;
+    saveClassResults();
     renderClassTable();
     const out = $('#salidaVerificacion');
     out.style.display = 'none';
@@ -368,6 +383,9 @@ verifySection.addEventListener('drop', async e => {
     catch { showBadJson(); }
   }
 });
+
+// Restaurar lista guardada al arrancar
+if (classResults.length) renderClassTable();
 
 // Entrega recibida por URL (alumno compartió el enlace)
 if (window.location.hash.startsWith('#e=')) {
