@@ -1579,6 +1579,8 @@ $('#btnGenerarEnlace')?.addEventListener('click', async () => {
   const { link } = await buildShortLink(url);
   btn.disabled = false;
   $('#compEnlace').textContent = link;
+  const tryBtn = $('#btnProbarEnlace');
+  if (tryBtn) tryBtn.href = link;
   $('#compSalida').style.display = 'block';
   const ok = await copyToClipboard(link);
   if (ok) toast(t('toast.linkCopied'), 'ok');

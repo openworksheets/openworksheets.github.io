@@ -64,6 +64,7 @@ const STRINGS = {
     'index.generateBtn': 'Generar enlace',
     'index.studentLinkLabel': 'Comparte esta dirección con el alumnado para que puedan completar la ficha:',
     'index.copyLink': '⧉ Copiar enlace',
+    'index.tryLink': '▶ Probar (opcional)',
     'index.verifyTitle': 'Ver y verificar una entrega',
     'index.verifyDesc': 'Abre uno o varios archivos de entrega para ver la puntuación, las respuestas a cada pregunta y comprobar que no han sido modificados. También puedes recibir la entrega mediante un enlace que el alumnado te envía al terminar la ficha.',
     'index.verifyBtn': 'Abrir archivo de entrega (.json)',
@@ -229,6 +230,7 @@ const STRINGS = {
     'dlg.share.urlPlaceholder': 'https://drive.google.com/file/d/…',
     'dlg.share.generateBtn': 'Generar enlace para el alumnado',
     'dlg.share.copyLink': '⧉ Copiar enlace',
+    'dlg.share.tryLink': '▶ Probar (opcional)',
 
     // Editor — restricciones de acceso
     'dlg.access.section': 'Restricciones de acceso',
@@ -486,6 +488,7 @@ const STRINGS = {
     'index.generateBtn': 'Generate link',
     'index.studentLinkLabel': 'Share this address with your students so they can complete the worksheet:',
     'index.copyLink': '⧉ Copy link',
+    'index.tryLink': '▶ Preview (optional)',
     'index.verifyTitle': 'View and verify a submission',
     'index.verifyDesc': 'Open one or several submission files to see the score, the answers to each question and check that they have not been modified. You can also receive a submission via a link that students send you when they finish the worksheet.',
     'index.verifyBtn': 'Open submission file (.json)',
@@ -613,6 +616,7 @@ const STRINGS = {
     'dlg.share.urlPlaceholder': 'https://drive.google.com/file/d/…',
     'dlg.share.generateBtn': 'Generate student link',
     'dlg.share.copyLink': '⧉ Copy link',
+    'dlg.share.tryLink': '▶ Preview (optional)',
 
     'dlg.access.section': 'Access restrictions',
     'dlg.access.desde': 'Available from (optional)',
@@ -877,6 +881,7 @@ const STRINGS = {
     'index.generateBtn': 'Generar enllaç',
     'index.studentLinkLabel': 'Comparteix aquesta adreça amb l\'alumnat perquè pugui completar la fitxa:',
     'index.copyLink': '⧉ Copiar enllaç',
+    'index.tryLink': '▶ Provar (opcional)',
     'index.verifyTitle': 'Veure i verificar un lliurament',
     'index.verifyDesc': 'Obre un o diversos fitxers de lliurament per veure la puntuació, les respostes a cada pregunta i comprovar que no han estat modificats. També pots rebre el lliurament mitjançant un enllaç que l\'alumnat t\'envia en acabar la fitxa.',
     'index.verifyBtn': 'Obrir fitxer de lliurament (.json)',
@@ -1004,6 +1009,7 @@ const STRINGS = {
     'dlg.share.urlPlaceholder': 'https://drive.google.com/file/d/…',
     'dlg.share.generateBtn': 'Generar enllaç per a l\'alumnat',
     'dlg.share.copyLink': '⧉ Copiar enllaç',
+    'dlg.share.tryLink': '▶ Provar (opcional)',
 
     'dlg.access.section': 'Restriccions d\'accés',
     'dlg.access.desde': 'Disponible des de (opcional)',
@@ -1268,6 +1274,7 @@ const STRINGS = {
     'index.generateBtn': 'Xerar enlace',
     'index.studentLinkLabel': 'Comparte este enderezo co alumnado para que poidan completar a ficha:',
     'index.copyLink': '⧉ Copiar enlace',
+    'index.tryLink': '▶ Probar (opcional)',
     'index.verifyTitle': 'Ver e verificar unha entrega',
     'index.verifyDesc': 'Abre un ou varios ficheiros de entrega para ver a puntuación, as respostas a cada pregunta e comprobar que non foron modificados. Tamén podes recibir a entrega mediante un enlace que o alumnado che envía ao rematar a ficha.',
     'index.verifyBtn': 'Abrir ficheiro de entrega (.json)',
@@ -1395,6 +1402,7 @@ const STRINGS = {
     'dlg.share.urlPlaceholder': 'https://drive.google.com/file/d/…',
     'dlg.share.generateBtn': 'Xerar enlace para o alumnado',
     'dlg.share.copyLink': '⧉ Copiar enlace',
+    'dlg.share.tryLink': '▶ Probar (opcional)',
 
     'dlg.access.section': 'Restricións de acceso',
     'dlg.access.desde': 'Dispoñible desde (opcional)',
@@ -1659,6 +1667,7 @@ const STRINGS = {
     'index.generateBtn': 'Esteka sortu',
     'index.studentLinkLabel': 'Partekatu helbide hau ikasleei fitxa osatu dezaten:',
     'index.copyLink': '⧉ Esteka kopiatu',
+    'index.tryLink': '▶ Probatu (aukerakoa)',
     'index.verifyTitle': 'Entrega bat ikusi eta egiaztatu',
     'index.verifyDesc': 'Ireki entrega-fitxategi bat edo gehiago puntuazioa, galdera bakoitzaren erantzuna ikusteko eta aldatu ez direla egiaztatzeko. Ikasleek fitxa amaitzean bidaltzen dizuten esteka baten bidez ere jaso dezakezu entrega.',
     'index.verifyBtn': 'Entrega-fitxategia ireki (.json)',
@@ -1786,6 +1795,7 @@ const STRINGS = {
     'dlg.share.urlPlaceholder': 'https://drive.google.com/file/d/…',
     'dlg.share.generateBtn': 'Ikasleentzako esteka sortu',
     'dlg.share.copyLink': '⧉ Esteka kopiatu',
+    'dlg.share.tryLink': '▶ Probatu (aukerakoa)',
 
     'dlg.access.section': 'Sarbide-murrizketak',
     'dlg.access.desde': 'Noiztik erabilgarri (aukerakoa)',
