@@ -504,7 +504,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .class-table td { padding: 5px 8px; border-bottom: 1px solid var(--tinta-tenue); vertical-align: middle; }
 .class-table tbody tr { cursor: pointer; transition: background 0.12s; }
 .class-table tbody tr:hover { background: color-mix(in srgb, var(--azul-claro) 20%, transparent); }
-.class-table td.cl-num { text-align: right; font-variant-numeric: tabular-nums; }
+.class-table td.cl-num, .class-table th.cl-num { text-align: right; font-variant-numeric: tabular-nums; }
 .class-table td.cl-date { white-space: nowrap; font-size: 0.78rem; color: var(--tinta-suave); }
 .class-table tfoot td { padding: 6px 8px; font-size: 0.8rem; color: var(--tinta-suave); border-top: 2px solid var(--tinta-tenue); }
 .class-stats { font-style: italic; }
