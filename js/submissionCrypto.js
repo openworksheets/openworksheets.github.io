@@ -149,7 +149,7 @@ export async function encryptSubmission(data, cryptoCfg) {
 
 export async function decryptSubmission(data, password) {
   if (!data || data.formato !== 'workpdf-entrega-cifrada') {
-    throw new Error('No es una entrega cifrada de WorkPDF.');
+    throw new Error('No es una entrega cifrada de OpenWorksheets.');
   }
   const cfg = data.crypto || {};
   const wrapKey = await deriveWrapKey(password, cfg.salt, cfg.iterations || ITERATIONS);

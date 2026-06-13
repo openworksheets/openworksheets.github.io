@@ -1,4 +1,4 @@
-# Tests de WorkPDF
+# Tests de OpenWorksheets
 
 Pruebas de integración que se ejecutan en un navegador real.
 

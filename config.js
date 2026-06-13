@@ -1,4 +1,4 @@
-// Configuración de WorkPDF.
+// Configuración de OpenWorksheets.
 //
 // gasUrl: URL de un despliegue de Google Apps Script que actúa como proxy de
 // descarga para los ZIP alojados en Google Drive (que bloquea CORS).
@@ -7,7 +7,7 @@
 // compatible por si se quiere desplegar uno propio.
 // Sin proxy, la aplicación intenta la descarga directa y, si falla por CORS,
 // recurre a proxies CORS públicos (menos fiables).
-window.WORKPDF_CONFIG = {
+window.OPENWORKSHEETS_CONFIG = {
   gasUrl: 'https://script.google.com/macros/s/AKfycbxTxNMhU6DsxfnwbtqfLzafj9AvMDYMyDG0qd03vKW8M2grSpZtsjerwO5NtxeWCWbI/exec',
   corsProxies: [
     { url: 'https://corsproxy.io/?', encode: true },

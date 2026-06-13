@@ -1,4 +1,4 @@
-// Utilidades comunes de WorkPDF.
+// Utilidades comunes de OpenWorksheets.
 
 export function uid(prefix = 'f') {
   return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);

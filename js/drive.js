@@ -68,7 +68,7 @@ export function buildStudentLink(zipUrl) {
 // o { link, short: false } con el enlace largo si falla.
 export async function buildShortLink(zipUrl) {
   const direct = toDirectUrl(zipUrl);
-  const gasUrl = window.WORKPDF_CONFIG?.gasUrl;
+  const gasUrl = window.OPENWORKSHEETS_CONFIG?.gasUrl;
   if (gasUrl) {
     try {
       const res = await fetch(
@@ -89,7 +89,7 @@ export async function buildShortLink(zipUrl) {
 // Resuelve un token corto a la URL original llamando al GAS.
 // Devuelve la URL o lanza un error.
 export async function resolveShortToken(token) {
-  const gasUrl = window.WORKPDF_CONFIG?.gasUrl;
+  const gasUrl = window.OPENWORKSHEETS_CONFIG?.gasUrl;
   if (!gasUrl) throw new Error('GAS no configurado');
   const res = await fetch(gasUrl + '?short=' + encodeURIComponent(token), { redirect: 'follow' });
   const json = await res.json();

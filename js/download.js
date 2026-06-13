@@ -7,7 +7,7 @@
 //   3. Proxies CORS públicos como último recurso.
 
 function config() {
-  return window.WORKPDF_CONFIG || { gasUrl: '', corsProxies: [] };
+  return window.OPENWORKSHEETS_CONFIG || { gasUrl: '', corsProxies: [] };
 }
 
 function base64ToBytes(b64) {

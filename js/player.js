@@ -177,7 +177,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     const restored = state && state.answers && Object.keys(state.answers).length;
     rootEl.appendChild(el('div', { class: 'al-centro' },
       el('div', { class: 'card al-tarjeta anim-in' },
-        el('h1', {}, manifest.title || 'WorkPDF'),
+        el('h1', {}, manifest.title || 'OpenWorksheets'),
         manifest.author ? el('p', { class: 'quien' }, t('player.authorPrefix') + manifest.author) : null,
         el('p', {}, t('player.statsLine', { pages: pn, ps: pn === 1 ? '' : 's', fields: fn, fs: fn === 1 ? '' : 's', points: formatNum(pp), pts: pp === 1 ? '' : 's' })),
         access.hasta ? el('p', {}, t('player.untilInfo', { fecha: fechaHora(new Date(access.hasta)) })) : null,
@@ -220,7 +220,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     const doc = el('div', { class: 'al-doc' });
 
     doc.appendChild(el('div', { class: 'al-cabecera' },
-      el('h1', {}, manifest.title || 'WorkPDF'),
+      el('h1', {}, manifest.title || 'OpenWorksheets'),
       el('span', { class: 'quien' },
         preview ? t('player.previewLabel') : `${alumno}${grupo ? ' · ' + grupo : ''}`)));
 
