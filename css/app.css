@@ -740,8 +740,12 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   box-shadow: var(--sombra);
   border-radius: 4px;
   overflow: visible;
+  color: #1d2c42;
   color-scheme: light;
   /* Fijar variables al modo claro para que los campos siempre se vean sobre el PDF blanco */
+  --papel: #f7f2e7;
+  --papel-2: #efe7d5;
+  --blanco: #fffdf8;
   --tinta: #1d2c42;
   --tinta-suave: #4a5870;
   --tinta-tenue: rgba(29, 44, 66, 0.18);
@@ -1006,6 +1010,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .wpf-field input, .wpf-field select, .wpf-field button {
   font-family: var(--cuerpo);
   font-size: inherit;
+  color-scheme: light;
 }
 
 .wpf-input {
