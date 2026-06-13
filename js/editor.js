@@ -9,7 +9,7 @@ import { exportFichaZip, importFichaZip, newManifest } from './zipio.js';
 import { buildShortLink, parseDriveId } from './drive.js';
 import { mountPlayer } from './player.js';
 import { t, getLang, applyI18n, initLangSelector } from './i18n.js';
-import { createSubmissionCrypto } from './submissionCrypto.js';
+import { createSubmissionCrypto, decryptManifestForStudent, encryptManifestForStudent, isEncryptedManifest } from './submissionCrypto.js';
 
 applyI18n();
 initLangSelector();
@@ -1557,7 +1557,7 @@ async function exportZip() {
   manifest.lang = getLang();
   try {
     toast(t('toast.generating'));
-    const exportManifest = JSON.parse(JSON.stringify(manifest));
+    let exportManifest = JSON.parse(JSON.stringify(manifest));
     if (exportManifest.settings?.encryptSubmissions !== false) {
       if (!submissionCryptoPassword) {
         toast(t('crypto.passwordRequired'), 'error');
@@ -1567,6 +1567,9 @@ async function exportZip() {
       exportManifest.submissionCrypto = await createSubmissionCrypto(submissionCryptoPassword);
     } else {
       delete exportManifest.submissionCrypto;
+    }
+    if (exportManifest.access?.password) {
+      exportManifest = await encryptManifestForStudent(exportManifest, exportManifest.access.password);
     }
     const blob = await exportFichaZip({ manifest: exportManifest, files });
     downloadBlob(blob, slugify(manifest.title || 'ficha') + '.zip');
@@ -1581,6 +1584,11 @@ async function exportZip() {
 async function openZipFile(file) {
   try {
     const ficha = await importFichaZip(file);
+    if (isEncryptedManifest(ficha.manifest)) {
+      const password = window.prompt(t('alumno.encryptedDesc'));
+      if (!password) return;
+      ficha.manifest = await decryptManifestForStudent(ficha.manifest, password, { keepPassword: true });
+    }
     manifest = ficha.manifest;
     files = ficha.files;
     submissionCryptoPassword = '';

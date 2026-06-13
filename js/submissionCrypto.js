@@ -5,6 +5,7 @@ const KDF = 'PBKDF2-SHA256';
 const WRAP_ALG = 'AES-GCM';
 const CONTENT_ALG = 'AES-GCM';
 const PUBLIC_ALG = 'RSA-OAEP-SHA256';
+const MANIFEST_ALG = 'AES-GCM';
 const ITERATIONS = 250000;
 
 function bytesToB64(bytes) {
@@ -125,11 +126,6 @@ export async function encryptSubmission(data, cryptoCfg) {
   return {
     formato: 'workpdf-entrega-cifrada',
     version: 1,
-    fichaId: data.fichaId,
-    titulo: data.titulo,
-    alumno: data.alumno,
-    grupo: data.grupo,
-    fecha: data.fecha,
     crypto: {
       publicAlg: cryptoCfg.publicAlg || PUBLIC_ALG,
       contentAlg: cryptoCfg.contentAlg || CONTENT_ALG,
@@ -178,4 +174,61 @@ export async function decryptSubmission(data, password) {
 
 export function isEncryptedSubmission(data) {
   return data?.formato === 'workpdf-entrega-cifrada';
+}
+
+export async function encryptManifestForStudent(manifest, password) {
+  if (!password) return manifest;
+  const salt = randomB64(16);
+  const iv = randomB64(12);
+  const key = await deriveWrapKey(password, salt, ITERATIONS);
+  const access = { ...(manifest.access || {}) };
+  delete access.password;
+  const payload = {
+    author: manifest.author || '',
+    instructions: manifest.instructions || '',
+    settings: manifest.settings || {},
+    access,
+    submissionCrypto: manifest.submissionCrypto || null,
+    pages: manifest.pages || []
+  };
+  return {
+    format: manifest.format,
+    version: manifest.version,
+    id: manifest.id,
+    title: manifest.title || '',
+    lang: manifest.lang || '',
+    encryptedManifest: {
+      version: 1,
+      alg: MANIFEST_ALG,
+      kdf: KDF,
+      iterations: ITERATIONS,
+      salt,
+      iv,
+      ciphertext: await aesEncryptJson(key, payload, iv)
+    }
+  };
+}
+
+export async function decryptManifestForStudent(manifest, password, { keepPassword = false } = {}) {
+  if (!isEncryptedManifest(manifest)) return manifest;
+  const cfg = manifest.encryptedManifest;
+  const key = await deriveWrapKey(password, cfg.salt, cfg.iterations || ITERATIONS);
+  const payload = await aesDecryptJson(key, cfg.ciphertext, cfg.iv);
+  return {
+    ...manifest,
+    encryptedManifest: undefined,
+    author: payload.author || '',
+    instructions: payload.instructions || '',
+    settings: payload.settings || {},
+    access: {
+      ...(payload.access || {}),
+      password: keepPassword ? password : ''
+    },
+    submissionCrypto: payload.submissionCrypto || undefined,
+    pages: payload.pages || []
+  };
+}
+
+export function isEncryptedManifest(manifest) {
+  return Boolean(manifest?.encryptedManifest?.ciphertext);
 }

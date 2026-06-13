@@ -7,6 +7,7 @@ import { toDirectUrl } from './drive.js';
 import { downloadZip } from './download.js';
 import { importFichaZip } from './zipio.js';
 import { mountPlayer } from './player.js';
+import { decryptManifestForStudent, isEncryptedManifest } from './submissionCrypto.js';
 import { t, getLang, setLang, applyI18n, initLangSelector } from './i18n.js';
 
 applyI18n();
@@ -52,6 +53,45 @@ function showError(message) {
       el('button', { class: 'btn', onclick: () => window.location.reload() }, t('alumno.retry')))));
 }
 
+function askWorksheetPassword(ficha) {
+  return new Promise(resolve => {
+    root.textContent = '';
+    const pass = el('input', { type: 'password', autocomplete: 'off', required: '' });
+    const form = el('form', {},
+      el('label', { class: 'f-label' }, t('player.passwordLabel')),
+      pass,
+      el('div', { style: 'margin-top:18px;text-align:center' },
+        el('button', { class: 'btn primary', type: 'submit' }, t('player.startBtn'))));
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      resolve(pass.value);
+    });
+    root.appendChild(el('div', { class: 'al-centro' },
+      el('div', { class: 'card al-tarjeta anim-in' },
+        el('h1', {}, ficha.manifest.title || 'OpenWorksheets'),
+        el('p', {}, t('alumno.encryptedDesc')),
+        form)));
+    pass.focus();
+  });
+}
+
+async function unlockFicha(ficha) {
+  while (isEncryptedManifest(ficha.manifest)) {
+    const password = await askWorksheetPassword(ficha);
+    if (!password) continue;
+    try {
+      return {
+        ...ficha,
+        manifest: await decryptManifestForStudent(ficha.manifest, password)
+      };
+    } catch (e) {
+      console.error(e);
+      toast(t('player.passwordWrong'), 'error');
+    }
+  }
+  return ficha;
+}
+
 function showOpener() {
   root.textContent = '';
   const inputZip = el('input', { type: 'file', accept: '.zip', style: 'display:none' });
@@ -59,7 +99,7 @@ function showOpener() {
     const file = inputZip.files[0];
     if (!file) return;
     try {
-      const ficha = await importFichaZip(file);
+      const ficha = await unlockFicha(await importFichaZip(file));
       mountPlayer(root, ficha);
     } catch (e) {
       toast(e.message, 'error');
@@ -107,7 +147,7 @@ async function main() {
       onProgress: loading.setProgress
     });
     loading.setStatus(t('alumno.opening'));
-    const ficha = await importFichaZip(bytes);
+    const ficha = await unlockFicha(await importFichaZip(bytes));
     // Herencia de idioma: si el alumno no tiene preferencia manual, usa el del profesor
     if (!localStorage.getItem('wpf-lang') && ficha.manifest.lang) {
       setLang(ficha.manifest.lang, { save: false, reload: false });
