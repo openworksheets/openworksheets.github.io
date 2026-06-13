@@ -451,6 +451,14 @@ dialog .dlg-buttons {
   padding: 10px 12px;
   margin: 10px 0;
 }
+.link-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.link-actions .btn { box-sizing: border-box; }
+a.btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
 
 /* ---------- Fecha + hora (restricciones de acceso) ---------- */
 
