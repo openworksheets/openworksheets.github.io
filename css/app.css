@@ -1045,24 +1045,27 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   background-size: 0.7em;
   color: var(--tinta);
   box-shadow: var(--sombra-mini);
-  font-size: inherit;
+  font-size: 0.92em;
 }
 
 .wpf-choices, .wpf-tf {
   background: rgba(255, 253, 248, 0.94);
   border: 2px solid var(--tinta);
   border-radius: 6px;
-  padding: 0.3em 0.55em;
+  padding: 0.25em 0.4em;
   box-shadow: var(--sombra-mini);
   display: flex;
   flex-direction: column;
   gap: 0.18em;
+  /* el texto de las opciones algo menor que el del enunciado: cabe mejor en
+     cajas estrechas sin romper la proporción sobre el PDF */
+  font-size: 0.9em;
 }
-.wpf-tf { flex-direction: row; gap: 1em; flex-wrap: wrap; }
+.wpf-tf { flex-direction: row; gap: 0.7em; flex-wrap: wrap; }
 .wpf-choice {
   display: flex;
   align-items: flex-start;
-  gap: 0.45em;
+  gap: 0.35em;
   cursor: pointer;
   line-height: 1.35;
 }
@@ -1074,10 +1077,10 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   appearance: none;
   -webkit-appearance: none;
   flex: none;
-  width: 1.05em;
-  height: 1.05em;
-  min-width: 1.05em;
-  margin: 0.12em 0 0;
+  width: 0.95em;
+  height: 0.95em;
+  min-width: 0.95em;
+  margin: 0.18em 0 0;
   padding: 0;
   border: 0.13em solid var(--tinta);
   background: #fff;
