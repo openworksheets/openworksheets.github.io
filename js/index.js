@@ -225,7 +225,7 @@ function renderClassTable() {
   const pass = classResults.filter(r => r.data.nota10 >= 5).length;
 
   const arrow = c => c === col ? (dir > 0 ? ' ↑' : ' ↓') : ' ↕';
-  const thSort = (c, label) => `<th data-sort="${c}" class="cl-sort">${esc(label)}${arrow(c)}</th>`;
+  const thSort = (c, label, right = false) => `<th data-sort="${c}" class="cl-sort${right ? ' cl-num' : ''}">${esc(label)}${arrow(c)}</th>`;
 
   const rows = sorted.map((r, rowIdx) => {
     const d   = r.data;
@@ -240,7 +240,7 @@ function renderClassTable() {
       <td class="cl-num">${formatNum(d.nota10)}</td>
       <td class="cl-num">${r.pct}%</td>
       <td class="cl-date">${esc(fechaHora(new Date(d.fecha)))}</td>
-      <td>${badge}</td>
+      <td class="cl-num">${badge}</td>
     </tr>`;
   }).join('');
 
@@ -261,10 +261,10 @@ function renderClassTable() {
           ${thSort('alumno', t('entrega.student'))}
           ${hasGroups    ? thSort('grupo',  t('index.colGroup'))  : ''}
           ${hasManySheets ? thSort('titulo', t('entrega.sheet'))   : ''}
-          ${thSort('nota10', t('index.colNota10'))}
-          ${thSort('pct',    t('index.colPct'))}
+          ${thSort('nota10', t('index.colNota10'), true)}
+          ${thSort('pct',    t('index.colPct'),    true)}
           <th>${esc(t('entrega.date'))}</th>
-          <th>${esc(t('index.colValid'))}</th>
+          <th class="cl-num">${esc(t('index.colValid'))}</th>
         </tr></thead>
         <tbody>${rows}</tbody>
         <tfoot><tr><td colspan="${colspan}" class="class-stats">
