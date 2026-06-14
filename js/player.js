@@ -214,7 +214,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
               : null)
           : null,
         last ? el('div', { style: 'display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px' },
-          iconBtn({ class: 'btn', onclick: () => downloadEntrega(last) }, ICONS.download, t('player.downloadBtn')),
+          iconBtn({ class: 'btn', onclick: () => downloadEntrega(last, { alumno: datos.alumno, titulo: manifest.title, fecha: last.fecha }) }, ICONS.download, t('player.downloadBtn')),
           iconBtn({ class: 'btn', disabled: settings.showScore === false || null, onclick: () => copyResumen(last) }, ICONS.copy, t('player.copyBtn'))) : null)));
   }
 
@@ -409,7 +409,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     const nota10 = entrega.nota10;
     const showScore = settings.showScore !== false;
     const acciones = el('div', { class: 'acciones' });
-    acciones.appendChild(iconBtn({ class: 'btn dark', onclick: () => downloadEntrega(entregaArchivo) }, ICONS.download, t('player.downloadBtn')));
+    acciones.appendChild(iconBtn({ class: 'btn dark', onclick: () => downloadEntrega(entregaArchivo, entrega) }, ICONS.download, t('player.downloadBtn')));
     acciones.appendChild(iconBtn({ class: 'btn', onclick: () => shareEntrega(entregaArchivo) }, ICONS.share, t('player.shareBtn')));
     const copyBtn = iconBtn({ class: 'btn', onclick: () => copyResumen(entrega, detalleCorreccion) }, ICONS.copy, t('player.copyBtn'));
     const printBtn = el('button', { class: 'btn', onclick: () => window.print() }, t('player.printBtn'));
@@ -455,9 +455,9 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function downloadEntrega(entrega) {
+  function downloadEntrega(entrega, meta) {
     const blob = new Blob([JSON.stringify(entrega, null, 2)], { type: 'application/json' });
-    downloadBlob(blob, entregaFilename(entrega));
+    downloadBlob(blob, entregaFilename(entrega, meta));
   }
 
   async function shareEntrega(entregaArchivo) {

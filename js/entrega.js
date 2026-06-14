@@ -72,14 +72,20 @@ export async function verifyEntrega(data) {
   return { valid: true };
 }
 
-export function entregaFilename(data) {
-  const fecha = (data.fecha || '').slice(0, 10);
-  if (isEncryptedSubmission(data)) {
-    return fecha
-      ? `entrega_cifrada_${fecha}.json`
-      : 'entrega_cifrada.json';
-  }
-  return `entrega_${slugify(data.alumno)}_${slugify(data.titulo)}_${fecha}.json`;
+function fechaHoraSlug(isoStr) {
+  if (!isoStr) return '';
+  const d = new Date(isoStr);
+  if (isNaN(d)) return isoStr.slice(0, 10);
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`;
+}
+
+export function entregaFilename(data, meta) {
+  const src = isEncryptedSubmission(data) ? (meta || {}) : data;
+  const alumno = slugify(src.alumno || 'alumno');
+  const titulo = slugify(src.titulo || 'ficha');
+  const fecha = fechaHoraSlug(src.fecha || data.fecha);
+  return `entrega_${alumno}_${titulo}_${fecha}.json`;
 }
 
 // Resumen de texto para pegar en Classroom, correo, etc.
