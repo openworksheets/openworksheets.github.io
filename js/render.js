@@ -601,9 +601,7 @@ const renderers = {
         if (used.has(tk)) return;
         trayBox.appendChild(makeTokenBtn(tk, { selected: selectedToken === tk }));
       });
-      if (!trayBox.children.length) {
-        trayBox.appendChild(el('span', { class: 'wpf-tray-empty' }, t('render.allPlaced')));
-      }
+
       zones.forEach(z => {
         const zEl = zoneEls[z.id];
         zEl.textContent = '';
