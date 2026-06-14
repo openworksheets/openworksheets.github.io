@@ -215,8 +215,20 @@ function addPage({ blob, ext, w, h }) {
   manifest.pages.push({ image: path, w, h, fields: [] });
 }
 
+const PAGE_SIZES = [
+  { key: 'a4p',  w: 1600, h: 2263 },
+  { key: 'a4l',  w: 2263, h: 1600 },
+  { key: 'ltrp', w: 1600, h: 2071 },
+  { key: 'ltrl', w: 2071, h: 1600 },
+];
+
+function detectSizePreset(w, h) {
+  const p = PAGE_SIZES.find(s => s.w === w && s.h === h);
+  return p ? p.key : 'free';
+}
+
 function addBlankPage() {
-  const W = 794, H = 1123; // A4 a 96 dpi
+  const W = 1600, H = 2263; // A4 a ~192 dpi (igual que páginas PDF)
   const cv = document.createElement('canvas');
   cv.width = W; cv.height = H;
   const ctx2d = cv.getContext('2d');
@@ -247,6 +259,74 @@ function recolorBlankPage(pi, color) {
     const imgEl = canvas.querySelector(`.wpf-page[data-page="${pi}"] img.fondo`);
     if (imgEl) imgEl.src = fileUrl(page.image);
   }, 'image/png');
+}
+
+function resizePage(pi, w, h) {
+  const page = manifest.pages[pi];
+  if (!page?.bgColor) return;
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  const ctx2d = cv.getContext('2d');
+  ctx2d.fillStyle = page.bgColor;
+  ctx2d.fillRect(0, 0, w, h);
+  cv.toBlob(blob => {
+    if (urls.has(page.image)) { URL.revokeObjectURL(urls.get(page.image)); urls.delete(page.image); }
+    files.set(page.image, blob);
+    page.w = w; page.h = h;
+    markDirty();
+    renderCanvas();
+    sel = { kind: 'page', pageIndex: pi };
+    renderPanel();
+  }, 'image/png');
+}
+
+function printWorksheet() {
+  if (!manifest.pages.length) { toast(t('toast.addPageFirst'), 'error'); return; }
+  manifest.title = titleInput.value.trim();
+
+  const overlay = el('div', { class: 'prev-overlay print-overlay' });
+  const root = el('div', {});
+  overlay.appendChild(root);
+  document.body.appendChild(overlay);
+
+  const printPlayer = mountPlayer(
+    root,
+    { manifest: JSON.parse(JSON.stringify(manifest)), files },
+    { preview: true }
+  );
+
+  const style = document.createElement('style');
+  style.textContent = `@media print {
+    body > *:not(.print-overlay) { display: none !important; }
+    .print-overlay {
+      position: static !important;
+      overflow: visible !important;
+      background: white !important;
+      background-image: none !important;
+    }
+    .al-cabecera, .al-barra, .al-instrucciones, .al-progreso { display: none !important; }
+    .al-doc {
+      padding: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    .al-doc .wpf-page {
+      margin: 0 !important;
+      break-after: page;
+      page-break-after: always;
+    }
+    .al-doc .wpf-page:last-child { break-after: auto; page-break-after: auto; }
+    @page { margin: 0; size: auto; }
+  }`;
+  document.head.appendChild(style);
+
+  window.addEventListener('afterprint', function cleanup() {
+    printPlayer.destroy();
+    overlay.remove();
+    style.remove();
+  }, { once: true });
+
+  setTimeout(() => window.print(), 600);
 }
 
 function makeAddPageBar() {
@@ -814,6 +894,51 @@ function renderPagePanel(pi) {
     const colorPick = el('input', { type: 'color', value: page.bgColor });
     colorPick.addEventListener('input', () => recolorBlankPage(pi, colorPick.value));
     cont.appendChild(colorPick);
+
+    const sizes = [
+      { key: 'a4p',  w: 1600, h: 2263, label: t('editor.pageSizeA4p') },
+      { key: 'a4l',  w: 2263, h: 1600, label: t('editor.pageSizeA4l') },
+      { key: 'ltrp', w: 1600, h: 2071, label: t('editor.pageSizeLtrp') },
+      { key: 'ltrl', w: 2071, h: 1600, label: t('editor.pageSizeLtrl') },
+      { key: 'free', w: null,  h: null, label: t('editor.pageSizeFree') },
+    ];
+    const curKey = detectSizePreset(page.w, page.h);
+    cont.appendChild(el('label', { class: 'f-label' }, t('editor.pageSize')));
+    const sizeSel = el('select', {});
+    sizes.forEach(s => {
+      const opt = el('option', { value: s.key }, s.label);
+      if (s.key === curKey) opt.selected = true;
+      sizeSel.appendChild(opt);
+    });
+    cont.appendChild(sizeSel);
+
+    const freeRow = el('div', {});
+    freeRow.style.display = curKey === 'free' ? '' : 'none';
+    const wIn = el('input', { type: 'number', min: '400', max: '5000', step: '10', value: String(page.w) });
+    const hIn = el('input', { type: 'number', min: '400', max: '5000', step: '10', value: String(page.h) });
+    freeRow.appendChild(el('label', { class: 'f-label' }, t('editor.pageSizeW')));
+    freeRow.appendChild(wIn);
+    freeRow.appendChild(el('label', { class: 'f-label' }, t('editor.pageSizeH')));
+    freeRow.appendChild(hIn);
+    cont.appendChild(freeRow);
+
+    const applyFreeSize = () => {
+      const w = parseInt(wIn.value) || page.w;
+      const h = parseInt(hIn.value) || page.h;
+      if (w !== page.w || h !== page.h) resizePage(pi, w, h);
+    };
+    wIn.addEventListener('change', applyFreeSize);
+    hIn.addEventListener('change', applyFreeSize);
+
+    sizeSel.addEventListener('change', () => {
+      const chosen = sizes.find(s => s.key === sizeSel.value);
+      if (chosen.key === 'free') {
+        freeRow.style.display = '';
+      } else {
+        freeRow.style.display = 'none';
+        if (chosen.w !== page.w || chosen.h !== page.h) resizePage(pi, chosen.w, chosen.h);
+      }
+    });
   }
   const dupBtn = el('button', { class: 'btn small', type: 'button' }, t('editor.duplicatePage'));
   dupBtn.addEventListener('click', () => duplicatePage(pi));
@@ -1894,6 +2019,7 @@ $('#inputZip').addEventListener('change', e => {
 });
 $('#btnAjustes').addEventListener('click', openSettings);
 $('#btnCompartir').addEventListener('click', openShare);
+$('#btnImprimir').addEventListener('click', printWorksheet);
 $('#btnPrevia').addEventListener('click', openPreview);
 $('#btnExportar').addEventListener('click', exportZip);
 
