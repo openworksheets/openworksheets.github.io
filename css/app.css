@@ -713,6 +713,11 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   margin: 60px auto;
   text-align: center;
 }
+.ed-empty-alt {
+  font-size: 0.85em;
+  color: var(--gris);
+  margin-top: -4px;
+}
 
 
 .ed-pagebox {

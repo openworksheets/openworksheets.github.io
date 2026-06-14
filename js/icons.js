@@ -52,6 +52,7 @@ export const ICONS = {
 
   // Tipos de campo — diseño
   square:    icon('<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>'),
+  coverZone: icon('<rect width="18" height="18" x="3" y="3" rx="2" fill="currentColor" opacity="0.15"/><g stroke-width="1.5"><line x1="3" y1="8" x2="8" y2="3"/><line x1="3" y1="13" x2="13" y2="3"/><line x1="3" y1="18" x2="18" y2="3"/><line x1="3" y1="21" x2="21" y2="3"/><line x1="8" y1="21" x2="21" y2="8"/><line x1="13" y1="21" x2="21" y2="13"/><line x1="18" y1="21" x2="21" y2="18"/></g><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>'),
   image:     icon('<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>'),
   minus:     icon('<path d="M5 12h14"/>'),
   arrowRight: icon('<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>'),

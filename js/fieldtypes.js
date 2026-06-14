@@ -111,7 +111,7 @@ export const FIELD_TYPES = {
   },
   cover: {
     name: 'Tapar zona',
-    glyph: ICONS.square,
+    glyph: ICONS.coverZone,
     decor: true,
     defRect: { w: 0.25, h: 0.07 },
     defaults: () => ({ color: '#ffffff' })

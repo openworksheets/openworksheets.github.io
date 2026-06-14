@@ -93,7 +93,8 @@ const STRINGS = {
 
     // Editor — pantalla vacía
     'editor.emptyTitle': 'Empieza tu ficha',
-    'editor.emptyDesc': 'Sube un PDF (cada página se convertirá en una imagen de fondo) o una imagen suelta. Después dibuja encima los campos autocorregibles. También puedes empezar con una hoja en blanco.',
+    'editor.emptyDesc': 'Sube un PDF (cada página se convertirá en una imagen de fondo) o una imagen suelta. Después dibuja encima los campos autocorregibles.',
+    'editor.emptyDesc2': 'También puedes abrir una ficha ya creada (ZIP) o empezar con una hoja en blanco.',
     'editor.addPdf': '+ Añadir PDF o imagen',
     'editor.addBlank': 'Hoja en blanco',
     'editor.addPageLabel': 'Añadir página:',
@@ -545,7 +546,8 @@ const STRINGS = {
     'footer.today': 'Today',
 
     'editor.emptyTitle': 'Start your worksheet',
-    'editor.emptyDesc': 'Upload a PDF (each page will become a background image) or a standalone image. Then draw self-correcting fields on top. You can also start with a blank sheet.',
+    'editor.emptyDesc': 'Upload a PDF (each page will become a background image) or a standalone image. Then draw self-correcting fields on top.',
+    'editor.emptyDesc2': 'You can also open an existing worksheet (ZIP) or start with a blank sheet.',
     'editor.addPdf': '+ Add PDF or image',
     'editor.addBlank': 'Blank page',
     'editor.addPageLabel': 'Add page:',
@@ -967,7 +969,8 @@ const STRINGS = {
     'footer.today': 'Avui',
 
     'editor.emptyTitle': 'Comença la teva fitxa',
-    'editor.emptyDesc': 'Puja un PDF (cada pàgina es convertirà en una imatge de fons) o una imatge. Després dibuixa-hi a sobre els camps autocorregibles. També pots començar amb un full en blanc.',
+    'editor.emptyDesc': 'Puja un PDF (cada pàgina es convertirà en una imatge de fons) o una imatge. Després dibuixa-hi a sobre els camps autocorregibles.',
+    'editor.emptyDesc2': 'També pots obrir una fitxa ja creada (ZIP) o començar amb un full en blanc.',
     'editor.addPdf': '+ Afegir PDF o imatge',
     'editor.addBlank': 'Full en blanc',
     'editor.addPageLabel': 'Afegir pàgina:',
@@ -1389,7 +1392,8 @@ const STRINGS = {
     'footer.today': 'Hoxe',
 
     'editor.emptyTitle': 'Comeza a túa ficha',
-    'editor.emptyDesc': 'Sube un PDF (cada páxina converterase nunha imaxe de fondo) ou unha imaxe. Despois debuxa enriba os campos autocorrixibles. Tamén podes comezar cunha folla en branco.',
+    'editor.emptyDesc': 'Sube un PDF (cada páxina converterase nunha imaxe de fondo) ou unha imaxe. Despois debuxa enriba os campos autocorrixibles.',
+    'editor.emptyDesc2': 'Tamén podes abrir unha ficha xa creada (ZIP) ou comezar cunha folla en branco.',
     'editor.addPdf': '+ Engadir PDF ou imaxe',
     'editor.addBlank': 'Folla en branco',
     'editor.addPageLabel': 'Engadir páxina:',
@@ -1811,7 +1815,8 @@ const STRINGS = {
     'footer.today': 'Gaur',
 
     'editor.emptyTitle': 'Hasi zure fitxa',
-    'editor.emptyDesc': 'Igo PDF bat (orrialde bakoitza atzeko plano irudi bihurtuko da) edo irudi bat. Ondoren marraztu gainean eremu autoaztergarriak. Orri zuriz ere has zaitezke.',
+    'editor.emptyDesc': 'Igo PDF bat (orrialde bakoitza atzeko plano irudi bihurtuko da) edo irudi bat. Ondoren marraztu gainean eremu autoaztergarriak.',
+    'editor.emptyDesc2': 'Dagoeneko sortutako fitxa bat ireki dezakezu (ZIP) edo orri zuriz hasi.',
     'editor.addPdf': '+ PDF edo irudia gehitu',
     'editor.addBlank': 'Orrialde zuria',
     'editor.addPageLabel': 'Orrialdea gehitu:',

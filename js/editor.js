@@ -490,10 +490,12 @@ function renderCanvas() {
     canvas.appendChild(el('div', { class: 'ed-empty card anim-in' },
       el('h2', {}, t('editor.emptyTitle')),
       el('p', {}, t('editor.emptyDesc')),
-      el('div', { style: 'display:flex;gap:10px;justify-content:center;flex-wrap:wrap' },
-        el('button', { class: 'btn primary', onclick: () => $('#inputPaginas').click() }, t('editor.addPdf')),
-        el('button', { class: 'btn', onclick: () => addBlankPage() }, t('editor.addBlank')),
-        el('button', { class: 'btn', onclick: () => $('#inputZip').click() }, t('editor.openZip')))));
+      el('p', { class: 'ed-empty-alt' }, t('editor.emptyDesc2')),
+      el('div', { style: 'display:flex;flex-direction:column;gap:10px;align-items:center' },
+        el('div', { style: 'display:flex;gap:10px;flex-wrap:wrap;justify-content:center' },
+          el('button', { class: 'btn', onclick: () => $('#inputPaginas').click() }, t('editor.addPdf')),
+          el('button', { class: 'btn', onclick: () => $('#inputZip').click() }, t('editor.openZip'))),
+        el('button', { class: 'btn', onclick: () => addBlankPage() }, t('editor.addBlank')))));
     return;
   }
 
