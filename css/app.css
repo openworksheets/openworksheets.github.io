@@ -740,6 +740,20 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 }
 .ed-pagehead .spacer { flex: 1; }
 
+.ed-add-page-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  margin: 4px auto 20px;
+  width: calc(860px * var(--zoom, 1));
+  max-width: 100%;
+}
+.ed-add-page-label {
+  font-size: 0.8rem;
+  color: var(--tinta-suave);
+}
+
 /* Página: contenedor relativo con container queries para fuentes fluidas */
 .wpf-page {
   position: relative;
@@ -924,6 +938,42 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .ed-panel-vacio { color: var(--tinta-suave); font-size: 0.9rem; }
 .ed-acciones { display: flex; gap: 8px; margin: 14px 0 4px; flex-wrap: wrap; }
 
+.ed-accordion {
+  margin-top: 12px;
+  border-top: 2px dashed var(--tinta-tenue);
+}
+.ed-accordion-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 8px 0 6px;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+  font-family: var(--cuerpo);
+}
+.ed-accordion-toggle:hover { color: var(--tinta); }
+.ed-accordion-arrow { font-style: normal; transition: transform 0.18s; display: inline-block; }
+.ed-accordion.open .ed-accordion-arrow { transform: rotate(90deg); }
+.ed-accordion-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s ease;
+}
+.ed-accordion-body-inner {
+  overflow: hidden;
+  padding-bottom: 0;
+  transition: padding-bottom 0.25s ease;
+}
+.ed-accordion.open .ed-accordion-body { grid-template-rows: 1fr; }
+.ed-accordion.open .ed-accordion-body-inner { padding-bottom: 6px; }
+
 .opt-list { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
 .opt-row { display: flex; align-items: center; gap: 6px; }
 .opt-row input[type='text'] { flex: 1; }
@@ -1015,6 +1065,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   font-size: calc(1.6cqw * var(--fs, 1));
   z-index: 2;
   transform-origin: center center;
+  color: var(--field-fg, var(--tinta));
 }
 .wpf-field input, .wpf-field select, .wpf-field button {
   font-family: var(--cuerpo);
@@ -1029,7 +1080,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   border: 2px solid var(--tinta);
   border-radius: 5px;
   padding: 0.12em 0.45em;
-  background: rgba(255, 253, 248, 0.96);
+  background: var(--field-bg, rgb(255, 253, 248));
   color: var(--tinta);
   box-shadow: var(--sombra-mini);
 }
@@ -1046,7 +1097,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   border: 0.13em solid var(--tinta);
   border-radius: 0.35em;
   padding: 0.12em 1.4em 0.12em 0.3em;
-  background-color: rgba(255, 253, 248, 0.96);
+  background-color: var(--field-bg, rgb(255, 253, 248));
   /* flecha en SVG escalada en em para que acompañe al tamaño de la página */
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%231d2c42' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -1058,7 +1109,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 }
 
 .wpf-choices, .wpf-tf {
-  background: rgba(255, 253, 248, 0.94);
+  background: var(--field-bg, rgb(255, 253, 248));
   border: 2px solid var(--tinta);
   border-radius: 6px;
   padding: 0.25em 0.4em;
@@ -1162,7 +1213,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .img-field-thumb { max-width: 100%; max-height: 12em; object-fit: contain; display: block; }
 
 .wpf-gaps {
-  background: rgba(255, 253, 248, 0.94);
+  background: var(--field-bg, rgb(255, 253, 248));
   border: 2px solid var(--tinta);
   border-radius: 6px;
   padding: 0.4em 0.6em;
@@ -1185,7 +1236,7 @@ input.wpf-gap-input {
 }
 
 .wpf-match {
-  background: rgba(255, 253, 248, 0.94);
+  background: var(--field-bg, rgb(255, 253, 248));
   border: 2px solid var(--tinta);
   border-radius: 6px;
   padding: 0.35em 0.55em;
@@ -1199,7 +1250,7 @@ input.wpf-gap-input {
 .wpf-match-row .wpf-select { flex: 1.2; width: auto; box-shadow: none; }
 
 .wpf-order {
-  background: rgba(255, 253, 248, 0.94);
+  background: var(--field-bg, rgb(255, 253, 248));
   border: 0.14em solid var(--tinta);
   border-radius: 6px;
   padding: 0.3em 0.45em;
@@ -1248,7 +1299,7 @@ input.wpf-gap-input {
 
 /* Arrastrar a zonas */
 .wpf-tray {
-  background: rgba(255, 253, 248, 0.96);
+  background: var(--field-bg, rgb(255, 253, 248));
   border: 0.14em solid var(--tinta);
   border-radius: 6px;
   padding: 0.3em 0.5em;
@@ -1303,7 +1354,7 @@ input.wpf-gap-input {
   transition: border-color 0.12s ease, background 0.12s ease;
 }
 .wpf-zone.armed { border-color: var(--rojo); background: rgba(198, 61, 44, 0.10); }
-.wpf-zone.filled { border-style: solid; background: rgba(255, 253, 248, 0.97); }
+.wpf-zone.filled { border-style: solid; background: var(--field-bg, rgb(255, 253, 248)); }
 .wpf-zone.drag-over { border-style: solid; border-color: var(--tinta); background: var(--azul-claro); transform: scale(1.03); }
 .wpf-zone.mark-ok { border-color: var(--verde); background: var(--verde-claro); }
 .wpf-zone.mark-ko { border-color: var(--rojo); background: var(--rojo-claro); }

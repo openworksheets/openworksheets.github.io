@@ -33,6 +33,7 @@ let sel = null;                 // {kind:'field'|'zone'|'amitem', pageIndex, fie
 let dirty = false;
 let preview = null;
 let submissionCryptoPassword = '';
+let copiedField = null;   // campo copiado para pegar en otra página
 
 const urls = new Map();
 function fileUrl(path) {
@@ -222,9 +223,38 @@ function addBlankPage() {
   ctx2d.fillStyle = '#ffffff';
   ctx2d.fillRect(0, 0, W, H);
   cv.toBlob(blob => {
-    addPage({ blob, ext: 'png', w: W, h: H });
+    const path = `pages/page-${pageSeq++}.png`;
+    files.set(path, blob);
+    manifest.pages.push({ image: path, w: W, h: H, fields: [], bgColor: '#ffffff' });
     markDirty(); renderCanvas(); renderPanel();
   }, 'image/png');
+}
+
+function recolorBlankPage(pi, color) {
+  const page = manifest.pages[pi];
+  if (!page?.bgColor) return;
+  const W = page.w, H = page.h;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx2d = cv.getContext('2d');
+  ctx2d.fillStyle = color;
+  ctx2d.fillRect(0, 0, W, H);
+  cv.toBlob(blob => {
+    if (urls.has(page.image)) { URL.revokeObjectURL(urls.get(page.image)); urls.delete(page.image); }
+    files.set(page.image, blob);
+    page.bgColor = color;
+    markDirty();
+    const imgEl = canvas.querySelector(`.wpf-page[data-page="${pi}"] img.fondo`);
+    if (imgEl) imgEl.src = fileUrl(page.image);
+  }, 'image/png');
+}
+
+function makeAddPageBar() {
+  const addBtn = el('button', { class: 'btn small', type: 'button' }, t('editor.addBlank'));
+  addBtn.addEventListener('click', () => addBlankPage());
+  return el('div', { class: 'ed-add-page-bar' },
+    el('span', { class: 'ed-add-page-label' }, t('editor.addPageLabel')),
+    addBtn);
 }
 
 function deletePage(pi) {
@@ -236,6 +266,24 @@ function deletePage(pi) {
   if (urls.has(page.image)) { URL.revokeObjectURL(urls.get(page.image)); urls.delete(page.image); }
   manifest.pages.splice(pi, 1);
   sel = null;
+  markDirty();
+  renderCanvas();
+  renderPanel();
+}
+
+function duplicatePage(pi) {
+  const page = manifest.pages[pi];
+  const blob = files.get(page.image);
+  const ext = page.image.split('.').pop() || 'png';
+  const newPath = `pages/page-${pageSeq++}.${ext}`;
+  files.set(newPath, blob);
+  const newPage = {
+    ...JSON.parse(JSON.stringify(page)),
+    image: newPath,
+    fields: page.fields.map(f => cloneField(f))
+  };
+  manifest.pages.splice(pi + 1, 0, newPage);
+  sel = { kind: 'page', pageIndex: pi + 1 };
   markDirty();
   renderCanvas();
   renderPanel();
@@ -360,6 +408,7 @@ function renderCanvas() {
 
     canvas.appendChild(el('div', { class: 'ed-pagebox' }, head, pageEl));
   });
+  canvas.appendChild(makeAddPageBar());
   refreshSelectionStyles();
 }
 
@@ -459,9 +508,9 @@ function attachRotateHandle(rotHandle, box, field) {
 function attachDrawInteraction(pageEl, pi) {
   pageEl.addEventListener('pointerdown', e => {
     if (!activeTool && !pendingAmItem) {
-      // Clic en el fondo (la imagen no recibe eventos): deseleccionar.
+      // Clic en el fondo: seleccionar la página para mostrar sus propiedades.
       if (e.target === pageEl) {
-        sel = null;
+        sel = { kind: 'page', pageIndex: pi };
         refreshSelectionStyles();
         renderPanel();
       }
@@ -625,33 +674,76 @@ function deleteSelected() {
   renderPanel();
 }
 
-function duplicateSelected() {
-  if (!sel || sel.kind !== 'field') return;
-  const field = getField(sel.pageIndex, sel.fieldId);
-  if (!field) return;
+function cloneField(field, offset = 0) {
   const copy = JSON.parse(JSON.stringify(field));
   copy.id = uid('f');
   copy.rect = {
     ...copy.rect,
-    x: clamp(copy.rect.x + 0.03, 0, 1 - copy.rect.w),
-    y: clamp(copy.rect.y + 0.03, 0, 1 - copy.rect.h)
+    x: clamp(copy.rect.x + offset, 0, 1 - copy.rect.w),
+    y: clamp(copy.rect.y + offset, 0, 1 - copy.rect.h)
   };
   if (copy.type === 'dragdrop') {
     copy.config.zones = copy.config.zones.map(z => ({
       ...z,
       id: uid('z'),
-      rect: { ...z.rect, x: clamp(z.rect.x + 0.03, 0, 1 - z.rect.w), y: clamp(z.rect.y + 0.03, 0, 1 - z.rect.h) }
+      rect: { ...z.rect, x: clamp(z.rect.x + offset, 0, 1 - z.rect.w), y: clamp(z.rect.y + offset, 0, 1 - z.rect.h) }
     }));
   }
+  if (copy.type === 'arrowmatch') {
+    copy.config.items = (copy.config.items || []).map(i => ({ ...i, id: uid('ai') }));
+  }
+  return copy;
+}
+
+function duplicateSelected() {
+  if (!sel || sel.kind !== 'field') return;
+  const field = getField(sel.pageIndex, sel.fieldId);
+  if (!field) return;
+  const copy = cloneField(field, 0.03);
   manifest.pages[sel.pageIndex].fields.push(copy);
   markDirty();
   renderCanvas();
   selectField(sel.pageIndex, copy.id);
 }
 
+function copySelected() {
+  if (!sel || sel.kind !== 'field') return;
+  const field = getField(sel.pageIndex, sel.fieldId);
+  if (!field) return;
+  copiedField = JSON.parse(JSON.stringify(field));
+  toast(t('toast.fieldCopied'), 'ok');
+  renderPanel();
+}
+
+function pasteField(pi) {
+  if (!copiedField) return;
+  if (pi === undefined || pi === null) return;
+  if (!manifest.pages[pi]) return;
+  const copy = cloneField(copiedField);
+  manifest.pages[pi].fields.push(copy);
+  markDirty();
+  renderCanvas();
+  selectField(pi, copy.id);
+}
+
 document.addEventListener('keydown', e => {
   const inForm = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || '');
   if (inForm) return;
+
+  // Copiar y pegar: funcionan con cualquier tipo de selección (campo o página).
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+    if (sel?.kind === 'field') { e.preventDefault(); copySelected(); }
+    return;
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+    if (copiedField && sel?.pageIndex !== undefined) {
+      e.preventDefault();
+      pasteField(sel.pageIndex);
+    }
+    return;
+  }
+
+  // El resto de atajos requieren un campo seleccionado.
   if (!sel) return;
   const field = getField(sel.pageIndex, sel.fieldId);
   if (!field) return;
@@ -686,13 +778,18 @@ document.addEventListener('keydown', e => {
 
 function renderPanel() {
   panel.textContent = '';
+  $('#btnCopiarCampo').disabled = !(sel?.kind === 'field');
   if (sel) {
-    const field = getField(sel.pageIndex, sel.fieldId);
-    if (field) {
-      if (sel.kind === 'zone') renderZonePanel(field);
-      else renderFieldPanel(field); // 'field' y 'amitem' muestran el panel del campo
+    if (sel.kind === 'page') {
+      renderPagePanel(sel.pageIndex);
     } else {
-      sel = null;
+      const field = getField(sel.pageIndex, sel.fieldId);
+      if (field) {
+        if (sel.kind === 'zone') renderZonePanel(field);
+        else renderFieldPanel(field); // 'field' y 'amitem' muestran el panel del campo
+      } else {
+        sel = null;
+      }
     }
   }
   if (!sel) {
@@ -703,6 +800,27 @@ function renderPanel() {
         : t('editor.noFieldDescNoPages'))));
   }
   renderFieldList();
+}
+
+function renderPagePanel(pi) {
+  const page = manifest.pages[pi];
+  if (!page) return;
+  const cont = el('div', {});
+  cont.appendChild(el('h3', {},
+    el('span', { class: 'tipo-chip' }, t('editor.pageChip')),
+    t('editor.pageN', { n: pi + 1, total: manifest.pages.length })));
+  if (page.bgColor !== undefined) {
+    cont.appendChild(el('label', { class: 'f-label' }, t('editor.pageBgColor')));
+    const colorPick = el('input', { type: 'color', value: page.bgColor });
+    colorPick.addEventListener('input', () => recolorBlankPage(pi, colorPick.value));
+    cont.appendChild(colorPick);
+  }
+  const dupBtn = el('button', { class: 'btn small', type: 'button' }, t('editor.duplicatePage'));
+  dupBtn.addEventListener('click', () => duplicatePage(pi));
+  const delBtn = el('button', { class: 'btn small danger', type: 'button' }, t('editor.deletePage'));
+  delBtn.addEventListener('click', () => deletePage(pi));
+  cont.appendChild(el('div', { class: 'ed-acciones' }, dupBtn, delBtn));
+  panel.appendChild(cont);
 }
 
 function refreshFieldList() {
@@ -727,8 +845,9 @@ function renderFieldPanel(field) {
     t('editor.fieldConfig')));
 
   const decor = Boolean(FIELD_TYPES[field.type]?.decor);
+  const interactive = !decor && !isShapeField(field.type) && field.type !== 'cover';
 
-  // Puntos (los decorativos no puntúan) y tamaño del texto
+  // Puntuación
   if (!decor) {
     const noScoreCb = el('input', { type: 'checkbox' });
     noScoreCb.checked = Boolean(field.noScore);
@@ -752,24 +871,6 @@ function renderFieldPanel(field) {
     });
     cont.appendChild(el('label', { class: 'check-row' }, noScoreCb, t('editor.noScore')));
     cont.appendChild(ptsRow);
-  }
-  if (field.type !== 'cover' && !isShapeField(field.type)) {
-    const fsVal = field.fontScale || 1;
-    const fsRange = el('input', { type: 'range', min: '0.6', max: '5', step: '0.1', value: String(fsVal) });
-    const fsNum = el('input', { type: 'number', min: '0.1', max: '20', step: '0.1', value: String(fsVal), style: 'width:72px' });
-    const applyFs = v => {
-      v = Math.max(0.1, parseFloat(v) || 1);
-      field.fontScale = v;
-      fsRange.value = Math.min(v, 5);
-      fsNum.value = v;
-      const node = canvas.querySelector(`[data-id="${field.id}"]`);
-      if (node) node.style.setProperty('--fs', v);
-      markDirty();
-    };
-    fsRange.addEventListener('input', () => applyFs(fsRange.value));
-    fsNum.addEventListener('input', () => applyFs(fsNum.value));
-    cont.appendChild(el('label', { class: 'f-label' }, t('editor.fontSize')));
-    cont.appendChild(el('div', { class: 'rot-row' }, fsRange, fsNum, el('span', {}, '×')));
   }
 
   // Configuración específica del tipo
@@ -800,6 +901,86 @@ function renderFieldPanel(field) {
   cont.appendChild(el('div', { class: 'ed-acciones' },
     el('button', { class: 'btn small', onclick: duplicateSelected }, t('editor.duplicate')),
     el('button', { class: 'btn small danger', onclick: deleteSelected }, t('editor.delete'))));
+
+  // Acordeón de diseño (tamaño/color de texto y fondo)
+  const hasDesign = (field.type !== 'cover' && !isShapeField(field.type)) || interactive;
+  if (hasDesign) {
+    const accordion = el('div', { class: 'ed-accordion' });
+    const arrow = el('i', { class: 'ed-accordion-arrow' }, '▶');
+    const toggle = el('button', { class: 'ed-accordion-toggle', type: 'button' },
+      arrow, t('editor.designSection'));
+    const bodyOuter = el('div', { class: 'ed-accordion-body' });
+    const body = el('div', { class: 'ed-accordion-body-inner' });
+    bodyOuter.appendChild(body);
+    toggle.addEventListener('click', () => accordion.classList.toggle('open'));
+    accordion.appendChild(toggle);
+    accordion.appendChild(bodyOuter);
+
+    // Texto: tamaño + color
+    if (field.type !== 'cover' && !isShapeField(field.type)) {
+      const fsVal = field.fontScale || 1;
+      const fsRange = el('input', { type: 'range', min: '0.6', max: '5', step: '0.1', value: String(fsVal) });
+      const fsNum = el('input', { type: 'number', min: '0.1', max: '20', step: '0.1', value: String(fsVal), style: 'width:72px' });
+      const applyFs = v => {
+        v = Math.max(0.1, parseFloat(v) || 1);
+        field.fontScale = v;
+        fsRange.value = Math.min(v, 5);
+        fsNum.value = v;
+        const node = canvas.querySelector(`[data-id="${field.id}"]`);
+        if (node) node.style.setProperty('--fs', v);
+        markDirty();
+      };
+      fsRange.addEventListener('input', () => applyFs(fsRange.value));
+      fsNum.addEventListener('input', () => applyFs(fsNum.value));
+      body.appendChild(el('label', { class: 'f-label' }, t('editor.fontSize')));
+      body.appendChild(el('div', { class: 'rot-row' }, fsRange, fsNum, el('span', {}, '×')));
+      if (interactive) {
+        const cfg = field.config;
+        const fgColor = el('input', { type: 'color', value: cfg.fgColor || '#1d2c42' });
+        fgColor.addEventListener('input', () => {
+          cfg.fgColor = fgColor.value;
+          canvas.querySelector(`[data-id="${field.id}"]`)?.style.setProperty('--field-fg', cfg.fgColor);
+          markDirty();
+        });
+        body.appendChild(el('label', { class: 'f-label' }, t('cfg.fieldFg')));
+        body.appendChild(fgColor);
+      }
+    }
+
+    // Fondo: color + opacidad (solo campos interactivos)
+    if (interactive) {
+      const cfg = field.config;
+      const applyFieldBg = () => {
+        const hex = cfg.bg || '#fffdf8';
+        const op = cfg.bgOpacity ?? 1;
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        canvas.querySelector(`[data-id="${field.id}"]`)?.style.setProperty('--field-bg', `rgba(${r},${g},${b},${op})`);
+      };
+      body.appendChild(el('label', { class: 'f-label' }, t('cfg.fieldBg')));
+      const bgColor = el('input', { type: 'color', value: cfg.bg || '#fffdf8' });
+      bgColor.addEventListener('input', () => { cfg.bg = bgColor.value; applyFieldBg(); markDirty(); });
+      const bgOp = el('input', { type: 'range', min: '0', max: '100', step: '1', value: String(Math.round((cfg.bgOpacity ?? 1) * 100)) });
+      const bgOpNum = el('input', { type: 'number', min: '0', max: '100', step: '1', value: String(Math.round((cfg.bgOpacity ?? 1) * 100)) });
+      const syncBgOp = val => {
+        const v = Math.max(0, Math.min(100, parseInt(val, 10) || 0));
+        cfg.bgOpacity = v / 100;
+        bgOp.value = v;
+        bgOpNum.value = v;
+        applyFieldBg();
+        markDirty();
+      };
+      bgOp.addEventListener('input', () => syncBgOp(bgOp.value));
+      bgOpNum.addEventListener('input', () => syncBgOp(bgOpNum.value));
+      body.appendChild(el('div', { class: 'rot-row' },
+        bgColor,
+        el('label', { class: 'f-label', style: 'margin-left:0.5em' }, t('cfg.fieldBgOpacity')),
+        bgOp, bgOpNum, el('span', {}, '%')));
+    }
+
+    cont.appendChild(accordion);
+  }
 
   panel.appendChild(cont);
 }
@@ -1796,7 +1977,14 @@ document.addEventListener('paste', async e => {
   await handlePasteItems(Array.from(e.clipboardData?.items || []));
 });
 
+$('#btnCopiarCampo').addEventListener('click', () => copySelected());
+
 $('#btnPegar').addEventListener('click', async () => {
+  // Si hay un campo copiado internamente, pegarlo en la página actual.
+  if (copiedField && sel?.pageIndex !== undefined) {
+    pasteField(sel.pageIndex);
+    return;
+  }
   try {
     const clipItems = await navigator.clipboard.read();
     for (const item of clipItems) {

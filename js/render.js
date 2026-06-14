@@ -19,6 +19,15 @@ export function renderField(field, pageLayer, ctx) {
   positionRect(root, field.rect);
   if (field.rotate) root.style.transform = `rotate(${field.rotate}deg)`;
   root.style.setProperty('--fs', field.fontScale || 1);
+  if (field.config?.bg) {
+    const hex = field.config.bg;
+    const op = field.config.bgOpacity ?? 1;
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    root.style.setProperty('--field-bg', `rgba(${r},${g},${b},${op})`);
+  }
+  if (field.config?.fgColor) root.style.setProperty('--field-fg', field.config.fgColor);
   pageLayer.appendChild(root);
 
   const maker = renderers[field.type];
