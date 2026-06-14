@@ -399,16 +399,17 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     if (!preview) {
       datos.attempts += 1;
       datos.startedAt = 0;
+      let shareUrl = '';
+      try {
+        const encoded = await compressToBase64url(entregaArchivo);
+        const u = new URL('./index.html', window.location.href);
+        u.hash = 'e=' + encoded;
+        shareUrl = u.href;
+      } catch {}
       datos.lastEntrega = {
         nota: entrega.nota, total: entrega.total, codigo: entrega.codigo, fecha: entrega.fecha,
-        alumno: entrega.alumno, titulo: entrega.titulo
+        alumno: entrega.alumno, titulo: entrega.titulo, shareUrl
       };
-      compressToBase64url(entregaArchivo).then(encoded => {
-        const url = new URL('./index.html', window.location.href);
-        url.hash = 'e=' + encoded;
-        datos.lastEntrega.shareUrl = url.href;
-        saveState();
-      }).catch(() => {});
       saveState();
       clearAnswersState();
     }
