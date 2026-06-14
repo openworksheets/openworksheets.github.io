@@ -2223,6 +2223,23 @@ function openPreview() {
 
 titleInput.addEventListener('input', () => { manifest.title = titleInput.value; markDirty(); });
 
+$('#btnNueva').addEventListener('click', () => {
+  if (!window.confirm(t('editor.confirmNew'))) return;
+  urls.forEach(u => URL.revokeObjectURL(u));
+  urls.clear();
+  manifest = newManifest();
+  files = new Map();
+  pageSeq = 1;
+  sel = null;
+  activeTool = null;
+  submissionCryptoPassword = '';
+  titleInput.value = '';
+  dirty = false;
+  renderCanvas();
+  renderPanel();
+  refreshPaletteState();
+});
+
 $('#btnPaginas').addEventListener('click', () => {
   const input = $('#inputPaginas');
   const handler = e => { addFiles(e.target.files); e.target.value = ''; input.removeEventListener('change', handler); };
