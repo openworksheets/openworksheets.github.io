@@ -216,7 +216,8 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
               : null)
           : null,
         last ? el('div', { class: 'acciones', style: 'justify-content:center;margin-top:10px' },
-          iconBtn({ class: 'btn', onclick: () => downloadEntrega(last, { alumno: datos.alumno, titulo: manifest.title, fecha: last.fecha }) }, ICONS.download, t('player.downloadBtn')),
+          iconBtn({ class: 'btn', onclick: () => downloadEntrega(last, { alumno: last.alumno || datos.alumno, titulo: last.titulo || manifest.title, fecha: last.fecha }) }, ICONS.download, t('player.downloadBtn')),
+          last.shareUrl ? iconBtn({ class: 'btn', onclick: () => copyToClipboard(last.shareUrl).then(ok => toast(ok ? t('toast.shareUrlCopied') : t('toast.shareUrlError'), ok ? 'ok' : 'error')) }, ICONS.share, t('player.shareBtn')) : null,
           iconBtn({ class: 'btn', disabled: settings.showScore === false || null, onclick: () => copyResumen(last) }, ICONS.copy, t('player.copyBtn'))) : null)));
   }
 
@@ -399,8 +400,15 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
       datos.attempts += 1;
       datos.startedAt = 0;
       datos.lastEntrega = {
-        nota: entrega.nota, total: entrega.total, codigo: entrega.codigo, fecha: entrega.fecha
+        nota: entrega.nota, total: entrega.total, codigo: entrega.codigo, fecha: entrega.fecha,
+        alumno: entrega.alumno, titulo: entrega.titulo
       };
+      compressToBase64url(entregaArchivo).then(encoded => {
+        const url = new URL('./index.html', window.location.href);
+        url.hash = 'e=' + encoded;
+        datos.lastEntrega.shareUrl = url.href;
+        saveState();
+      }).catch(() => {});
       saveState();
       clearAnswersState();
     }
