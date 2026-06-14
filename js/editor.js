@@ -515,7 +515,12 @@ function renderCanvas() {
       el('p', { class: 'ed-empty-alt' }, t('editor.emptyDesc2')),
       el('div', { style: 'display:flex;flex-direction:column;gap:10px;align-items:center' },
         el('div', { style: 'display:flex;gap:10px;flex-wrap:wrap;justify-content:center' },
-          el('button', { class: 'btn', onclick: () => $('#inputPaginas').click() }, t('editor.addPdf')),
+          el('button', { class: 'btn', onclick: () => {
+            const input = $('#inputPaginas');
+            const handler = e => { addFiles(e.target.files); e.target.value = ''; input.removeEventListener('change', handler); };
+            input.addEventListener('change', handler);
+            input.click();
+          } }, t('editor.addPdf')),
           el('button', { class: 'btn', onclick: () => $('#inputZip').click() }, t('editor.openZip'))),
         el('button', { class: 'btn', onclick: () => addBlankPage() }, t('editor.addBlank')))));
     return;

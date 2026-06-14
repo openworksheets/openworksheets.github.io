@@ -78,12 +78,6 @@
 html {
   height: 100%;
   color-scheme: light dark;
-  /* Desactiva el auto-inflado de texto de los navegadores móviles (font
-     boosting). Sin esto, el texto de los campos —dimensionado en cqw para ir
-     a escala sobre el PDF— se agranda solo en el móvil, se ve desproporcionado
-     y desborda las cajas (huecos, ordenar, arrastrar). */
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
 }
 :root[data-theme='light'] { color-scheme: light; }
 :root[data-theme='dark']  { color-scheme: dark; }
@@ -1880,5 +1874,14 @@ input.wpf-gap-input {
   .al-resultado {
     box-shadow: none;
     break-inside: avoid;
+  }
+}
+
+/* Evita el auto-inflado de texto en Safari iOS (font boosting).
+   Solo se aplica en pantallas táctiles para no generar avisos en Firefox. */
+@media (hover: none) and (pointer: coarse) {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 }
