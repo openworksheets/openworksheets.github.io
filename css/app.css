@@ -1795,6 +1795,7 @@ input.wpf-gap-input {
 }
 .prev-aviso .btn { white-space: nowrap; }
 .prev-aviso .btn svg { width: 14px; height: 14px; flex-shrink: 0; vertical-align: middle; }
+.acciones .btn svg { width: 16px; height: 16px; flex-shrink: 0; vertical-align: middle; }
 
 /* Pantalla de carga del alumno */
 .al-carga .spinner {

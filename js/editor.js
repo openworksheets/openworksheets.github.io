@@ -1526,7 +1526,7 @@ const configForms = {
       prev.appendChild(el('img', { src: fileUrl(cfg.src), alt: '', class: 'img-field-thumb' }));
       cont.appendChild(prev);
     }
-    const btn = el('button', { class: 'btn small', type: 'button' }, t('cfg.changeImage'));
+    const btn = iconBtn({ class: 'btn small', type: 'button' }, ICONS.image, t('cfg.changeImage'));
     btn.addEventListener('click', () => {
       const inp = document.createElement('input');
       inp.type = 'file'; inp.accept = 'image/png,image/jpeg,image/gif,image/webp';

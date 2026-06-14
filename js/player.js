@@ -5,6 +5,13 @@
 //   opts  = { preview: bool }
 
 import { el, toast, mulberry32, formatNum, downloadBlob, copyToClipboard, compressToBase64url, fechaHora, zoomControl } from './util.js';
+import { ICONS } from './icons.js';
+
+function iconBtn(attrs, svgStr, label) {
+  const b = el('button', attrs);
+  b.innerHTML = svgStr + (label ? ' <span>' + label + '</span>' : '');
+  return b;
+}
 import { isDecorField } from './fieldtypes.js';
 import { renderField } from './render.js';
 import { gradeField, expectedText } from './grading.js';
@@ -203,8 +210,8 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
               : null)
           : null,
         last ? el('div', { style: 'display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px' },
-          el('button', { class: 'btn', onclick: () => downloadEntrega(last) }, t('player.downloadBtn')),
-          el('button', { class: 'btn', disabled: settings.showScore === false || null, onclick: () => copyResumen(last) }, t('player.copyBtn'))) : null)));
+          iconBtn({ class: 'btn', onclick: () => downloadEntrega(last) }, ICONS.download, t('player.downloadBtn')),
+          iconBtn({ class: 'btn', disabled: settings.showScore === false || null, onclick: () => copyResumen(last) }, ICONS.copy, t('player.copyBtn'))) : null)));
   }
 
   // ---------- Actividad ----------
@@ -398,9 +405,9 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     const nota10 = entrega.nota10;
     const showScore = settings.showScore !== false;
     const acciones = el('div', { class: 'acciones' });
-    acciones.appendChild(el('button', { class: 'btn dark', onclick: () => downloadEntrega(entregaArchivo) }, t('player.downloadBtn')));
-    acciones.appendChild(el('button', { class: 'btn', onclick: () => shareEntrega(entregaArchivo) }, t('player.shareBtn')));
-    const copyBtn = el('button', { class: 'btn', onclick: () => copyResumen(entrega, detalleCorreccion) }, t('player.copyBtn'));
+    acciones.appendChild(iconBtn({ class: 'btn dark', onclick: () => downloadEntrega(entregaArchivo) }, ICONS.download, t('player.downloadBtn')));
+    acciones.appendChild(iconBtn({ class: 'btn', onclick: () => shareEntrega(entregaArchivo) }, ICONS.share, t('player.shareBtn')));
+    const copyBtn = iconBtn({ class: 'btn', onclick: () => copyResumen(entrega, detalleCorreccion) }, ICONS.copy, t('player.copyBtn'));
     const printBtn = el('button', { class: 'btn', onclick: () => window.print() }, t('player.printBtn'));
     if (!showScore) { copyBtn.disabled = true; printBtn.disabled = true; }
     acciones.appendChild(copyBtn);
