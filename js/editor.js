@@ -129,8 +129,10 @@ function renderPalette() {
   palette.textContent = '';
   PALETTE_GROUPS.forEach(group => {
     const gName = t('palette.' + group.id);
+    const groupGlyph = el('span', { class: 'glyph' });
+    groupGlyph.innerHTML = group.glyph;
     const head = el('button', { class: 'ed-group', type: 'button', title: gName },
-      el('span', { class: 'glyph' }, group.glyph),
+      groupGlyph,
       el('span', { class: 'name' }, gName));
     head.dataset.group = group.id;
     head.addEventListener('click', () => {
@@ -146,8 +148,10 @@ function renderPalette() {
     group.types.forEach(type => {
       const ft = FIELD_TYPES[type];
       const name = fieldTypeName(type);
+      const toolGlyph = el('span', { class: 'glyph' });
+      toolGlyph.innerHTML = ft.glyph;
       const btn = el('button', { class: 'ed-tool', type: 'button', title: name },
-        el('span', { class: 'glyph' }, ft.glyph),
+        toolGlyph,
         el('span', { class: 'name' }, name));
       btn.addEventListener('click', () => {
         activeTool = activeTool === type ? null : type;
@@ -1746,8 +1750,10 @@ function renderFieldList() {
       const resumen = field.type === 'label'
         ? (field.config.text || fieldTypeName(field.type))
         : (expectedText(field) || fieldTypeName(field.type));
+      const fieldGlyph = el('span', { class: 'g' });
+      fieldGlyph.innerHTML = FIELD_TYPES[field.type]?.glyph || '?';
       const item = el('div', { class: 'item' + (sel?.kind === 'field' && sel.fieldId === field.id ? ' sel' : '') },
-        el('span', { class: 'g' }, FIELD_TYPES[field.type]?.glyph || '?'),
+        fieldGlyph,
         el('span', { class: 'resumen' }, `P${pi + 1} · ${resumen}`),
         decor ? null : el('span', { class: 'pts' }, field.noScore ? '—' : field.points + ' pt'));
       item.addEventListener('click', () => {

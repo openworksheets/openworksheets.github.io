@@ -217,6 +217,7 @@ small { color: var(--tinta-suave); }
 .btn.ghost:hover { border-color: var(--tinta); }
 .btn.small { padding: 5px 10px; font-size: 0.8rem; box-shadow: none; }
 .btn.danger { color: var(--rojo); border-color: var(--rojo); }
+.btn-icon { width: 16px; height: 16px; flex-shrink: 0; stroke-width: 2px; }
 
 /* ---------- Formularios ---------- */
 
@@ -608,6 +609,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   place-items: center;
   box-shadow: var(--sombra-mini);
 }
+.ed-group .glyph svg { width: 16px; height: 16px; display: block; }
 .ed-group .name {
   font-size: 0.58rem;
   font-weight: 700;
@@ -667,6 +669,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   place-items: center;
   box-shadow: var(--sombra-mini);
 }
+.ed-tool .glyph svg { width: 18px; height: 18px; display: block; }
 .ed-tool .name { font-size: 0.58rem; text-align: center; line-height: 1.15; }
 .ed-tool:hover .glyph { background: var(--azul-claro); }
 .ed-tool.active { border-color: var(--rojo); background: var(--rojo-claro); }
@@ -1008,7 +1011,11 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   text-align: center;
   flex: none;
   font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+.lista-campos .item .g svg { width: 14px; height: 14px; flex-shrink: 0; }
 .lista-campos .item .resumen {
   flex: 1;
   overflow: hidden;

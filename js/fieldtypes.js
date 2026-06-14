@@ -1,14 +1,15 @@
 // Registro de los tipos de campo autocorregibles.
-// Cada tipo define su nombre, un glifo para la paleta del editor,
+// Cada tipo define su nombre, un glifo (SVG Lucide) para la paleta del editor,
 // el tamaño inicial del rectángulo (en fracciones de página) y su
 // configuración por defecto.
 
 import { t } from './i18n.js';
+import { ICONS } from './icons.js';
 
 export const FIELD_TYPES = {
   text: {
     name: 'Respuesta corta',
-    glyph: 'abc',
+    glyph: ICONS.type,
     defRect: { w: 0.24, h: 0.05 },
     defaults: () => ({
       answers: [''],
@@ -19,37 +20,37 @@ export const FIELD_TYPES = {
   },
   number: {
     name: 'Respuesta numérica',
-    glyph: '123',
+    glyph: ICONS.hash,
     defRect: { w: 0.16, h: 0.05 },
     defaults: () => ({ answer: '', tolerance: 0 })
   },
   single: {
     name: 'Opción única',
-    glyph: '◉',
+    glyph: ICONS.circleDot,
     defRect: { w: 0.3, h: 0.14 },
     defaults: () => ({ options: ['Opción 1', 'Opción 2', 'Opción 3'], correct: 0 })
   },
   truefalse: {
     name: 'Verdadero / falso',
-    glyph: 'V·F',
+    glyph: ICONS.toggleLeft,
     defRect: { w: 0.26, h: 0.06 },
     defaults: () => ({ correct: true, labels: ['Verdadero', 'Falso'] })
   },
   multi: {
     name: 'Opción múltiple',
-    glyph: '☑',
+    glyph: ICONS.checkSquare,
     defRect: { w: 0.3, h: 0.16 },
     defaults: () => ({ options: ['Opción 1', 'Opción 2', 'Opción 3'], correct: [0], partial: false })
   },
   select: {
     name: 'Desplegable',
-    glyph: '▾',
+    glyph: ICONS.chevronsUpDown,
     defRect: { w: 0.2, h: 0.05 },
     defaults: () => ({ options: ['Opción 1', 'Opción 2'], correct: 0 })
   },
   gaps: {
     name: 'Completar huecos',
-    glyph: 'a_c',
+    glyph: ICONS.penLine,
     defRect: { w: 0.45, h: 0.12 },
     defaults: () => ({
       text: 'El agua hierve a [100] grados.',
@@ -60,7 +61,7 @@ export const FIELD_TYPES = {
   },
   match: {
     name: 'Emparejar',
-    glyph: '⇄',
+    glyph: ICONS.arrowLeftRight,
     defRect: { w: 0.42, h: 0.18 },
     defaults: () => ({
       pairs: [
@@ -72,19 +73,19 @@ export const FIELD_TYPES = {
   },
   order: {
     name: 'Ordenar',
-    glyph: '↕',
+    glyph: ICONS.arrowUpDown,
     defRect: { w: 0.34, h: 0.18 },
     defaults: () => ({ items: ['Primero', 'Segundo', 'Tercero'] })
   },
   dragdrop: {
     name: 'Arrastrar a zonas',
-    glyph: '⊞',
+    glyph: ICONS.move,
     defRect: { w: 0.4, h: 0.09 },
     defaults: () => ({ zones: [], distractors: [] })
   },
   arrowmatch: {
     name: 'Unir con flechas',
-    glyph: '↔',
+    glyph: ICONS.gitCompare,
     defRect: { w: 0.6, h: 0.4 },
     defaults: () => {
       const mk = () => Math.random().toString(36).slice(2, 9);
@@ -103,21 +104,21 @@ export const FIELD_TYPES = {
   // Elementos decorativos: no puntúan ni cuentan como preguntas.
   label: {
     name: 'Texto',
-    glyph: 'T',
+    glyph: ICONS.pencil,
     decor: true,
     defRect: { w: 0.3, h: 0.05 },
     defaults: () => ({ text: 'Texto', color: '#1d2c42', bold: false })
   },
   cover: {
     name: 'Tapar zona',
-    glyph: '▩',
+    glyph: ICONS.square,
     decor: true,
     defRect: { w: 0.25, h: 0.07 },
     defaults: () => ({ color: '#ffffff' })
   },
   image: {
     name: 'Imagen',
-    glyph: '🖼',
+    glyph: ICONS.image,
     decor: true,
     defRect: { w: 0.4, h: 0.3 },
     defaults: () => ({ src: '' })
@@ -125,28 +126,28 @@ export const FIELD_TYPES = {
   // Formas de dibujo: para componer fichas desde una hoja en blanco.
   line: {
     name: 'Línea',
-    glyph: '─',
+    glyph: ICONS.minus,
     decor: true,
     defRect: { w: 0.25, h: 0.02 },
     defaults: () => ({ color: '#1d2c42', width: 2, style: 'solid', dir: 'h' })
   },
   arrow: {
     name: 'Flecha',
-    glyph: '→',
+    glyph: ICONS.arrowRight,
     decor: true,
     defRect: { w: 0.25, h: 0.02 },
     defaults: () => ({ color: '#1d2c42', width: 2, style: 'solid', dir: 'h', invert: false, double: false })
   },
   rect: {
     name: 'Rectángulo',
-    glyph: '▭',
+    glyph: ICONS.rectH,
     decor: true,
     defRect: { w: 0.25, h: 0.12 },
     defaults: () => ({ color: '#1d2c42', width: 2, style: 'solid', noStroke: false, fill: '', fillOpacity: 1 })
   },
   ellipse: {
     name: 'Elipse',
-    glyph: '◯',
+    glyph: ICONS.circle,
     decor: true,
     defRect: { w: 0.2, h: 0.12 },
     defaults: () => ({ color: '#1d2c42', width: 2, style: 'solid', noStroke: false, fill: '', fillOpacity: 1 })
@@ -162,10 +163,10 @@ export const FIELD_ORDER = [
 // Grupos temáticos de la paleta del editor. El nombre visible
 // se obtiene de i18n con la clave 'palette.<id>'.
 export const PALETTE_GROUPS = [
-  { id: 'write',  glyph: '✎', types: ['text', 'number', 'gaps'] },
-  { id: 'choose', glyph: '☑', types: ['single', 'multi', 'truefalse', 'select'] },
-  { id: 'relate', glyph: '⇄', types: ['match', 'order', 'dragdrop', 'arrowmatch'] },
-  { id: 'design', glyph: '✦', types: ['label', 'image', 'cover', 'line', 'arrow', 'rect', 'ellipse'] }
+  { id: 'write',  glyph: ICONS.pencil,         types: ['text', 'number', 'gaps'] },
+  { id: 'choose', glyph: ICONS.listChecks,      types: ['single', 'multi', 'truefalse', 'select'] },
+  { id: 'relate', glyph: ICONS.arrowLeftRight,  types: ['match', 'order', 'dragdrop', 'arrowmatch'] },
+  { id: 'design', glyph: ICONS.shapes,          types: ['label', 'image', 'cover', 'line', 'arrow', 'rect', 'ellipse'] }
 ];
 
 export function isDecorField(type) {
