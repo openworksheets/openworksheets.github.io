@@ -1795,7 +1795,6 @@ function updateCryptoSettingsUi() {
   const enabled = $('#ajCifrarEntregas').checked;
   $('#ajCryptoPasswordBlock').hidden = !enabled;
   $('#ajCryptoDisabledWarning').hidden = enabled;
-  $('#ajCryptoPassword').required = enabled;
   $('#ajCryptoPassword').disabled = !enabled;
 }
 
