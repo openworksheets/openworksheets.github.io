@@ -36,7 +36,11 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
 
   const urls = new Map();
   function fileUrl(path) {
-    if (!urls.has(path)) urls.set(path, URL.createObjectURL(files.get(path)));
+    if (!urls.has(path)) {
+      const blob = files.get(path);
+      if (!blob) return null;
+      urls.set(path, URL.createObjectURL(blob));
+    }
     return urls.get(path);
   }
 

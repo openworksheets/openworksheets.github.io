@@ -283,9 +283,10 @@ function refreshPaletteState() {
 
 // ---------- Páginas ----------
 
-async function addFiles(fileList) {
+async function addFiles(fileList, insertAt) {
   const list = Array.from(fileList || []);
   if (!list.length) return;
+  let idx = insertAt;
   for (const file of list) {
     try {
       if (isPdf(file)) {
@@ -293,10 +294,11 @@ async function addFiles(fileList) {
         const pages = await pdfToPages(file, (n, total) => {
           toast(t('toast.convertingPage', { n, total }));
         });
-        pages.forEach(p => addPage(p));
+        pages.forEach(p => { addPage(p, idx); if (idx != null) idx++; });
         toast(t('toast.pdfAdded', { n: pages.length, s: pages.length === 1 ? '' : 's' }), 'ok');
       } else if (isImage(file)) {
-        addPage(await imageToPage(file));
+        addPage(await imageToPage(file), idx);
+        if (idx != null) idx++;
         toast(t('toast.imageAdded'), 'ok');
       } else {
         toast(t('toast.notMedia', { name: file.name }), 'error');
@@ -311,10 +313,12 @@ async function addFiles(fileList) {
   renderPanel();
 }
 
-function addPage({ blob, ext, w, h }) {
+function addPage({ blob, ext, w, h }, insertAt) {
   const path = `pages/page-${pageSeq++}.${ext}`;
   files.set(path, blob);
-  manifest.pages.push({ image: path, w, h, fields: [] });
+  const page = { image: path, w, h, fields: [] };
+  if (insertAt != null) manifest.pages.splice(insertAt, 0, page);
+  else manifest.pages.push(page);
 }
 
 const PAGE_SIZES = [
@@ -329,7 +333,7 @@ function detectSizePreset(w, h) {
   return p ? p.key : 'free';
 }
 
-function addBlankPage() {
+function addBlankPage(insertAt) {
   const W = 1600, H = 2263; // A4 a ~192 dpi (igual que páginas PDF)
   const cv = document.createElement('canvas');
   cv.width = W; cv.height = H;
@@ -339,7 +343,9 @@ function addBlankPage() {
   cv.toBlob(blob => {
     const path = `pages/page-${pageSeq++}.png`;
     files.set(path, blob);
-    manifest.pages.push({ image: path, w: W, h: H, fields: [], bgColor: '#ffffff' });
+    const page = { image: path, w: W, h: H, fields: [], bgColor: '#ffffff' };
+    if (insertAt != null) manifest.pages.splice(insertAt, 0, page);
+    else manifest.pages.push(page);
     markDirty(); renderCanvas(); renderPanel();
   }, 'image/png');
 }
@@ -431,12 +437,28 @@ function printWorksheet() {
   setTimeout(() => window.print(), 600);
 }
 
-function makeAddPageBar() {
+function makeAddPageBar(insertAt) {
+  const between = insertAt != null;
+  const cls = between ? 'ed-add-page-bar ed-add-page-bar--between' : 'ed-add-page-bar';
   const addBtn = el('button', { class: 'btn small', type: 'button' }, t('editor.addBlank'));
-  addBtn.addEventListener('click', () => addBlankPage());
-  return el('div', { class: 'ed-add-page-bar' },
+  addBtn.addEventListener('click', () => addBlankPage(insertAt));
+  const pdfBtn = el('button', { class: 'btn small', type: 'button' }, t('editor.addPdf'));
+  pdfBtn.addEventListener('click', () => {
+    const input = $('#inputPaginas');
+    const handler = e => { addFiles(e.target.files, insertAt); e.target.value = ''; input.removeEventListener('change', handler); };
+    input.addEventListener('change', handler);
+    input.click();
+  });
+  const zipBtn = el('button', { class: 'btn small', type: 'button' }, t('editor.addZip'));
+  zipBtn.addEventListener('click', () => {
+    const input = $('#inputZipMerge');
+    const handler = e => { if (e.target.files[0]) mergeZipFile(e.target.files[0], insertAt); e.target.value = ''; input.removeEventListener('change', handler); };
+    input.addEventListener('change', handler);
+    input.click();
+  });
+  return el('div', { class: cls },
     el('span', { class: 'ed-add-page-label' }, t('editor.addPageLabel')),
-    addBtn);
+    pdfBtn, zipBtn, addBtn);
 }
 
 function deletePage(pi) {
@@ -591,8 +613,9 @@ function renderCanvas() {
       iconBtn({ class: 'btn small ghost danger', title: t('editor.deletePage'), onclick: () => deletePage(pi) }, ICONS.trash));
 
     canvas.appendChild(el('div', { class: 'ed-pagebox' }, head, pageEl));
+    if (pi < manifest.pages.length - 1) canvas.appendChild(makeAddPageBar(pi + 1));
   });
-  canvas.appendChild(makeAddPageBar());
+  canvas.appendChild(makeAddPageBar(null));
   refreshSelectionStyles();
 }
 
@@ -2129,6 +2152,52 @@ async function openZipFile(file) {
   }
 }
 
+async function mergeZipFile(file, insertAt) {
+  try {
+    const ficha = await importFichaZip(file);
+    if (isEncryptedManifest(ficha.manifest)) {
+      const password = window.prompt(t('alumno.encryptedDesc'));
+      if (!password) return;
+      ficha.manifest = await decryptManifestForStudent(ficha.manifest, password, { keepPassword: true });
+    }
+    const pfx = `mrg${Date.now()}`;
+    const remap = new Map();
+    ficha.files.forEach((blob, path) => {
+      const newPath = /^pages\/page-\d+\./.test(path)
+        ? path.replace(/^pages\/page-\d+(\.[^.]+)$/, (_, ext) => `pages/page-${pageSeq++}${ext}`)
+        : `${pfx}-${path}`;
+      remap.set(path, newPath);
+      files.set(newPath, blob);
+    });
+    const newPages = ficha.manifest.pages.map(page => ({
+      ...page,
+      image: remap.get(page.image) ?? page.image,
+      fields: page.fields.map(f => {
+        const configSrc = f.config?.src;
+        return {
+          ...f,
+          id: `f${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          ...(f.config ? {
+            config: {
+              ...f.config,
+              ...(configSrc ? { src: remap.get(configSrc) ?? configSrc } : {})
+            }
+          } : {})
+        };
+      })
+    }));
+    if (insertAt != null) manifest.pages.splice(insertAt, 0, ...newPages);
+    else manifest.pages.push(...newPages);
+    markDirty();
+    renderCanvas();
+    renderPanel();
+    toast(t('toast.fichaLoaded', { title: ficha.manifest.title || file.name }), 'ok');
+  } catch (e) {
+    console.error(e);
+    toast(e.message, 'error');
+  }
+}
+
 // ---------- Vista previa ----------
 
 function openPreview() {
@@ -2154,8 +2223,12 @@ function openPreview() {
 
 titleInput.addEventListener('input', () => { manifest.title = titleInput.value; markDirty(); });
 
-$('#btnPaginas').addEventListener('click', () => $('#inputPaginas').click());
-$('#inputPaginas').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
+$('#btnPaginas').addEventListener('click', () => {
+  const input = $('#inputPaginas');
+  const handler = e => { addFiles(e.target.files); e.target.value = ''; input.removeEventListener('change', handler); };
+  input.addEventListener('change', handler);
+  input.click();
+});
 $('#btnZip').addEventListener('click', () => $('#inputZip').click());
 $('#inputZip').addEventListener('change', e => {
   if (e.target.files[0]) openZipFile(e.target.files[0]);

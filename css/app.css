@@ -782,6 +782,15 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   width: calc(860px * var(--zoom, 1));
   max-width: 100%;
 }
+.ed-add-page-bar--between {
+  margin-top: 6px;
+  margin-bottom: 6px;
+  opacity: 0.45;
+  transition: opacity 0.15s;
+}
+.ed-add-page-bar--between:hover {
+  opacity: 1;
+}
 .ed-add-page-label {
   font-size: 0.8rem;
   color: var(--tinta-suave);
