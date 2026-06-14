@@ -215,7 +215,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
               ? t('player.lastScore', { nota: formatNum(last.nota), total: formatNum(last.total) })
               : null)
           : null,
-        last ? el('div', { style: 'display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px' },
+        last ? el('div', { class: 'acciones', style: 'justify-content:center;margin-top:10px' },
           iconBtn({ class: 'btn', onclick: () => downloadEntrega(last, { alumno: datos.alumno, titulo: manifest.title, fecha: last.fecha }) }, ICONS.download, t('player.downloadBtn')),
           iconBtn({ class: 'btn', disabled: settings.showScore === false || null, onclick: () => copyResumen(last) }, ICONS.copy, t('player.copyBtn'))) : null)));
   }
