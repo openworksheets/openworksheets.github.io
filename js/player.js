@@ -74,6 +74,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
         startedAt: datos.startedAt || 0,
         answers: collectAnswers(),
         lastEntrega: datos.lastEntrega || null,
+        correctionShown: datos.correctionShown || false,
         ...extra
       }));
     } catch { /* almacenamiento no disponible */ }
@@ -94,7 +95,8 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     seed: state?.seed || ((Math.random() * 2 ** 31) | 0),
     attempts: state?.attempts || 0,
     startedAt: state?.startedAt || 0,
-    lastEntrega: state?.lastEntrega || null
+    lastEntrega: state?.lastEntrega || null,
+    correctionShown: state?.correctionShown || false
   };
 
   function collectAnswers() {
@@ -364,15 +366,13 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     const detalleCorreccion = [];
     let earned = 0;
     const showCorrection = settings.showCorrection !== false;
+    const gradeResults = [];
     controllers.forEach(c => {
       const res = gradeField(c.field, c.getAnswer());
       earned += res.earned;
       c.setDisabled(true);
       const exp = expectedText(c.field);
-      if (showCorrection) {
-        c.mark(res, exp);
-        detalleCorreccion.push({ answer: c.getAnswer(), ok: res.ok, expected: exp });
-      }
+      gradeResults.push({ c, res, exp });
       resultados.push({
         id: c.field.id,
         type: c.field.type,
@@ -405,9 +405,32 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
       clearAnswersState();
     }
 
+    function applyCorrection() {
+      if (!showCorrection) return;
+      gradeResults.forEach(({ c, res, exp }) => {
+        c.mark(res, exp);
+        detalleCorreccion.push({ answer: c.getAnswer(), ok: res.ok, expected: exp });
+      });
+      doc.classList.add('al-show-correction');
+      const hint = tarjeta.querySelector('.al-correction-hint');
+      if (hint) hint.hidden = false;
+    }
+
+    function doRetry() {
+      if (!preview && accessState() === 'after') { showClosed(); return; }
+      datos.seed = (Math.random() * 2 ** 31) | 0;
+      datos.startedAt = 0;
+      state = null;
+      if (!preview) saveState();
+      startActivity(datos.alumno, datos.grupo);
+      window.scrollTo({ top: 0 });
+    }
+
     // Tarjeta de resultados
     const nota10 = entrega.nota10;
     const showScore = settings.showScore !== false;
+    const canRetry = !datos.correctionShown && (preview || attemptsLeft() > 0);
+
     const acciones = el('div', { class: 'acciones' });
     acciones.appendChild(iconBtn({ class: 'btn dark', onclick: () => downloadEntrega(entregaArchivo, entrega) }, ICONS.download, t('player.downloadBtn')));
     acciones.appendChild(iconBtn({ class: 'btn', onclick: () => shareEntrega(entregaArchivo) }, ICONS.share, t('player.shareBtn')));
@@ -416,18 +439,6 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     if (!showScore) { copyBtn.disabled = true; printBtn.disabled = true; }
     acciones.appendChild(copyBtn);
     acciones.appendChild(printBtn);
-    if (preview || attemptsLeft() > 0) {
-      acciones.appendChild(iconBtn({ class: 'btn', onclick: () => {
-          if (!preview && accessState() === 'after') { showClosed(); return; }
-          datos.seed = (Math.random() * 2 ** 31) | 0;
-          datos.startedAt = 0;
-          state = null;
-          if (!preview) saveState();
-          startActivity(datos.alumno, datos.grupo);
-          window.scrollTo({ top: 0 });
-        }
-      }, ICONS.rotateCcw, t('player.retryBtn')));
-    }
 
     const tarjeta = el('div', { class: 'al-resultado anim-in' },
       el('h2', {}, preview ? t('player.resultTitlePreview') : t('player.resultTitle')),
@@ -439,7 +450,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
       el('div', { class: 'detalle' },
         `${datos.alumno}${datos.grupo ? ' · ' + datos.grupo : ''} · ${fechaHora(new Date(entrega.fecha))}`),
       (() => { const p = el('p', { class: 'al-info', style: 'margin-top:12px' }); p.innerHTML = t('player.submissionInfo'); return p; })(),
-      showCorrection ? el('p', { class: 'al-info al-correction-hint', style: 'margin-top:8px' }, t('player.correctionHint')) : null,
+      showCorrection ? el('p', { class: 'al-correction-hint al-info', style: 'margin-top:8px', hidden: canRetry }, t('player.correctionHint')) : null,
       acciones);
 
     if (showScore && totalPoints > 0) {
@@ -447,9 +458,26 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
       tarjeta.querySelector('.detalle').append(t('player.pct', { pct }));
     }
 
+    if (canRetry && showCorrection) {
+      const pregunta = el('div', { class: 'al-retry-question' },
+        el('p', {}, t('player.retryQuestion')),
+        el('div', { class: 'acciones' },
+          iconBtn({ class: 'btn', onclick: () => doRetry() }, ICONS.rotateCcw, t('player.retryYes')),
+          el('button', { class: 'btn', onclick: () => {
+            datos.correctionShown = true;
+            if (!preview) saveState();
+            pregunta.remove();
+            applyCorrection();
+          }}, t('player.retryNo'))));
+      tarjeta.appendChild(pregunta);
+    } else if (canRetry) {
+      acciones.appendChild(iconBtn({ class: 'btn', onclick: () => doRetry() }, ICONS.rotateCcw, t('player.retryBtn')));
+    } else {
+      applyCorrection();
+    }
+
     doc.insertBefore(tarjeta, doc.firstChild);
     doc.classList.add('al-entregado');
-    if (showCorrection) doc.classList.add('al-show-correction');
     barra.remove();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
