@@ -82,9 +82,9 @@ function fechaHoraSlug(isoStr) {
 
 export function entregaFilename(data, meta) {
   const src = isEncryptedSubmission(data) ? (meta || {}) : data;
-  const alumno = slugify(src.alumno || 'alumno');
-  const titulo = slugify(src.titulo || 'ficha');
-  const fecha = fechaHoraSlug(src.fecha || data.fecha);
+  const alumno = slugify(src.alumno || meta?.alumno || 'alumno');
+  const titulo = slugify(src.titulo || meta?.titulo || 'ficha');
+  const fecha = fechaHoraSlug(src.fecha || meta?.fecha || data.fecha);
   return `entrega_${alumno}_${titulo}_${fecha}.json`;
 }
 
