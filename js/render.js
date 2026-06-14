@@ -113,12 +113,42 @@ export function buildShapeSvg(field) {
 
   if (field.type === 'rect' || field.type === 'ellipse') {
     let node;
-    if (field.type === 'rect') {
+    if (field.type === 'rect' && cfg.square) {
+      // Cuadrado: viewBox cuadrado + non-scaling-stroke para que el grosor no escale
+      svg.setAttribute('viewBox', '0 0 100 100');
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      node = document.createElementNS(NS, 'rect');
+      node.setAttribute('x', '0');
+      node.setAttribute('y', '0');
+      node.setAttribute('width', '100');
+      node.setAttribute('height', '100');
+      node.setAttribute('vector-effect', 'non-scaling-stroke');
+      const br = parseFloat(cfg.borderRadius) || 0;
+      if (br > 0) {
+        node.setAttribute('rx', String(br));
+        node.setAttribute('ry', String(br));
+      }
+    } else if (field.type === 'rect') {
       node = document.createElementNS(NS, 'rect');
       node.setAttribute('x', '0');
       node.setAttribute('y', '0');
       node.setAttribute('width', '100%');
       node.setAttribute('height', '100%');
+      const br = parseFloat(cfg.borderRadius) || 0;
+      if (br > 0) {
+        node.setAttribute('rx', br + '%');
+        node.setAttribute('ry', br + '%');
+      }
+    } else if (cfg.circle) {
+      // Círculo: viewBox cuadrado para que sea redondo independientemente de las proporciones del campo.
+      // non-scaling-stroke evita que el grosor escale al redimensionar.
+      svg.setAttribute('viewBox', '0 0 100 100');
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      node = document.createElementNS(NS, 'circle');
+      node.setAttribute('cx', '50');
+      node.setAttribute('cy', '50');
+      node.setAttribute('r', '49');
+      node.setAttribute('vector-effect', 'non-scaling-stroke');
     } else {
       node = document.createElementNS(NS, 'ellipse');
       node.setAttribute('cx', '50%');

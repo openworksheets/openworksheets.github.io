@@ -143,14 +143,14 @@ export const FIELD_TYPES = {
     glyph: ICONS.rectH,
     decor: true,
     defRect: { w: 0.25, h: 0.12 },
-    defaults: () => ({ color: '#1d2c42', width: 2, style: 'solid', noStroke: false, fill: '', fillOpacity: 1 })
+    defaults: () => ({ color: '#1d2c42', width: 2, style: 'solid', noStroke: false, fill: '', fillOpacity: 1, borderRadius: 0, square: false })
   },
   ellipse: {
     name: 'Elipse',
     glyph: ICONS.circle,
     decor: true,
     defRect: { w: 0.2, h: 0.12 },
-    defaults: () => ({ color: '#1d2c42', width: 2, style: 'solid', noStroke: false, fill: '', fillOpacity: 1 })
+    defaults: () => ({ color: '#1d2c42', width: 2, style: 'solid', noStroke: false, fill: '', fillOpacity: 1, circle: false })
   }
 };
 

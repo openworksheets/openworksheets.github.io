@@ -21,6 +21,97 @@ function iconBtn(attrs, svgStr, label) {
   return b;
 }
 
+// Devuelve true si el color hex es claro (para decidir el color del texto encima).
+function isLightColor(hex) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000 > 128;
+}
+
+// Modo cuentagotas sobre la imagen de fondo de la ficha (fallback sin EyeDropper API).
+function pickColorFromPage(onPick) {
+  // Precarga todas las páginas con imagen de fondo en canvas ocultos
+  const pages = [...canvas.querySelectorAll('.wpf-page')].map(pageEl => {
+    const img = pageEl.querySelector('img.fondo');
+    if (!img || !img.complete || !img.naturalWidth) return null;
+    const c = document.createElement('canvas');
+    c.width = img.naturalWidth;
+    c.height = img.naturalHeight;
+    try {
+      c.getContext('2d').drawImage(img, 0, 0);
+      return { pageEl, c };
+    } catch { return null; }
+  }).filter(Boolean);
+
+  const hint = el('div', { class: 'color-pick-hint' }, t('editor.eyedropperHint'));
+  const swatch = el('div', { class: 'color-pick-swatch' });
+  const swatchHex = el('span', { class: 'color-pick-hex' });
+  swatch.appendChild(swatchHex);
+  const overlay = el('div', { class: 'color-pick-overlay', tabIndex: '0' }, hint, swatch);
+  document.body.appendChild(overlay);
+  overlay.focus();
+
+  let currentColor = null;
+
+  overlay.addEventListener('mousemove', e => {
+    let found = null;
+    for (const { pageEl, c } of pages) {
+      const r = pageEl.getBoundingClientRect();
+      if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+        const px = Math.floor((e.clientX - r.left) / r.width  * c.width);
+        const py = Math.floor((e.clientY - r.top)  / r.height * c.height);
+        const d  = c.getContext('2d').getImageData(px, py, 1, 1).data;
+        found = '#' + [d[0], d[1], d[2]].map(v => v.toString(16).padStart(2, '0')).join('');
+        break;
+      }
+    }
+    currentColor = found;
+    swatch.style.display = found ? 'flex' : 'none';
+    if (found) {
+      swatch.style.left = (e.clientX + 18) + 'px';
+      swatch.style.top  = (e.clientY + 18) + 'px';
+      swatch.style.background = found;
+      swatchHex.textContent = found;
+      swatchHex.style.color = isLightColor(found) ? '#000' : '#fff';
+    }
+  });
+
+  overlay.addEventListener('click', () => {
+    if (currentColor) onPick(currentColor);
+    overlay.remove();
+  });
+
+  overlay.addEventListener('keydown', e => {
+    if (e.key === 'Escape') overlay.remove();
+  });
+}
+
+// Input de color con botón cuentagotas.
+// - Chromium: usa EyeDropper API (captura de cualquier punto de la pantalla).
+// - Otros: captura de la imagen de fondo de la ficha.
+// Devuelve { inp, wrap } — usar `wrap` para insertar en el DOM, `inp` para leer el valor.
+function colorInput(initValue, onChange) {
+  const inp = el('input', { type: 'color', value: initValue });
+  inp.addEventListener('input', () => onChange(inp.value));
+  const wrap = el('div', { class: 'color-input-wrap' }, inp);
+  if (window.EyeDropper) {
+    const btn = iconBtn({ class: 'btn small ghost', type: 'button', title: t('editor.eyedropper') }, ICONS.pipette);
+    btn.addEventListener('click', () => {
+      new EyeDropper().open().then(r => {
+        inp.value = r.sRGBHex;
+        onChange(r.sRGBHex);
+      }).catch(() => {});
+    });
+    wrap.appendChild(btn);
+  } else {
+    const btn = iconBtn({ class: 'btn small ghost', type: 'button', title: t('editor.eyedropperPage') }, ICONS.pipette);
+    btn.addEventListener('click', () => pickColorFromPage(hex => { inp.value = hex; onChange(hex); }));
+    wrap.appendChild(btn);
+  }
+  return { inp, wrap };
+}
+
 const EYE_SVG = '<svg class="eye-show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
 function pwToggleBtn(title) {
   const btn = el('button', { type: 'button', class: 'pw-toggle', title });
@@ -902,9 +993,8 @@ function renderPagePanel(pi) {
     t('editor.pageN', { n: pi + 1, total: manifest.pages.length })));
   if (page.bgColor !== undefined) {
     cont.appendChild(el('label', { class: 'f-label' }, t('editor.pageBgColor')));
-    const colorPick = el('input', { type: 'color', value: page.bgColor });
-    colorPick.addEventListener('input', () => recolorBlankPage(pi, colorPick.value));
-    cont.appendChild(colorPick);
+    const { wrap: colorPickWrap } = colorInput(page.bgColor, v => recolorBlankPage(pi, v));
+    cont.appendChild(colorPickWrap);
 
     const sizes = [
       { key: 'a4p',  w: 1600, h: 2263, label: t('editor.pageSizeA4p') },
@@ -1029,7 +1119,7 @@ function renderFieldPanel(field) {
       rotInp,
       el('button', { class: 'btn small', type: 'button', onclick: () => applyRot((field.rotate || 0) - 90) }, '-90°'),
       el('button', { class: 'btn small', type: 'button', onclick: () => applyRot((field.rotate || 0) + 90) }, '+90°'),
-      iconBtn({ class: 'btn small', type: 'button', onclick: () => applyRot(0) }, ICONS.rotateCcw));
+      el('button', { class: 'btn small', type: 'button', title: t('editor.resetRotation'), onclick: () => applyRot(0) }, '0°'));
     cont.appendChild(row);
   }
 
@@ -1038,8 +1128,8 @@ function renderFieldPanel(field) {
     iconBtn({ class: 'btn small', onclick: duplicateSelected }, ICONS.copyPlus, t('editor.duplicate')),
     iconBtn({ class: 'btn small danger', onclick: deleteSelected }, ICONS.trash, t('editor.delete'))));
 
-  // Acordeón de diseño (tamaño/color de texto y fondo)
-  const hasDesign = (field.type !== 'cover' && !isShapeField(field.type)) || interactive;
+  // Acordeón de diseño (tamaño/color de texto y fondo — no para image ni label, que gestionan esto inline)
+  const hasDesign = (field.type !== 'cover' && field.type !== 'image' && field.type !== 'label' && !isShapeField(field.type)) || interactive;
   if (hasDesign) {
     const accordion = el('div', { class: 'ed-accordion' });
     const arrow = el('i', { class: 'ed-accordion-arrow' });
@@ -1073,14 +1163,13 @@ function renderFieldPanel(field) {
       body.appendChild(el('div', { class: 'rot-row' }, fsRange, fsNum, el('span', {}, '×')));
       if (interactive) {
         const cfg = field.config;
-        const fgColor = el('input', { type: 'color', value: cfg.fgColor || '#1d2c42' });
-        fgColor.addEventListener('input', () => {
-          cfg.fgColor = fgColor.value;
-          canvas.querySelector(`[data-id="${field.id}"]`)?.style.setProperty('--field-fg', cfg.fgColor);
+        const { wrap: fgWrap } = colorInput(cfg.fgColor || '#1d2c42', v => {
+          cfg.fgColor = v;
+          canvas.querySelector(`[data-id="${field.id}"]`)?.style.setProperty('--field-fg', v);
           markDirty();
         });
         body.appendChild(el('label', { class: 'f-label' }, t('cfg.fieldFg')));
-        body.appendChild(fgColor);
+        body.appendChild(fgWrap);
       }
     }
 
@@ -1096,8 +1185,7 @@ function renderFieldPanel(field) {
         canvas.querySelector(`[data-id="${field.id}"]`)?.style.setProperty('--field-bg', `rgba(${r},${g},${b},${op})`);
       };
       body.appendChild(el('label', { class: 'f-label' }, t('cfg.fieldBg')));
-      const bgColor = el('input', { type: 'color', value: cfg.bg || '#fffdf8' });
-      bgColor.addEventListener('input', () => { cfg.bg = bgColor.value; applyFieldBg(); markDirty(); });
+      const { inp: bgColor, wrap: bgWrap } = colorInput(cfg.bg || '#fffdf8', v => { cfg.bg = v; applyFieldBg(); markDirty(); });
       const bgOp = el('input', { type: 'range', min: '0', max: '100', step: '1', value: String(Math.round((cfg.bgOpacity ?? 1) * 100)) });
       const bgOpNum = el('input', { type: 'number', min: '0', max: '100', step: '1', value: String(Math.round((cfg.bgOpacity ?? 1) * 100)) });
       const syncBgOp = val => {
@@ -1111,7 +1199,7 @@ function renderFieldPanel(field) {
       bgOp.addEventListener('input', () => syncBgOp(bgOp.value));
       bgOpNum.addEventListener('input', () => syncBgOp(bgOpNum.value));
       body.appendChild(el('div', { class: 'rot-row' },
-        bgColor,
+        bgWrap,
         el('label', { class: 'f-label', style: 'margin-left:0.5em' }, t('cfg.fieldBgOpacity')),
         bgOp, bgOpNum, el('span', {}, '%')));
     }
@@ -1273,9 +1361,8 @@ function selectRow(cont, label, value, options, onChange) {
 function shapeStrokeConfig(cont, field) {
   const cfg = field.config;
   cont.appendChild(el('label', { class: 'f-label' }, t('cfg.strokeColor')));
-  const color = el('input', { type: 'color', value: cfg.color || '#1d2c42' });
-  color.addEventListener('input', () => { cfg.color = color.value; refreshShapePrev(field); markDirty(); });
-  cont.appendChild(color);
+  const { inp: color, wrap: colorWrap } = colorInput(cfg.color || '#1d2c42', v => { cfg.color = v; refreshShapePrev(field); markDirty(); });
+  cont.appendChild(colorWrap);
   cont.appendChild(el('label', { class: 'f-label' }, t('cfg.strokeWidth')));
   const w = el('input', { type: 'range', min: '1', max: '14', step: '1', value: String(cfg.width || 2) });
   w.addEventListener('input', () => { cfg.width = parseFloat(w.value); refreshShapePrev(field); markDirty(); });
@@ -1326,12 +1413,11 @@ const configForms = {
     cont.appendChild(strokeBox);
 
     // Relleno (opcional), con color y opacidad
-    const fillColor = el('input', { type: 'color', value: cfg.fill || '#f8e3a1' });
-    fillColor.addEventListener('input', () => { cfg.fill = fillColor.value; refreshShapePrev(field); markDirty(); });
+    const { inp: fillColor, wrap: fillColorWrap } = colorInput(cfg.fill || '#f8e3a1', v => { cfg.fill = v; refreshShapePrev(field); markDirty(); });
     const fillOp = el('input', { type: 'range', min: '0', max: '1', step: '0.05', value: String(cfg.fillOpacity ?? 1) });
     fillOp.addEventListener('input', () => { cfg.fillOpacity = parseFloat(fillOp.value); refreshShapePrev(field); markDirty(); });
     const fillRow = el('div', {},
-      el('label', { class: 'f-label' }, t('cfg.fillColor')), fillColor,
+      el('label', { class: 'f-label' }, t('cfg.fillColor')), fillColorWrap,
       el('label', { class: 'f-label' }, t('cfg.fillOpacity')), fillOp);
     if (!cfg.fill) fillRow.style.display = 'none';
     checkRow(cont, t('cfg.shapeFill'), Boolean(cfg.fill), v => {
@@ -1340,10 +1426,38 @@ const configForms = {
       refreshShapePrev(field);
     });
     cont.appendChild(fillRow);
+
+    // Esquinas redondeadas
+    const brVal = parseFloat(cfg.borderRadius) || 0;
+    const brRange = el('input', { type: 'range', min: '0', max: '50', step: '1', value: String(brVal) });
+    const brNum = el('input', { type: 'number', min: '0', max: '50', step: '1', value: String(brVal), style: 'width:60px' });
+    const applyBr = v => {
+      v = Math.max(0, Math.min(50, parseFloat(v) || 0));
+      cfg.borderRadius = v;
+      brRange.value = v;
+      brNum.value = v;
+      refreshShapePrev(field);
+      markDirty();
+    };
+    brRange.addEventListener('input', () => applyBr(brRange.value));
+    brNum.addEventListener('input', () => applyBr(brNum.value));
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.borderRadius')));
+    cont.appendChild(el('div', { class: 'rot-row' }, brRange, brNum, el('span', {}, '%')));
+
+    checkRow(cont, t('cfg.forceSquare'), Boolean(cfg.square), v => {
+      cfg.square = v;
+      refreshShapePrev(field);
+      markDirty();
+    });
   },
 
   ellipse(cont, field) {
     configForms.rect(cont, field);
+    checkRow(cont, t('cfg.forceCircle'), Boolean(field.config.circle), v => {
+      field.config.circle = v;
+      refreshShapePrev(field);
+      markDirty();
+    });
   },
 
   label(cont, field) {
@@ -1360,32 +1474,47 @@ const configForms = {
     });
     cont.appendChild(ta);
     cont.appendChild(el('label', { class: 'f-label' }, t('cfg.labelColor')));
-    const color = el('input', { type: 'color', value: cfg.color || '#1d2c42' });
-    color.addEventListener('input', () => {
-      cfg.color = color.value;
+    const { wrap: labelColorWrap } = colorInput(cfg.color || '#1d2c42', v => {
+      cfg.color = v;
       const p = prev();
-      if (p) p.style.color = cfg.color;
+      if (p) p.style.color = v;
       markDirty();
     });
-    cont.appendChild(color);
+    cont.appendChild(labelColorWrap);
     checkRow(cont, t('cfg.labelBold'), Boolean(cfg.bold), v => {
       cfg.bold = v;
       const p = prev();
       if (p) p.style.fontWeight = v ? '700' : '400';
     });
+    // Tamaño de texto (antes en el acordeón de diseño)
+    const fsVal = field.fontScale || 1;
+    const fsRange = el('input', { type: 'range', min: '0.6', max: '5', step: '0.1', value: String(fsVal) });
+    const fsNum = el('input', { type: 'number', min: '0.1', max: '20', step: '0.1', value: String(fsVal), style: 'width:72px' });
+    const applyFs = v => {
+      v = Math.max(0.1, parseFloat(v) || 1);
+      field.fontScale = v;
+      fsRange.value = Math.min(v, 5);
+      fsNum.value = v;
+      const node = canvas.querySelector(`[data-id="${field.id}"]`);
+      if (node) node.style.setProperty('--fs', v);
+      markDirty();
+    };
+    fsRange.addEventListener('input', () => applyFs(fsRange.value));
+    fsNum.addEventListener('input', () => applyFs(fsNum.value));
+    cont.appendChild(el('label', { class: 'f-label' }, t('editor.fontSize')));
+    cont.appendChild(el('div', { class: 'rot-row' }, fsRange, fsNum, el('span', {}, '×')));
   },
 
   cover(cont, field) {
     const cfg = field.config;
     cont.appendChild(el('label', { class: 'f-label' }, t('cfg.coverColor')));
-    const color = el('input', { type: 'color', value: cfg.color || '#ffffff' });
-    color.addEventListener('input', () => {
-      cfg.color = color.value;
+    const { wrap: coverColorWrap } = colorInput(cfg.color || '#ffffff', v => {
+      cfg.color = v;
       const box = canvas.querySelector(`.ed-field[data-id="${field.id}"]`);
-      if (box) box.style.background = cfg.color;
+      if (box) box.style.background = v;
       markDirty();
     });
-    cont.appendChild(color);
+    cont.appendChild(coverColorWrap);
     cont.appendChild(el('p', { style: 'font-size:.85rem;color:var(--tinta-suave);margin-top:8px' },
       t('cfg.coverHint')));
   },
@@ -2005,7 +2134,7 @@ function openPreview() {
   if (!manifest.pages.length) { toast(t('toast.addPageFirst'), 'error'); return; }
   const overlay = el('div', { class: 'prev-overlay' });
   const root = el('div', {});
-  const cerrar = el('button', { class: 'btn small' }, t('preview.back'));
+  const cerrar = iconBtn({ class: 'btn small' }, ICONS.arrowLeft, t('preview.back'));
   overlay.appendChild(el('div', { class: 'prev-aviso' }, t('preview.banner'), cerrar));
   overlay.appendChild(root);
   document.body.appendChild(overlay);
