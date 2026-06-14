@@ -158,7 +158,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     if (st === 'before') { showNotYet(); return; }
     if (st === 'after') { showClosed(); return; }
 
-    if (attemptsLeft() <= 0) { showBlocked(); return; }
+    if (datos.correctionShown || attemptsLeft() <= 0) { showBlocked(); return; }
 
     const nombre = el('input', { type: 'text', autocomplete: 'name', required: '' });
     const grupo = el('input', { type: 'text' });
@@ -465,6 +465,8 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
           iconBtn({ class: 'btn', onclick: () => doRetry() }, ICONS.rotateCcw, t('player.retryYes')),
           el('button', { class: 'btn', onclick: () => {
             datos.correctionShown = true;
+            const max = Number(settings.maxAttempts) || 0;
+            if (max > 0 && datos.attempts < max) datos.attempts = max;
             if (!preview) saveState();
             pregunta.remove();
             applyCorrection();
