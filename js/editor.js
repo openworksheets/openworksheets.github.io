@@ -1966,8 +1966,9 @@ function updateCryptoSettingsUi() {
   $('#ajCryptoPassword').disabled = !enabled;
 }
 
-function openSettings() {
+function openSettings(afterSave) {
   const dlg = $('#dlgAjustes');
+  dlg._afterSave = afterSave || null;
   fillTimeSelects();
   $('#ajTitulo').value = manifest.title || '';
   $('#ajAutor').value = manifest.author || '';
@@ -2008,7 +2009,8 @@ $('#dlgAjustes form')?.addEventListener('submit', ev => {
 });
 
 $('#dlgAjustes')?.addEventListener('close', () => {
-  if ($('#dlgAjustes').returnValue !== 'ok') return;
+  const dlg = $('#dlgAjustes');
+  if (dlg.returnValue !== 'ok') return;
   const newTitle = $('#ajTitulo').value.trim();
   manifest.title = newTitle;
   titleInput.value = newTitle;
@@ -2029,6 +2031,9 @@ $('#dlgAjustes')?.addEventListener('close', () => {
     password: $('#ajPassword').value.trim()
   };
   markDirty();
+  const cb = dlg._afterSave;
+  dlg._afterSave = null;
+  if (cb) cb();
 });
 
 // ---------- Compartir ----------
@@ -2100,7 +2105,7 @@ async function exportZip() {
     if (exportManifest.settings?.encryptSubmissions !== false) {
       if (!submissionCryptoPassword) {
         toast(t('crypto.passwordRequired'), 'error');
-        openSettings();
+        openSettings(exportZip);
         return;
       }
       exportManifest.submissionCrypto = await createSubmissionCrypto(submissionCryptoPassword);
