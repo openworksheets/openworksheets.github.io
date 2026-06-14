@@ -9,10 +9,17 @@ import { exportFichaZip, importFichaZip, newManifest } from './zipio.js';
 import { buildShortLink, parseDriveId } from './drive.js';
 import { mountPlayer } from './player.js';
 import { t, getLang, applyI18n, initLangSelector } from './i18n.js';
+import { ICONS } from './icons.js';
 import { createSubmissionCrypto, decryptManifestForStudent, encryptManifestForStudent, isEncryptedManifest } from './submissionCrypto.js';
 
 applyI18n();
 initLangSelector();
+
+function iconBtn(attrs, svgStr, label) {
+  const b = el('button', attrs);
+  b.innerHTML = svgStr + (label ? ' <span>' + label + '</span>' : '');
+  return b;
+}
 
 const EYE_SVG = '<svg class="eye-show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
 function pwToggleBtn(title) {
@@ -486,9 +493,9 @@ function renderCanvas() {
     const head = el('div', { class: 'ed-pagehead' },
       el('span', {}, t('editor.pageN', { n: pi + 1, total: manifest.pages.length })),
       el('span', { class: 'spacer' }),
-      el('button', { class: 'btn small ghost', title: t('editor.moveUp'), onclick: () => movePage(pi, -1) }, '▲'),
-      el('button', { class: 'btn small ghost', title: t('editor.moveDown'), onclick: () => movePage(pi, 1) }, '▼'),
-      el('button', { class: 'btn small ghost danger', title: t('editor.deletePage'), onclick: () => deletePage(pi) }, '✕'));
+      iconBtn({ class: 'btn small ghost', title: t('editor.moveUp'), onclick: () => movePage(pi, -1) }, ICONS.chevronUp),
+      iconBtn({ class: 'btn small ghost', title: t('editor.moveDown'), onclick: () => movePage(pi, 1) }, ICONS.chevronDown2),
+      iconBtn({ class: 'btn small ghost danger', title: t('editor.deletePage'), onclick: () => deletePage(pi) }, ICONS.trash));
 
     canvas.appendChild(el('div', { class: 'ed-pagebox' }, head, pageEl));
   });
@@ -944,9 +951,9 @@ function renderPagePanel(pi) {
       }
     });
   }
-  const dupBtn = el('button', { class: 'btn small', type: 'button' }, t('editor.duplicatePage'));
+  const dupBtn = iconBtn({ class: 'btn small', type: 'button' }, ICONS.copyPlus, t('editor.duplicatePage'));
   dupBtn.addEventListener('click', () => duplicatePage(pi));
-  const delBtn = el('button', { class: 'btn small danger', type: 'button' }, t('editor.deletePage'));
+  const delBtn = iconBtn({ class: 'btn small danger', type: 'button' }, ICONS.trash, t('editor.deletePage'));
   delBtn.addEventListener('click', () => deletePage(pi));
   cont.appendChild(el('div', { class: 'ed-acciones' }, dupBtn, delBtn));
   panel.appendChild(cont);
@@ -1022,20 +1029,21 @@ function renderFieldPanel(field) {
       rotInp,
       el('button', { class: 'btn small', type: 'button', onclick: () => applyRot((field.rotate || 0) - 90) }, '-90°'),
       el('button', { class: 'btn small', type: 'button', onclick: () => applyRot((field.rotate || 0) + 90) }, '+90°'),
-      el('button', { class: 'btn small', type: 'button', onclick: () => applyRot(0) }, '↺'));
+      iconBtn({ class: 'btn small', type: 'button', onclick: () => applyRot(0) }, ICONS.rotateCcw));
     cont.appendChild(row);
   }
 
   // Acciones
   cont.appendChild(el('div', { class: 'ed-acciones' },
-    el('button', { class: 'btn small', onclick: duplicateSelected }, t('editor.duplicate')),
-    el('button', { class: 'btn small danger', onclick: deleteSelected }, t('editor.delete'))));
+    iconBtn({ class: 'btn small', onclick: duplicateSelected }, ICONS.copyPlus, t('editor.duplicate')),
+    iconBtn({ class: 'btn small danger', onclick: deleteSelected }, ICONS.trash, t('editor.delete'))));
 
   // Acordeón de diseño (tamaño/color de texto y fondo)
   const hasDesign = (field.type !== 'cover' && !isShapeField(field.type)) || interactive;
   if (hasDesign) {
     const accordion = el('div', { class: 'ed-accordion' });
-    const arrow = el('i', { class: 'ed-accordion-arrow' }, '▶');
+    const arrow = el('i', { class: 'ed-accordion-arrow' });
+    arrow.innerHTML = ICONS.chevronRight;
     const toggle = el('button', { class: 'ed-accordion-toggle', type: 'button' },
       arrow, t('editor.designSection'));
     const bodyOuter = el('div', { class: 'ed-accordion-body' });
@@ -1160,7 +1168,7 @@ function renderZonePanel(field) {
         row.appendChild(textCell(item, v => { zone.answers[i] = v; updateZoneChip(); }, t('cfg.zoneLabelPlaceholder')));
       } else {
         // Botón para quitar la imagen y volver a texto.
-        const quitImg = el('button', { class: 'btn small', type: 'button', title: t('cfg.removeImage') }, '✕🖼');
+        const quitImg = iconBtn({ class: 'btn small', type: 'button', title: t('cfg.removeImage') }, ICONS.imageOff);
         quitImg.addEventListener('click', e => {
           e.stopPropagation();
           urls.delete(item); files.delete(item);
@@ -1181,8 +1189,8 @@ function renderZonePanel(field) {
   cont.appendChild(el('p', { style: 'font-size:.85rem;color:var(--tinta-suave);margin-top:8px' },
     t('editor.zoneHint')));
   cont.appendChild(el('div', { class: 'ed-acciones' },
-    el('button', { class: 'btn small', onclick: () => selectField(sel.pageIndex, field.id) }, t('editor.backToField')),
-    el('button', { class: 'btn small danger', onclick: deleteSelected }, t('editor.deleteZone'))));
+    iconBtn({ class: 'btn small', onclick: () => selectField(sel.pageIndex, field.id) }, ICONS.arrowLeft, t('editor.backToField')),
+    iconBtn({ class: 'btn small danger', onclick: deleteSelected }, ICONS.trash, t('editor.deleteZone'))));
   panel.appendChild(cont);
 }
 
@@ -1196,8 +1204,8 @@ function renderAmItemPanel(field) {
     t('editor.amItemTitle')));
   cont.appendChild(el('p', { style: 'font-size:.85rem;color:var(--tinta-suave)' }, t('editor.amItemHint')));
   cont.appendChild(el('div', { class: 'ed-acciones' },
-    el('button', { class: 'btn small', onclick: () => selectField(sel.pageIndex, field.id) }, t('editor.backToField')),
-    el('button', { class: 'btn small danger', onclick: deleteSelected }, t('editor.amItemDelete'))));
+    iconBtn({ class: 'btn small', onclick: () => selectField(sel.pageIndex, field.id) }, ICONS.arrowLeft, t('editor.backToField')),
+    iconBtn({ class: 'btn small danger', onclick: deleteSelected }, ICONS.trash, t('editor.amItemDelete'))));
   panel.appendChild(cont);
 }
 

@@ -940,6 +940,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 }
 .ed-panel-vacio { color: var(--tinta-suave); font-size: 0.9rem; }
 .ed-acciones { display: flex; gap: 8px; margin: 14px 0 4px; flex-wrap: wrap; }
+.ed-acciones .btn svg, .ed-pagehead .btn svg { width: 14px; height: 14px; flex-shrink: 0; vertical-align: middle; }
 
 .ed-accordion {
   margin-top: 12px;
@@ -962,7 +963,8 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   font-family: var(--cuerpo);
 }
 .ed-accordion-toggle:hover { color: var(--tinta); }
-.ed-accordion-arrow { font-style: normal; transition: transform 0.18s; display: inline-block; }
+.ed-accordion-arrow { font-style: normal; transition: transform 0.18s; display: inline-flex; align-items: center; }
+.ed-accordion-arrow svg { width: 14px; height: 14px; }
 .ed-accordion.open .ed-accordion-arrow { transform: rotate(90deg); }
 .ed-accordion-body {
   display: grid;
