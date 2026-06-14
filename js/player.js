@@ -417,8 +417,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     acciones.appendChild(copyBtn);
     acciones.appendChild(printBtn);
     if (preview || attemptsLeft() > 0) {
-      acciones.appendChild(el('button', {
-        class: 'btn', onclick: () => {
+      acciones.appendChild(iconBtn({ class: 'btn', onclick: () => {
           if (!preview && accessState() === 'after') { showClosed(); return; }
           datos.seed = (Math.random() * 2 ** 31) | 0;
           datos.startedAt = 0;
@@ -427,7 +426,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
           startActivity(datos.alumno, datos.grupo);
           window.scrollTo({ top: 0 });
         }
-      }, t('player.retryBtn')));
+      }, ICONS.rotateCcw, t('player.retryBtn')));
     }
 
     const tarjeta = el('div', { class: 'al-resultado anim-in' },
