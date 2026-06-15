@@ -22,7 +22,6 @@ Las versiones publicadas también están en la página de
   página que se estaba viendo en la vista previa.
 - Al **abrir una ficha (ZIP)** o **añadir un PDF o imágenes**, el zoom del lienzo
   se restablece al 100 %.
-
 - Botón **«Ver un ejemplo en el editor»** en la página principal, que abre una
   ficha de ejemplo lista para editar (vía `editor.html?ejemplo=…`, solo rutas
   relativas del propio sitio).
