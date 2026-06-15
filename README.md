@@ -4,7 +4,31 @@ OpenWorksheets es una aplicación web para convertir PDFs o imágenes en fichas 
 
 ## Tipos de campo
 
-Permite crear actividades con respuestas cortas, respuestas numéricas, opción única o múltiple, verdadero/falso, desplegables, casillas de verificación, huecos, emparejamientos, ordenaciones, arrastrar a zonas y unir con flechas. También incluye elementos de diseño como texto, imágenes, líneas, flechas y formas.
+### Campos de respuesta
+
+| Tipo | Descripción |
+|------|-------------|
+| **Respuesta corta** | El alumno escribe texto libre. Admite varias respuestas correctas alternativas y opciones de normalización (tildes, mayúsculas, espacios). |
+| **Respuesta numérica** | El alumno introduce un número. Permite definir una tolerancia de error. |
+| **Opción única** | Lista de opciones en la que el alumno elige una sola. |
+| **Opción múltiple** | Lista de opciones en la que el alumno puede marcar varias. Admite puntuación parcial. |
+| **Verdadero / falso** | Dos botones con etiquetas configurables (p. ej. Sí / No, Correcto / Incorrecto). |
+| **Desplegable** | El alumno elige una opción de un menú desplegable. Ocupa poco espacio visual. |
+| **Casillas de verificación** | Casillas dibujadas libremente sobre el documento. Modo individual o múltiple con puntuación parcial opcional. |
+| **Completar huecos** | El alumno rellena palabras o frases que faltan en un texto. Los huecos se marcan con corchetes en el enunciado. |
+| **Emparejar** | Dos columnas de elementos que el alumno relaciona entre sí. |
+| **Ordenar** | El alumno arrastra elementos para ponerlos en el orden correcto. |
+| **Arrastrar a zonas** | El alumno arrastra etiquetas o imágenes hasta las zonas de destino dibujadas sobre el documento. |
+| **Unir con flechas** | El alumno conecta elementos dibujando flechas entre ellos directamente sobre la página. |
+
+### Elementos de diseño
+
+| Tipo | Descripción |
+|------|-------------|
+| **Texto** | Bloque de texto fijo: títulos, instrucciones, notas. No cuenta en la puntuación. |
+| **Imagen** | Imagen decorativa o explicativa superpuesta al documento. |
+| **Tapar zona** | Rectángulo de color que oculta una parte del documento (respuestas, pistas, etc.). |
+| **Línea / Flecha / Rectángulo / Elipse** | Formas geométricas para resaltar, enmarcar o señalar elementos del documento. |
 
 ## Flujo de trabajo
 
