@@ -65,6 +65,17 @@ export const FIELD_TYPES = {
       collapseSpaces: true
     })
   },
+  textboxes: {
+    name: 'Huecos en documento',
+    glyph: ICONS.textCursorInput,
+    defRect: { w: 0.12, h: 0.045 },
+    defaults: () => ({
+      boxes: [],
+      ignoreCase: true,
+      ignoreAccents: true,
+      collapseSpaces: true
+    })
+  },
   match: {
     name: 'Emparejar',
     glyph: ICONS.arrowLeftRight,
@@ -162,14 +173,14 @@ export const FIELD_TYPES = {
 
 export const FIELD_ORDER = [
   'text', 'number', 'single', 'truefalse', 'multi', 'checkbox',
-  'select', 'gaps', 'match', 'order', 'dragdrop', 'arrowmatch',
+  'select', 'gaps', 'textboxes', 'match', 'order', 'dragdrop', 'arrowmatch',
   'label', 'cover', 'image', 'line', 'arrow', 'rect', 'ellipse'
 ];
 
 // Grupos temáticos de la paleta del editor. El nombre visible
 // se obtiene de i18n con la clave 'palette.<id>'.
 export const PALETTE_GROUPS = [
-  { id: 'write',  glyph: ICONS.pencil,         types: ['text', 'number', 'gaps'] },
+  { id: 'write',  glyph: ICONS.pencil,         types: ['text', 'number', 'gaps', 'textboxes'] },
   { id: 'choose', glyph: ICONS.listChecks,      types: ['single', 'multi', 'checkbox', 'truefalse', 'select'] },
   { id: 'relate', glyph: ICONS.arrowLeftRight,  types: ['match', 'order', 'dragdrop', 'arrowmatch'] },
   { id: 'design', glyph: ICONS.shapes,          types: ['label', 'image', 'cover', 'line', 'arrow', 'rect', 'ellipse'] }

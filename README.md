@@ -16,6 +16,7 @@ OpenWorksheets es una aplicación web para convertir PDFs o imágenes en fichas 
 | **Desplegable** | El alumno elige una opción de un menú desplegable. Ocupa poco espacio visual. |
 | **Casillas de verificación** | Casillas dibujadas libremente sobre el documento. Modo individual o múltiple con puntuación parcial opcional. |
 | **Completar huecos** | El alumno rellena palabras o frases que faltan en un texto. Los huecos se marcan con corchetes en el enunciado. |
+| **Huecos en documento** | Rellena huecos que ya existen en el PDF o imagen: se dibuja un cuadro de texto sobre cada hueco con su respuesta. Puntuación proporcional y varias respuestas válidas por hueco. |
 | **Emparejar** | Dos columnas de elementos que el alumno relaciona entre sí. |
 | **Ordenar** | El alumno arrastra elementos para ponerlos en el orden correcto. |
 | **Arrastrar a zonas** | El alumno arrastra etiquetas o imágenes hasta las zonas de destino dibujadas sobre el documento. |

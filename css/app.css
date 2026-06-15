@@ -1478,6 +1478,35 @@ input.wpf-gap-input {
 .wpf-cbbox.cb-missing .wpf-cb-frame { fill: none; stroke-dasharray: 3 2.5; }
 .wpf-cbbox.cb-missing .wpf-cb-tick { opacity: 0.55; }
 
+/* ── Huecos sobre el documento (textboxes) ─── */
+/* El campo es solo un ancla transparente; los huecos se colocan sobre la página. */
+.wpf-tb-hostfield { background: transparent !important; border: none !important; pointer-events: none; }
+.wpf-field-textboxes > .wpf-badge,
+.wpf-field-textboxes > .wpf-expected { display: none; }
+
+.wpf-tbbox {
+  position: absolute;
+  z-index: 3;
+  min-height: 0;
+}
+.wpf-tbbox.tb-ok { border-color: var(--verde); background: var(--verde-claro); }
+.wpf-tbbox.tb-ko { border-color: var(--rojo); background: var(--rojo-claro); }
+/* Solución mostrada bajo un hueco incorrecto al corregir */
+.wpf-tb-exp {
+  position: absolute;
+  z-index: 4;
+  font-size: 0.8em;
+  color: var(--verde);
+  font-weight: 600;
+  background: var(--verde-claro);
+  border: 1px solid var(--verde);
+  border-radius: 4px;
+  padding: 0 5px;
+  margin-top: 2px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 /* ── Arrowmatch ─────────────────────── */
 .wpf-field-arrowmatch { overflow: visible; }
 
@@ -1684,6 +1713,45 @@ input.wpf-gap-input {
 }
 .cb-locate:hover { border-color: var(--rojo); color: var(--rojo); }
 .cfg-hint { font-size: 0.82rem; color: var(--tinta-suave); margin: 6px 0 0; }
+
+/* Editor: campo de huecos (host transparente + overlays de texto) */
+.ed-tb-hostfield {
+  background: transparent !important;
+  border: none !important;
+  pointer-events: none;
+}
+.ed-tbbox {
+  position: absolute;
+  border: 2px dashed #5377ad;
+  background: rgba(83, 119, 173, 0.13);
+  border-radius: 4px;
+  cursor: grab;
+  overflow: hidden;
+  font-size: calc(1.4cqw * var(--fs, 1));
+}
+.ed-tbbox .chip {
+  display: block;
+  font-size: 0.7em;
+  font-weight: 700;
+  color: #3a5a8a;
+  padding: 1px 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+.ed-tbbox.selected { border-style: solid; border-color: var(--rojo); z-index: 5; }
+.ed-tbbox .handle {
+  position: absolute;
+  right: -7px; bottom: -7px;
+  width: 14px; height: 14px;
+  border: 2px solid #fff;
+  background: #5377ad;
+  border-radius: 50%;
+  cursor: nwse-resize;
+  display: none;
+}
+.ed-tbbox.selected .handle { display: block; }
 
 /* Editor: nueva lista de pares unificada */
 .am-pairs-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }

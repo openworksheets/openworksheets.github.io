@@ -10,7 +10,7 @@
 //   - shuffle: si la ficha baraja las opciones de single/multi/select.
 //     (match, order y dragdrop se barajan siempre: su orden delataría la solución).
 
-import { el, shuffled, shuffledIndices } from './util.js';
+import { el, shuffled, shuffledIndices, normalizeText } from './util.js';
 import { parseGaps } from './fieldtypes.js';
 import { t } from './i18n.js';
 
@@ -403,6 +403,65 @@ const renderers = {
           if (marked && isCorrect) node.classList.add('cb-ok');
           else if (marked && !isCorrect) node.classList.add('cb-ko');
           else if (!marked && isCorrect) node.classList.add('cb-missing');
+        });
+      }
+    };
+  },
+
+  textboxes(field, root, ctx) {
+    const cfg = field.config || {};
+    const boxes = cfg.boxes || [];
+    // El root es solo un ancla transparente; los cuadros de texto se colocan
+    // libremente sobre la página (igual que las casillas de checkbox).
+    root.classList.add('wpf-tb-hostfield');
+    const page = root.parentElement;
+
+    const inputs = new Map();
+    boxes.forEach((b, i) => {
+      const node = el('input', {
+        class: 'wpf-tbbox wpf-input', type: 'text', autocomplete: 'off',
+        dataset: { id: b.id },
+        'aria-label': t('render.gapAria', { n: i + 1 })
+      });
+      node.style.left   = (b.rect.x * 100) + '%';
+      node.style.top    = (b.rect.y * 100) + '%';
+      node.style.width  = (b.rect.w * 100) + '%';
+      node.style.height = (b.rect.h * 100) + '%';
+      node.addEventListener('input', () => notify(ctx));
+      page.appendChild(node);
+      inputs.set(b.id, node);
+    });
+
+    return {
+      getAnswer: () => {
+        const o = {};
+        inputs.forEach((inp, id) => { o[id] = inp.value; });
+        return o;
+      },
+      setAnswer: v => {
+        const obj = v && typeof v === 'object' ? v : {};
+        inputs.forEach((inp, id) => { inp.value = obj[id] ?? ''; });
+      },
+      isAnswered: () => [...inputs.values()].some(inp => inp.value.trim() !== ''),
+      setDisabled: b => inputs.forEach(inp => { inp.disabled = b; }),
+      markDetail() {
+        const norm = s => normalizeText(s, cfg);
+        page.querySelectorAll(`.wpf-tb-exp[data-f="${field.id}"]`).forEach(n => n.remove());
+        boxes.forEach(b => {
+          const inp = inputs.get(b.id);
+          if (!inp) return;
+          const v = inp.value;
+          const answers = (b.answers || []).filter(a => a.trim() !== '');
+          const ok = v.trim() !== '' && answers.some(a => norm(a) === norm(v));
+          inp.classList.remove('tb-ok', 'tb-ko');
+          inp.classList.add(ok ? 'tb-ok' : 'tb-ko');
+          if (!ok && answers.length) {
+            const exp = el('div', { class: 'wpf-tb-exp', dataset: { f: field.id } }, answers[0]);
+            exp.style.left = (b.rect.x * 100) + '%';
+            exp.style.top  = ((b.rect.y + b.rect.h) * 100) + '%';
+            exp.style.minWidth = (b.rect.w * 100) + '%';
+            page.appendChild(exp);
+          }
         });
       }
     };

@@ -106,6 +106,22 @@ const graders = {
     return { ratio: hits / gaps.length };
   },
 
+  textboxes(cfg, answer) {
+    // answer = { boxId: 'texto escrito' }. Cada hueco puntúa por igual (como gaps).
+    const boxes = cfg.boxes || [];
+    if (!boxes.length) return { ratio: 0, blank: true };
+    const given = answer && typeof answer === 'object' ? answer : {};
+    if (boxes.every(b => !String(given[b.id] ?? '').trim())) return { ratio: 0, blank: true };
+    const norm = s => normalizeText(s, cfg);
+    let hits = 0;
+    boxes.forEach(b => {
+      const v = String(given[b.id] ?? '');
+      const answers = (b.answers || []).filter(a => a.trim() !== '');
+      if (v.trim() && answers.some(a => norm(a) === norm(v))) hits++;
+    });
+    return { ratio: hits / boxes.length };
+  },
+
   match(cfg, answer) {
     const pairs = cfg.pairs || [];
     const given = Array.isArray(answer) ? answer : [];
@@ -179,6 +195,7 @@ export function expectedText(field) {
       return nums.length ? '☑ ' + nums.join(', ') : '';
     }
     case 'gaps': return parseGaps(cfg.text || '').filter(s => s.kind === 'gap').map(g => g.answers[0]).join(', ');
+    case 'textboxes': return (cfg.boxes || []).map(b => (b.answers || []).find(a => a.trim()) || '').filter(Boolean).join(', ');
     case 'match': return (cfg.pairs || []).map(p => `${p.left} → ${p.right}`).join(' · ');
     case 'order': return (cfg.items || []).join(' → ');
     case 'arrowmatch': return (cfg.pairs || []).map(p => {

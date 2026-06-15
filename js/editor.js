@@ -578,6 +578,14 @@ function renderCanvas() {
           e.stopPropagation();
           selectField(pi, field.id);
         });
+      } else if (field.type === 'textboxes') {
+        // Los huecos se gestionan como overlays propios; el campo no se arrastra.
+        box.classList.add('ed-cb-hostfield');
+        box.addEventListener('pointerdown', e => {
+          if (activeTool || pendingAmItem) return;
+          e.stopPropagation();
+          selectField(pi, field.id);
+        });
       } else {
         attachBoxInteraction(box, pageEl, field.rect, {
           onSelect: () => selectField(pi, field.id),
@@ -634,6 +642,21 @@ function renderCanvas() {
           pageEl.appendChild(cbEl);
         });
       }
+
+      if (field.type === 'textboxes') {
+        (field.config.boxes || []).forEach(b => {
+          const ans = (b.answers || []).find(a => a && a.trim());
+          const tbEl = el('div', { class: 'ed-tbbox', dataset: { id: b.id } },
+            el('span', { class: 'chip' }, ans || '—'),
+            el('span', { class: 'handle' }));
+          setRectStyle(tbEl, b.rect);
+          attachBoxInteraction(tbEl, pageEl, b.rect, {
+            onSelect: () => selectTbBox(pi, field.id, b.id),
+            isSelected: () => sel?.kind === 'tbbox' && sel.tbBoxId === b.id
+          });
+          pageEl.appendChild(tbEl);
+        });
+      }
     });
 
     attachDrawInteraction(pageEl, pi);
@@ -660,11 +683,12 @@ function setRectStyle(node, rect) {
 }
 
 function refreshSelectionStyles() {
-  canvas.querySelectorAll('.ed-field, .ed-zone, .ed-amitem, .ed-cbbox').forEach(n => n.classList.remove('selected'));
+  canvas.querySelectorAll('.ed-field, .ed-zone, .ed-amitem, .ed-cbbox, .ed-tbbox').forEach(n => n.classList.remove('selected'));
   if (!sel) return;
   const id = sel.kind === 'zone' ? sel.zoneId
     : sel.kind === 'amitem' ? sel.amItemId
     : sel.kind === 'cbbox' ? sel.cbBoxId
+    : sel.kind === 'tbbox' ? sel.tbBoxId
     : sel.fieldId;
   const node = canvas.querySelector(`[data-id="${id}"]`);
   if (node) node.classList.add('selected');
@@ -815,6 +839,12 @@ function attachDrawInteraction(pageEl, pi) {
           r = { x: clamp(x0 - def.w / 2, 0, 1 - def.w), y: clamp(y0 - def.h / 2, 0, 1 - def.h), w: def.w, h: def.h };
         }
         createCbBox(pi, r);
+      } else if (tool === 'tbbox') {
+        const def = FIELD_TYPES.textboxes.defRect;
+        if (r.w < 0.02 || r.h < 0.015) {
+          r = { x: clamp(x0 - def.w / 2, 0, 1 - def.w), y: clamp(y0 - def.h / 2, 0, 1 - def.h), w: def.w, h: def.h };
+        }
+        createTbBox(pi, r);
       } else {
         const def = FIELD_TYPES[tool].defRect;
         if (r.w < 0.02 || r.h < 0.015) {
@@ -870,6 +900,15 @@ function createField(pi, type, rect) {
     selectCbBox(pi, field.id, box.id);
     return;
   }
+  // El campo de huecos nace con su primer hueco en el rectángulo dibujado.
+  if (type === 'textboxes') {
+    const box = { id: uid('tb'), rect: { ...rect }, answers: [''] };
+    field.config.boxes.push(box);
+    markDirty();
+    renderCanvas();
+    selectTbBox(pi, field.id, box.id);
+    return;
+  }
   markDirty();
   renderCanvas();
   selectField(pi, field.id);
@@ -888,6 +927,21 @@ function createCbBox(pi, rect) {
   markDirty();
   renderCanvas();
   selectCbBox(pi, field.id, box.id);
+}
+
+// Añade un nuevo hueco al campo de huecos seleccionado (modo dibujo).
+function createTbBox(pi, rect) {
+  const field = sel ? getField(sel.pageIndex, sel.fieldId) : null;
+  if (!field || field.type !== 'textboxes' || sel.pageIndex !== pi) {
+    toast(t('toast.selectTextboxFirst'), 'error');
+    renderCanvas();
+    return;
+  }
+  const box = { id: uid('tb'), rect, answers: [''] };
+  field.config.boxes.push(box);
+  markDirty();
+  renderCanvas();
+  selectTbBox(pi, field.id, box.id);
 }
 
 function createZone(pi, rect) {
@@ -932,6 +986,12 @@ function selectCbBox(pi, fieldId, cbBoxId) {
   renderPanel(); // muestra el panel del campo (lista de casillas)
 }
 
+function selectTbBox(pi, fieldId, tbBoxId) {
+  sel = { kind: 'tbbox', pageIndex: pi, fieldId, tbBoxId };
+  refreshSelectionStyles();
+  renderPanel(); // muestra el panel del hueco (sus respuestas válidas)
+}
+
 function deleteSelected() {
   if (!sel) return;
   const field = getField(sel.pageIndex, sel.fieldId);
@@ -950,6 +1010,16 @@ function deleteSelected() {
       sel = { kind: 'field', pageIndex: sel.pageIndex, fieldId: field.id };
     } else {
       // Sin casillas el campo no tiene sentido: se elimina entero.
+      const page = manifest.pages[sel.pageIndex];
+      page.fields = page.fields.filter(f => f.id !== field.id);
+      sel = null;
+    }
+  } else if (sel.kind === 'tbbox') {
+    field.config.boxes = (field.config.boxes || []).filter(b => b.id !== sel.tbBoxId);
+    if (field.config.boxes.length) {
+      sel = { kind: 'field', pageIndex: sel.pageIndex, fieldId: field.id };
+    } else {
+      // Sin huecos el campo no tiene sentido: se elimina entero.
       const page = manifest.pages[sel.pageIndex];
       page.fields = page.fields.filter(f => f.id !== field.id);
       sel = null;
@@ -997,6 +1067,17 @@ function cloneField(field, offset = 0) {
       };
     });
     copy.config.correct = (copy.config.correct || []).map(id => idMap[id]).filter(Boolean);
+  }
+  if (copy.type === 'textboxes') {
+    copy.config.boxes = (copy.config.boxes || []).map(b => ({
+      id: uid('tb'),
+      answers: [...(b.answers || [''])],
+      rect: {
+        ...b.rect,
+        x: clamp(b.rect.x + offset, 0, 1 - b.rect.w),
+        y: clamp(b.rect.y + offset, 0, 1 - b.rect.h)
+      }
+    }));
   }
   return copy;
 }
@@ -1059,7 +1140,9 @@ document.addEventListener('keydown', e => {
       ? (field.config.items || []).find(i => i.id === sel.amItemId)?.rect
       : sel.kind === 'cbbox'
         ? (field.config.boxes || []).find(b => b.id === sel.cbBoxId)?.rect
-        : field.rect;
+        : sel.kind === 'tbbox'
+          ? (field.config.boxes || []).find(b => b.id === sel.tbBoxId)?.rect
+          : field.rect;
   if (!rect) return;
 
   if (e.key === 'Delete' || e.key === 'Backspace') {
@@ -1076,6 +1159,7 @@ document.addEventListener('keydown', e => {
     const id = sel.kind === 'zone' ? sel.zoneId
       : sel.kind === 'amitem' ? sel.amItemId
       : sel.kind === 'cbbox' ? sel.cbBoxId
+      : sel.kind === 'tbbox' ? sel.tbBoxId
       : sel.fieldId;
     const node = canvas.querySelector(`[data-id="${id}"]`);
     if (node) setRectStyle(node, rect);
@@ -1097,6 +1181,7 @@ function renderPanel() {
       const field = getField(sel.pageIndex, sel.fieldId);
       if (field) {
         if (sel.kind === 'zone') renderZonePanel(field);
+        else if (sel.kind === 'tbbox') renderTbBoxPanel(field);
         else renderFieldPanel(field); // 'field' y 'amitem' muestran el panel del campo
       } else {
         sel = null;
@@ -1422,6 +1507,34 @@ function renderZonePanel(field) {
   cont.appendChild(el('div', { class: 'ed-acciones' },
     iconBtn({ class: 'btn small', onclick: () => selectField(sel.pageIndex, field.id) }, ICONS.arrowLeft, t('editor.backToField')),
     iconBtn({ class: 'btn small danger', onclick: deleteSelected }, ICONS.trash, t('editor.deleteZone'))));
+  panel.appendChild(cont);
+}
+
+function renderTbBoxPanel(field) {
+  const box = (field.config.boxes || []).find(b => b.id === sel.tbBoxId);
+  if (!box) { sel = { kind: 'field', pageIndex: sel.pageIndex, fieldId: field.id }; renderFieldPanel(field); return; }
+  if (!Array.isArray(box.answers)) box.answers = box.answers ? [String(box.answers)] : [''];
+  function updateChip() {
+    const chip = canvas.querySelector(`.ed-tbbox[data-id="${box.id}"] .chip`);
+    if (chip) chip.textContent = (box.answers.find(a => a && a.trim()) || '—');
+  }
+  const cont = el('div', {});
+  cont.appendChild(el('h3', {},
+    el('span', { class: 'tipo-chip' }, t('editor.tbBoxChip')),
+    t('editor.tbBoxTitle')));
+  optionListEditor(cont, {
+    label: t('cfg.tbBoxAnswers'),
+    items: () => box.answers,
+    render: (row, item, i) => row.appendChild(textCell(item, v => { box.answers[i] = v; updateChip(); }, t('cfg.answerPlaceholder'))),
+    add: () => box.answers.push(''),
+    remove: i => { box.answers.splice(i, 1); updateChip(); },
+    addLabel: t('cfg.addAnswer'),
+    min: 1
+  });
+  cont.appendChild(el('p', { class: 'cfg-hint' }, t('editor.tbBoxHint')));
+  cont.appendChild(el('div', { class: 'ed-acciones' },
+    iconBtn({ class: 'btn small', onclick: () => selectField(sel.pageIndex, field.id) }, ICONS.arrowLeft, t('editor.backToField')),
+    iconBtn({ class: 'btn small danger', onclick: deleteSelected }, ICONS.trash, t('editor.tbBoxDelete'))));
   panel.appendChild(cont);
 }
 
@@ -1866,6 +1979,39 @@ const configForms = {
     cont.appendChild(info);
     cont.appendChild(el('label', { class: 'f-label' }, t('cfg.correction')));
     textNormOptions(cont, cfg);
+  },
+
+  textboxes(cont, field) {
+    const cfg = field.config;
+    if (!Array.isArray(cfg.boxes)) cfg.boxes = [];
+
+    optionListEditor(cont, {
+      label: t('cfg.tbList', { n: cfg.boxes.length }),
+      items: () => cfg.boxes,
+      render: (row, b, i) => {
+        if (!Array.isArray(b.answers)) b.answers = b.answers ? [String(b.answers)] : [''];
+        const ans = b.answers.find(a => a && a.trim()) || t('cfg.tbNoAnswer');
+        const locate = el('button', { class: 'cb-locate', type: 'button' }, t('cfg.tbItem', { n: i + 1, a: ans }));
+        locate.addEventListener('click', () => selectTbBox(sel.pageIndex, field.id, b.id));
+        row.appendChild(locate);
+      },
+      add: () => {
+        activeTool = 'tbbox';
+        refreshPaletteState();
+        canvas.classList.add('drawing');
+        toast(t('toast.drawTextboxTip'));
+      },
+      remove: i => {
+        cfg.boxes.splice(i, 1);
+        renderCanvas();
+      },
+      addLabel: t('cfg.addTextbox'),
+      min: 0
+    });
+
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.correction')));
+    textNormOptions(cont, cfg);
+    cont.appendChild(el('p', { class: 'cfg-hint' }, t('cfg.tbHint')));
   },
 
   match(cont, field) {
