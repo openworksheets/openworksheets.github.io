@@ -55,13 +55,13 @@ Elementos decorativos o informativos que no se corrigen ni cuentan en la puntuac
 
 1. **Crear:** el profesorado sube un PDF o imagen, coloca los campos y configura las respuestas correctas y la puntuación en el editor.
 2. **Compartir:** la ficha se exporta como un archivo ZIP que contiene todo lo necesario. Se sube a Google Drive u otro alojamiento público y se comparte con el alumnado mediante un enlace generado en la propia aplicación. El alumnado no tiene acceso al archivo ZIP original, lo que protege el contenido.
-3. **Responder y entregar:** el alumnado responde desde el navegador y, al terminar, puede descargar un archivo de entrega (.json) o copiar un enlace directo para enviárselo al docente.
+3. **Responder y entregar:** el alumnado responde desde el navegador y, al terminar, puede descargar un archivo de entrega (`.json`) o copiar un enlace directo para enviárselo al docente.
 
 ## Entregas y verificación
 
 El docente puede abrir los archivos de entrega desde la página principal para ver la puntuación, las respuestas y comprobar automáticamente que no han sido modificados. Es posible cargar múltiples archivos a la vez o recibirlos mediante el enlace que genera el alumnado al terminar. Los resultados de toda una clase se muestran en una tabla ordenable y se pueden exportar a CSV.
 
-Las entregas pueden cifrarse con una contraseña para que solo el docente pueda leerlas. La verificación de integridad es automática y avisa si algún archivo ha sido manipulado.
+La verificación de integridad es automática y avisa si algún archivo ha sido manipulado. Las entregas también pueden cifrarse para que solo el docente pueda leerlas (ver [Seguridad y cifrado](#seguridad-y-cifrado)).
 
 ## Control de acceso
 
