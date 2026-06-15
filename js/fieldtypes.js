@@ -42,6 +42,12 @@ export const FIELD_TYPES = {
     defRect: { w: 0.3, h: 0.16 },
     defaults: () => ({ options: ['Opción 1', 'Opción 2', 'Opción 3'], correct: [0], partial: false })
   },
+  checkbox: {
+    name: 'Casillas',
+    glyph: ICONS.squareCheck,
+    defRect: { w: 0.035, h: 0.025 },
+    defaults: () => ({ boxes: [], multiple: false, correct: [], partial: false })
+  },
   select: {
     name: 'Desplegable',
     glyph: ICONS.chevronsUpDown,
@@ -155,7 +161,7 @@ export const FIELD_TYPES = {
 };
 
 export const FIELD_ORDER = [
-  'text', 'number', 'single', 'truefalse', 'multi',
+  'text', 'number', 'single', 'truefalse', 'multi', 'checkbox',
   'select', 'gaps', 'match', 'order', 'dragdrop', 'arrowmatch',
   'label', 'cover', 'image', 'line', 'arrow', 'rect', 'ellipse'
 ];
@@ -164,7 +170,7 @@ export const FIELD_ORDER = [
 // se obtiene de i18n con la clave 'palette.<id>'.
 export const PALETTE_GROUPS = [
   { id: 'write',  glyph: ICONS.pencil,         types: ['text', 'number', 'gaps'] },
-  { id: 'choose', glyph: ICONS.listChecks,      types: ['single', 'multi', 'truefalse', 'select'] },
+  { id: 'choose', glyph: ICONS.listChecks,      types: ['single', 'multi', 'checkbox', 'truefalse', 'select'] },
   { id: 'relate', glyph: ICONS.arrowLeftRight,  types: ['match', 'order', 'dragdrop', 'arrowmatch'] },
   { id: 'design', glyph: ICONS.shapes,          types: ['label', 'image', 'cover', 'line', 'arrow', 'rect', 'ellipse'] }
 ];

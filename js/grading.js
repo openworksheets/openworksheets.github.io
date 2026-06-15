@@ -75,6 +75,23 @@ const graders = {
     return { ratio: Number(answer) === Number(cfg.correct) ? 1 : 0 };
   },
 
+  checkbox(cfg, answer) {
+    const boxes = cfg.boxes || [];
+    const marked = (Array.isArray(answer) ? answer : []).map(String)
+      .filter(id => boxes.some(b => b.id === id));
+    if (!marked.length) return { ratio: 0, blank: true };
+    const correct = (cfg.correct || []).map(String).filter(id => boxes.some(b => b.id === id));
+    if (cfg.multiple && cfg.partial) {
+      // Puntuación parcial: aciertos menos errores, sobre el total de correctas.
+      const hits = marked.filter(id => correct.includes(id)).length;
+      const misses = marked.length - hits;
+      const ratio = correct.length ? Math.max(0, hits - misses) / correct.length : 0;
+      return { ratio };
+    }
+    const exact = marked.length === correct.length && correct.every(id => marked.includes(id));
+    return { ratio: exact ? 1 : 0 };
+  },
+
   gaps(cfg, answer) {
     const gaps = parseGaps(cfg.text || '').filter(s => s.kind === 'gap');
     const given = Array.isArray(answer) ? answer : [];
@@ -153,6 +170,14 @@ export function expectedText(field) {
     case 'truefalse': return cfg.correct ? (cfg.labels?.[0] || 'Verdadero') : (cfg.labels?.[1] || 'Falso');
     case 'multi': return (cfg.correct || []).map(i => cfg.options?.[i]).filter(Boolean).join(', ');
     case 'select': return cfg.options?.[cfg.correct] ?? '';
+    case 'checkbox': {
+      const boxes = cfg.boxes || [];
+      const nums = (cfg.correct || [])
+        .map(id => boxes.findIndex(b => b.id === id) + 1)
+        .filter(n => n > 0)
+        .sort((a, b) => a - b);
+      return nums.length ? '☑ ' + nums.join(', ') : '';
+    }
     case 'gaps': return parseGaps(cfg.text || '').filter(s => s.kind === 'gap').map(g => g.answers[0]).join(', ');
     case 'match': return (cfg.pairs || []).map(p => `${p.left} → ${p.right}`).join(' · ');
     case 'order': return (cfg.items || []).join(' → ');

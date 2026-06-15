@@ -2,7 +2,7 @@
 
 import { el, uid, clamp, toast, downloadBlob, slugify, copyToClipboard, zoomControl } from './util.js';
 import { FIELD_TYPES, PALETTE_GROUPS, fieldTypeName, gapCount, isShapeField } from './fieldtypes.js';
-import { buildShapeSvg } from './render.js';
+import { buildShapeSvg, CHECKBOX_SVG } from './render.js';
 import { expectedText } from './grading.js';
 import { pdfToPages, imageToPage, isPdf, isImage } from './pdfimport.js';
 import { exportFichaZip, importFichaZip, newManifest } from './zipio.js';
@@ -253,7 +253,9 @@ function renderPalette() {
         el('span', { class: 'name' }, name));
       btn.addEventListener('click', () => {
         activeTool = activeTool === type ? null : type;
+        if (activeTool) sel = null;
         refreshPaletteState();
+        renderPanel();
         if (activeTool && !manifest.pages.length) {
           toast(t('toast.addPdfFirst'), 'error');
           activeTool = null;
@@ -568,6 +570,14 @@ function renderCanvas() {
           e.stopPropagation();
           selectField(pi, field.id);
         });
+      } else if (field.type === 'checkbox') {
+        // Las casillas se gestionan como overlays propios; el campo no se arrastra.
+        box.classList.add('ed-cb-hostfield');
+        box.addEventListener('pointerdown', e => {
+          if (activeTool || pendingAmItem) return;
+          e.stopPropagation();
+          selectField(pi, field.id);
+        });
       } else {
         attachBoxInteraction(box, pageEl, field.rect, {
           onSelect: () => selectField(pi, field.id),
@@ -606,6 +616,24 @@ function renderCanvas() {
           pageEl.appendChild(aEl);
         });
       }
+
+      if (field.type === 'checkbox') {
+        const correctIds = field.config.correct || [];
+        (field.config.boxes || []).forEach(b => {
+          const cbEl = el('div', {
+            class: 'ed-cbbox' + (correctIds.includes(b.id) ? ' correct' : ''),
+            dataset: { id: b.id }
+          });
+          cbEl.innerHTML = CHECKBOX_SVG;
+          cbEl.appendChild(el('span', { class: 'handle' }));
+          setRectStyle(cbEl, b.rect);
+          attachBoxInteraction(cbEl, pageEl, b.rect, {
+            onSelect: () => selectCbBox(pi, field.id, b.id),
+            isSelected: () => sel?.kind === 'cbbox' && sel.cbBoxId === b.id
+          });
+          pageEl.appendChild(cbEl);
+        });
+      }
     });
 
     attachDrawInteraction(pageEl, pi);
@@ -632,9 +660,12 @@ function setRectStyle(node, rect) {
 }
 
 function refreshSelectionStyles() {
-  canvas.querySelectorAll('.ed-field, .ed-zone, .ed-amitem').forEach(n => n.classList.remove('selected'));
+  canvas.querySelectorAll('.ed-field, .ed-zone, .ed-amitem, .ed-cbbox').forEach(n => n.classList.remove('selected'));
   if (!sel) return;
-  const id = sel.kind === 'zone' ? sel.zoneId : sel.kind === 'amitem' ? sel.amItemId : sel.fieldId;
+  const id = sel.kind === 'zone' ? sel.zoneId
+    : sel.kind === 'amitem' ? sel.amItemId
+    : sel.kind === 'cbbox' ? sel.cbBoxId
+    : sel.fieldId;
   const node = canvas.querySelector(`[data-id="${id}"]`);
   if (node) node.classList.add('selected');
 }
@@ -778,6 +809,12 @@ function attachDrawInteraction(pageEl, pi) {
       if (tool === 'zone') {
         if (r.w < 0.02 || r.h < 0.015) r = { x: clamp(x0 - 0.06, 0, 0.88), y: clamp(y0 - 0.025, 0, 0.95), w: 0.12, h: 0.05 };
         createZone(pi, r);
+      } else if (tool === 'cbbox') {
+        const def = FIELD_TYPES.checkbox.defRect;
+        if (r.w < 0.02 || r.h < 0.015) {
+          r = { x: clamp(x0 - def.w / 2, 0, 1 - def.w), y: clamp(y0 - def.h / 2, 0, 1 - def.h), w: def.w, h: def.h };
+        }
+        createCbBox(pi, r);
       } else {
         const def = FIELD_TYPES[tool].defRect;
         if (r.w < 0.02 || r.h < 0.015) {
@@ -824,9 +861,33 @@ function createField(pi, type, rect) {
     config: FIELD_TYPES[type].defaults()
   };
   manifest.pages[pi].fields.push(field);
+  // El campo de casillas nace con su primera casilla en el rectángulo dibujado.
+  if (type === 'checkbox') {
+    const box = { id: uid('cb'), rect: { ...rect } };
+    field.config.boxes.push(box);
+    markDirty();
+    renderCanvas();
+    selectCbBox(pi, field.id, box.id);
+    return;
+  }
   markDirty();
   renderCanvas();
   selectField(pi, field.id);
+}
+
+// Añade una nueva casilla al campo checkbox seleccionado (modo dibujo).
+function createCbBox(pi, rect) {
+  const field = sel ? getField(sel.pageIndex, sel.fieldId) : null;
+  if (!field || field.type !== 'checkbox' || sel.pageIndex !== pi) {
+    toast(t('toast.selectCheckboxFirst'), 'error');
+    renderCanvas();
+    return;
+  }
+  const box = { id: uid('cb'), rect };
+  field.config.boxes.push(box);
+  markDirty();
+  renderCanvas();
+  selectCbBox(pi, field.id, box.id);
 }
 
 function createZone(pi, rect) {
@@ -865,6 +926,12 @@ function selectAmItem(pi, fieldId, amItemId) {
   renderPanel(); // muestra el panel del campo (pairs list)
 }
 
+function selectCbBox(pi, fieldId, cbBoxId) {
+  sel = { kind: 'cbbox', pageIndex: pi, fieldId, cbBoxId };
+  refreshSelectionStyles();
+  renderPanel(); // muestra el panel del campo (lista de casillas)
+}
+
 function deleteSelected() {
   if (!sel) return;
   const field = getField(sel.pageIndex, sel.fieldId);
@@ -876,6 +943,17 @@ function deleteSelected() {
     const item = (field.config.items || []).find(i => i.id === sel.amItemId);
     if (item) delete item.rect;
     sel = { kind: 'field', pageIndex: sel.pageIndex, fieldId: field.id };
+  } else if (sel.kind === 'cbbox') {
+    field.config.boxes = (field.config.boxes || []).filter(b => b.id !== sel.cbBoxId);
+    field.config.correct = (field.config.correct || []).filter(id => id !== sel.cbBoxId);
+    if (field.config.boxes.length) {
+      sel = { kind: 'field', pageIndex: sel.pageIndex, fieldId: field.id };
+    } else {
+      // Sin casillas el campo no tiene sentido: se elimina entero.
+      const page = manifest.pages[sel.pageIndex];
+      page.fields = page.fields.filter(f => f.id !== field.id);
+      sel = null;
+    }
   } else {
     const page = manifest.pages[sel.pageIndex];
     page.fields = page.fields.filter(f => f.id !== field.id);
@@ -903,6 +981,22 @@ function cloneField(field, offset = 0) {
   }
   if (copy.type === 'arrowmatch') {
     copy.config.items = (copy.config.items || []).map(i => ({ ...i, id: uid('ai') }));
+  }
+  if (copy.type === 'checkbox') {
+    const idMap = {};
+    copy.config.boxes = (copy.config.boxes || []).map(b => {
+      const nid = uid('cb');
+      idMap[b.id] = nid;
+      return {
+        id: nid,
+        rect: {
+          ...b.rect,
+          x: clamp(b.rect.x + offset, 0, 1 - b.rect.w),
+          y: clamp(b.rect.y + offset, 0, 1 - b.rect.h)
+        }
+      };
+    });
+    copy.config.correct = (copy.config.correct || []).map(id => idMap[id]).filter(Boolean);
   }
   return copy;
 }
@@ -963,7 +1057,9 @@ document.addEventListener('keydown', e => {
     ? field.config.zones.find(z => z.id === sel.zoneId)?.rect
     : sel.kind === 'amitem'
       ? (field.config.items || []).find(i => i.id === sel.amItemId)?.rect
-      : field.rect;
+      : sel.kind === 'cbbox'
+        ? (field.config.boxes || []).find(b => b.id === sel.cbBoxId)?.rect
+        : field.rect;
   if (!rect) return;
 
   if (e.key === 'Delete' || e.key === 'Backspace') {
@@ -977,7 +1073,10 @@ document.addEventListener('keydown', e => {
     if (e.key === 'ArrowUp') rect.y = clamp(rect.y - step, 0, 1 - rect.h);
     if (e.key === 'ArrowDown') rect.y = clamp(rect.y + step, 0, 1 - rect.h);
     markDirty();
-    const id = sel.kind === 'zone' ? sel.zoneId : sel.kind === 'amitem' ? sel.amItemId : sel.fieldId;
+    const id = sel.kind === 'zone' ? sel.zoneId
+      : sel.kind === 'amitem' ? sel.amItemId
+      : sel.kind === 'cbbox' ? sel.cbBoxId
+      : sel.fieldId;
     const node = canvas.querySelector(`[data-id="${id}"]`);
     if (node) setRectStyle(node, rect);
   } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
@@ -1005,11 +1104,25 @@ function renderPanel() {
     }
   }
   if (!sel) {
-    panel.appendChild(el('div', { class: 'ed-panel-vacio' },
-      el('h3', {}, t('editor.noField')),
-      el('p', {}, manifest.pages.length
-        ? t('editor.noFieldDesc')
-        : t('editor.noFieldDescNoPages'))));
+    const toolType = activeTool && FIELD_TYPES[activeTool] ? activeTool : null;
+    if (toolType) {
+      const ft = FIELD_TYPES[toolType];
+      const glyph = el('span', { class: 'glyph' });
+      glyph.innerHTML = ft.glyph;
+      const descKey = 'field.desc.' + toolType;
+      const desc = t(descKey) !== descKey ? t(descKey) : '';
+      panel.appendChild(el('div', { class: 'ed-panel-vacio ed-panel-tool-hint' },
+        el('div', { class: 'ed-tool-hint-header' },
+          glyph,
+          el('span', {}, fieldTypeName(toolType))),
+        el('p', {}, desc)));
+    } else {
+      panel.appendChild(el('div', { class: 'ed-panel-vacio' },
+        el('h3', {}, t('editor.noField')),
+        el('p', {}, manifest.pages.length
+          ? t('editor.noFieldDesc')
+          : t('editor.noFieldDescNoPages'))));
+    }
   }
   renderFieldList();
 }
@@ -1671,6 +1784,68 @@ const configForms = {
     checkRow(cont, t('cfg.partialScore'), Boolean(cfg.partial), v => { cfg.partial = v; });
   },
 
+  checkbox(cont, field) {
+    const cfg = field.config;
+    if (!Array.isArray(cfg.boxes)) cfg.boxes = [];
+    if (!Array.isArray(cfg.correct)) cfg.correct = [];
+
+    // Modo: permitir marcar varias (varias correctas) o una sola.
+    checkRow(cont, t('cfg.checkboxMultiple'), Boolean(cfg.multiple), v => {
+      cfg.multiple = v;
+      if (!v && cfg.correct.length > 1) cfg.correct = cfg.correct.slice(0, 1);
+      renderCanvas();
+      renderPanel();
+    });
+
+    optionListEditor(cont, {
+      label: t('cfg.checkboxList', { n: cfg.boxes.length }),
+      items: () => cfg.boxes,
+      render: (row, b, i) => {
+        let mark;
+        if (cfg.multiple) {
+          mark = el('input', { type: 'checkbox', class: 'marca' });
+          mark.checked = cfg.correct.includes(b.id);
+          mark.addEventListener('change', () => {
+            const set = new Set(cfg.correct);
+            mark.checked ? set.add(b.id) : set.delete(b.id);
+            cfg.correct = [...set];
+            markDirty();
+            renderCanvas();
+          });
+        } else {
+          mark = el('input', { type: 'radio', class: 'marca', name: 'cfg-cb-correct' });
+          mark.checked = cfg.correct[0] === b.id;
+          mark.addEventListener('change', () => {
+            cfg.correct = [b.id];
+            markDirty();
+            renderCanvas();
+          });
+        }
+        row.appendChild(mark);
+        const locate = el('button', { class: 'cb-locate', type: 'button' }, t('cfg.checkboxItem', { n: i + 1 }));
+        locate.addEventListener('click', () => selectCbBox(sel.pageIndex, field.id, b.id));
+        row.appendChild(locate);
+      },
+      add: () => {
+        activeTool = 'cbbox';
+        refreshPaletteState();
+        canvas.classList.add('drawing');
+        toast(t('toast.drawCheckboxTip'));
+      },
+      remove: i => {
+        const removed = cfg.boxes[i];
+        cfg.boxes.splice(i, 1);
+        if (removed) cfg.correct = cfg.correct.filter(id => id !== removed.id);
+        renderCanvas();
+      },
+      addLabel: t('cfg.addCheckbox'),
+      min: 0
+    });
+
+    if (cfg.multiple) checkRow(cont, t('cfg.partialScore'), Boolean(cfg.partial), v => { cfg.partial = v; });
+    cont.appendChild(el('p', { class: 'cfg-hint' }, t('cfg.checkboxHint')));
+  },
+
   select(cont, field) {
     configForms.single(cont, field);
   },
@@ -1855,17 +2030,13 @@ const configForms = {
           zone.answers = zone.answer ? [String(zone.answer)] : [''];
           delete zone.answer;
         }
-        const textAnswers = zone.answers.filter(a => !a.startsWith('dtokens/'));
-        const imgAnswers  = zone.answers.filter(a =>  a.startsWith('dtokens/'));
-        const inp = textCell(textAnswers.join(', '), v => {
-          const newText = v.split(',').map(s => s.trim()).filter(Boolean);
-          zone.answers = [...imgAnswers, ...newText];
-          if (!zone.answers.length) zone.answers = [''];
-          const chip = canvas.querySelector(`.ed-zone[data-id="${zone.id}"] .chip`);
-          if (chip) chip.textContent = firstAnswerLabel(zone.answers) || 'zona';
-        }, t('cfg.zoneLabelPlaceholder'));
-        inp.addEventListener('focus', () => selectZoneSoft(zone.id));
-        row.appendChild(inp);
+        const textAnswers = zone.answers.filter(a => a && !a.startsWith('dtokens/'));
+        const imgAnswers  = zone.answers.filter(a => a.startsWith('dtokens/'));
+        // Resumen de la zona: se edita seleccionándola (panel propio, una etiqueta por fila).
+        const labelText = textAnswers.join(' · ') || t('cfg.zoneNoLabel');
+        const summary = el('button', { class: 'zone-summary', type: 'button' }, labelText);
+        summary.addEventListener('click', () => selectZone(sel.pageIndex, field.id, zone.id));
+        row.appendChild(summary);
         imgAnswers.forEach(p => {
           if (files.has(p)) row.appendChild(el('img', { src: fileUrl(p), class: 'tok-thumb-xs', alt: '🖼', title: p }));
         });
@@ -1896,15 +2067,10 @@ const configForms = {
   }
 };
 
-// Resalta una zona sin reconstruir el panel (para no perder el foco del input).
+// Etiqueta resumida de una zona (primera respuesta o icono de imagen).
 function firstAnswerLabel(answers) {
   const first = (answers || []).find(Boolean) || '';
   return first.startsWith('dtokens/') ? '🖼' : first;
-}
-
-function selectZoneSoft(zoneId) {
-  canvas.querySelectorAll('.ed-zone').forEach(n =>
-    n.classList.toggle('selected', n.dataset.id === zoneId));
 }
 
 // Lista de todos los campos de la ficha.

@@ -14,6 +14,14 @@ import { el, shuffled, shuffledIndices } from './util.js';
 import { parseGaps } from './fieldtypes.js';
 import { t } from './i18n.js';
 
+// SVG de una casilla de verificación dibujable (campo checkbox).
+// El marco se ve siempre; la marca (✓) se muestra al estar activada vía CSS.
+// preserveAspectRatio mantiene la casilla cuadrada dentro de cualquier rectángulo.
+export const CHECKBOX_SVG =
+  '<svg class="wpf-cb-svg" viewBox="0 0 24 24" preserveAspectRatio="xMidYMid meet" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' +
+  '<rect class="wpf-cb-frame" x="2.5" y="2.5" width="19" height="19" rx="3.5"/>' +
+  '<path class="wpf-cb-tick" d="M6 12.5 10 16.5 18 7.5"/></svg>';
+
 export function renderField(field, pageLayer, ctx) {
   const root = el('div', { class: `wpf-field wpf-field-${field.type}`, dataset: { id: field.id } });
   positionRect(root, field.rect);
@@ -330,6 +338,73 @@ const renderers = {
       },
       isAnswered: () => inputs.some(o => o.input.checked),
       setDisabled: b => inputs.forEach(o => { o.input.disabled = b; })
+    };
+  },
+
+  checkbox(field, root, ctx) {
+    const cfg = field.config || {};
+    const boxes = cfg.boxes || [];
+    const multiple = Boolean(cfg.multiple);
+    // El root del campo es solo un ancla transparente; las casillas se colocan
+    // libremente sobre la página (igual que las zonas de dragdrop).
+    root.classList.add('wpf-cb-hostfield');
+    const page = root.parentElement;
+
+    let selected = new Set();
+    let disabled = false;
+    const boxEls = new Map();
+
+    function paint() {
+      boxes.forEach(b => {
+        boxEls.get(b.id)?.classList.toggle('checked', selected.has(b.id));
+      });
+    }
+
+    boxes.forEach(b => {
+      const node = el('div', { class: 'wpf-cbbox', dataset: { id: b.id } });
+      node.style.left   = (b.rect.x * 100) + '%';
+      node.style.top    = (b.rect.y * 100) + '%';
+      node.style.width  = (b.rect.w * 100) + '%';
+      node.style.height = (b.rect.h * 100) + '%';
+      node.innerHTML = CHECKBOX_SVG;
+      node.addEventListener('click', () => {
+        if (disabled) return;
+        if (multiple) {
+          selected.has(b.id) ? selected.delete(b.id) : selected.add(b.id);
+        } else {
+          if (selected.has(b.id)) selected.clear();
+          else selected = new Set([b.id]);
+        }
+        paint();
+        notify(ctx);
+      });
+      page.appendChild(node);
+      boxEls.set(b.id, node);
+    });
+    paint();
+
+    return {
+      getAnswer: () => [...selected],
+      setAnswer: v => {
+        selected = new Set((Array.isArray(v) ? v : []).map(String).filter(id => boxes.some(b => b.id === id)));
+        paint();
+      },
+      isAnswered: () => selected.size > 0,
+      setDisabled: b => { disabled = b; },
+      markDetail() {
+        const correct = new Set((cfg.correct || []).map(String));
+        boxes.forEach(b => {
+          const node = boxEls.get(b.id);
+          if (!node) return;
+          const marked = selected.has(b.id);
+          const isCorrect = correct.has(b.id);
+          node.classList.remove('checked');
+          node.classList.toggle('checked', marked);
+          if (marked && isCorrect) node.classList.add('cb-ok');
+          else if (marked && !isCorrect) node.classList.add('cb-ko');
+          else if (!marked && isCorrect) node.classList.add('cb-missing');
+        });
+      }
     };
   },
 

@@ -972,6 +972,11 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   font-weight: 400;
 }
 .ed-panel-vacio { color: var(--tinta-suave); font-size: 0.9rem; }
+.ed-panel-tool-hint { color: var(--tinta); }
+.ed-tool-hint-header { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 1rem; margin-bottom: 10px; }
+.ed-tool-hint-header .glyph { display: flex; align-items: center; flex-shrink: 0; }
+.ed-tool-hint-header .glyph svg { width: 22px; height: 22px; stroke: var(--acento); }
+.ed-panel-tool-hint p { font-size: 0.88rem; line-height: 1.5; color: var(--tinta-suave); margin: 0; }
 .ed-acciones { display: flex; gap: 8px; margin: 14px 0 4px; flex-wrap: wrap; }
 .ed-acciones .btn svg, .ed-pagehead .btn svg { width: 14px; height: 14px; flex-shrink: 0; vertical-align: middle; }
 
@@ -1026,6 +1031,23 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   line-height: 1;
 }
 .add-row { margin-top: 8px; }
+
+/* Resumen de zona en el panel de dragdrop: se toca para abrir su editor */
+.zone-summary {
+  flex: 1;
+  text-align: left;
+  background: none;
+  border: 1px dashed var(--tinta-tenue);
+  border-radius: 4px;
+  padding: 4px 9px;
+  cursor: pointer;
+  color: var(--tinta);
+  font: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.zone-summary:hover { border-color: var(--rojo); color: var(--rojo); }
 
 .lista-campos { margin-top: 18px; border-top: 2px dashed var(--tinta-tenue); padding-top: 12px; }
 .lista-campos .item {
@@ -1426,6 +1448,36 @@ input.wpf-gap-input {
 .wpf-zone-chip.mark-ok { border-color: var(--verde); background: var(--verde-claro); cursor: default; }
 .wpf-zone-chip.mark-ko { border-color: var(--rojo); background: var(--rojo-claro); cursor: default; }
 
+/* ── Casillas (checkbox) ─────────────── */
+/* El campo es solo un ancla transparente; las casillas se colocan sobre la página. */
+.wpf-cb-hostfield { background: transparent !important; border: none !important; pointer-events: none; }
+.wpf-field-checkbox > .wpf-badge,
+.wpf-field-checkbox > .wpf-expected { display: none; }
+
+.wpf-cbbox {
+  position: absolute;
+  cursor: pointer;
+  color: var(--tinta);
+  z-index: 3;
+  -webkit-tap-highlight-color: transparent;
+}
+.wpf-cb-svg { display: block; width: 100%; height: 100%; }
+.wpf-cb-frame { fill: #fff; }
+.wpf-cb-tick { opacity: 0; }
+.wpf-cbbox.checked .wpf-cb-tick { opacity: 1; }
+.wpf-cbbox:not(.disabled):hover .wpf-cb-frame { fill: var(--azul-claro); }
+
+/* Corrección por casilla */
+.wpf-cbbox.cb-ok  { color: var(--verde); }
+.wpf-cbbox.cb-ok  .wpf-cb-frame { fill: var(--verde-claro); }
+.wpf-cbbox.cb-ko  { color: var(--rojo); }
+.wpf-cbbox.cb-ko  .wpf-cb-frame { fill: var(--rojo-claro); }
+.wpf-cbbox.cb-ko  .wpf-cb-tick { opacity: 1; }
+/* Casilla correcta que el alumno dejó sin marcar: se muestra la solución */
+.wpf-cbbox.cb-missing { color: var(--verde); }
+.wpf-cbbox.cb-missing .wpf-cb-frame { fill: none; stroke-dasharray: 3 2.5; }
+.wpf-cbbox.cb-missing .wpf-cb-tick { opacity: 0.55; }
+
 /* ── Arrowmatch ─────────────────────── */
 .wpf-field-arrowmatch { overflow: visible; }
 
@@ -1583,6 +1635,55 @@ input.wpf-gap-input {
 .ed-amitem-left  .handle { background: #5377ad; }
 .ed-amitem-right .handle { background: #2a9d8f; }
 .ed-amitem.selected .handle { display: block; }
+
+/* Editor: campo de casillas (host transparente + overlays) */
+.ed-cb-hostfield {
+  background: transparent !important;
+  border: none !important;
+  pointer-events: none;
+}
+.ed-cb-hostfield .chip { display: none; }
+.ed-cb-hostfield .handle { display: none !important; }
+
+.ed-cbbox {
+  position: absolute;
+  cursor: grab;
+  color: var(--tinta-suave);
+}
+.ed-cbbox .wpf-cb-svg { display: block; width: 100%; height: 100%; }
+.ed-cbbox .wpf-cb-frame { fill: rgba(255, 255, 255, 0.85); }
+.ed-cbbox .wpf-cb-tick { opacity: 0; }
+/* Casilla marcada como correcta: se muestra el ✓ y en verde (clave de respuestas) */
+.ed-cbbox.correct { color: var(--verde); }
+.ed-cbbox.correct .wpf-cb-tick { opacity: 1; }
+.ed-cbbox.selected { color: var(--rojo); z-index: 5; }
+.ed-cbbox.selected .wpf-cb-frame { fill: rgba(198, 61, 44, 0.12); }
+.ed-cbbox .handle {
+  position: absolute;
+  right: -7px; bottom: -7px;
+  width: 14px; height: 14px;
+  border: 2px solid #fff;
+  background: var(--rojo);
+  border-radius: 50%;
+  cursor: nwse-resize;
+  display: none;
+}
+.ed-cbbox.selected .handle { display: block; }
+
+/* Botón de la lista de casillas en el panel */
+.cb-locate {
+  flex: 1;
+  text-align: left;
+  background: none;
+  border: 1px dashed var(--tinta-tenue);
+  border-radius: 4px;
+  padding: 3px 8px;
+  cursor: pointer;
+  color: var(--tinta);
+  font: inherit;
+}
+.cb-locate:hover { border-color: var(--rojo); color: var(--rojo); }
+.cfg-hint { font-size: 0.82rem; color: var(--tinta-suave); margin: 6px 0 0; }
 
 /* Editor: nueva lista de pares unificada */
 .am-pairs-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }

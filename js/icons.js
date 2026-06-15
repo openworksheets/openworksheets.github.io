@@ -32,6 +32,7 @@ export const ICONS = {
   circleDot:      icon('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="1"/>'),
   toggleLeft:     icon('<rect width="20" height="12" x="2" y="6" rx="6" ry="6"/><circle cx="8" cy="12" r="2"/>'),
   checkSquare:    icon('<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'),
+  squareCheck:    icon('<rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/>'),
   chevronsUpDown: icon('<path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/>'),
   penLine:        icon('<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>'),
   arrowUpDown:    icon('<path d="m21 16-4 4-4-4"/><path d="M17 20V4"/><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/>'),
