@@ -112,6 +112,12 @@ La interfaz está disponible en español, inglés, català, galego y euskera.
 
 Funciona sin servidor, sin cuentas y sin instalaciones. Es una aplicación web estática en JavaScript vanilla, compatible con cualquier navegador moderno.
 
+### Enlaces cortos (backend compartido)
+
+Los enlaces cortos para el alumnado (`?short=1&url=...` para crear, `?short=<token>` para resolver, en `js/drive.js`) se generan a través de un **Google Apps Script compartido con Visor Web-ZIP** — es el mismo `gasUrl` definido en `config.js`. El código de ese backend vive en el repositorio de Visor Web-ZIP (`gas/Code.js`), no en este.
+
+Los tokens se almacenan en un archivo `shortlinks.json` dentro de la carpeta `ZipWebSites` de Drive de la cuenta que despliega el script; los tokens antiguos creados antes de esa migración siguen en `ScriptProperties` y se leen como respaldo. ⚠️ Como el script y ese archivo son **compartidos por las dos aplicaciones**, no se deben borrar, mover ni renombrar: hacerlo rompería los enlaces cortos de OpenWorksheets *y* de Visor Web-ZIP.
+
 ## Licencia
 
 [AGPLv3](LICENSE) · © Juan José de Haro

@@ -66,6 +66,9 @@ export function buildStudentLink(zipUrl) {
 // Genera un enlace corto opaco mediante el GAS.
 // Devuelve { link, short: true } si el GAS responde con token,
 // o { link, short: false } con el enlace largo si falla.
+// NOTA: el GAS (config.js -> gasUrl) es compartido con Visor Web-ZIP; su
+// código vive en el repo de Visor Web-ZIP (gas/Code.js). Los tokens se
+// guardan en shortlinks.json en Drive: no borrar ese archivo compartido.
 export async function buildShortLink(zipUrl) {
   const direct = toDirectUrl(zipUrl);
   const gasUrl = window.OPENWORKSHEETS_CONFIG?.gasUrl;
