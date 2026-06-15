@@ -1,4 +1,22 @@
 // Editor de fichas (modo profesor).
+//
+// ÍNDICE DE SECCIONES (busca con Ctrl+F el título exacto para saltar):
+//
+//   Referencias al DOM ......... nodos cacheados ($, canvas, panel, paleta, título)
+//   Zoom del lienzo ............ control de zoom y rueda Ctrl
+//   Paleta ..................... acordeón de herramientas/grupos de campo
+//   Páginas .................... añadir/borrar/mover/redimensionar/imprimir páginas
+//   Lienzo ..................... render del canvas e interacción (dibujo, arrastre, rotación)
+//   Campos ..................... crear/seleccionar/clonar/borrar/copiar-pegar campos
+//   Panel lateral .............. paneles de configuración de campo/zona/forma (configForms)
+//   Ajustes .................... diálogo de ajustes (fechas, cifrado)
+//   Compartir .................. enlace para el alumno
+//   Exportar / importar ........ ZIP de la ficha (exportar, abrir, fusionar)
+//   Vista previa ............... previsualización como alumno
+//   Arranque ................... wiring de eventos y render inicial
+//   Pegar desde portapapeles ... texto/imagen/archivos pegados
+//
+// Estado mutable y helpers de UI viven fuera: editor-state.js y editor-ui.js.
 
 import { el, uid, clamp, toast, downloadBlob, slugify, copyToClipboard, zoomControl } from './util.js';
 import { FIELD_TYPES, PALETTE_GROUPS, fieldTypeName, gapCount, isShapeField } from './fieldtypes.js';
