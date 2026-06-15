@@ -299,7 +299,7 @@ const renderers = {
     const group = uid();
     let value = null;
     const inputs = [];
-    const wrap = el('div', { class: 'wpf-tf' });
+    const wrap = el('div', { class: 'wpf-tf' + (field.config.horizontal ? ' wpf-tf--row' : '') });
     [true, false].forEach((val, i) => {
       const input = el('input', { type: 'radio', name: group });
       input.addEventListener('change', () => { value = val; notify(ctx); });
@@ -557,7 +557,7 @@ const renderers = {
     let disabled = false;
     let touched = false;
     let dragPos = null;
-    const list = el('div', { class: 'wpf-order' });
+    const list = el('div', { class: 'wpf-order' + (field.config.horizontal ? ' wpf-order--row' : '') });
     root.appendChild(list);
 
     function move(pos, delta) {
@@ -584,8 +584,9 @@ const renderers = {
       list.textContent = '';
       arrangement.forEach((orig, pos) => {
         const item = el('div', { class: 'wpf-order-item', draggable: disabled ? null : 'true' });
-        const up = el('button', { class: 'wpf-mini-btn', type: 'button', 'aria-label': t('render.moveUp') }, '▲');
-        const down = el('button', { class: 'wpf-mini-btn', type: 'button', 'aria-label': t('render.moveDown') }, '▼');
+        const horiz = Boolean(field.config.horizontal);
+        const up = el('button', { class: 'wpf-mini-btn', type: 'button', 'aria-label': t(horiz ? 'render.moveLeft' : 'render.moveUp') }, horiz ? '◀' : '▲');
+        const down = el('button', { class: 'wpf-mini-btn', type: 'button', 'aria-label': t(horiz ? 'render.moveRight' : 'render.moveDown') }, horiz ? '▶' : '▼');
         up.disabled = disabled || pos === 0;
         down.disabled = disabled || pos === arrangement.length - 1;
         up.addEventListener('click', () => move(pos, -1));

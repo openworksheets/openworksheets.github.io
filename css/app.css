@@ -1268,9 +1268,9 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
      cajas estrechas sin romper la proporción sobre el PDF */
   font-size: 0.9em;
 }
-.wpf-tf { flex-direction: row; gap: 0.7em; flex-wrap: wrap; }
 /* Opciones en horizontal: ocupan la fila y saltan a la siguiente si no caben. */
-.wpf-choices--row { flex-direction: row; flex-wrap: wrap; gap: 0.18em 0.9em; }
+.wpf-choices--row,
+.wpf-tf--row { flex-direction: row; flex-wrap: wrap; gap: 0.18em 0.9em; }
 .wpf-choice {
   display: flex;
   align-items: flex-start;
@@ -1408,6 +1408,8 @@ input.wpf-gap-input {
   flex-direction: column;
   gap: 0.18em;
 }
+/* En horizontal los elementos se colocan en fila y saltan si no caben. */
+.wpf-order--row { flex-direction: row; flex-wrap: wrap; gap: 0.3em; }
 .wpf-order-item {
   display: flex;
   align-items: center;

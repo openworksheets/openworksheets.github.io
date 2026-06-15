@@ -2008,6 +2008,7 @@ const configForms = {
       cfg.labels = [cfg.labels?.[0] || 'Verdadero', v];
       sel1.options[1].textContent = v;
     }));
+    checkRow(cont, t('cfg.horizontalLayout'), Boolean(cfg.horizontal), v => { cfg.horizontal = v; });
   },
 
   multi(cont, field) {
@@ -2295,6 +2296,7 @@ const configForms = {
       addLabel: t('cfg.addItem'),
       min: 2
     });
+    checkRow(cont, t('cfg.horizontalLayout'), Boolean(cfg.horizontal), v => { cfg.horizontal = v; });
     cont.appendChild(el('p', { style: 'font-size:.82rem;color:var(--tinta-suave);margin-top:8px' },
       t('cfg.orderHint')));
   },
