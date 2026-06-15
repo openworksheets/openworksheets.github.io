@@ -323,6 +323,7 @@ const STRINGS = {
 
     // Editor — vista previa
     'preview.banner': 'Vista previa: así lo verá el alumnado',
+    'preview.tip': 'Ver la ficha tal como la verá el alumnado al abrirla',
     'preview.back': 'Volver al editor',
 
     // Editor — toasts y mensajes
@@ -815,6 +816,7 @@ const STRINGS = {
     'dlg.access.hint': 'This password is only for opening the worksheet. It should not be the same as the encryption password that protects submissions.',
 
     'preview.banner': 'Preview: this is how students will see it',
+    'preview.tip': 'See the worksheet as students will see it when they open it',
     'preview.back': 'Back to editor',
 
     'toast.addPdfFirst': 'Add a PDF or image first.',
@@ -1326,6 +1328,7 @@ const STRINGS = {
     'dlg.access.hint': 'Aquesta contrasenya només serveix per obrir la fitxa. No ha de ser igual que la contrasenya de xifratge que protegeix els lliuraments.',
 
     'preview.banner': 'Vista prèvia: així ho veurà l\'alumnat',
+    'preview.tip': 'Veure la fitxa tal com la veurà l\'alumnat en obrir-la',
     'preview.back': 'Tornar a l\'editor',
 
     'toast.addPdfFirst': 'Primer afegeix un PDF o una imatge.',
@@ -1837,6 +1840,7 @@ const STRINGS = {
     'dlg.access.hint': 'Este contrasinal é só para abrir a ficha. Non debe ser igual ao contrasinal de cifrado que protexe as entregas.',
 
     'preview.banner': 'Vista previa: así o verá o alumnado',
+    'preview.tip': 'Ver a ficha tal como a verá o alumnado ao abrila',
     'preview.back': 'Volver ao editor',
 
     'toast.addPdfFirst': 'Primeiro engade un PDF ou unha imaxe.',
@@ -2348,6 +2352,7 @@ const STRINGS = {
     'dlg.access.hint': 'Pasahitz hau fitxa irekitzeko bakarrik da. Ez du entregak babesten dituen zifratzeko pasahitzaren berdina izan behar.',
 
     'preview.banner': 'Aurrebista: ikasleek honela ikusiko dute',
+    'preview.tip': 'Ikusi fitxa ikasleek irekitzean ikusiko duten bezala',
     'preview.back': 'Editorera itzuli',
 
     'toast.addPdfFirst': 'Lehenik gehitu PDF bat edo irudi bat.',

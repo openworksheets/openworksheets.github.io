@@ -20,6 +20,11 @@ Las versiones publicadas también están en la página de
 - La **vista previa** se abre ahora en la misma página que se está editando, en
   lugar de empezar siempre por la página 1.
 
+### Cambiado
+- El botón de **vista previa** pasa de la barra superior a la barra del lienzo,
+  junto al control de zoom, con icono y texto «Vista previa» y un color acorde a
+  la zona de trabajo.
+
 ---
 
 ## [1.6.1] — 2026-06-15

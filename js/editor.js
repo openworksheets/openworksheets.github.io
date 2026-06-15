@@ -382,7 +382,10 @@ function renderCanvas() {
     return;
   }
 
-  canvas.appendChild(el('div', { class: 'ed-zoom-wrap' }, zoomCtl.el));
+  const btnPrevia = iconBtn(
+    { id: 'btnPrevia', class: 'btn small ed-preview-btn', type: 'button', title: t('preview.tip'), onclick: openPreview },
+    ICONS.eye, t('nav.preview'));
+  canvas.appendChild(el('div', { class: 'ed-zoom-wrap' }, btnPrevia, zoomCtl.el));
 
   state.manifest.pages.forEach((page, pi) => {
     const pageEl = el('div', { class: 'wpf-page', dataset: { page: pi } },
@@ -2819,7 +2822,6 @@ $('#inputZip').addEventListener('change', e => {
 $('#btnAjustes').addEventListener('click', openSettings);
 $('#btnCompartir').addEventListener('click', openShare);
 $('#btnImprimir').addEventListener('click', printWorksheet);
-$('#btnPrevia').addEventListener('click', openPreview);
 $('#btnExportar').addEventListener('click', exportZip);
 
 // ---------- Pegar desde portapapeles ----------

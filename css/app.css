@@ -726,9 +726,20 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   top: 0;
   z-index: 30;
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 8px;
   margin-bottom: 8px;
 }
+/* Botón de vista previa en la barra del lienzo: acento azul acorde con la zona
+   de trabajo (antes era verde, pensado para la barra superior). */
+.ed-preview-btn {
+  background: var(--azul-claro);
+  border-color: var(--tinta);
+  color: var(--tinta);
+}
+.ed-preview-btn:hover { background: var(--blanco); }
+.ed-preview-btn svg { width: 15px; height: 15px; flex-shrink: 0; vertical-align: middle; }
 .zoom-ctrl {
   display: inline-flex;
   align-items: center;
