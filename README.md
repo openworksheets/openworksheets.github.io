@@ -78,6 +78,37 @@ Las fichas admiten las siguientes opciones de control:
 
 OpenWorksheets ofrece un nivel de seguridad alto para el uso en el aula. El alumnado no puede acceder al archivo de la ficha y las entregas pueden cifrarse para que solo el docente pueda leerlas. No obstante, ningún sistema de este tipo es infalible y no sustituye a un sistema de examen de alta seguridad.
 
+## Cifrado
+
+OpenWorksheets incorpora dos mecanismos de cifrado **independientes**, ambos ejecutados íntegramente en el navegador mediante la Web Crypto API (`crypto.subtle`), sin servidor ni envío de datos a terceros.
+
+### Cifrado de entregas (clave pública)
+
+Pensado para que **solo el docente** pueda leer lo que entrega el alumnado.
+
+- Al activarlo, el docente fija una contraseña y la aplicación genera un par de claves **RSA-OAEP de 2048 bits** (SHA-256). La clave pública se incrusta en la ficha; la clave privada se guarda **cifrada** con **AES-GCM de 256 bits**, usando una clave derivada de la contraseña del docente mediante **PBKDF2-SHA256 con 250 000 iteraciones** y sal aleatoria.
+- Cuando el alumnado entrega, la aplicación genera una clave AES-GCM aleatoria, cifra la entrega con ella y, a su vez, cifra esa clave con la clave pública RSA (esquema híbrido). El alumnado puede **cifrar pero no descifrar**.
+- Solo el docente, introduciendo su contraseña, recupera la clave privada y descifra las entregas.
+
+Ventaja: aunque el archivo de entrega (`.json`) o el enlace de entrega se intercepten, su contenido permanece ilegible sin la contraseña del docente.
+
+### Cifrado de la ficha (protección de las soluciones)
+
+Protege el contenido de la ficha —en especial las respuestas correctas, que viajan dentro del archivo— frente a quien obtenga el ZIP sin autorización.
+
+- El contenido sensible del manifiesto (instrucciones, ajustes, páginas con soluciones, configuración de acceso…) se cifra con **AES-GCM de 256 bits**, con clave derivada de la contraseña de acceso por **PBKDF2-SHA256 (250 000 iteraciones)**. Solo quedan en claro datos no sensibles (título, idioma e identificador).
+- La contraseña de acceso cumple doble función: da acceso a la ficha y descifra su contenido.
+
+### Implicaciones de seguridad
+
+Conviene entender bien el modelo, porque condiciona qué protege y qué no:
+
+- **Toda la seguridad recae en la contraseña.** Como no hay servidor, la clave privada cifrada y los datos cifrados viajan dentro de archivos que pueden acabar en manos de terceros. Quien obtenga uno de esos archivos puede intentar un **ataque de diccionario sin conexión**. Las 250 000 iteraciones de PBKDF2 encarecen mucho cada intento, pero **una contraseña débil sigue siendo vulnerable**. Usa contraseñas largas y únicas.
+- **No hay recuperación.** Si se pierde la contraseña, las entregas cifradas y la ficha cifrada son **irrecuperables**: no existe restablecimiento ni puerta trasera.
+- **El cifrado de la ficha no es DRM.** Protege las soluciones frente a quien **no** tiene la contraseña (por ejemplo, un ZIP filtrado públicamente). No protege frente a un alumno que **sí** recibe la contraseña de acceso, ya que esa misma contraseña descifra el manifiesto: técnicamente podría extraer las respuestas. Evita la fuga accidental del archivo, no a un usuario autorizado y malintencionado.
+- **Integridad garantizada.** AES-GCM es cifrado autenticado: cualquier manipulación del texto cifrado se detecta al descifrar. Las entregas, además, incluyen verificación de integridad que avisa si un archivo ha sido alterado.
+- **Límite inherente a las aplicaciones de cliente.** Como todo se ejecuta en el navegador del alumnado, el cifrado protege los datos **en reposo** (los archivos), pero no impide que un usuario con conocimientos técnicos inspeccione o manipule su propia sesión en ejecución. Por eso OpenWorksheets es adecuado para el aula, pero **no sustituye a un sistema de examen de alta seguridad** con supervisión y backend de confianza.
+
 ## Idiomas
 
 La interfaz está disponible en español, inglés, català, galego y euskera.
