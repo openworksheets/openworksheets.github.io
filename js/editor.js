@@ -1302,7 +1302,18 @@ function renderFieldPanel(field) {
     }
     if (cfg.mode !== 'labels' && cfg.mode !== 'crops') {
       cont.appendChild(el('p', { class: 'cfg-hint' }, t('cfg.dragdropChooseIntro')));
-      const pick = m => { cfg.mode = m; markDirty(); renderPanel(); renderCanvas(); };
+      const pick = m => {
+        // Al elegir un medio se descartan los datos del otro para que no queden
+        // colgados (recortes y sus imágenes, o distractores de texto).
+        if (m === 'labels') {
+          (cfg.pieces || []).forEach(p => { if (p.src) { urls.delete(p.src); state.files.delete(p.src); } });
+          cfg.pieces = [];
+        } else if (m === 'crops') {
+          cfg.distractors = [];
+        }
+        cfg.mode = m;
+        markDirty(); renderPanel(); renderCanvas();
+      };
       cont.appendChild(el('div', { class: 'ed-mode-choice' },
         modeChoiceCard(t('cfg.dragdropLabelsTitle'), t('cfg.dragdropHintLabels'), () => pick('labels')),
         modeChoiceCard(t('cfg.dragdropCropsTitle'), t('cfg.dragdropHintCrops'), () => pick('crops'))));
@@ -2552,6 +2563,18 @@ function validate() {
   return problems;
 }
 
+// Solo los ficheros referenciados por el manifiesto (descarta huérfanos, p. ej.
+// recortes de campos borrados). Se calcula sobre el manifiesto en claro, ya que
+// el de exportación puede ir cifrado y ocultar las rutas.
+function referencedFiles() {
+  const json = JSON.stringify(state.manifest);
+  const keep = new Map();
+  for (const [path, blob] of state.files) {
+    if (json.includes('"' + path + '"')) keep.set(path, blob);
+  }
+  return keep;
+}
+
 async function exportZip() {
   state.manifest.title = titleInput.value.trim();
   const problems = validate();
@@ -2578,7 +2601,7 @@ async function exportZip() {
     if (exportManifest.access?.password) {
       exportManifest = await encryptManifestForStudent(exportManifest, exportManifest.access.password);
     }
-    const blob = await exportFichaZip({ manifest: exportManifest, files: state.files });
+    const blob = await exportFichaZip({ manifest: exportManifest, files: referencedFiles() });
     downloadBlob(blob, slugify(state.manifest.title || 'ficha') + '.zip');
     state.dirty = false;
     toast(t('toast.exported'), 'ok');

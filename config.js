@@ -16,7 +16,7 @@
 // Sin gasUrl configurado, la aplicación intenta la descarga directa y,
 // si falla por CORS, recurre a proxies CORS públicos (menos fiables).
 window.OPENWORKSHEETS_CONFIG = {
-  appVersion: '1.4.0',
+  appVersion: '1.5.0',
   gasUrl: 'https://script.google.com/macros/s/AKfycbxTxNMhU6DsxfnwbtqfLzafj9AvMDYMyDG0qd03vKW8M2grSpZtsjerwO5NtxeWCWbI/exec',
   corsProxies: [
     { url: 'https://corsproxy.io/?', encode: true },

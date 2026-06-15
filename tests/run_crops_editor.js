@@ -166,6 +166,23 @@ const puppeteer = require('puppeteer-core');
   check('previa: la pieza se coloca en la zona', placed.chip >= 1);
   check('previa: el hueco de origen queda vacío', placed.emptyHole >= 1);
 
+  // Cerrar la previa y comprobar que cambiar de medio descarta los recortes
+  // (evita imágenes huérfanas). Volvemos al campo y elegimos «Escribir las etiquetas».
+  await page.click('.prev-aviso .btn');
+  await wait(200);
+  await page.click('.ed-field');
+  await wait(150);
+  await page.evaluate(() => { document.querySelector('#panel .ed-mode-head button')?.click(); });
+  await wait(150);
+  await page.evaluate(() => {
+    const card = [...document.querySelectorAll('#panel .ed-mode-card')]
+      .find(c => /Escribir las etiquetas|Type the labels/i.test(c.textContent));
+    if (card) card.click();
+  });
+  await wait(250);
+  const piecesAfterSwitch = await page.$$eval('.ed-piece', ns => ns.length);
+  check('cambiar de medio descarta los recortes', piecesAfterSwitch === 0);
+
   if (errors.length) {
     console.log('--- ERRORES DE PÁGINA/CONSOLA ---');
     errors.forEach(e => console.log('  ' + e));

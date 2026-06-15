@@ -49,7 +49,7 @@ const puppeteer = require('puppeteer-core');
   // --- Página en blanco ---
   await page.evaluate(() => {
     const btns = [...document.querySelectorAll('.ed-empty button')];
-    btns[1].click(); // «Hoja en blanco»
+    btns[btns.length - 1].click(); // «Hoja en blanco» (último botón)
   });
   await page.waitForSelector('.wpf-page img.fondo');
   await new Promise(r => setTimeout(r, 300));
@@ -99,16 +99,21 @@ const puppeteer = require('puppeteer-core');
   await page.click('.ed-field-rect');
   await new Promise(r => setTimeout(r, 200));
   const rectCfg = await page.evaluate(() => {
-    const checks = [...document.querySelectorAll('#panel .check-row input[type="checkbox"]')];
-    // checks[0] = «Con borde», último = «Con relleno»
-    const fill = checks[checks.length - 1];
+    // Seleccionar por etiqueta (robusto si se añaden más casillas/deslizadores).
+    const cbByText = re => [...document.querySelectorAll('#panel .check-row')]
+      .find(l => re.test(l.textContent))?.querySelector('input[type="checkbox"]');
+    // Activar el relleno.
+    const fill = cbByText(/Con relleno|Filled/i);
     fill.checked = true;
     fill.dispatchEvent(new Event('change'));
-    const ranges = [...document.querySelectorAll('#panel input[type="range"]')];
-    const op = ranges[ranges.length - 1]; // opacidad del relleno
-    op.value = '0.5';
-    op.dispatchEvent(new Event('input'));
-    const borde = checks[0];
+    // Opacidad del relleno: el deslizador justo tras su etiqueta.
+    const opLabel = [...document.querySelectorAll('#panel .f-label')]
+      .find(l => /Opacidad del relleno|Fill opacity/i.test(l.textContent));
+    const op = opLabel && opLabel.nextElementSibling?.matches('input[type="range"]')
+      ? opLabel.nextElementSibling : null;
+    if (op) { op.value = '0.5'; op.dispatchEvent(new Event('input')); }
+    // Quitar el borde.
+    const borde = cbByText(/Con borde|With border/i);
     borde.checked = false;
     borde.dispatchEvent(new Event('change'));
     const r = document.querySelector('.ed-field-rect svg.wpf-shape rect');

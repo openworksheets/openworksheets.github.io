@@ -108,18 +108,27 @@ async function main() {
 
     const nota = root.querySelector('.notaza')?.textContent?.trim();
     log('nota mostrada:', nota, '| esperada: 5 / 7');
+
+    // Con intentos restantes y corrección activada, el visor pregunta primero si
+    // reintentar o ver la corrección; las marcas no se muestran hasta elegir.
+    const retry = [...root.querySelectorAll('button')].some(b => b.textContent.includes('Sí, intentar de nuevo'));
+    log('pregunta de reintento (queda 1 intento):', retry);
+
+    // El código de entrega ya no se muestra en pantalla: queda en el estado guardado.
+    const codigo = JSON.parse(localStorage.getItem('workpdf:al:wpftest1'))?.lastEntrega?.codigo;
+    log('código de entrega (en el estado):', codigo);
+
+    // Elegir «No, ver corrección» aplica las marcas por campo.
+    [...root.querySelectorAll('button')].find(b => b.textContent.includes('No, ver corrección'))?.click();
+    await sleep(100);
     const marks = {
       ok: root.querySelectorAll('.wpf-field.mark-ok').length,
       partial: root.querySelectorAll('.wpf-field.mark-partial').length,
       ko: root.querySelectorAll('.wpf-field.mark-ko').length
     };
     log('marcas → ok:', marks.ok, 'parciales:', marks.partial, 'ko:', marks.ko, '| esperado ok:2 parciales:2 ko:0');
-    const codigo = root.querySelector('.codigo')?.textContent;
-    log('código entrega:', codigo);
     const expected = root.querySelectorAll('.wpf-expected').length;
     log('soluciones mostradas en campos fallados:', expected);
-    const retry = [...root.querySelectorAll('button')].some(b => b.textContent.includes('Intentar de nuevo'));
-    log('botón reintentar (queda 1 intento):', retry);
 
     const pass = nota === '5 / 7' && marks.ok === 2 && marks.partial === 2 && marks.ko === 0 && codigo && retry;
 

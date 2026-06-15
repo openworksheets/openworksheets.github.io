@@ -37,7 +37,7 @@ Campos en los que el alumno conecta, ordena o coloca elementos.
 |------|-------------|
 | **Emparejar** | Dos columnas de elementos que el alumno relaciona entre sí. |
 | **Ordenar** | El alumno arrastra elementos para ponerlos en el orden correcto. |
-| **Arrastrar a zonas** | El alumno arrastra etiquetas o imágenes hasta las zonas de destino dibujadas sobre el documento. |
+| **Arrastrar a zonas** | El alumno arrastra elementos hasta las zonas de destino dibujadas sobre el documento. Dos modos: *escribir las etiquetas* (que parten de una bandeja) o *recortar del propio PDF* trozos de texto o imagen (que parten de su sitio y lo dejan vacío al moverlos). |
 | **Unir con flechas** | El alumno conecta elementos dibujando flechas entre ellos directamente sobre la página. |
 
 ### 🎨 Diseño
