@@ -236,6 +236,7 @@ function renderPalette() {
     head.addEventListener('click', () => {
       openGroup = openGroup === group.id ? null : group.id;
       refreshPaletteState();
+      if (!sel) renderPanel();
     });
     palette.appendChild(head);
 
@@ -1190,6 +1191,7 @@ function renderPanel() {
   }
   if (!sel) {
     const toolType = activeTool && FIELD_TYPES[activeTool] ? activeTool : null;
+    const openGroupDef = !toolType && openGroup ? PALETTE_GROUPS.find(g => g.id === openGroup) : null;
     if (toolType) {
       const ft = FIELD_TYPES[toolType];
       const glyph = el('span', { class: 'glyph' });
@@ -1200,6 +1202,16 @@ function renderPanel() {
         el('div', { class: 'ed-tool-hint-header' },
           glyph,
           el('span', {}, fieldTypeName(toolType))),
+        el('p', {}, desc)));
+    } else if (openGroupDef) {
+      const glyph = el('span', { class: 'glyph' });
+      glyph.innerHTML = openGroupDef.glyph;
+      const descKey = 'palette.desc.' + openGroupDef.id;
+      const desc = t(descKey) !== descKey ? t(descKey) : '';
+      panel.appendChild(el('div', { class: 'ed-panel-vacio ed-panel-tool-hint' },
+        el('div', { class: 'ed-tool-hint-header' },
+          glyph,
+          el('span', {}, t('palette.' + openGroupDef.id))),
         el('p', {}, desc)));
     } else {
       panel.appendChild(el('div', { class: 'ed-panel-vacio' },
