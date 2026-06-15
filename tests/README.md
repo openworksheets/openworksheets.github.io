@@ -35,6 +35,10 @@ pantalla y termina con `__TEST_OK__` o `__TEST_FAIL__`.
   (que recorta la imagen de la página), lo asigna a su zona y, en la vista
   previa, lo coloca por clic dejando el hueco de origen vacío
   (`node tests/run_crops_editor.js`, con el servidor en el puerto 8765).
+- `run_fillgaps_editor.js` — script de puppeteer aparte: entrada unificada
+  «Rellenar huecos» de la paleta; comprueba que pregunta el modo antes de
+  dibujar y que crea un campo «gaps» o «textboxes» según la elección
+  (`node tests/run_fillgaps_editor.js`, con el servidor en el puerto 8765).
 - `run_zoom.js` — script de puppeteer aparte: zoom de página en el editor
   (botones, Ctrl+rueda) y en el visor del alumno, y transición del acordeón
   de la paleta (`node tests/run_zoom.js`, con el servidor en el puerto 8765).

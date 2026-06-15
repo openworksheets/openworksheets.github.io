@@ -9,6 +9,25 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [Sin publicar]
+
+### Añadido
+- En el panel de un hueco, botón **«Dibujar nuevo hueco»** para añadir otro sin
+  tener que volver al campo (flujo de trabajo continuo, como en «Arrastrar a
+  zonas»).
+
+### Cambiado
+- Iconos de paleta más claros: **«Rellenar huecos»** (recuadro con puntos) y
+  **«Respuesta numérica»** (calculadora).
+- **«Rellenar huecos» unifica los dos campos de huecos.** En la paleta, en lugar
+  de dos botones parecidos («Completar huecos» y «Huecos en documento»), hay una
+  sola entrada **«Rellenar huecos»** que, al elegirla, pregunta cómo se quiere
+  proceder antes de dibujar: *escribir un texto con huecos* o *marcar huecos
+  sobre el documento*. Después, el panel indica en cada momento qué hacer. Las
+  fichas ya creadas siguen funcionando igual.
+
+---
+
 ## [1.5.0] — 2026-06-15
 
 ### Añadido

@@ -13,9 +13,8 @@ Campos en los que el alumno teclea su respuesta.
 | Tipo | Descripción |
 |------|-------------|
 | **Respuesta corta** | El alumno escribe texto libre. Admite varias respuestas correctas alternativas y opciones de normalización (tildes, mayúsculas, espacios). |
-| **Respuesta numérica** | El alumno introduce un número. Permite definir una tolerancia de error. |
-| **Completar huecos** | El alumno rellena palabras o frases que faltan en un texto. Los huecos se marcan con corchetes en el enunciado. |
-| **Huecos en documento** | Rellena huecos que ya existen en el PDF o imagen: se dibuja un cuadro de texto sobre cada hueco con su respuesta. Puntuación proporcional y varias respuestas válidas por hueco. |
+| **Respuesta numérica** | El alumno introduce un número. Acepta coma o punto como separador decimal y permite definir una tolerancia de error. |
+| **Rellenar huecos** | El alumno rellena palabras o frases que faltan. Dos modos: *escribir un texto con huecos* (marcados con corchetes en el enunciado) o *marcar huecos sobre el documento* (dibujando un cuadro sobre cada hueco que ya existe en el PDF o imagen). Admite varias respuestas válidas por hueco y puntuación proporcional. |
 
 ### ☑️ Elegir
 

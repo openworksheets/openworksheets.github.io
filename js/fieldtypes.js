@@ -20,7 +20,7 @@ export const FIELD_TYPES = {
   },
   number: {
     name: 'Respuesta numérica',
-    glyph: ICONS.hash,
+    glyph: ICONS.calculator,
     defRect: { w: 0.16, h: 0.05 },
     defaults: () => ({ answer: '', tolerance: 0 })
   },
@@ -75,6 +75,14 @@ export const FIELD_TYPES = {
       ignoreAccents: true,
       collapseSpaces: true
     })
+  },
+  // Entrada virtual de la paleta: agrupa «Completar huecos» (gaps) y «Huecos en
+  // documento» (textboxes). No es un tipo de campo real (no se crea con este id):
+  // al elegirla, el editor pregunta el modo y arma la herramienta gaps o textboxes.
+  fillgaps: {
+    name: 'Rellenar huecos',
+    glyph: ICONS.rectangleEllipsis,
+    virtual: true
   },
   match: {
     name: 'Emparejar',
@@ -184,7 +192,7 @@ export const FIELD_ORDER = [
 // Grupos temáticos de la paleta del editor. El nombre visible
 // se obtiene de i18n con la clave 'palette.<id>'.
 export const PALETTE_GROUPS = [
-  { id: 'write',  glyph: ICONS.pencil,         types: ['text', 'number', 'gaps', 'textboxes'] },
+  { id: 'write',  glyph: ICONS.pencil,         types: ['text', 'number', 'fillgaps'] },
   { id: 'choose', glyph: ICONS.listChecks,      types: ['single', 'multi', 'checkbox', 'truefalse', 'select'] },
   { id: 'relate', glyph: ICONS.arrowLeftRight,  types: ['match', 'order', 'dragdrop', 'arrowmatch'] },
   { id: 'design', glyph: ICONS.shapes,          types: ['label', 'image', 'cover', 'line', 'arrow', 'rect', 'ellipse'] }

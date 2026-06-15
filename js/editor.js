@@ -125,10 +125,16 @@ function refreshPaletteState() {
   palette.querySelectorAll('.ed-group-tools').forEach(d => {
     d.classList.toggle('open', d.dataset.group === state.openGroup);
   });
+  // Mientras se dibuja un hueco (gaps/textboxes) se resalta su entrada de paleta,
+  // que es la unificada «Rellenar huecos» (fillgaps).
+  const activeTool = (state.activeTool === 'gaps' || state.activeTool === 'textboxes')
+    ? 'fillgaps' : state.activeTool;
   palette.querySelectorAll('.ed-tool').forEach(b => {
-    b.classList.toggle('active', b.dataset.type === state.activeTool);
+    b.classList.toggle('active', b.dataset.type === activeTool);
   });
-  canvas.classList.toggle('drawing', Boolean(state.activeTool) || Boolean(state.pendingAmItem));
+  // «fillgaps» no dibuja: primero hay que elegir el modo en el panel.
+  const drawing = Boolean(state.activeTool && state.activeTool !== 'fillgaps') || Boolean(state.pendingAmItem);
+  canvas.classList.toggle('drawing', drawing);
 }
 
 // ---------- Páginas ----------
@@ -642,6 +648,9 @@ function attachRotateHandle(rotHandle, box, field) {
 // Dibujar un campo nuevo (o una zona) sobre la página.
 function attachDrawInteraction(pageEl, pi) {
   pageEl.addEventListener('pointerdown', e => {
+    // «Rellenar huecos» aún no es una herramienta de dibujo: hay que elegir el
+    // modo en el panel. No hace nada al pulsar sobre la página.
+    if (state.activeTool === 'fillgaps') return;
     if (!state.activeTool && !state.pendingAmItem) {
       // Clic en el fondo: seleccionar la página para mostrar sus propiedades.
       if (e.target === pageEl) {
@@ -821,6 +830,14 @@ function startZoneTool() {
   refreshPaletteState();
   canvas.classList.add('drawing');
   toast(t('toast.drawZoneTip'));
+}
+
+// Activa la herramienta de dibujo de hueco (flujo continuo desde el panel).
+function startTbBoxTool() {
+  state.activeTool = 'tbbox';
+  refreshPaletteState();
+  canvas.classList.add('drawing');
+  toast(t('toast.drawTextboxTip'));
 }
 
 function createZone(pi, rect) {
@@ -1171,7 +1188,23 @@ function renderPanel() {
   if (!state.sel) {
     const toolType = state.activeTool && FIELD_TYPES[state.activeTool] ? state.activeTool : null;
     const openGroupDef = !toolType && state.openGroup ? PALETTE_GROUPS.find(g => g.id === state.openGroup) : null;
-    if (toolType) {
+    if (toolType === 'fillgaps') {
+      // «Rellenar huecos»: antes de dibujar, el docente elige cómo proceder.
+      const glyph = el('span', { class: 'glyph' });
+      glyph.innerHTML = FIELD_TYPES.fillgaps.glyph;
+      const box = el('div', { class: 'ed-panel-vacio ed-panel-tool-hint' },
+        el('div', { class: 'ed-tool-hint-header' }, glyph, el('span', {}, fieldTypeName('fillgaps'))),
+        el('p', {}, t('fillgaps.chooseIntro')));
+      const pick = realType => {
+        state.activeTool = realType; // gaps | textboxes
+        refreshPaletteState();
+        renderPanel(); // muestra ya la ayuda «qué dibujar» del modo elegido
+      };
+      box.appendChild(el('div', { class: 'ed-mode-choice' },
+        modeChoiceCard(t('fillgaps.textTitle'), t('fillgaps.textDesc'), () => pick('gaps')),
+        modeChoiceCard(t('fillgaps.boxesTitle'), t('fillgaps.boxesDesc'), () => pick('textboxes'))));
+      panel.appendChild(box);
+    } else if (toolType) {
       const ft = FIELD_TYPES[toolType];
       const glyph = el('span', { class: 'glyph' });
       glyph.innerHTML = ft.glyph;
@@ -1635,6 +1668,9 @@ function renderTbBoxPanel(field) {
     min: 1
   });
   cont.appendChild(el('p', { class: 'cfg-hint' }, t('editor.tbBoxHint')));
+  const addBoxBtn = el('button', { class: 'btn small add-row', type: 'button' }, t('cfg.addAnotherTextbox'));
+  addBoxBtn.addEventListener('click', startTbBoxTool);
+  cont.appendChild(addBoxBtn);
   cont.appendChild(el('div', { class: 'ed-acciones' },
     iconBtn({ class: 'btn small', onclick: () => selectField(state.sel.pageIndex, field.id) }, ICONS.arrowLeft, t('editor.backToField')),
     iconBtn({ class: 'btn small danger', onclick: deleteSelected }, ICONS.trash, t('editor.tbBoxDelete'))));
@@ -2098,12 +2134,7 @@ const configForms = {
         locate.addEventListener('click', () => selectTbBox(state.sel.pageIndex, field.id, b.id));
         row.appendChild(locate);
       },
-      add: () => {
-        state.activeTool = 'tbbox';
-        refreshPaletteState();
-        canvas.classList.add('drawing');
-        toast(t('toast.drawTextboxTip'));
-      },
+      add: startTbBoxTool,
       remove: i => {
         cfg.boxes.splice(i, 1);
         renderCanvas();
