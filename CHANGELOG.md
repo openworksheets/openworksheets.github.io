@@ -15,6 +15,8 @@ Las versiones publicadas también están en la página de
 - Opción **«Mostrar las opciones en horizontal»** en los campos **Opción única**
   y **Opción múltiple**: las opciones se disponen en fila y saltan a una segunda
   fila si no caben. Por defecto se mantiene la disposición vertical.
+- La **vista previa** se abre ahora en la misma página que se está editando, en
+  lugar de empezar siempre por la página 1.
 
 ---
 

@@ -2729,6 +2729,7 @@ async function mergeZipFile(file, insertAt) {
 function openPreview() {
   state.manifest.title = titleInput.value.trim();
   if (!state.manifest.pages.length) { toast(t('toast.addPageFirst'), 'error'); return; }
+  const pageIndex = currentEditorPageIndex();
   const overlay = el('div', { class: 'prev-overlay' });
   const root = el('div', {});
   const cerrar = iconBtn({ class: 'btn small' }, ICONS.arrowLeft, t('preview.back'));
@@ -2737,12 +2738,48 @@ function openPreview() {
   document.body.appendChild(overlay);
   document.body.style.overflow = 'hidden';
   state.preview = mountPlayer(root, { manifest: JSON.parse(JSON.stringify(state.manifest)), files: state.files }, { preview: true });
+  // Abrir la vista previa en la misma página que se está editando.
+  scrollPreviewToPage(overlay, pageIndex);
   cerrar.addEventListener('click', () => {
     state.preview.destroy();
     state.preview = null;
     overlay.remove();
     document.body.style.overflow = '';
   });
+}
+
+// Página del lienzo de edición más visible (centro del visor), para que la
+// vista previa arranque en el mismo punto en lugar de siempre en la página 1.
+function currentEditorPageIndex() {
+  const pages = [...canvas.querySelectorAll('.wpf-page[data-page]')];
+  if (pages.length <= 1) return 0;
+  const cRect = canvas.getBoundingClientRect();
+  const mid = cRect.top + cRect.height / 2;
+  let best = 0, bestDist = Infinity;
+  for (const p of pages) {
+    const r = p.getBoundingClientRect();
+    const dist = mid < r.top ? r.top - mid : (mid > r.bottom ? mid - r.bottom : 0);
+    if (dist < bestDist) { bestDist = dist; best = Number(p.dataset.page) || 0; }
+  }
+  return best;
+}
+
+// Desplaza el overlay de la vista previa hasta la página indicada. Las imágenes
+// de fondo cargan de forma asíncrona, así que reposiciona a medida que se
+// conoce la altura de las páginas anteriores.
+function scrollPreviewToPage(overlay, idx) {
+  if (!idx) return; // página 1: ya está arriba
+  const go = () => {
+    const target = overlay.querySelectorAll('.wpf-page')[idx];
+    if (!target) return;
+    const offset = overlay.querySelector('.prev-aviso')?.offsetHeight || 0;
+    const oRect = overlay.getBoundingClientRect();
+    const tRect = target.getBoundingClientRect();
+    overlay.scrollTop += (tRect.top - oRect.top) - offset;
+  };
+  requestAnimationFrame(go);
+  const imgs = [...overlay.querySelectorAll('.wpf-page img.fondo')].slice(0, idx + 1);
+  imgs.filter(im => !im.complete).forEach(im => im.addEventListener('load', go, { once: true }));
 }
 
 // ---------- Arranque ----------
