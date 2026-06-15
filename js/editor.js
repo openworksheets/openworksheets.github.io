@@ -235,6 +235,9 @@ function renderPalette() {
     head.dataset.group = group.id;
     head.addEventListener('click', () => {
       openGroup = openGroup === group.id ? null : group.id;
+      // Navegar a un grupo cancela la herramienta activa: así el panel
+      // muestra la descripción del grupo y no la del campo anterior.
+      activeTool = null;
       refreshPaletteState();
       if (!sel) renderPanel();
     });
