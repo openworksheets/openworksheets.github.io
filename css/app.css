@@ -939,6 +939,89 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 }
 .ed-zone.selected .handle { display: block; }
 
+/* Pieza recortada del PDF (editor, modo "crops" de dragdrop) */
+.ed-piece {
+  position: absolute;
+  border: 2px solid var(--rojo);
+  border-radius: 4px;
+  cursor: grab;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+.ed-piece-img {
+  display: block;
+  width: 100%; height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+}
+.ed-piece.selected { border-color: var(--tinta); z-index: 6; }
+.ed-piece .handle {
+  position: absolute;
+  right: -7px; bottom: -7px;
+  width: 14px; height: 14px;
+  border: 2px solid #fff;
+  background: var(--rojo);
+  border-radius: 50%;
+  cursor: nwse-resize;
+  display: none;
+  z-index: 2;
+}
+.ed-piece.selected .handle { display: block; }
+
+/* Elección de medio para «arrastrar a zonas» (pregunta inicial) */
+.ed-mode-choice { display: flex; flex-direction: column; gap: 10px; margin: 8px 0 12px; }
+.ed-mode-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border: 2px solid var(--borde);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+}
+.ed-mode-card:hover,
+.ed-mode-card:focus-visible {
+  border-color: var(--rojo);
+  background: var(--rojo-claro);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  outline: none;
+}
+.ed-mode-card-radio {
+  flex: 0 0 auto;
+  width: 18px; height: 18px;
+  border: 2px solid var(--tinta-suave);
+  border-radius: 50%;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.ed-mode-card:hover .ed-mode-card-radio,
+.ed-mode-card:focus-visible .ed-mode-card-radio {
+  border-color: var(--rojo);
+  box-shadow: inset 0 0 0 3px var(--rojo);
+}
+.ed-mode-card-body { flex: 1 1 auto; display: flex; flex-direction: column; gap: 4px; }
+.ed-mode-card-title { font-weight: 700; color: var(--tinta); }
+.ed-mode-card-desc { font-size: 0.85rem; color: var(--tinta-suave); line-height: 1.35; }
+.ed-mode-card-arrow { flex: 0 0 auto; display: flex; color: var(--tinta-suave); transition: color 0.12s ease; }
+.ed-mode-card-arrow svg { width: 20px; height: 20px; }
+.ed-mode-card:hover .ed-mode-card-arrow,
+.ed-mode-card:focus-visible .ed-mode-card-arrow { color: var(--rojo); }
+.ed-mode-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--borde);
+}
+.ed-mode-head-label { font-size: 0.9rem; color: var(--tinta-suave); }
+.ed-mode-head-label strong { color: var(--tinta); }
+
 /* Rectángulo de dibujo */
 .ed-rubber {
   position: absolute;
@@ -976,7 +1059,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .ed-tool-hint-header { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 1rem; margin-bottom: 10px; }
 .ed-tool-hint-header .glyph { display: flex; align-items: center; flex-shrink: 0; }
 .ed-tool-hint-header .glyph svg { width: 22px; height: 22px; stroke: var(--acento); }
-.ed-panel-tool-hint p { font-size: 0.88rem; line-height: 1.5; color: var(--tinta-suave); margin: 0; }
+.ed-panel-tool-hint p { font-size: 0.88rem; line-height: 1.5; color: var(--tinta-suave); margin: 0; white-space: pre-line; }
 .ed-acciones { display: flex; gap: 8px; margin: 14px 0 4px; flex-wrap: wrap; }
 .ed-acciones .btn svg, .ed-pagehead .btn svg { width: 14px; height: 14px; flex-shrink: 0; vertical-align: middle; }
 
@@ -1447,6 +1530,45 @@ input.wpf-gap-input {
 .wpf-zone-chip:not(:disabled):hover { background: var(--ambar-claro); border-color: var(--ambar); }
 .wpf-zone-chip.mark-ok { border-color: var(--verde); background: var(--verde-claro); cursor: default; }
 .wpf-zone-chip.mark-ko { border-color: var(--rojo); background: var(--rojo-claro); cursor: default; }
+
+/* ── Arrastrar a zonas: modo recorte del PDF ─────────────── */
+/* El campo no usa bandeja; no debe interceptar clics sobre la página. */
+.wpf-crops-host { pointer-events: none; }
+
+/* Hueco de origen de una pieza, sobre la página. Tapa el contenido
+   original con el fondo de la página para que quede "vacío" al arrastrar. */
+/* El hueco ocupa exactamente el rectángulo original: sin borde que reste
+   espacio (el contorno discontinuo va por outline, que no afecta al tamaño). */
+.wpf-hole {
+  position: absolute;
+  background: var(--field-bg, #fff);
+  border-radius: 4px;
+  box-sizing: border-box;
+  transition: outline-color 0.12s ease, background 0.12s ease;
+}
+.wpf-hole.empty { outline: 0.12em dashed rgba(0, 0, 0, 0.28); outline-offset: -0.12em; }
+.wpf-hole.armed { outline: 0.12em solid var(--rojo); outline-offset: -0.12em; background: rgba(198, 61, 44, 0.08); }
+.wpf-hole.drag-over { outline: 0.14em solid var(--tinta); outline-offset: -0.14em; background: var(--azul-claro); }
+.wpf-hole.mark-ko { outline: 0.14em solid var(--rojo); outline-offset: -0.14em; background: var(--rojo-claro); }
+.wpf-hole-piece {
+  display: block;
+  width: 100%; height: 100%;
+  padding: 0; margin: 0;
+  border: 0;
+  background: transparent;
+  line-height: 0;
+  cursor: grab;
+}
+.wpf-hole-piece:disabled { cursor: default; }
+.wpf-hole-piece.selected { outline: 0.16em solid var(--rojo); outline-offset: -0.16em; }
+/* El recorte conserva su tamaño original: llena el hueco sin tope. */
+.wpf-hole-piece .wpf-token-img {
+  display: block;
+  width: 100%; height: 100%;
+  max-width: none; max-height: none;
+  border-radius: 0;
+  object-fit: fill;
+}
 
 /* ── Casillas (checkbox) ─────────────── */
 /* El campo es solo un ancla transparente; las casillas se colocan sobre la página. */

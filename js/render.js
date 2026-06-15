@@ -644,12 +644,25 @@ const renderers = {
   dragdrop(field, root, ctx) {
     const cfg = field.config;
     const zones = cfg.zones || [];
+    const crops = cfg.mode === 'crops';
+    const pieces = crops ? (cfg.pieces || []) : [];
+    const pieceMap = {};
+    pieces.forEach(p => { pieceMap[p.id] = p; });
+
     const zoneAnswers = z => Array.isArray(z.answers) && z.answers.length
       ? z.answers.map(String) : z.answer ? [String(z.answer)] : [];
-    const tokens = zones.flatMap(zoneAnswers).concat(cfg.distractors || []);
+
+    // Tokens arrastrables: ids de pieza (modo recorte) o etiquetas (modo clásico).
+    const tokens = crops
+      ? pieces.map(p => p.id)
+      : zones.flatMap(zoneAnswers).concat(cfg.distractors || []);
     const tokenOrder = shuffledIndices(tokens.length, ctx.rng);
 
     function tokenImgUrl(label) {
+      if (crops) {
+        const p = pieceMap[label];
+        return p && ctx.fileUrl ? (ctx.fileUrl(p.src) || null) : null;
+      }
       if (!label.startsWith('dtokens/') || !ctx.fileUrl) return null;
       return ctx.fileUrl(label) || null;
     }
@@ -657,12 +670,20 @@ const renderers = {
       const url = tokenImgUrl(label);
       if (url) {
         const img = document.createElement('img');
-        img.src = url; img.alt = label; img.className = 'wpf-token-img';
+        img.src = url; img.alt = crops ? '' : label; img.className = 'wpf-token-img';
         return img;
       }
       return document.createTextNode(label);
     }
     function hasImg(label) { return Boolean(tokenImgUrl(label)); }
+
+    // Tokens correctos para una zona (por nombre en modo clásico, por pieza
+    // asignada en modo recorte).
+    function correctTokens(z) {
+      return crops
+        ? pieces.filter(p => p.zoneId === z.id).map(p => p.id)
+        : zoneAnswers(z);
+    }
 
     // assignment: zoneId → string[]
     const assignment = {};
@@ -671,11 +692,7 @@ const renderers = {
     let dragToken = null;
     let disabled = false;
 
-    root.classList.add('wpf-tray');
-    const trayBox = el('div', { class: 'wpf-tray-tokens' });
-    root.appendChild(trayBox);
-
-    // Devuelve un token a la bandeja eliminándolo de donde esté.
+    // Devuelve un token a su origen eliminándolo de donde esté.
     function releaseToken(tk) {
       for (const id of Object.keys(assignment)) {
         assignment[id] = assignment[id].filter(t => t !== tk);
@@ -686,6 +703,62 @@ const renderers = {
     function placeToken(tk, zoneId) {
       releaseToken(tk);
       assignment[zoneId] = [...assignment[zoneId], tk];
+    }
+
+    function usedTokens() {
+      return new Set(Object.values(assignment).flat());
+    }
+
+    // --- Zona de partida: bandeja (clásico) o huecos sobre la página (recorte) ---
+    let trayBox = null;
+    const homeEls = {};
+    if (crops) {
+      root.classList.add('wpf-crops-host');
+      pieces.forEach(p => {
+        const hEl = el('div', { class: 'wpf-hole', dataset: { piece: p.id } });
+        positionRect(hEl, p.rect);
+        hEl.style.setProperty('--fs', field.fontScale || 1);
+        hEl.style.setProperty('--field-bg', cfg.holeColor || '#ffffff');
+        // Soltar cualquier pieza sobre un hueco la devuelve a su origen.
+        hEl.addEventListener('dragover', e => {
+          if (disabled || !dragToken) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          hEl.classList.add('drag-over');
+        });
+        hEl.addEventListener('dragleave', e => {
+          if (!hEl.contains(e.relatedTarget)) hEl.classList.remove('drag-over');
+        });
+        hEl.addEventListener('drop', e => {
+          e.preventDefault();
+          hEl.classList.remove('drag-over');
+          if (disabled || !dragToken) return;
+          releaseToken(dragToken);
+          dragToken = null; selectedToken = null;
+          paint(); notify(ctx);
+        });
+        hEl.addEventListener('click', () => {
+          if (disabled || selectedToken === null) return;
+          releaseToken(selectedToken);
+          selectedToken = null;
+          paint(); notify(ctx);
+        });
+        root.parentElement.appendChild(hEl);
+        homeEls[p.id] = hEl;
+      });
+    } else {
+      root.classList.add('wpf-tray');
+      trayBox = el('div', { class: 'wpf-tray-tokens' });
+      root.appendChild(trayBox);
+      // Permite soltar un token en la bandeja para devolverlo.
+      trayBox.addEventListener('dragover', e => { if (!disabled && dragToken) e.preventDefault(); });
+      trayBox.addEventListener('drop', e => {
+        e.preventDefault();
+        if (disabled || !dragToken) return;
+        releaseToken(dragToken);
+        dragToken = null; selectedToken = null;
+        paint(); notify(ctx);
+      });
     }
 
     // Las zonas de destino se colocan directamente sobre la página.
@@ -726,18 +799,29 @@ const renderers = {
       zoneEls[z.id] = zEl;
     });
 
-    // Permite soltar un token en la bandeja para devolverlo.
-    trayBox.addEventListener('dragover', e => { if (!disabled && dragToken) e.preventDefault(); });
-    trayBox.addEventListener('drop', e => {
-      e.preventDefault();
-      if (disabled || !dragToken) return;
-      releaseToken(dragToken);
-      dragToken = null; selectedToken = null;
-      paint(); notify(ctx);
-    });
-
-    function usedTokens() {
-      return new Set(Object.values(assignment).flat());
+    // Añade los manejadores de arrastre comunes a un chip/botón de token.
+    function wireDrag(btn, tk) {
+      btn.addEventListener('dragstart', e => {
+        e.stopPropagation();
+        dragToken = tk; selectedToken = null;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', tk);
+        // Imagen de arrastre explícita: con la imagen del hueco a tamaño
+        // completo (y dimensiones en %), el "fantasma" por defecto no se
+        // genera bien en el primer arrastre. Fijarla lo soluciona.
+        const im = btn.querySelector('img');
+        if (im) {
+          const w = im.clientWidth || im.naturalWidth || 1;
+          const h = im.clientHeight || im.naturalHeight || 1;
+          try { e.dataTransfer.setDragImage(im, w / 2, h / 2); } catch (_) {}
+        }
+        requestAnimationFrame(() => btn.classList.add('dragging'));
+      });
+      btn.addEventListener('dragend', () => {
+        dragToken = null;
+        btn.classList.remove('dragging');
+        paint();
+      });
     }
 
     function makeTokenBtn(tk, opts = {}) {
@@ -746,41 +830,58 @@ const renderers = {
       btn.appendChild(tokenContent(tk));
       if (opts.selected) btn.classList.add('selected');
       btn.disabled = disabled;
-
       btn.addEventListener('click', () => {
         if (disabled) return;
         selectedToken = selectedToken === tk ? null : tk;
         paint();
       });
-      btn.addEventListener('dragstart', e => {
-        dragToken = tk; selectedToken = null;
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', tk);
-        requestAnimationFrame(() => btn.classList.add('dragging'));
-      });
-      btn.addEventListener('dragend', () => {
-        dragToken = null;
-        btn.classList.remove('dragging');
+      wireDrag(btn, tk);
+      return btn;
+    }
+
+    // Pieza descansando en su hueco de origen (modo recorte).
+    function makeHomeChip(tk) {
+      const btn = el('button', { class: 'wpf-hole-piece', type: 'button', draggable: 'true', dataset: { label: tk } });
+      btn.appendChild(tokenContent(tk));
+      if (selectedToken === tk) btn.classList.add('selected');
+      btn.disabled = disabled;
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (disabled) return;
+        selectedToken = selectedToken === tk ? null : tk;
         paint();
       });
+      wireDrag(btn, tk);
       return btn;
     }
 
     function paint() {
-      trayBox.textContent = '';
       const used = usedTokens();
-      tokenOrder.forEach(ti => {
-        const tk = tokens[ti];
-        if (used.has(tk)) return;
-        trayBox.appendChild(makeTokenBtn(tk, { selected: selectedToken === tk }));
-      });
+      if (trayBox) {
+        trayBox.textContent = '';
+        tokenOrder.forEach(ti => {
+          const tk = tokens[ti];
+          if (used.has(tk)) return;
+          trayBox.appendChild(makeTokenBtn(tk, { selected: selectedToken === tk }));
+        });
+      }
+      if (crops) {
+        pieces.forEach(p => {
+          const hEl = homeEls[p.id];
+          hEl.textContent = '';
+          const atHome = !used.has(p.id);
+          hEl.classList.toggle('empty', !atHome);
+          hEl.classList.toggle('armed', !atHome && selectedToken !== null);
+          if (atHome) hEl.appendChild(makeHomeChip(p.id));
+        });
+      }
 
       zones.forEach(z => {
         const zEl = zoneEls[z.id];
         zEl.textContent = '';
         assignment[z.id].forEach(tk => {
           const chipCls = 'wpf-zone-chip' + (hasImg(tk) ? ' has-img' : '');
-          const chip = el('button', { class: chipCls, type: 'button', draggable: 'true', title: tk, dataset: { label: tk } });
+          const chip = el('button', { class: chipCls, type: 'button', draggable: 'true', title: crops ? '' : tk, dataset: { label: tk } });
           chip.appendChild(tokenContent(tk));
           chip.disabled = disabled;
 
@@ -791,18 +892,7 @@ const renderers = {
             if (selectedToken === tk) selectedToken = null;
             paint(); notify(ctx);
           });
-          // Drag desde la zona.
-          chip.addEventListener('dragstart', e => {
-            e.stopPropagation();
-            dragToken = tk; selectedToken = null;
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', tk);
-            requestAnimationFrame(() => chip.classList.add('dragging'));
-          });
-          chip.addEventListener('dragend', () => {
-            dragToken = null;
-            paint();
-          });
+          wireDrag(chip, tk);
           zEl.appendChild(chip);
         });
         zEl.classList.toggle('filled', assignment[z.id].length > 0);
@@ -830,13 +920,20 @@ const renderers = {
       setDisabled: b => { disabled = b; selectedToken = null; paint(); },
       markDetail() {
         zones.forEach(z => {
-          const correct = zoneAnswers(z);
+          const correct = correctTokens(z);
           const zEl = zoneEls[z.id];
           zEl.querySelectorAll('.wpf-zone-chip').forEach(chip => {
             chip.classList.add(correct.includes(chip.dataset.label) ? 'mark-ok' : 'mark-ko');
           });
-          if (!assignment[z.id].length) zEl.classList.add('mark-ko');
+          if (!assignment[z.id].length && correct.length) zEl.classList.add('mark-ko');
         });
+        if (crops) {
+          const used = usedTokens();
+          // Pieza que debía colocarse y sigue en su hueco: incompleta.
+          pieces.forEach(p => {
+            if (p.zoneId && !used.has(p.id)) homeEls[p.id]?.classList.add('mark-ko');
+          });
+        }
       }
     };
   },

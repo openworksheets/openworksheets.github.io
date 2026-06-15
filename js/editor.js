@@ -101,6 +101,7 @@ function renderPalette() {
       btn.addEventListener('click', () => {
         state.activeTool = state.activeTool === type ? null : type;
         if (state.activeTool) state.sel = null;
+        state.pendingPieceZone = null;
         refreshPaletteState();
         renderPanel();
         if (state.activeTool && !state.manifest.pages.length) {
@@ -442,9 +443,12 @@ function renderCanvas() {
       pageEl.appendChild(box);
 
       if (field.type === 'dragdrop') {
-        (field.config.zones || []).forEach(zone => {
-          const zChipText = Array.isArray(zone.answers) && zone.answers.length
-            ? firstAnswerLabel(zone.answers) : (zone.answer || 'zona');
+        const crops = field.config.mode === 'crops';
+        (field.config.zones || []).forEach((zone, zi) => {
+          const zChipText = crops
+            ? zoneDisplayName(zone, zi)
+            : (Array.isArray(zone.answers) && zone.answers.length
+              ? firstAnswerLabel(zone.answers) : (zone.answer || 'zona'));
           const zEl = el('div', { class: 'ed-zone', dataset: { id: zone.id } },
             el('span', { class: 'chip' }, zChipText),
             el('span', { class: 'handle' }));
@@ -455,6 +459,22 @@ function renderCanvas() {
           });
           pageEl.appendChild(zEl);
         });
+        if (crops) {
+          (field.config.pieces || []).forEach(piece => {
+            const pEl = el('div', { class: 'ed-piece', dataset: { id: piece.id } },
+              state.files.has(piece.src)
+                ? el('img', { class: 'ed-piece-img', src: fileUrl(piece.src), alt: '', draggable: 'false' })
+                : null,
+              el('span', { class: 'handle' }));
+            setRectStyle(pEl, piece.rect);
+            attachBoxInteraction(pEl, pageEl, piece.rect, {
+              onSelect: () => selectPiece(pi, field.id, piece.id),
+              isSelected: () => state.sel?.kind === 'piece' && state.sel.pieceId === piece.id,
+              onChange: () => recropPiece(pi, field.id, piece.id)
+            });
+            pageEl.appendChild(pEl);
+          });
+        }
       }
 
       if (field.type === 'arrowmatch') {
@@ -530,9 +550,10 @@ function setRectStyle(node, rect) {
 }
 
 function refreshSelectionStyles() {
-  canvas.querySelectorAll('.ed-field, .ed-zone, .ed-amitem, .ed-cbbox, .ed-tbbox').forEach(n => n.classList.remove('selected'));
+  canvas.querySelectorAll('.ed-field, .ed-zone, .ed-piece, .ed-amitem, .ed-cbbox, .ed-tbbox').forEach(n => n.classList.remove('selected'));
   if (!state.sel) return;
   const id = state.sel.kind === 'zone' ? state.sel.zoneId
+    : state.sel.kind === 'piece' ? state.sel.pieceId
     : state.sel.kind === 'amitem' ? state.sel.amItemId
     : state.sel.kind === 'cbbox' ? state.sel.cbBoxId
     : state.sel.kind === 'tbbox' ? state.sel.tbBoxId
@@ -550,7 +571,7 @@ function pageContentSize(pageEl) {
 }
 
 // Mover y redimensionar un rectángulo (campo o zona).
-function attachBoxInteraction(box, pageEl, rect, { onSelect, isSelected }) {
+function attachBoxInteraction(box, pageEl, rect, { onSelect, isSelected, onChange }) {
   box.addEventListener('pointerdown', e => {
     if (state.activeTool || state.pendingAmItem) return; // en modo dibujo, la página gestiona el evento
     e.stopPropagation();
@@ -580,7 +601,7 @@ function attachBoxInteraction(box, pageEl, rect, { onSelect, isSelected }) {
     function onUp() {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
-      if (moved) markDirty();
+      if (moved) { markDirty(); if (onChange) onChange(); }
     }
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
@@ -692,6 +713,9 @@ function attachDrawInteraction(pageEl, pi) {
           r = { x: clamp(x0 - def.w / 2, 0, 1 - def.w), y: clamp(y0 - def.h / 2, 0, 1 - def.h), w: def.w, h: def.h };
         }
         createTbBox(pi, r);
+      } else if (tool === 'piece') {
+        if (r.w < 0.015 || r.h < 0.01) { toast(t('toast.pieceTooSmall'), 'error'); renderCanvas(); return; }
+        createPiece(pi, r);
       } else {
         const def = FIELD_TYPES[tool].defRect;
         if (r.w < 0.02 || r.h < 0.015) {
@@ -791,6 +815,14 @@ function createTbBox(pi, rect) {
   selectTbBox(pi, field.id, box.id);
 }
 
+// Activa la herramienta de dibujo de zona (flujo continuo desde el panel).
+function startZoneTool() {
+  state.activeTool = 'zone';
+  refreshPaletteState();
+  canvas.classList.add('drawing');
+  toast(t('toast.drawZoneTip'));
+}
+
 function createZone(pi, rect) {
   const field = state.sel ? getField(state.sel.pageIndex, state.sel.fieldId) : null;
   if (!field || field.type !== 'dragdrop' || state.sel.pageIndex !== pi) {
@@ -803,6 +835,71 @@ function createZone(pi, rect) {
   markDirty();
   renderCanvas();
   selectZone(pi, field.id, zone.id);
+}
+
+// Carga la imagen de fondo de una página y recorta la región indicada
+// (en fracciones de página) devolviendo un blob PNG.
+function loadImageEl(src) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => res(img);
+    img.onerror = rej;
+    img.src = src;
+  });
+}
+
+async function cropPageRegion(pi, rect) {
+  const page = state.manifest.pages[pi];
+  if (!page) return null;
+  const img = await loadImageEl(fileUrl(page.image));
+  const sx = Math.round(rect.x * img.naturalWidth);
+  const sy = Math.round(rect.y * img.naturalHeight);
+  const sw = Math.max(1, Math.round(rect.w * img.naturalWidth));
+  const sh = Math.max(1, Math.round(rect.h * img.naturalHeight));
+  const c = document.createElement('canvas');
+  c.width = sw; c.height = sh;
+  c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+  return await new Promise(res => c.toBlob(res, 'image/png'));
+}
+
+// Marca un recorte del PDF como pieza arrastrable (modo "crops" de dragdrop).
+async function createPiece(pi, rect) {
+  const field = state.sel ? getField(state.sel.pageIndex, state.sel.fieldId) : null;
+  if (!field || field.type !== 'dragdrop' || field.config.mode !== 'crops' || state.sel.pageIndex !== pi) {
+    toast(t('toast.selectDragFirst'), 'error');
+    renderCanvas();
+    return;
+  }
+  const blob = await cropPageRegion(pi, rect);
+  if (!blob) { renderCanvas(); return; }
+  const path = 'dtokens/' + uid() + '.png';
+  state.files.set(path, blob);
+  if (!Array.isArray(field.config.pieces)) field.config.pieces = [];
+  // La pieza se recorta desde el panel de una zona y queda asignada a ella.
+  const targetZone = state.pendingPieceZone || '';
+  state.pendingPieceZone = null;
+  const piece = { id: uid('p'), src: path, rect, zoneId: targetZone };
+  field.config.pieces.push(piece);
+  markDirty();
+  renderCanvas();
+  if (targetZone && field.config.zones.some(z => z.id === targetZone)) {
+    selectZone(pi, field.id, targetZone); // seguir en el panel de la zona
+  } else {
+    selectPiece(pi, field.id, piece.id);
+  }
+}
+
+// Vuelve a recortar la imagen de una pieza tras moverla o redimensionarla.
+async function recropPiece(pi, fieldId, pieceId) {
+  const field = getField(pi, fieldId);
+  const piece = (field?.config.pieces || []).find(p => p.id === pieceId);
+  if (!piece) return;
+  const blob = await cropPageRegion(pi, piece.rect);
+  if (!blob) return;
+  urls.delete(piece.src);
+  state.files.set(piece.src, blob);
+  markDirty();
+  renderCanvas();
 }
 
 function getField(pi, fieldId) {
@@ -827,6 +924,12 @@ function selectAmItem(pi, fieldId, amItemId) {
   renderPanel(); // muestra el panel del campo (pairs list)
 }
 
+function selectPiece(pi, fieldId, pieceId) {
+  state.sel = { kind: 'piece', pageIndex: pi, fieldId, pieceId };
+  refreshSelectionStyles();
+  renderPanel(); // muestra el panel del campo (lista de piezas)
+}
+
 function selectCbBox(pi, fieldId, cbBoxId) {
   state.sel = { kind: 'cbbox', pageIndex: pi, fieldId, cbBoxId };
   refreshSelectionStyles();
@@ -845,6 +948,13 @@ function deleteSelected() {
   if (!field) return;
   if (state.sel.kind === 'zone') {
     field.config.zones = field.config.zones.filter(z => z.id !== state.sel.zoneId);
+    // Las piezas que apuntaban a esta zona quedan sin destino (distractoras).
+    (field.config.pieces || []).forEach(p => { if (p.zoneId === state.sel.zoneId) p.zoneId = ''; });
+    state.sel = { kind: 'field', pageIndex: state.sel.pageIndex, fieldId: field.id };
+  } else if (state.sel.kind === 'piece') {
+    const piece = (field.config.pieces || []).find(p => p.id === state.sel.pieceId);
+    if (piece?.src) { urls.delete(piece.src); state.files.delete(piece.src); }
+    field.config.pieces = (field.config.pieces || []).filter(p => p.id !== state.sel.pieceId);
     state.sel = { kind: 'field', pageIndex: state.sel.pageIndex, fieldId: field.id };
   } else if (state.sel.kind === 'amitem') {
     const item = (field.config.items || []).find(i => i.id === state.sel.amItemId);
@@ -890,11 +1000,30 @@ function cloneField(field, offset = 0) {
     y: clamp(copy.rect.y + offset, 0, 1 - copy.rect.h)
   };
   if (copy.type === 'dragdrop') {
-    copy.config.zones = copy.config.zones.map(z => ({
-      ...z,
-      id: uid('z'),
-      rect: { ...z.rect, x: clamp(z.rect.x + offset, 0, 1 - z.rect.w), y: clamp(z.rect.y + offset, 0, 1 - z.rect.h) }
-    }));
+    const zoneIdMap = {};
+    copy.config.zones = copy.config.zones.map(z => {
+      const nid = uid('z');
+      zoneIdMap[z.id] = nid;
+      return {
+        ...z,
+        id: nid,
+        rect: { ...z.rect, x: clamp(z.rect.x + offset, 0, 1 - z.rect.w), y: clamp(z.rect.y + offset, 0, 1 - z.rect.h) }
+      };
+    });
+    if (copy.config.mode === 'crops') {
+      copy.config.pieces = (copy.config.pieces || []).map(p => {
+        const blob = state.files.get(p.src);
+        let nsrc = p.src;
+        if (blob) { nsrc = 'dtokens/' + uid() + '.png'; state.files.set(nsrc, blob); }
+        return {
+          ...p,
+          id: uid('p'),
+          src: nsrc,
+          zoneId: zoneIdMap[p.zoneId] || '',
+          rect: { ...p.rect, x: clamp(p.rect.x + offset, 0, 1 - p.rect.w), y: clamp(p.rect.y + offset, 0, 1 - p.rect.h) }
+        };
+      });
+    }
   }
   if (copy.type === 'arrowmatch') {
     copy.config.items = (copy.config.items || []).map(i => ({ ...i, id: uid('ai') }));
@@ -983,13 +1112,15 @@ document.addEventListener('keydown', e => {
   if (!field) return;
   const rect = state.sel.kind === 'zone'
     ? field.config.zones.find(z => z.id === state.sel.zoneId)?.rect
-    : state.sel.kind === 'amitem'
-      ? (field.config.items || []).find(i => i.id === state.sel.amItemId)?.rect
-      : state.sel.kind === 'cbbox'
-        ? (field.config.boxes || []).find(b => b.id === state.sel.cbBoxId)?.rect
-        : state.sel.kind === 'tbbox'
-          ? (field.config.boxes || []).find(b => b.id === state.sel.tbBoxId)?.rect
-          : field.rect;
+    : state.sel.kind === 'piece'
+      ? (field.config.pieces || []).find(p => p.id === state.sel.pieceId)?.rect
+      : state.sel.kind === 'amitem'
+        ? (field.config.items || []).find(i => i.id === state.sel.amItemId)?.rect
+        : state.sel.kind === 'cbbox'
+          ? (field.config.boxes || []).find(b => b.id === state.sel.cbBoxId)?.rect
+          : state.sel.kind === 'tbbox'
+            ? (field.config.boxes || []).find(b => b.id === state.sel.tbBoxId)?.rect
+            : field.rect;
   if (!rect) return;
 
   if (e.key === 'Delete' || e.key === 'Backspace') {
@@ -1004,12 +1135,14 @@ document.addEventListener('keydown', e => {
     if (e.key === 'ArrowDown') rect.y = clamp(rect.y + step, 0, 1 - rect.h);
     markDirty();
     const id = state.sel.kind === 'zone' ? state.sel.zoneId
+      : state.sel.kind === 'piece' ? state.sel.pieceId
       : state.sel.kind === 'amitem' ? state.sel.amItemId
       : state.sel.kind === 'cbbox' ? state.sel.cbBoxId
       : state.sel.kind === 'tbbox' ? state.sel.tbBoxId
       : state.sel.fieldId;
     const node = canvas.querySelector(`[data-id="${id}"]`);
     if (node) setRectStyle(node, rect);
+    if (state.sel.kind === 'piece') recropPiece(state.sel.pageIndex, field.id, state.sel.pieceId);
   } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
     e.preventDefault();
     duplicateSelected();
@@ -1156,8 +1289,35 @@ function renderFieldPanel(field) {
     el('span', { class: 'tipo-chip' }, fieldTypeName(field.type)),
     t('editor.fieldConfig')));
 
+  // "Arrastrar a zonas": antes de mostrar las opciones, el usuario elige el
+  // medio (escribir etiquetas o recortar del PDF). Hasta entonces no se muestra
+  // nada más, para evitar confusiones. Las fichas anteriores se infieren.
+  if (field.type === 'dragdrop') {
+    const cfg = field.config;
+    if (!Array.isArray(cfg.pieces)) cfg.pieces = [];
+    if (!Array.isArray(cfg.distractors)) cfg.distractors = [];
+    if (cfg.mode === undefined) {
+      const hasLabels = (cfg.zones || []).some(z => Array.isArray(z.answers) && z.answers.some(Boolean)) || cfg.distractors.some(Boolean);
+      cfg.mode = hasLabels ? 'labels' : (cfg.pieces.length ? 'crops' : '');
+    }
+    if (cfg.mode !== 'labels' && cfg.mode !== 'crops') {
+      cont.appendChild(el('p', { class: 'cfg-hint' }, t('cfg.dragdropChooseIntro')));
+      const pick = m => { cfg.mode = m; markDirty(); renderPanel(); renderCanvas(); };
+      cont.appendChild(el('div', { class: 'ed-mode-choice' },
+        modeChoiceCard(t('cfg.dragdropLabelsTitle'), t('cfg.dragdropHintLabels'), () => pick('labels')),
+        modeChoiceCard(t('cfg.dragdropCropsTitle'), t('cfg.dragdropHintCrops'), () => pick('crops'))));
+      cont.appendChild(el('div', { class: 'ed-acciones' },
+        iconBtn({ class: 'btn small danger', onclick: deleteSelected }, ICONS.trash, t('editor.delete'))));
+      panel.appendChild(cont);
+      return;
+    }
+  }
+
   const decor = Boolean(FIELD_TYPES[field.type]?.decor);
   const interactive = !decor && !isShapeField(field.type) && field.type !== 'cover';
+  // En "arrastrar a zonas" modo recorte, las piezas son imágenes: el color de
+  // texto y el fondo de la bandeja no aplican (el hueco tiene su propio color).
+  const dragCrops = field.type === 'dragdrop' && field.config.mode === 'crops';
 
   // Puntuación
   if (!decor) {
@@ -1214,7 +1374,8 @@ function renderFieldPanel(field) {
     iconBtn({ class: 'btn small', onclick: duplicateSelected }, ICONS.copyPlus, t('editor.duplicate')),
     iconBtn({ class: 'btn small danger', onclick: deleteSelected }, ICONS.trash, t('editor.delete'))));
 
-  // Acordeón de diseño (tamaño/color de texto y fondo — no para image ni label, que gestionan esto inline)
+  // Acordeón de diseño (tamaño/color de texto y fondo — no para image ni label, que gestionan esto inline).
+  // En modo recorte solo contiene el color del hueco (los recortes conservan su tamaño y color originales).
   const hasDesign = (field.type !== 'cover' && field.type !== 'image' && field.type !== 'label' && !isShapeField(field.type)) || interactive;
   if (hasDesign) {
     const accordion = el('div', { class: 'ed-accordion' });
@@ -1229,8 +1390,19 @@ function renderFieldPanel(field) {
     accordion.appendChild(toggle);
     accordion.appendChild(bodyOuter);
 
+    // Modo recorte: el único ajuste de diseño es el color del hueco vacío.
+    if (dragCrops) {
+      const cfg = field.config;
+      body.appendChild(el('label', { class: 'f-label' }, t('cfg.holeColor')));
+      const { wrap: holeColorWrap } = colorInput(cfg.holeColor || '#ffffff', v => {
+        cfg.holeColor = v;
+        markDirty();
+      });
+      body.appendChild(holeColorWrap);
+    }
+
     // Texto: tamaño + color
-    if (field.type !== 'cover' && !isShapeField(field.type)) {
+    if (!dragCrops && field.type !== 'cover' && !isShapeField(field.type)) {
       const fsVal = field.fontScale || 1;
       const fsRange = el('input', { type: 'range', min: '0.6', max: '5', step: '0.1', value: String(fsVal) });
       const fsNum = el('input', { type: 'number', min: '0.1', max: '20', step: '0.1', value: String(fsVal), style: 'width:72px' });
@@ -1259,8 +1431,8 @@ function renderFieldPanel(field) {
       }
     }
 
-    // Fondo: color + opacidad (solo campos interactivos)
-    if (interactive) {
+    // Fondo: color + opacidad (solo campos interactivos; no en modo recorte)
+    if (interactive && !dragCrops) {
       const cfg = field.config;
       const applyFieldBg = () => {
         const hex = cfg.bg || '#fffdf8';
@@ -1299,6 +1471,65 @@ function renderFieldPanel(field) {
 function renderZonePanel(field) {
   const zone = field.config.zones.find(z => z.id === state.sel.zoneId);
   if (!zone) { state.sel = { kind: 'field', pageIndex: state.sel.pageIndex, fieldId: field.id }; renderFieldPanel(field); return; }
+
+  // En modo "recortar del PDF" la zona lleva un nombre opcional y, en el mismo
+  // sitio, los recortes del PDF que el alumnado debe traer hasta ella.
+  if (field.config.mode === 'crops') {
+    if (!Array.isArray(field.config.pieces)) field.config.pieces = [];
+    const zi = field.config.zones.indexOf(zone);
+    const cont = el('div', {});
+    cont.appendChild(el('h3', {},
+      el('span', { class: 'tipo-chip' }, t('editor.zoneChip')),
+      t('editor.zoneTitle')));
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.zoneName')));
+    const nameInp = el('input', { type: 'text', value: zone.name || '', placeholder: t('cfg.zoneN', { n: zi + 1 }) });
+    nameInp.addEventListener('input', () => {
+      zone.name = nameInp.value;
+      const chip = canvas.querySelector(`.ed-zone[data-id="${zone.id}"] .chip`);
+      if (chip) chip.textContent = zoneDisplayName(zone, zi);
+      markDirty();
+    });
+    cont.appendChild(nameInp);
+
+    // Recortes que pertenecen a esta zona.
+    const zonePieces = () => (field.config.pieces || []).filter(p => p.zoneId === zone.id);
+    optionListEditor(cont, {
+      label: t('cfg.zonePieces'),
+      items: zonePieces,
+      render: (row, piece) => {
+        const cell = state.files.has(piece.src)
+          ? el('img', { src: fileUrl(piece.src), class: 'tok-thumb', alt: '🖼' })
+          : el('span', {}, '🖼');
+        row.appendChild(cell);
+      },
+      add: () => {
+        state.pendingPieceZone = zone.id;
+        state.activeTool = 'piece';
+        refreshPaletteState();
+        canvas.classList.add('drawing');
+        toast(t('toast.drawPieceTip'));
+      },
+      remove: i => {
+        const p = zonePieces()[i];
+        if (p?.src) { urls.delete(p.src); state.files.delete(p.src); }
+        field.config.pieces = field.config.pieces.filter(x => x.id !== p.id);
+        renderCanvas();
+      },
+      addLabel: t('cfg.drawPieceZone'),
+      min: 0
+    });
+
+    cont.appendChild(el('p', { class: 'cfg-hint' }, t('editor.zoneHintCrops')));
+    const addZoneBtn = el('button', { class: 'btn small add-row', type: 'button' }, t('cfg.addAnotherZone'));
+    addZoneBtn.addEventListener('click', startZoneTool);
+    cont.appendChild(addZoneBtn);
+    cont.appendChild(el('div', { class: 'ed-acciones' },
+      iconBtn({ class: 'btn small', onclick: () => selectField(state.sel.pageIndex, field.id) }, ICONS.arrowLeft, t('editor.backToField')),
+      iconBtn({ class: 'btn small danger', onclick: deleteSelected }, ICONS.trash, t('editor.deleteZone'))));
+    panel.appendChild(cont);
+    return;
+  }
+
   // Normaliza formato antiguo (answer: string) → nuevo (answers: string[])
   if (!Array.isArray(zone.answers)) {
     zone.answers = zone.answer ? [String(zone.answer)] : [''];
@@ -1362,6 +1593,9 @@ function renderZonePanel(field) {
   });
   cont.appendChild(el('p', { style: 'font-size:.85rem;color:var(--tinta-suave);margin-top:8px' },
     t('editor.zoneHint')));
+  const addZoneBtn = el('button', { class: 'btn small add-row', type: 'button' }, t('cfg.addAnotherZone'));
+  addZoneBtn.addEventListener('click', startZoneTool);
+  cont.appendChild(addZoneBtn);
   cont.appendChild(el('div', { class: 'ed-acciones' },
     iconBtn({ class: 'btn small', onclick: () => selectField(state.sel.pageIndex, field.id) }, ICONS.arrowLeft, t('editor.backToField')),
     iconBtn({ class: 'btn small danger', onclick: deleteSelected }, ICONS.trash, t('editor.deleteZone'))));
@@ -2023,16 +2257,39 @@ const configForms = {
 
   dragdrop(cont, field) {
     const cfg = field.config;
+    if (!Array.isArray(cfg.pieces)) cfg.pieces = [];
+    // El medio ya se eligió (renderFieldPanel filtra el caso sin elegir).
+    const crops = cfg.mode === 'crops';
 
+    // Cabecera con el medio elegido y opción de cambiarlo.
+    const head = el('div', { class: 'ed-mode-head' },
+      el('span', { class: 'ed-mode-head-label' },
+        t('cfg.dragdropModeLabel') + ': ',
+        el('strong', {}, crops ? t('cfg.dragdropCropsTitle') : t('cfg.dragdropLabelsTitle'))));
+    const changeBtn = el('button', { class: 'btn small ghost', type: 'button' }, t('cfg.dragdropChangeMode'));
+    changeBtn.addEventListener('click', () => { cfg.mode = ''; markDirty(); renderPanel(); renderCanvas(); });
+    head.appendChild(changeBtn);
+    cont.appendChild(head);
+
+    // Zonas de destino (común a ambos modos).
     cont.appendChild(el('div', { class: 'zona-bloque' },
-      t('cfg.dragdropZones', { n: cfg.zones.length })));
+      crops ? t('cfg.dragdropZonesCrops', { n: cfg.zones.length }) : t('cfg.dragdropZones', { n: cfg.zones.length })));
     optionListEditor(cont, {
-      label: t('cfg.zoneLabels'),
+      label: crops ? t('cfg.zonesCrops') : t('cfg.zoneLabels'),
       items: () => cfg.zones,
-      render: (row, zone) => {
+      render: (row, zone, zi) => {
         if (!Array.isArray(zone.answers)) {
           zone.answers = zone.answer ? [String(zone.answer)] : [''];
           delete zone.answer;
+        }
+        if (crops) {
+          // El resumen abre la zona, donde se marcan sus recortes.
+          const n = (cfg.pieces || []).filter(p => p.zoneId === zone.id).length;
+          const summary = el('button', { class: 'zone-summary', type: 'button' },
+            zoneDisplayName(zone, zi) + (n ? ` · ${n} 🖼` : ''));
+          summary.addEventListener('click', () => selectZone(state.sel.pageIndex, field.id, zone.id));
+          row.appendChild(summary);
+          return;
         }
         const textAnswers = zone.answers.filter(a => a && !a.startsWith('dtokens/'));
         const imgAnswers  = zone.answers.filter(a => a.startsWith('dtokens/'));
@@ -2045,36 +2302,63 @@ const configForms = {
           if (state.files.has(p)) row.appendChild(el('img', { src: fileUrl(p), class: 'tok-thumb-xs', alt: '🖼', title: p }));
         });
       },
-      add: () => {
-        state.activeTool = 'zone';
-        refreshPaletteState();
-        canvas.classList.add('drawing');
-        toast(t('toast.drawZoneTip'));
-      },
+      add: startZoneTool,
       remove: i => {
+        const zid = cfg.zones[i]?.id;
         cfg.zones.splice(i, 1);
+        (cfg.pieces || []).forEach(p => { if (p.zoneId === zid) p.zoneId = ''; });
         renderCanvas();
       },
       addLabel: t('cfg.drawZone'),
       min: 0
     });
 
-    optionListEditor(cont, {
-      label: t('cfg.dragDistractors'),
-      items: () => cfg.distractors,
-      render: (row, item, i) => row.appendChild(textCell(item, v => { cfg.distractors[i] = v; }, t('cfg.dragDistractorPlaceholder'))),
-      add: () => cfg.distractors.push(''),
-      remove: i => cfg.distractors.splice(i, 1),
-      addLabel: t('cfg.addDragDistractor'),
-      min: 0
-    });
+    if (crops) {
+      // Los recortes se marcan dentro de cada zona (igual que las etiquetas se
+      // escriben dentro de cada zona en el modo clásico): abre una zona arriba.
+      // El color del hueco vacío está en la sección «Diseño».
+      cont.appendChild(el('p', { class: 'cfg-hint' }, t('cfg.cropsFieldHint')));
+    } else {
+      optionListEditor(cont, {
+        label: t('cfg.dragDistractors'),
+        items: () => cfg.distractors,
+        render: (row, item, i) => row.appendChild(textCell(item, v => { cfg.distractors[i] = v; }, t('cfg.dragDistractorPlaceholder'))),
+        add: () => cfg.distractors.push(''),
+        remove: i => cfg.distractors.splice(i, 1),
+        addLabel: t('cfg.addDragDistractor'),
+        min: 0
+      });
+    }
   }
 };
+
+// Tarjeta de elección de medio para "arrastrar a zonas". Se presenta como una
+// opción seleccionable (círculo tipo radio + flecha) para que se vea que hay
+// que elegir una.
+function modeChoiceCard(title, desc, onClick) {
+  const arrow = el('span', { class: 'ed-mode-card-arrow' });
+  arrow.innerHTML = ICONS.chevronRight;
+  const card = el('button', { class: 'ed-mode-card', type: 'button' },
+    el('span', { class: 'ed-mode-card-radio' }),
+    el('span', { class: 'ed-mode-card-body' },
+      el('span', { class: 'ed-mode-card-title' }, title),
+      el('span', { class: 'ed-mode-card-desc' }, desc)),
+    arrow);
+  card.addEventListener('click', onClick);
+  return card;
+}
 
 // Etiqueta resumida de una zona (primera respuesta o icono de imagen).
 function firstAnswerLabel(answers) {
   const first = (answers || []).find(Boolean) || '';
   return first.startsWith('dtokens/') ? '🖼' : first;
+}
+
+// Nombre visible de una zona en modo "crops": su nombre propio o "Zona N".
+function zoneDisplayName(zone, index) {
+  if (zone.name && zone.name.trim()) return zone.name.trim();
+  const txt = (zone.answers || []).find(a => a && !a.startsWith('dtokens/'));
+  return txt || t('cfg.zoneN', { n: index + 1 });
 }
 
 // Lista de todos los campos de la ficha.
@@ -2258,6 +2542,10 @@ function validate() {
       if (!e || !e.trim()) problems.push(t('validate.noAnswer', { n: pi + 1, type: fieldTypeName(f.type) }));
       if (f.type === 'dragdrop' && !(f.config.zones || []).length) {
         problems.push(t('validate.noZones', { n: pi + 1 }));
+      }
+      if (f.type === 'dragdrop' && f.config.mode === 'crops'
+          && !(f.config.pieces || []).some(pc => pc.zoneId)) {
+        problems.push(t('validate.noPieces', { n: pi + 1 }));
       }
     });
   });

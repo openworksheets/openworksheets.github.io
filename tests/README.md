@@ -30,6 +30,11 @@ pantalla y termina con `__TEST_OK__` o `__TEST_FAIL__`.
   agrupada (acordeón) y las formas de dibujo (línea, flecha, rectángulo,
   elipse): creación, configuración (puntas, relleno) y vista previa
   (`node tests/run_shapes_editor.js`, con el servidor en el puerto 8765).
+- `run_crops_editor.js` — script de puppeteer aparte: modo «recortar del PDF»
+  de «Arrastrar a zonas»: alterna el modo, dibuja una zona, marca un recorte
+  (que recorta la imagen de la página), lo asigna a su zona y, en la vista
+  previa, lo coloca por clic dejando el hueco de origen vacío
+  (`node tests/run_crops_editor.js`, con el servidor en el puerto 8765).
 - `run_zoom.js` — script de puppeteer aparte: zoom de página en el editor
   (botones, Ctrl+rueda) y en el visor del alumno, y transición del acordeón
   de la paleta (`node tests/run_zoom.js`, con el servidor en el puerto 8765).

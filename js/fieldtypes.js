@@ -98,7 +98,11 @@ export const FIELD_TYPES = {
     name: 'Arrastrar a zonas',
     glyph: ICONS.move,
     defRect: { w: 0.4, h: 0.09 },
-    defaults: () => ({ zones: [], distractors: [] })
+    // mode: '' = sin elegir (el editor pregunta el medio al configurar);
+    //       'labels' = etiquetas escritas en una bandeja (clásico);
+    //       'crops'  = recortes marcados sobre el propio PDF, que parten de su
+    //                  sitio y dejan el hueco vacío al arrastrarlos.
+    defaults: () => ({ zones: [], distractors: [], mode: '', pieces: [] })
   },
   arrowmatch: {
     name: 'Unir con flechas',

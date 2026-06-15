@@ -159,13 +159,28 @@ const graders = {
     const zones = cfg.zones || [];
     const given = answer && typeof answer === 'object' ? answer : {};
     if (!zones.length) return { ratio: 0, blank: true };
-    const zoneCorrect = z => Array.isArray(z.answers) && z.answers.length
-      ? z.answers.map(String) : z.answer ? [String(z.answer)] : [];
     const getPlaced = id => {
       const v = given[id];
       return Array.isArray(v) ? v.map(String) : (v ? [String(v)] : []);
     };
     if (zones.every(z => getPlaced(z.id).length === 0)) return { ratio: 0, blank: true };
+
+    // Modo recorte: cada pieza es correcta solo en la zona asignada.
+    if (cfg.mode === 'crops') {
+      const pieces = cfg.pieces || [];
+      const total = pieces.filter(p => p.zoneId).length;
+      let hits = 0;
+      zones.forEach(z => {
+        getPlaced(z.id).forEach(pid => {
+          const p = pieces.find(pc => pc.id === pid);
+          if (p && p.zoneId === z.id) hits++;
+        });
+      });
+      return { ratio: total ? hits / total : 0 };
+    }
+
+    const zoneCorrect = z => Array.isArray(z.answers) && z.answers.length
+      ? z.answers.map(String) : z.answer ? [String(z.answer)] : [];
     let hits = 0, total = 0;
     zones.forEach(z => {
       const correct = zoneCorrect(z);
@@ -204,10 +219,15 @@ export function expectedText(field) {
       const to   = items.find(i => i.id === p.to);
       return `${from?.label || '🖼'} → ${to?.label || '🖼'}`;
     }).join(', ');
-    case 'dragdrop': return (cfg.zones || []).map(z => {
-      const ans = Array.isArray(z.answers) && z.answers.length ? z.answers : z.answer ? [z.answer] : [];
-      return ans.join('+');
-    }).join(', ');
+    case 'dragdrop':
+      if (cfg.mode === 'crops') {
+        const n = (cfg.pieces || []).filter(p => p.zoneId).length;
+        return n ? '🖼 ×' + n : '';
+      }
+      return (cfg.zones || []).map(z => {
+        const ans = Array.isArray(z.answers) && z.answers.length ? z.answers : z.answer ? [z.answer] : [];
+        return ans.join('+');
+      }).join(', ');
     default: return '';
   }
 }
