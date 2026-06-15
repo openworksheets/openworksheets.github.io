@@ -165,6 +165,7 @@ async function addFiles(fileList, insertAt) {
     }
   }
   markDirty();
+  if (insertAt == null) zoomCtl.set(1); // al abrir/añadir un PDF o imágenes, zoom al 100 %
   renderCanvas();
   renderPanel();
 }
@@ -2673,6 +2674,7 @@ async function openZipFile(file) {
     state.activeTool = null;
     titleInput.value = state.manifest.title || '';
     state.dirty = false;
+    zoomCtl.set(1); // al abrir una ficha, zoom al 100 %
     renderCanvas();
     renderPanel();
     refreshPaletteState();
@@ -2746,11 +2748,44 @@ function openPreview() {
   // Abrir la vista previa en la misma página que se está editando.
   scrollPreviewToPage(overlay, pageIndex);
   cerrar.addEventListener('click', () => {
+    // Al volver al editor, situarlo en la misma página que se veía en la previa.
+    const backIndex = currentPreviewPageIndex(overlay);
     state.preview.destroy();
     state.preview = null;
     overlay.remove();
     document.body.style.overflow = '';
+    requestAnimationFrame(() => scrollEditorToPage(backIndex));
   });
+}
+
+// Página más visible en el overlay de la vista previa (centro del área útil,
+// descontando la banda superior fija), para reflejarla al volver al editor.
+function currentPreviewPageIndex(overlay) {
+  const pages = [...overlay.querySelectorAll('.wpf-page')];
+  if (pages.length <= 1) return 0;
+  const oRect = overlay.getBoundingClientRect();
+  const banner = overlay.querySelector('.prev-aviso')?.offsetHeight || 0;
+  const mid = oRect.top + banner + (oRect.height - banner) / 2;
+  let best = 0, bestDist = Infinity;
+  pages.forEach((p, i) => {
+    const r = p.getBoundingClientRect();
+    const dist = mid < r.top ? r.top - mid : (mid > r.bottom ? mid - r.bottom : 0);
+    if (dist < bestDist) { bestDist = dist; best = i; }
+  });
+  return best;
+}
+
+// Desplaza el lienzo del editor hasta la página indicada (descontando la barra
+// de zoom fija superior).
+function scrollEditorToPage(idx) {
+  if (!idx) { canvas.scrollTop = 0; return; }
+  const page = canvas.querySelector(`.wpf-page[data-page="${idx}"]`);
+  if (!page) return;
+  const target = page.closest('.ed-pagebox') || page;
+  const offset = (canvas.querySelector('.ed-zoom-wrap')?.offsetHeight || 0) + 8;
+  const cRect = canvas.getBoundingClientRect();
+  const tRect = target.getBoundingClientRect();
+  canvas.scrollTop += (tRect.top - cRect.top) - offset;
 }
 
 // Página del lienzo de edición más visible (centro del visor), para que la

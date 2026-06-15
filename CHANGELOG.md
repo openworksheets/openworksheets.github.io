@@ -18,7 +18,10 @@ Las versiones publicadas también están en la página de
   mantiene la disposición vertical. En **Ordenar**, los botones de mover pasan a
   ser ◀ / ▶ cuando está en horizontal.
 - La **vista previa** se abre ahora en la misma página que se está editando, en
-  lugar de empezar siempre por la página 1.
+  lugar de empezar siempre por la página 1, y al volver al editor se sitúa en la
+  página que se estaba viendo en la vista previa.
+- Al **abrir una ficha (ZIP)** o **añadir un PDF o imágenes**, el zoom del lienzo
+  se restablece al 100 %.
 
 - Botón **«Ver un ejemplo en el editor»** en la página principal, que abre una
   ficha de ejemplo lista para editar (vía `editor.html?ejemplo=…`, solo rutas
