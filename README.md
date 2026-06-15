@@ -4,7 +4,7 @@ OpenWorksheets es una aplicación web para convertir PDFs o imágenes en fichas 
 
 ## Tipos de campo
 
-Permite crear actividades con respuestas cortas, respuestas numéricas, opción única o múltiple, verdadero/falso, desplegables, huecos, emparejamientos, ordenaciones, arrastrar a zonas y unir con flechas. También incluye elementos de diseño como texto, imágenes, líneas, flechas y formas.
+Permite crear actividades con respuestas cortas, respuestas numéricas, opción única o múltiple, verdadero/falso, desplegables, casillas de verificación, huecos, emparejamientos, ordenaciones, arrastrar a zonas y unir con flechas. También incluye elementos de diseño como texto, imágenes, líneas, flechas y formas.
 
 ## Flujo de trabajo
 
