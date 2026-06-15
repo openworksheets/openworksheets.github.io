@@ -9,6 +9,15 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.6.1] — 2026-06-15
+
+### Corregido
+- Los campos marcados para **no puntuar** ya no generan el aviso de «falta
+  completar la respuesta correcta» al guardar el ZIP. El resto de campos sigue
+  avisando igual que antes.
+
+---
+
 ## [1.6.0] — 2026-06-15
 
 ### Añadido

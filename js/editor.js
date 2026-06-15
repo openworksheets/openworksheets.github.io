@@ -2580,8 +2580,10 @@ function validate() {
   state.manifest.pages.forEach((p, pi) => {
     p.fields.forEach(f => {
       if (FIELD_TYPES[f.type]?.decor) return; // los decorativos no necesitan respuesta
-      const e = expectedText(f);
-      if (!e || !e.trim()) problems.push(t('validate.noAnswer', { n: pi + 1, type: fieldTypeName(f.type) }));
+      if (!f.noScore) { // los que no puntúan no requieren respuesta correcta
+        const e = expectedText(f);
+        if (!e || !e.trim()) problems.push(t('validate.noAnswer', { n: pi + 1, type: fieldTypeName(f.type) }));
+      }
       if (f.type === 'dragdrop' && !(f.config.zones || []).length) {
         problems.push(t('validate.noZones', { n: pi + 1 }));
       }
