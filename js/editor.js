@@ -12,37 +12,19 @@ import { t, getLang, applyI18n, initLangSelector } from './i18n.js';
 import { ICONS } from './icons.js';
 import { createSubmissionCrypto, decryptManifestForStudent, encryptManifestForStudent, isEncryptedManifest } from './submissionCrypto.js';
 import { iconBtn, colorInput } from './editor-ui.js';
+import { state, urls, fileUrl, markDirty } from './editor-state.js';
 
 applyI18n();
 initLangSelector();
 
-// ---------- Estado ----------
-
-let manifest = newManifest();
-let files = new Map();          // ruta → Blob
-let pageSeq = 1;                // numeración de archivos de página
-let activeTool = null;          // tipo de campo a dibujar, o 'zone'
-let pendingAmItem = null;       // item de arrowmatch esperando que se dibuje su rect
-let pendingAmNext = null;       // item que se dibujará automáticamente tras pendingAmItem
-let sel = null;                 // {kind:'field'|'zone'|'amitem', pageIndex, fieldId, zoneId?, amItemId?}
-let dirty = false;
-let preview = null;
-let submissionCryptoPassword = '';
-let copiedField = null;   // campo copiado para pegar en otra página
-
-const urls = new Map();
-function fileUrl(path) {
-  if (!urls.has(path)) urls.set(path, URL.createObjectURL(files.get(path)));
-  return urls.get(path);
-}
+// ---------- Referencias al DOM ----------
+// (el estado mutable vive en editor-state.js)
 
 const $ = s => document.querySelector(s);
 const canvas = $('#canvas');
 const panel = $('#panel');
 const palette = $('#palette');
 const titleInput = $('#titulo');
-
-function markDirty() { dirty = true; }
 
 // ---------- Zoom del lienzo ----------
 
@@ -59,12 +41,10 @@ canvas.addEventListener('wheel', e => {
 }, { passive: false });
 
 window.addEventListener('beforeunload', e => {
-  if (dirty) { e.preventDefault(); e.returnValue = ''; }
+  if (state.dirty) { e.preventDefault(); e.returnValue = ''; }
 });
 
 // ---------- Paleta ----------
-
-let openGroup = null; // al entrar, todos los grupos colapsados
 
 function renderPalette() {
   palette.textContent = '';
@@ -77,11 +57,11 @@ function renderPalette() {
       el('span', { class: 'name' }, gName));
     head.dataset.group = group.id;
     head.addEventListener('click', () => {
-      openGroup = openGroup === group.id ? null : group.id;
+      state.openGroup = state.openGroup === group.id ? null : group.id;
       // Navegar a un grupo cancela la herramienta activa y deselecciona el
       // campo actual: así el panel muestra siempre la descripción del grupo.
-      activeTool = null;
-      sel = null;
+      state.activeTool = null;
+      state.sel = null;
       refreshSelectionStyles();
       refreshPaletteState();
       renderPanel();
@@ -101,13 +81,13 @@ function renderPalette() {
         toolGlyph,
         el('span', { class: 'name' }, name));
       btn.addEventListener('click', () => {
-        activeTool = activeTool === type ? null : type;
-        if (activeTool) sel = null;
+        state.activeTool = state.activeTool === type ? null : type;
+        if (state.activeTool) state.sel = null;
         refreshPaletteState();
         renderPanel();
-        if (activeTool && !manifest.pages.length) {
+        if (state.activeTool && !state.manifest.pages.length) {
           toast(t('toast.addPdfFirst'), 'error');
-          activeTool = null;
+          state.activeTool = null;
           refreshPaletteState();
         }
       });
@@ -121,15 +101,15 @@ function renderPalette() {
 
 function refreshPaletteState() {
   palette.querySelectorAll('.ed-group').forEach(b => {
-    b.classList.toggle('open', b.dataset.group === openGroup);
+    b.classList.toggle('open', b.dataset.group === state.openGroup);
   });
   palette.querySelectorAll('.ed-group-tools').forEach(d => {
-    d.classList.toggle('open', d.dataset.group === openGroup);
+    d.classList.toggle('open', d.dataset.group === state.openGroup);
   });
   palette.querySelectorAll('.ed-tool').forEach(b => {
-    b.classList.toggle('active', b.dataset.type === activeTool);
+    b.classList.toggle('active', b.dataset.type === state.activeTool);
   });
-  canvas.classList.toggle('drawing', Boolean(activeTool) || Boolean(pendingAmItem));
+  canvas.classList.toggle('drawing', Boolean(state.activeTool) || Boolean(state.pendingAmItem));
 }
 
 // ---------- Páginas ----------
@@ -165,11 +145,11 @@ async function addFiles(fileList, insertAt) {
 }
 
 function addPage({ blob, ext, w, h }, insertAt) {
-  const path = `pages/page-${pageSeq++}.${ext}`;
-  files.set(path, blob);
+  const path = `pages/page-${state.pageSeq++}.${ext}`;
+  state.files.set(path, blob);
   const page = { image: path, w, h, fields: [] };
-  if (insertAt != null) manifest.pages.splice(insertAt, 0, page);
-  else manifest.pages.push(page);
+  if (insertAt != null) state.manifest.pages.splice(insertAt, 0, page);
+  else state.manifest.pages.push(page);
 }
 
 const PAGE_SIZES = [
@@ -192,17 +172,17 @@ function addBlankPage(insertAt) {
   ctx2d.fillStyle = '#ffffff';
   ctx2d.fillRect(0, 0, W, H);
   cv.toBlob(blob => {
-    const path = `pages/page-${pageSeq++}.png`;
-    files.set(path, blob);
+    const path = `pages/page-${state.pageSeq++}.png`;
+    state.files.set(path, blob);
     const page = { image: path, w: W, h: H, fields: [], bgColor: '#ffffff' };
-    if (insertAt != null) manifest.pages.splice(insertAt, 0, page);
-    else manifest.pages.push(page);
+    if (insertAt != null) state.manifest.pages.splice(insertAt, 0, page);
+    else state.manifest.pages.push(page);
     markDirty(); renderCanvas(); renderPanel();
   }, 'image/png');
 }
 
 function recolorBlankPage(pi, color) {
-  const page = manifest.pages[pi];
+  const page = state.manifest.pages[pi];
   if (!page?.bgColor) return;
   const W = page.w, H = page.h;
   const cv = document.createElement('canvas');
@@ -212,7 +192,7 @@ function recolorBlankPage(pi, color) {
   ctx2d.fillRect(0, 0, W, H);
   cv.toBlob(blob => {
     if (urls.has(page.image)) { URL.revokeObjectURL(urls.get(page.image)); urls.delete(page.image); }
-    files.set(page.image, blob);
+    state.files.set(page.image, blob);
     page.bgColor = color;
     markDirty();
     const imgEl = canvas.querySelector(`.wpf-page[data-page="${pi}"] img.fondo`);
@@ -221,7 +201,7 @@ function recolorBlankPage(pi, color) {
 }
 
 function resizePage(pi, w, h) {
-  const page = manifest.pages[pi];
+  const page = state.manifest.pages[pi];
   if (!page?.bgColor) return;
   const cv = document.createElement('canvas');
   cv.width = w; cv.height = h;
@@ -230,18 +210,18 @@ function resizePage(pi, w, h) {
   ctx2d.fillRect(0, 0, w, h);
   cv.toBlob(blob => {
     if (urls.has(page.image)) { URL.revokeObjectURL(urls.get(page.image)); urls.delete(page.image); }
-    files.set(page.image, blob);
+    state.files.set(page.image, blob);
     page.w = w; page.h = h;
     markDirty();
     renderCanvas();
-    sel = { kind: 'page', pageIndex: pi };
+    state.sel = { kind: 'page', pageIndex: pi };
     renderPanel();
   }, 'image/png');
 }
 
 function printWorksheet() {
-  if (!manifest.pages.length) { toast(t('toast.addPageFirst'), 'error'); return; }
-  manifest.title = titleInput.value.trim();
+  if (!state.manifest.pages.length) { toast(t('toast.addPageFirst'), 'error'); return; }
+  state.manifest.title = titleInput.value.trim();
 
   const overlay = el('div', { class: 'prev-overlay print-overlay' });
   const root = el('div', {});
@@ -250,7 +230,7 @@ function printWorksheet() {
 
   const printPlayer = mountPlayer(
     root,
-    { manifest: JSON.parse(JSON.stringify(manifest)), files },
+    { manifest: JSON.parse(JSON.stringify(state.manifest)), files: state.files },
     { preview: true }
   );
 
@@ -313,32 +293,32 @@ function makeAddPageBar(insertAt) {
 }
 
 function deletePage(pi) {
-  const page = manifest.pages[pi];
+  const page = state.manifest.pages[pi];
   const n = page.fields.length;
   const fields = n ? t('editor.confirmDeleteFields', { n }) : '';
   if (!window.confirm(t('editor.confirmDelete', { n: pi + 1, fields }))) return;
-  files.delete(page.image);
+  state.files.delete(page.image);
   if (urls.has(page.image)) { URL.revokeObjectURL(urls.get(page.image)); urls.delete(page.image); }
-  manifest.pages.splice(pi, 1);
-  sel = null;
+  state.manifest.pages.splice(pi, 1);
+  state.sel = null;
   markDirty();
   renderCanvas();
   renderPanel();
 }
 
 function duplicatePage(pi) {
-  const page = manifest.pages[pi];
-  const blob = files.get(page.image);
+  const page = state.manifest.pages[pi];
+  const blob = state.files.get(page.image);
   const ext = page.image.split('.').pop() || 'png';
-  const newPath = `pages/page-${pageSeq++}.${ext}`;
-  files.set(newPath, blob);
+  const newPath = `pages/page-${state.pageSeq++}.${ext}`;
+  state.files.set(newPath, blob);
   const newPage = {
     ...JSON.parse(JSON.stringify(page)),
     image: newPath,
     fields: page.fields.map(f => cloneField(f))
   };
-  manifest.pages.splice(pi + 1, 0, newPage);
-  sel = { kind: 'page', pageIndex: pi + 1 };
+  state.manifest.pages.splice(pi + 1, 0, newPage);
+  state.sel = { kind: 'page', pageIndex: pi + 1 };
   markDirty();
   renderCanvas();
   renderPanel();
@@ -346,10 +326,10 @@ function duplicatePage(pi) {
 
 function movePage(pi, delta) {
   const j = pi + delta;
-  if (j < 0 || j >= manifest.pages.length) return;
-  const [pg] = manifest.pages.splice(pi, 1);
-  manifest.pages.splice(j, 0, pg);
-  sel = null;
+  if (j < 0 || j >= state.manifest.pages.length) return;
+  const [pg] = state.manifest.pages.splice(pi, 1);
+  state.manifest.pages.splice(j, 0, pg);
+  state.sel = null;
   markDirty();
   renderCanvas();
   renderPanel();
@@ -359,7 +339,7 @@ function movePage(pi, delta) {
 
 function renderCanvas() {
   canvas.textContent = '';
-  if (!manifest.pages.length) {
+  if (!state.manifest.pages.length) {
     canvas.appendChild(el('div', { class: 'ed-empty card anim-in' },
       el('h2', {}, t('editor.emptyTitle')),
       el('p', {}, t('editor.emptyDesc')),
@@ -379,9 +359,9 @@ function renderCanvas() {
 
   canvas.appendChild(el('div', { class: 'ed-zoom-wrap' }, zoomCtl.el));
 
-  manifest.pages.forEach((page, pi) => {
+  state.manifest.pages.forEach((page, pi) => {
     const pageEl = el('div', { class: 'wpf-page', dataset: { page: pi } },
-      el('img', { class: 'fondo', src: fileUrl(page.image), alt: t('editor.pageN', { n: pi + 1, total: manifest.pages.length }), draggable: 'false' }));
+      el('img', { class: 'fondo', src: fileUrl(page.image), alt: t('editor.pageN', { n: pi + 1, total: state.manifest.pages.length }), draggable: 'false' }));
 
     page.fields.forEach(field => {
       const decor = Boolean(FIELD_TYPES[field.type]?.decor);
@@ -396,7 +376,7 @@ function renderCanvas() {
         }, field.config.text || ''));
       } else if (field.type === 'cover') {
         box.style.background = field.config.color || '#ffffff';
-      } else if (field.type === 'image' && field.config?.src && files.has(field.config.src)) {
+      } else if (field.type === 'image' && field.config?.src && state.files.has(field.config.src)) {
         box.appendChild(el('img', { src: fileUrl(field.config.src), class: 'ed-img-prev', alt: '' }));
       } else if (isShapeField(field.type)) {
         box.appendChild(buildShapeSvg(field));
@@ -415,7 +395,7 @@ function renderCanvas() {
       if (isAmHotspot) {
         box.classList.add('ed-am-hotspot-field');
         box.addEventListener('pointerdown', e => {
-          if (activeTool || pendingAmItem) return;
+          if (state.activeTool || state.pendingAmItem) return;
           e.stopPropagation();
           selectField(pi, field.id);
         });
@@ -423,7 +403,7 @@ function renderCanvas() {
         // Las casillas se gestionan como overlays propios; el campo no se arrastra.
         box.classList.add('ed-cb-hostfield');
         box.addEventListener('pointerdown', e => {
-          if (activeTool || pendingAmItem) return;
+          if (state.activeTool || state.pendingAmItem) return;
           e.stopPropagation();
           selectField(pi, field.id);
         });
@@ -431,14 +411,14 @@ function renderCanvas() {
         // Los huecos se gestionan como overlays propios; el campo no se arrastra.
         box.classList.add('ed-cb-hostfield');
         box.addEventListener('pointerdown', e => {
-          if (activeTool || pendingAmItem) return;
+          if (state.activeTool || state.pendingAmItem) return;
           e.stopPropagation();
           selectField(pi, field.id);
         });
       } else {
         attachBoxInteraction(box, pageEl, field.rect, {
           onSelect: () => selectField(pi, field.id),
-          isSelected: () => sel?.kind === 'field' && sel.fieldId === field.id
+          isSelected: () => state.sel?.kind === 'field' && state.sel.fieldId === field.id
         });
       }
       pageEl.appendChild(box);
@@ -453,7 +433,7 @@ function renderCanvas() {
           setRectStyle(zEl, zone.rect);
           attachBoxInteraction(zEl, pageEl, zone.rect, {
             onSelect: () => selectZone(pi, field.id, zone.id),
-            isSelected: () => sel?.kind === 'zone' && sel.zoneId === zone.id
+            isSelected: () => state.sel?.kind === 'zone' && state.sel.zoneId === zone.id
           });
           pageEl.appendChild(zEl);
         });
@@ -468,7 +448,7 @@ function renderCanvas() {
           setRectStyle(aEl, item.rect);
           attachBoxInteraction(aEl, pageEl, item.rect, {
             onSelect: () => selectAmItem(pi, field.id, item.id),
-            isSelected: () => sel?.kind === 'amitem' && sel.amItemId === item.id
+            isSelected: () => state.sel?.kind === 'amitem' && state.sel.amItemId === item.id
           });
           pageEl.appendChild(aEl);
         });
@@ -486,7 +466,7 @@ function renderCanvas() {
           setRectStyle(cbEl, b.rect);
           attachBoxInteraction(cbEl, pageEl, b.rect, {
             onSelect: () => selectCbBox(pi, field.id, b.id),
-            isSelected: () => sel?.kind === 'cbbox' && sel.cbBoxId === b.id
+            isSelected: () => state.sel?.kind === 'cbbox' && state.sel.cbBoxId === b.id
           });
           pageEl.appendChild(cbEl);
         });
@@ -501,7 +481,7 @@ function renderCanvas() {
           setRectStyle(tbEl, b.rect);
           attachBoxInteraction(tbEl, pageEl, b.rect, {
             onSelect: () => selectTbBox(pi, field.id, b.id),
-            isSelected: () => sel?.kind === 'tbbox' && sel.tbBoxId === b.id
+            isSelected: () => state.sel?.kind === 'tbbox' && state.sel.tbBoxId === b.id
           });
           pageEl.appendChild(tbEl);
         });
@@ -511,14 +491,14 @@ function renderCanvas() {
     attachDrawInteraction(pageEl, pi);
 
     const head = el('div', { class: 'ed-pagehead' },
-      el('span', {}, t('editor.pageN', { n: pi + 1, total: manifest.pages.length })),
+      el('span', {}, t('editor.pageN', { n: pi + 1, total: state.manifest.pages.length })),
       el('span', { class: 'spacer' }),
       iconBtn({ class: 'btn small ghost', title: t('editor.moveUp'), onclick: () => movePage(pi, -1) }, ICONS.chevronUp),
       iconBtn({ class: 'btn small ghost', title: t('editor.moveDown'), onclick: () => movePage(pi, 1) }, ICONS.chevronDown2),
       iconBtn({ class: 'btn small ghost danger', title: t('editor.deletePage'), onclick: () => deletePage(pi) }, ICONS.trash));
 
     canvas.appendChild(el('div', { class: 'ed-pagebox' }, head, pageEl));
-    if (pi < manifest.pages.length - 1) canvas.appendChild(makeAddPageBar(pi + 1));
+    if (pi < state.manifest.pages.length - 1) canvas.appendChild(makeAddPageBar(pi + 1));
   });
   canvas.appendChild(makeAddPageBar(null));
   refreshSelectionStyles();
@@ -533,12 +513,12 @@ function setRectStyle(node, rect) {
 
 function refreshSelectionStyles() {
   canvas.querySelectorAll('.ed-field, .ed-zone, .ed-amitem, .ed-cbbox, .ed-tbbox').forEach(n => n.classList.remove('selected'));
-  if (!sel) return;
-  const id = sel.kind === 'zone' ? sel.zoneId
-    : sel.kind === 'amitem' ? sel.amItemId
-    : sel.kind === 'cbbox' ? sel.cbBoxId
-    : sel.kind === 'tbbox' ? sel.tbBoxId
-    : sel.fieldId;
+  if (!state.sel) return;
+  const id = state.sel.kind === 'zone' ? state.sel.zoneId
+    : state.sel.kind === 'amitem' ? state.sel.amItemId
+    : state.sel.kind === 'cbbox' ? state.sel.cbBoxId
+    : state.sel.kind === 'tbbox' ? state.sel.tbBoxId
+    : state.sel.fieldId;
   const node = canvas.querySelector(`[data-id="${id}"]`);
   if (node) node.classList.add('selected');
 }
@@ -554,7 +534,7 @@ function pageContentSize(pageEl) {
 // Mover y redimensionar un rectángulo (campo o zona).
 function attachBoxInteraction(box, pageEl, rect, { onSelect, isSelected }) {
   box.addEventListener('pointerdown', e => {
-    if (activeTool || pendingAmItem) return; // en modo dibujo, la página gestiona el evento
+    if (state.activeTool || state.pendingAmItem) return; // en modo dibujo, la página gestiona el evento
     e.stopPropagation();
     e.preventDefault();
     onSelect();
@@ -592,7 +572,7 @@ function attachBoxInteraction(box, pageEl, rect, { onSelect, isSelected }) {
 // Handle de rotación para elementos decorativos (image, label).
 function attachRotateHandle(rotHandle, box, field) {
   rotHandle.addEventListener('pointerdown', e => {
-    if (activeTool) return;
+    if (state.activeTool) return;
     e.stopPropagation();
     e.preventDefault();
     rotHandle.setPointerCapture(e.pointerId);
@@ -623,10 +603,10 @@ function attachRotateHandle(rotHandle, box, field) {
 // Dibujar un campo nuevo (o una zona) sobre la página.
 function attachDrawInteraction(pageEl, pi) {
   pageEl.addEventListener('pointerdown', e => {
-    if (!activeTool && !pendingAmItem) {
+    if (!state.activeTool && !state.pendingAmItem) {
       // Clic en el fondo: seleccionar la página para mostrar sus propiedades.
       if (e.target === pageEl) {
-        sel = { kind: 'page', pageIndex: pi };
+        state.sel = { kind: 'page', pageIndex: pi };
         refreshSelectionStyles();
         renderPanel();
       }
@@ -655,19 +635,19 @@ function attachDrawInteraction(pageEl, pi) {
       rubber.remove();
       let r = normRect(x0, y0, x1, y1);
 
-      if (pendingAmItem) {
-        const item = pendingAmItem;
-        const nextItem = pendingAmNext;
-        pendingAmItem = null;
-        pendingAmNext = null;
+      if (state.pendingAmItem) {
+        const item = state.pendingAmItem;
+        const nextItem = state.pendingAmNext;
+        state.pendingAmItem = null;
+        state.pendingAmNext = null;
         if (r.w < 0.02 || r.h < 0.015) r = { x: clamp(x0 - 0.06, 0, 0.88), y: clamp(y0 - 0.025, 0, 0.95), w: 0.12, h: 0.05 };
         item.rect = r;
         markDirty();
-        const fieldId = sel?.fieldId || getFieldIdForItem(pi, item.id);
+        const fieldId = state.sel?.fieldId || getFieldIdForItem(pi, item.id);
         renderCanvas();
         selectField(pi, fieldId);
         if (nextItem && !nextItem.rect) {
-          pendingAmItem = nextItem;
+          state.pendingAmItem = nextItem;
           refreshPaletteState();
           toast(t('toast.amDrawAreaTip'), 'info');
         } else {
@@ -676,8 +656,8 @@ function attachDrawInteraction(pageEl, pi) {
         return;
       }
 
-      const tool = activeTool;
-      activeTool = null;
+      const tool = state.activeTool;
+      state.activeTool = null;
       refreshPaletteState();
       if (tool === 'zone') {
         if (r.w < 0.02 || r.h < 0.015) r = { x: clamp(x0 - 0.06, 0, 0.88), y: clamp(y0 - 0.025, 0, 0.95), w: 0.12, h: 0.05 };
@@ -713,7 +693,7 @@ function attachDrawInteraction(pageEl, pi) {
 }
 
 function getFieldIdForItem(pi, itemId) {
-  const page = manifest.pages[pi];
+  const page = state.manifest.pages[pi];
   if (!page) return null;
   const field = page.fields.find(f => f.type === 'arrowmatch' && (f.config.items || []).some(i => i.id === itemId));
   return field?.id || null;
@@ -739,7 +719,7 @@ function createField(pi, type, rect) {
     fontScale: 1,
     config: FIELD_TYPES[type].defaults()
   };
-  manifest.pages[pi].fields.push(field);
+  state.manifest.pages[pi].fields.push(field);
   // El campo de casillas nace con su primera casilla en el rectángulo dibujado.
   if (type === 'checkbox') {
     const box = { id: uid('cb'), rect: { ...rect } };
@@ -765,8 +745,8 @@ function createField(pi, type, rect) {
 
 // Añade una nueva casilla al campo checkbox seleccionado (modo dibujo).
 function createCbBox(pi, rect) {
-  const field = sel ? getField(sel.pageIndex, sel.fieldId) : null;
-  if (!field || field.type !== 'checkbox' || sel.pageIndex !== pi) {
+  const field = state.sel ? getField(state.sel.pageIndex, state.sel.fieldId) : null;
+  if (!field || field.type !== 'checkbox' || state.sel.pageIndex !== pi) {
     toast(t('toast.selectCheckboxFirst'), 'error');
     renderCanvas();
     return;
@@ -780,8 +760,8 @@ function createCbBox(pi, rect) {
 
 // Añade un nuevo hueco al campo de huecos seleccionado (modo dibujo).
 function createTbBox(pi, rect) {
-  const field = sel ? getField(sel.pageIndex, sel.fieldId) : null;
-  if (!field || field.type !== 'textboxes' || sel.pageIndex !== pi) {
+  const field = state.sel ? getField(state.sel.pageIndex, state.sel.fieldId) : null;
+  if (!field || field.type !== 'textboxes' || state.sel.pageIndex !== pi) {
     toast(t('toast.selectTextboxFirst'), 'error');
     renderCanvas();
     return;
@@ -794,8 +774,8 @@ function createTbBox(pi, rect) {
 }
 
 function createZone(pi, rect) {
-  const field = sel ? getField(sel.pageIndex, sel.fieldId) : null;
-  if (!field || field.type !== 'dragdrop' || sel.pageIndex !== pi) {
+  const field = state.sel ? getField(state.sel.pageIndex, state.sel.fieldId) : null;
+  if (!field || field.type !== 'dragdrop' || state.sel.pageIndex !== pi) {
     toast(t('toast.selectDragFirst'), 'error');
     renderCanvas();
     return;
@@ -808,75 +788,75 @@ function createZone(pi, rect) {
 }
 
 function getField(pi, fieldId) {
-  return manifest.pages[pi]?.fields.find(f => f.id === fieldId) || null;
+  return state.manifest.pages[pi]?.fields.find(f => f.id === fieldId) || null;
 }
 
 function selectField(pi, fieldId) {
-  sel = { kind: 'field', pageIndex: pi, fieldId };
+  state.sel = { kind: 'field', pageIndex: pi, fieldId };
   refreshSelectionStyles();
   renderPanel();
 }
 
 function selectZone(pi, fieldId, zoneId) {
-  sel = { kind: 'zone', pageIndex: pi, fieldId, zoneId };
+  state.sel = { kind: 'zone', pageIndex: pi, fieldId, zoneId };
   refreshSelectionStyles();
   renderPanel();
 }
 
 function selectAmItem(pi, fieldId, amItemId) {
-  sel = { kind: 'amitem', pageIndex: pi, fieldId, amItemId };
+  state.sel = { kind: 'amitem', pageIndex: pi, fieldId, amItemId };
   refreshSelectionStyles();
   renderPanel(); // muestra el panel del campo (pairs list)
 }
 
 function selectCbBox(pi, fieldId, cbBoxId) {
-  sel = { kind: 'cbbox', pageIndex: pi, fieldId, cbBoxId };
+  state.sel = { kind: 'cbbox', pageIndex: pi, fieldId, cbBoxId };
   refreshSelectionStyles();
   renderPanel(); // muestra el panel del campo (lista de casillas)
 }
 
 function selectTbBox(pi, fieldId, tbBoxId) {
-  sel = { kind: 'tbbox', pageIndex: pi, fieldId, tbBoxId };
+  state.sel = { kind: 'tbbox', pageIndex: pi, fieldId, tbBoxId };
   refreshSelectionStyles();
   renderPanel(); // muestra el panel del hueco (sus respuestas válidas)
 }
 
 function deleteSelected() {
-  if (!sel) return;
-  const field = getField(sel.pageIndex, sel.fieldId);
+  if (!state.sel) return;
+  const field = getField(state.sel.pageIndex, state.sel.fieldId);
   if (!field) return;
-  if (sel.kind === 'zone') {
-    field.config.zones = field.config.zones.filter(z => z.id !== sel.zoneId);
-    sel = { kind: 'field', pageIndex: sel.pageIndex, fieldId: field.id };
-  } else if (sel.kind === 'amitem') {
-    const item = (field.config.items || []).find(i => i.id === sel.amItemId);
+  if (state.sel.kind === 'zone') {
+    field.config.zones = field.config.zones.filter(z => z.id !== state.sel.zoneId);
+    state.sel = { kind: 'field', pageIndex: state.sel.pageIndex, fieldId: field.id };
+  } else if (state.sel.kind === 'amitem') {
+    const item = (field.config.items || []).find(i => i.id === state.sel.amItemId);
     if (item) delete item.rect;
-    sel = { kind: 'field', pageIndex: sel.pageIndex, fieldId: field.id };
-  } else if (sel.kind === 'cbbox') {
-    field.config.boxes = (field.config.boxes || []).filter(b => b.id !== sel.cbBoxId);
-    field.config.correct = (field.config.correct || []).filter(id => id !== sel.cbBoxId);
+    state.sel = { kind: 'field', pageIndex: state.sel.pageIndex, fieldId: field.id };
+  } else if (state.sel.kind === 'cbbox') {
+    field.config.boxes = (field.config.boxes || []).filter(b => b.id !== state.sel.cbBoxId);
+    field.config.correct = (field.config.correct || []).filter(id => id !== state.sel.cbBoxId);
     if (field.config.boxes.length) {
-      sel = { kind: 'field', pageIndex: sel.pageIndex, fieldId: field.id };
+      state.sel = { kind: 'field', pageIndex: state.sel.pageIndex, fieldId: field.id };
     } else {
       // Sin casillas el campo no tiene sentido: se elimina entero.
-      const page = manifest.pages[sel.pageIndex];
+      const page = state.manifest.pages[state.sel.pageIndex];
       page.fields = page.fields.filter(f => f.id !== field.id);
-      sel = null;
+      state.sel = null;
     }
-  } else if (sel.kind === 'tbbox') {
-    field.config.boxes = (field.config.boxes || []).filter(b => b.id !== sel.tbBoxId);
+  } else if (state.sel.kind === 'tbbox') {
+    field.config.boxes = (field.config.boxes || []).filter(b => b.id !== state.sel.tbBoxId);
     if (field.config.boxes.length) {
-      sel = { kind: 'field', pageIndex: sel.pageIndex, fieldId: field.id };
+      state.sel = { kind: 'field', pageIndex: state.sel.pageIndex, fieldId: field.id };
     } else {
       // Sin huecos el campo no tiene sentido: se elimina entero.
-      const page = manifest.pages[sel.pageIndex];
+      const page = state.manifest.pages[state.sel.pageIndex];
       page.fields = page.fields.filter(f => f.id !== field.id);
-      sel = null;
+      state.sel = null;
     }
   } else {
-    const page = manifest.pages[sel.pageIndex];
+    const page = state.manifest.pages[state.sel.pageIndex];
     page.fields = page.fields.filter(f => f.id !== field.id);
-    sel = null;
+    state.sel = null;
   }
   markDirty();
   renderCanvas();
@@ -932,31 +912,31 @@ function cloneField(field, offset = 0) {
 }
 
 function duplicateSelected() {
-  if (!sel || sel.kind !== 'field') return;
-  const field = getField(sel.pageIndex, sel.fieldId);
+  if (!state.sel || state.sel.kind !== 'field') return;
+  const field = getField(state.sel.pageIndex, state.sel.fieldId);
   if (!field) return;
   const copy = cloneField(field, 0.03);
-  manifest.pages[sel.pageIndex].fields.push(copy);
+  state.manifest.pages[state.sel.pageIndex].fields.push(copy);
   markDirty();
   renderCanvas();
-  selectField(sel.pageIndex, copy.id);
+  selectField(state.sel.pageIndex, copy.id);
 }
 
 function copySelected() {
-  if (!sel || sel.kind !== 'field') return;
-  const field = getField(sel.pageIndex, sel.fieldId);
+  if (!state.sel || state.sel.kind !== 'field') return;
+  const field = getField(state.sel.pageIndex, state.sel.fieldId);
   if (!field) return;
-  copiedField = JSON.parse(JSON.stringify(field));
+  state.copiedField = JSON.parse(JSON.stringify(field));
   toast(t('toast.fieldCopied'), 'ok');
   renderPanel();
 }
 
 function pasteField(pi) {
-  if (!copiedField) return;
+  if (!state.copiedField) return;
   if (pi === undefined || pi === null) return;
-  if (!manifest.pages[pi]) return;
-  const copy = cloneField(copiedField);
-  manifest.pages[pi].fields.push(copy);
+  if (!state.manifest.pages[pi]) return;
+  const copy = cloneField(state.copiedField);
+  state.manifest.pages[pi].fields.push(copy);
   markDirty();
   renderCanvas();
   selectField(pi, copy.id);
@@ -968,29 +948,29 @@ document.addEventListener('keydown', e => {
 
   // Copiar y pegar: funcionan con cualquier tipo de selección (campo o página).
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
-    if (sel?.kind === 'field') { e.preventDefault(); copySelected(); }
+    if (state.sel?.kind === 'field') { e.preventDefault(); copySelected(); }
     return;
   }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
-    if (copiedField && sel?.pageIndex !== undefined) {
+    if (state.copiedField && state.sel?.pageIndex !== undefined) {
       e.preventDefault();
-      pasteField(sel.pageIndex);
+      pasteField(state.sel.pageIndex);
     }
     return;
   }
 
   // El resto de atajos requieren un campo seleccionado.
-  if (!sel) return;
-  const field = getField(sel.pageIndex, sel.fieldId);
+  if (!state.sel) return;
+  const field = getField(state.sel.pageIndex, state.sel.fieldId);
   if (!field) return;
-  const rect = sel.kind === 'zone'
-    ? field.config.zones.find(z => z.id === sel.zoneId)?.rect
-    : sel.kind === 'amitem'
-      ? (field.config.items || []).find(i => i.id === sel.amItemId)?.rect
-      : sel.kind === 'cbbox'
-        ? (field.config.boxes || []).find(b => b.id === sel.cbBoxId)?.rect
-        : sel.kind === 'tbbox'
-          ? (field.config.boxes || []).find(b => b.id === sel.tbBoxId)?.rect
+  const rect = state.sel.kind === 'zone'
+    ? field.config.zones.find(z => z.id === state.sel.zoneId)?.rect
+    : state.sel.kind === 'amitem'
+      ? (field.config.items || []).find(i => i.id === state.sel.amItemId)?.rect
+      : state.sel.kind === 'cbbox'
+        ? (field.config.boxes || []).find(b => b.id === state.sel.cbBoxId)?.rect
+        : state.sel.kind === 'tbbox'
+          ? (field.config.boxes || []).find(b => b.id === state.sel.tbBoxId)?.rect
           : field.rect;
   if (!rect) return;
 
@@ -1005,11 +985,11 @@ document.addEventListener('keydown', e => {
     if (e.key === 'ArrowUp') rect.y = clamp(rect.y - step, 0, 1 - rect.h);
     if (e.key === 'ArrowDown') rect.y = clamp(rect.y + step, 0, 1 - rect.h);
     markDirty();
-    const id = sel.kind === 'zone' ? sel.zoneId
-      : sel.kind === 'amitem' ? sel.amItemId
-      : sel.kind === 'cbbox' ? sel.cbBoxId
-      : sel.kind === 'tbbox' ? sel.tbBoxId
-      : sel.fieldId;
+    const id = state.sel.kind === 'zone' ? state.sel.zoneId
+      : state.sel.kind === 'amitem' ? state.sel.amItemId
+      : state.sel.kind === 'cbbox' ? state.sel.cbBoxId
+      : state.sel.kind === 'tbbox' ? state.sel.tbBoxId
+      : state.sel.fieldId;
     const node = canvas.querySelector(`[data-id="${id}"]`);
     if (node) setRectStyle(node, rect);
   } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
@@ -1022,24 +1002,24 @@ document.addEventListener('keydown', e => {
 
 function renderPanel() {
   panel.textContent = '';
-  $('#btnCopiarCampo').disabled = !(sel?.kind === 'field');
-  if (sel) {
-    if (sel.kind === 'page') {
-      renderPagePanel(sel.pageIndex);
+  $('#btnCopiarCampo').disabled = !(state.sel?.kind === 'field');
+  if (state.sel) {
+    if (state.sel.kind === 'page') {
+      renderPagePanel(state.sel.pageIndex);
     } else {
-      const field = getField(sel.pageIndex, sel.fieldId);
+      const field = getField(state.sel.pageIndex, state.sel.fieldId);
       if (field) {
-        if (sel.kind === 'zone') renderZonePanel(field);
-        else if (sel.kind === 'tbbox') renderTbBoxPanel(field);
+        if (state.sel.kind === 'zone') renderZonePanel(field);
+        else if (state.sel.kind === 'tbbox') renderTbBoxPanel(field);
         else renderFieldPanel(field); // 'field' y 'amitem' muestran el panel del campo
       } else {
-        sel = null;
+        state.sel = null;
       }
     }
   }
-  if (!sel) {
-    const toolType = activeTool && FIELD_TYPES[activeTool] ? activeTool : null;
-    const openGroupDef = !toolType && openGroup ? PALETTE_GROUPS.find(g => g.id === openGroup) : null;
+  if (!state.sel) {
+    const toolType = state.activeTool && FIELD_TYPES[state.activeTool] ? state.activeTool : null;
+    const openGroupDef = !toolType && state.openGroup ? PALETTE_GROUPS.find(g => g.id === state.openGroup) : null;
     if (toolType) {
       const ft = FIELD_TYPES[toolType];
       const glyph = el('span', { class: 'glyph' });
@@ -1064,7 +1044,7 @@ function renderPanel() {
     } else {
       panel.appendChild(el('div', { class: 'ed-panel-vacio' },
         el('h3', {}, t('editor.noField')),
-        el('p', {}, manifest.pages.length
+        el('p', {}, state.manifest.pages.length
           ? t('editor.noFieldDesc')
           : t('editor.noFieldDescNoPages'))));
     }
@@ -1073,12 +1053,12 @@ function renderPanel() {
 }
 
 function renderPagePanel(pi) {
-  const page = manifest.pages[pi];
+  const page = state.manifest.pages[pi];
   if (!page) return;
   const cont = el('div', {});
   cont.appendChild(el('h3', {},
     el('span', { class: 'tipo-chip' }, t('editor.pageChip')),
-    t('editor.pageN', { n: pi + 1, total: manifest.pages.length })));
+    t('editor.pageN', { n: pi + 1, total: state.manifest.pages.length })));
   if (page.bgColor !== undefined) {
     cont.appendChild(el('label', { class: 'f-label' }, t('editor.pageBgColor')));
     const { wrap: colorPickWrap } = colorInput(page.bgColor, v => recolorBlankPage(pi, v));
@@ -1299,8 +1279,8 @@ function renderFieldPanel(field) {
 }
 
 function renderZonePanel(field) {
-  const zone = field.config.zones.find(z => z.id === sel.zoneId);
-  if (!zone) { sel = { kind: 'field', pageIndex: sel.pageIndex, fieldId: field.id }; renderFieldPanel(field); return; }
+  const zone = field.config.zones.find(z => z.id === state.sel.zoneId);
+  if (!zone) { state.sel = { kind: 'field', pageIndex: state.sel.pageIndex, fieldId: field.id }; renderFieldPanel(field); return; }
   // Normaliza formato antiguo (answer: string) → nuevo (answers: string[])
   if (!Array.isArray(zone.answers)) {
     zone.answers = zone.answer ? [String(zone.answer)] : [''];
@@ -1319,9 +1299,9 @@ function renderZonePanel(field) {
     items: () => zone.answers,
     render: (row, item, i, repaint) => {
       const isImg = item.startsWith('dtokens/');
-      // Botón/preview de imagen.
+      // Botón/state.preview de imagen.
       const imgBtn = el('button', { class: 'ans-img-btn' + (isImg ? ' has-img' : ''), type: 'button', title: t('cfg.uploadTokenImg') });
-      if (isImg && files.has(item)) {
+      if (isImg && state.files.has(item)) {
         imgBtn.appendChild(el('img', { src: fileUrl(item), class: 'tok-thumb', alt: '' }));
       }
       imgBtn.addEventListener('click', () => {
@@ -1331,8 +1311,8 @@ function renderZonePanel(field) {
           const f = pick.files[0]; if (!f) return;
           const ext = f.name.split('.').pop().toLowerCase() || 'png';
           const path = 'dtokens/' + uid() + '.' + ext;
-          if (isImg) { urls.delete(item); files.delete(item); }
-          files.set(path, f);
+          if (isImg) { urls.delete(item); state.files.delete(item); }
+          state.files.set(path, f);
           zone.answers[i] = path;
           updateZoneChip(); markDirty(); repaint();
         });
@@ -1347,7 +1327,7 @@ function renderZonePanel(field) {
         const quitImg = iconBtn({ class: 'btn small', type: 'button', title: t('cfg.removeImage') }, ICONS.imageOff);
         quitImg.addEventListener('click', e => {
           e.stopPropagation();
-          urls.delete(item); files.delete(item);
+          urls.delete(item); state.files.delete(item);
           zone.answers[i] = ''; updateZoneChip(); markDirty(); repaint();
         });
         row.appendChild(quitImg);
@@ -1356,7 +1336,7 @@ function renderZonePanel(field) {
     add: () => zone.answers.push(''),
     remove: i => {
       const a = zone.answers[i];
-      if (a.startsWith('dtokens/')) { urls.delete(a); files.delete(a); }
+      if (a.startsWith('dtokens/')) { urls.delete(a); state.files.delete(a); }
       zone.answers.splice(i, 1); updateZoneChip();
     },
     addLabel: t('cfg.addZoneAnswer'),
@@ -1365,14 +1345,14 @@ function renderZonePanel(field) {
   cont.appendChild(el('p', { style: 'font-size:.85rem;color:var(--tinta-suave);margin-top:8px' },
     t('editor.zoneHint')));
   cont.appendChild(el('div', { class: 'ed-acciones' },
-    iconBtn({ class: 'btn small', onclick: () => selectField(sel.pageIndex, field.id) }, ICONS.arrowLeft, t('editor.backToField')),
+    iconBtn({ class: 'btn small', onclick: () => selectField(state.sel.pageIndex, field.id) }, ICONS.arrowLeft, t('editor.backToField')),
     iconBtn({ class: 'btn small danger', onclick: deleteSelected }, ICONS.trash, t('editor.deleteZone'))));
   panel.appendChild(cont);
 }
 
 function renderTbBoxPanel(field) {
-  const box = (field.config.boxes || []).find(b => b.id === sel.tbBoxId);
-  if (!box) { sel = { kind: 'field', pageIndex: sel.pageIndex, fieldId: field.id }; renderFieldPanel(field); return; }
+  const box = (field.config.boxes || []).find(b => b.id === state.sel.tbBoxId);
+  if (!box) { state.sel = { kind: 'field', pageIndex: state.sel.pageIndex, fieldId: field.id }; renderFieldPanel(field); return; }
   if (!Array.isArray(box.answers)) box.answers = box.answers ? [String(box.answers)] : [''];
   function updateChip() {
     const chip = canvas.querySelector(`.ed-tbbox[data-id="${box.id}"] .chip`);
@@ -1393,14 +1373,14 @@ function renderTbBoxPanel(field) {
   });
   cont.appendChild(el('p', { class: 'cfg-hint' }, t('editor.tbBoxHint')));
   cont.appendChild(el('div', { class: 'ed-acciones' },
-    iconBtn({ class: 'btn small', onclick: () => selectField(sel.pageIndex, field.id) }, ICONS.arrowLeft, t('editor.backToField')),
+    iconBtn({ class: 'btn small', onclick: () => selectField(state.sel.pageIndex, field.id) }, ICONS.arrowLeft, t('editor.backToField')),
     iconBtn({ class: 'btn small danger', onclick: deleteSelected }, ICONS.trash, t('editor.tbBoxDelete'))));
   panel.appendChild(cont);
 }
 
 function renderAmItemPanel(field) {
-  const item = (field.config.items || []).find(i => i.id === sel.amItemId);
-  if (!item) { sel = { kind: 'field', pageIndex: sel.pageIndex, fieldId: field.id }; renderFieldPanel(field); return; }
+  const item = (field.config.items || []).find(i => i.id === state.sel.amItemId);
+  if (!item) { state.sel = { kind: 'field', pageIndex: state.sel.pageIndex, fieldId: field.id }; renderFieldPanel(field); return; }
   const cont = el('div', {});
   const sideLabel = item.side === 'left' ? t('cfg.amLeft') : t('cfg.amRight');
   cont.appendChild(el('h3', {},
@@ -1408,7 +1388,7 @@ function renderAmItemPanel(field) {
     t('editor.amItemTitle')));
   cont.appendChild(el('p', { style: 'font-size:.85rem;color:var(--tinta-suave)' }, t('editor.amItemHint')));
   cont.appendChild(el('div', { class: 'ed-acciones' },
-    iconBtn({ class: 'btn small', onclick: () => selectField(sel.pageIndex, field.id) }, ICONS.arrowLeft, t('editor.backToField')),
+    iconBtn({ class: 'btn small', onclick: () => selectField(state.sel.pageIndex, field.id) }, ICONS.arrowLeft, t('editor.backToField')),
     iconBtn({ class: 'btn small danger', onclick: deleteSelected }, ICONS.trash, t('editor.amItemDelete'))));
   panel.appendChild(cont);
 }
@@ -1637,7 +1617,7 @@ const configForms = {
 
   image(cont, field) {
     const cfg = field.config;
-    if (cfg.src && files.has(cfg.src)) {
+    if (cfg.src && state.files.has(cfg.src)) {
       const prev = el('div', { class: 'img-field-preview' });
       prev.appendChild(el('img', { src: fileUrl(cfg.src), alt: '', class: 'img-field-thumb' }));
       cont.appendChild(prev);
@@ -1650,8 +1630,8 @@ const configForms = {
         const f = inp.files[0]; if (!f) return;
         const ext = f.name.split('.').pop().toLowerCase() || 'png';
         const path = 'images/' + uid() + '.' + ext;
-        if (cfg.src) { urls.delete(cfg.src); files.delete(cfg.src); }
-        files.set(path, f);
+        if (cfg.src) { urls.delete(cfg.src); state.files.delete(cfg.src); }
+        state.files.set(path, f);
         cfg.src = path;
         markDirty();
         renderCanvas();
@@ -1796,11 +1776,11 @@ const configForms = {
         }
         row.appendChild(mark);
         const locate = el('button', { class: 'cb-locate', type: 'button' }, t('cfg.checkboxItem', { n: i + 1 }));
-        locate.addEventListener('click', () => selectCbBox(sel.pageIndex, field.id, b.id));
+        locate.addEventListener('click', () => selectCbBox(state.sel.pageIndex, field.id, b.id));
         row.appendChild(locate);
       },
       add: () => {
-        activeTool = 'cbbox';
+        state.activeTool = 'cbbox';
         refreshPaletteState();
         canvas.classList.add('drawing');
         toast(t('toast.drawCheckboxTip'));
@@ -1852,11 +1832,11 @@ const configForms = {
         if (!Array.isArray(b.answers)) b.answers = b.answers ? [String(b.answers)] : [''];
         const ans = b.answers.find(a => a && a.trim()) || t('cfg.tbNoAnswer');
         const locate = el('button', { class: 'cb-locate', type: 'button' }, t('cfg.tbItem', { n: i + 1, a: ans }));
-        locate.addEventListener('click', () => selectTbBox(sel.pageIndex, field.id, b.id));
+        locate.addEventListener('click', () => selectTbBox(state.sel.pageIndex, field.id, b.id));
         row.appendChild(locate);
       },
       add: () => {
-        activeTool = 'tbbox';
+        state.activeTool = 'tbbox';
         refreshPaletteState();
         canvas.classList.add('drawing');
         toast(t('toast.drawTextboxTip'));
@@ -1916,9 +1896,9 @@ const configForms = {
     }
 
     function startDraw(item, next) {
-      if (!manifest.pages.length) { toast(t('toast.addPdfFirst'), 'error'); return; }
-      pendingAmItem = item;
-      pendingAmNext = next || null;
+      if (!state.manifest.pages.length) { toast(t('toast.addPdfFirst'), 'error'); return; }
+      state.pendingAmItem = item;
+      state.pendingAmNext = next || null;
       refreshPaletteState();
       toast(t('toast.amDrawAreaTip'), 'info');
     }
@@ -1946,7 +1926,7 @@ const configForms = {
 
         // Lado izquierdo
         const leftPart = el('div', { class: 'am-side am-side-left' });
-        if (left.src && files.has(left.src)) {
+        if (left.src && state.files.has(left.src)) {
           leftPart.appendChild(el('img', { src: fileUrl(left.src), class: 'tok-thumb-xs', alt: '' }));
         } else if (!left.rect) {
           const inp = el('input', { type: 'text', class: 'f-input-xs', value: left.label || '', placeholder: '…' });
@@ -1961,7 +1941,7 @@ const configForms = {
         // Lado derecho
         const rightPart = el('div', { class: 'am-side am-side-right' });
         if (right) {
-          if (right.src && files.has(right.src)) {
+          if (right.src && state.files.has(right.src)) {
             rightPart.appendChild(el('img', { src: fileUrl(right.src), class: 'tok-thumb-xs', alt: '' }));
           } else if (!right.rect) {
             const inp = el('input', { type: 'text', class: 'f-input-xs', value: right.label || '', placeholder: '…' });
@@ -1978,7 +1958,7 @@ const configForms = {
         const del = el('button', { class: 'btn small ghost', type: 'button', title: t('editor.delete') }, '✕');
         del.addEventListener('click', () => {
           [left, right].filter(Boolean).forEach(item => {
-            if (item.src) { urls.delete(item.src); files.delete(item.src); }
+            if (item.src) { urls.delete(item.src); state.files.delete(item.src); }
           });
           const delIds = new Set([left.id, right?.id].filter(Boolean));
           cfg.items = cfg.items.filter(i => !delIds.has(i.id));
@@ -2041,14 +2021,14 @@ const configForms = {
         // Resumen de la zona: se edita seleccionándola (panel propio, una etiqueta por fila).
         const labelText = textAnswers.join(' · ') || t('cfg.zoneNoLabel');
         const summary = el('button', { class: 'zone-summary', type: 'button' }, labelText);
-        summary.addEventListener('click', () => selectZone(sel.pageIndex, field.id, zone.id));
+        summary.addEventListener('click', () => selectZone(state.sel.pageIndex, field.id, zone.id));
         row.appendChild(summary);
         imgAnswers.forEach(p => {
-          if (files.has(p)) row.appendChild(el('img', { src: fileUrl(p), class: 'tok-thumb-xs', alt: '🖼', title: p }));
+          if (state.files.has(p)) row.appendChild(el('img', { src: fileUrl(p), class: 'tok-thumb-xs', alt: '🖼', title: p }));
         });
       },
       add: () => {
-        activeTool = 'zone';
+        state.activeTool = 'zone';
         refreshPaletteState();
         canvas.classList.add('drawing');
         toast(t('toast.drawZoneTip'));
@@ -2081,9 +2061,9 @@ function firstAnswerLabel(answers) {
 
 // Lista de todos los campos de la ficha.
 function renderFieldList() {
-  if (!manifest.pages.some(p => p.fields.length)) return;
+  if (!state.manifest.pages.some(p => p.fields.length)) return;
   const box = el('div', { class: 'lista-campos' }, el('h3', {}, t('editor.fieldsTitle')));
-  manifest.pages.forEach((page, pi) => {
+  state.manifest.pages.forEach((page, pi) => {
     page.fields.forEach(field => {
       const decor = Boolean(FIELD_TYPES[field.type]?.decor);
       const resumen = field.type === 'label'
@@ -2091,7 +2071,7 @@ function renderFieldList() {
         : (expectedText(field) || fieldTypeName(field.type));
       const fieldGlyph = el('span', { class: 'g' });
       fieldGlyph.innerHTML = FIELD_TYPES[field.type]?.glyph || '?';
-      const item = el('div', { class: 'item' + (sel?.kind === 'field' && sel.fieldId === field.id ? ' sel' : '') },
+      const item = el('div', { class: 'item' + (state.sel?.kind === 'field' && state.sel.fieldId === field.id ? ' state.sel' : '') },
         fieldGlyph,
         el('span', { class: 'resumen' }, `P${pi + 1} · ${resumen}`),
         decor ? null : el('span', { class: 'pts' }, field.noScore ? '—' : field.points + ' pt'));
@@ -2147,17 +2127,17 @@ function openSettings(afterSave) {
   const dlg = $('#dlgAjustes');
   dlg._afterSave = afterSave || null;
   fillTimeSelects();
-  $('#ajTitulo').value = manifest.title || '';
-  $('#ajAutor').value = manifest.author || '';
-  $('#ajInstrucciones').value = manifest.instructions || '';
-  $('#ajNota').checked = manifest.settings.showScore !== false;
-  $('#ajCorreccion').checked = manifest.settings.showCorrection !== false;
-  $('#ajBarajar').checked = Boolean(manifest.settings.shuffle);
-  $('#ajIntentos').value = String(manifest.settings.maxAttempts || 0);
-  $('#ajCifrarEntregas').checked = manifest.settings.encryptSubmissions !== false;
-  $('#ajCryptoPassword').value = submissionCryptoPassword;
+  $('#ajTitulo').value = state.manifest.title || '';
+  $('#ajAutor').value = state.manifest.author || '';
+  $('#ajInstrucciones').value = state.manifest.instructions || '';
+  $('#ajNota').checked = state.manifest.settings.showScore !== false;
+  $('#ajCorreccion').checked = state.manifest.settings.showCorrection !== false;
+  $('#ajBarajar').checked = Boolean(state.manifest.settings.shuffle);
+  $('#ajIntentos').value = String(state.manifest.settings.maxAttempts || 0);
+  $('#ajCifrarEntregas').checked = state.manifest.settings.encryptSubmissions !== false;
+  $('#ajCryptoPassword').value = state.submissionCryptoPassword;
   updateCryptoSettingsUi();
-  const acc = manifest.access || {};
+  const acc = state.manifest.access || {};
   setDateTime(acc.desde, 'ajDesde', '08', '00');
   setDateTime(acc.hasta, 'ajHasta', '23', '59');
   $('#ajAutoEntrega').checked = Boolean(acc.autoEntrega);
@@ -2189,18 +2169,18 @@ $('#dlgAjustes')?.addEventListener('close', () => {
   const dlg = $('#dlgAjustes');
   if (dlg.returnValue !== 'ok') return;
   const newTitle = $('#ajTitulo').value.trim();
-  manifest.title = newTitle;
+  state.manifest.title = newTitle;
   titleInput.value = newTitle;
-  manifest.author = $('#ajAutor').value.trim();
-  manifest.instructions = $('#ajInstrucciones').value.trim();
-  manifest.settings.showScore = $('#ajNota').checked;
-  manifest.settings.showCorrection = $('#ajCorreccion').checked;
-  manifest.settings.shuffle = $('#ajBarajar').checked;
-  manifest.settings.maxAttempts = Math.max(0, parseInt($('#ajIntentos').value, 10) || 0);
-  manifest.settings.encryptSubmissions = $('#ajCifrarEntregas').checked;
-  submissionCryptoPassword = manifest.settings.encryptSubmissions ? $('#ajCryptoPassword').value : '';
-  if (!manifest.settings.encryptSubmissions) delete manifest.submissionCrypto;
-  manifest.access = {
+  state.manifest.author = $('#ajAutor').value.trim();
+  state.manifest.instructions = $('#ajInstrucciones').value.trim();
+  state.manifest.settings.showScore = $('#ajNota').checked;
+  state.manifest.settings.showCorrection = $('#ajCorreccion').checked;
+  state.manifest.settings.shuffle = $('#ajBarajar').checked;
+  state.manifest.settings.maxAttempts = Math.max(0, parseInt($('#ajIntentos').value, 10) || 0);
+  state.manifest.settings.encryptSubmissions = $('#ajCifrarEntregas').checked;
+  state.submissionCryptoPassword = state.manifest.settings.encryptSubmissions ? $('#ajCryptoPassword').value : '';
+  if (!state.manifest.settings.encryptSubmissions) delete state.manifest.submissionCrypto;
+  state.manifest.access = {
     desde: getDateTime('ajDesde'),
     hasta: getDateTime('ajHasta'),
     autoEntrega: $('#ajAutoEntrega').checked,
@@ -2250,10 +2230,10 @@ $('#btnCopiarEnlace')?.addEventListener('click', async () => {
 
 function validate() {
   const problems = [];
-  if (!manifest.title.trim()) problems.push(t('validate.noTitle'));
-  if (!manifest.pages.length) problems.push(t('validate.noPages'));
-  if (!manifest.pages.some(p => p.fields.length)) problems.push(t('validate.noFields'));
-  manifest.pages.forEach((p, pi) => {
+  if (!state.manifest.title.trim()) problems.push(t('validate.noTitle'));
+  if (!state.manifest.pages.length) problems.push(t('validate.noPages'));
+  if (!state.manifest.pages.some(p => p.fields.length)) problems.push(t('validate.noFields'));
+  state.manifest.pages.forEach((p, pi) => {
     p.fields.forEach(f => {
       if (FIELD_TYPES[f.type]?.decor) return; // los decorativos no necesitan respuesta
       const e = expectedText(f);
@@ -2267,34 +2247,34 @@ function validate() {
 }
 
 async function exportZip() {
-  manifest.title = titleInput.value.trim();
+  state.manifest.title = titleInput.value.trim();
   const problems = validate();
   if (problems.length) {
-    const blocking = !manifest.pages.length;
+    const blocking = !state.manifest.pages.length;
     const msg = t('validate.review', { problems: problems.join('\n· ') });
     if (blocking) { window.alert(msg); return; }
     if (!window.confirm(msg + t('validate.anyway'))) return;
   }
-  manifest.lang = getLang();
+  state.manifest.lang = getLang();
   try {
     toast(t('toast.generating'));
-    let exportManifest = JSON.parse(JSON.stringify(manifest));
+    let exportManifest = JSON.parse(JSON.stringify(state.manifest));
     if (exportManifest.settings?.encryptSubmissions !== false) {
-      if (!submissionCryptoPassword) {
+      if (!state.submissionCryptoPassword) {
         toast(t('crypto.passwordRequired'), 'error');
         openSettings(exportZip);
         return;
       }
-      exportManifest.submissionCrypto = await createSubmissionCrypto(submissionCryptoPassword);
+      exportManifest.submissionCrypto = await createSubmissionCrypto(state.submissionCryptoPassword);
     } else {
       delete exportManifest.submissionCrypto;
     }
     if (exportManifest.access?.password) {
       exportManifest = await encryptManifestForStudent(exportManifest, exportManifest.access.password);
     }
-    const blob = await exportFichaZip({ manifest: exportManifest, files });
-    downloadBlob(blob, slugify(manifest.title || 'ficha') + '.zip');
-    dirty = false;
+    const blob = await exportFichaZip({ manifest: exportManifest, files: state.files });
+    downloadBlob(blob, slugify(state.manifest.title || 'ficha') + '.zip');
+    state.dirty = false;
     toast(t('toast.exported'), 'ok');
   } catch (e) {
     console.error(e);
@@ -2310,24 +2290,24 @@ async function openZipFile(file) {
       if (!password) return;
       ficha.manifest = await decryptManifestForStudent(ficha.manifest, password, { keepPassword: true });
     }
-    manifest = ficha.manifest;
-    files = ficha.files;
-    submissionCryptoPassword = '';
+    state.manifest = ficha.manifest;
+    state.files = ficha.files;
+    state.submissionCryptoPassword = '';
     urls.forEach(u => URL.revokeObjectURL(u));
     urls.clear();
     // Recalcular numeración de páginas para nuevas incorporaciones.
-    pageSeq = 1 + manifest.pages.reduce((max, p) => {
+    state.pageSeq = 1 + state.manifest.pages.reduce((max, p) => {
       const m = /page-(\d+)\./.exec(p.image);
       return m ? Math.max(max, parseInt(m[1], 10)) : max;
     }, 0);
-    sel = null;
-    activeTool = null;
-    titleInput.value = manifest.title || '';
-    dirty = false;
+    state.sel = null;
+    state.activeTool = null;
+    titleInput.value = state.manifest.title || '';
+    state.dirty = false;
     renderCanvas();
     renderPanel();
     refreshPaletteState();
-    toast(t('toast.fichaLoaded', { title: manifest.title || file.name }), 'ok');
+    toast(t('toast.fichaLoaded', { title: state.manifest.title || file.name }), 'ok');
   } catch (e) {
     console.error(e);
     toast(e.message, 'error');
@@ -2346,10 +2326,10 @@ async function mergeZipFile(file, insertAt) {
     const remap = new Map();
     ficha.files.forEach((blob, path) => {
       const newPath = /^pages\/page-\d+\./.test(path)
-        ? path.replace(/^pages\/page-\d+(\.[^.]+)$/, (_, ext) => `pages/page-${pageSeq++}${ext}`)
+        ? path.replace(/^pages\/page-\d+(\.[^.]+)$/, (_, ext) => `pages/page-${state.pageSeq++}${ext}`)
         : `${pfx}-${path}`;
       remap.set(path, newPath);
-      files.set(newPath, blob);
+      state.files.set(newPath, blob);
     });
     const newPages = ficha.manifest.pages.map(page => ({
       ...page,
@@ -2368,8 +2348,8 @@ async function mergeZipFile(file, insertAt) {
         };
       })
     }));
-    if (insertAt != null) manifest.pages.splice(insertAt, 0, ...newPages);
-    else manifest.pages.push(...newPages);
+    if (insertAt != null) state.manifest.pages.splice(insertAt, 0, ...newPages);
+    else state.manifest.pages.push(...newPages);
     markDirty();
     renderCanvas();
     renderPanel();
@@ -2383,8 +2363,8 @@ async function mergeZipFile(file, insertAt) {
 // ---------- Vista previa ----------
 
 function openPreview() {
-  manifest.title = titleInput.value.trim();
-  if (!manifest.pages.length) { toast(t('toast.addPageFirst'), 'error'); return; }
+  state.manifest.title = titleInput.value.trim();
+  if (!state.manifest.pages.length) { toast(t('toast.addPageFirst'), 'error'); return; }
   const overlay = el('div', { class: 'prev-overlay' });
   const root = el('div', {});
   const cerrar = iconBtn({ class: 'btn small' }, ICONS.arrowLeft, t('preview.back'));
@@ -2392,10 +2372,10 @@ function openPreview() {
   overlay.appendChild(root);
   document.body.appendChild(overlay);
   document.body.style.overflow = 'hidden';
-  preview = mountPlayer(root, { manifest: JSON.parse(JSON.stringify(manifest)), files }, { preview: true });
+  state.preview = mountPlayer(root, { manifest: JSON.parse(JSON.stringify(state.manifest)), files: state.files }, { preview: true });
   cerrar.addEventListener('click', () => {
-    preview.destroy();
-    preview = null;
+    state.preview.destroy();
+    state.preview = null;
     overlay.remove();
     document.body.style.overflow = '';
   });
@@ -2403,20 +2383,20 @@ function openPreview() {
 
 // ---------- Arranque ----------
 
-titleInput.addEventListener('input', () => { manifest.title = titleInput.value; markDirty(); });
+titleInput.addEventListener('input', () => { state.manifest.title = titleInput.value; markDirty(); });
 
 $('#btnNueva').addEventListener('click', () => {
   if (!window.confirm(t('editor.confirmNew'))) return;
   urls.forEach(u => URL.revokeObjectURL(u));
   urls.clear();
-  manifest = newManifest();
-  files = new Map();
-  pageSeq = 1;
-  sel = null;
-  activeTool = null;
-  submissionCryptoPassword = '';
+  state.manifest = newManifest();
+  state.files = new Map();
+  state.pageSeq = 1;
+  state.sel = null;
+  state.activeTool = null;
+  state.submissionCryptoPassword = '';
   titleInput.value = '';
-  dirty = false;
+  state.dirty = false;
   renderCanvas();
   renderPanel();
   refreshPaletteState();
@@ -2442,7 +2422,7 @@ $('#btnExportar').addEventListener('click', exportZip);
 // ---------- Pegar desde portapapeles ----------
 
 function currentPageIndex() {
-  if (sel) return sel.pageIndex;
+  if (state.sel) return state.sel.pageIndex;
   const pages = Array.from(canvas.querySelectorAll('.wpf-page'));
   if (!pages.length) return -1;
   let best = 0, bestVis = -1;
@@ -2455,7 +2435,7 @@ function currentPageIndex() {
 }
 
 async function pasteText(text) {
-  if (!manifest.pages.length) { toast(t('toast.addPdfFirst'), 'error'); return; }
+  if (!state.manifest.pages.length) { toast(t('toast.addPdfFirst'), 'error'); return; }
   const pi = currentPageIndex();
   const field = {
     id: uid('f'),
@@ -2465,7 +2445,7 @@ async function pasteText(text) {
     fontScale: 1,
     config: { text, color: '#1d2c42', bold: false }
   };
-  manifest.pages[pi].fields.push(field);
+  state.manifest.pages[pi].fields.push(field);
   markDirty();
   renderCanvas();
   selectField(pi, field.id);
@@ -2473,11 +2453,11 @@ async function pasteText(text) {
 }
 
 async function pasteImage(blob, mimeType) {
-  if (!manifest.pages.length) { toast(t('toast.addPdfFirst'), 'error'); return; }
+  if (!state.manifest.pages.length) { toast(t('toast.addPdfFirst'), 'error'); return; }
   const pi = currentPageIndex();
   const ext = mimeType.split('/')[1] || 'png';
   const path = 'images/' + uid() + '.' + ext;
-  files.set(path, blob);
+  state.files.set(path, blob);
   const def = FIELD_TYPES['image'].defRect;
   const field = {
     id: uid('f'),
@@ -2487,7 +2467,7 @@ async function pasteImage(blob, mimeType) {
     fontScale: 1,
     config: { src: path }
   };
-  manifest.pages[pi].fields.push(field);
+  state.manifest.pages[pi].fields.push(field);
   markDirty();
   renderCanvas();
   selectField(pi, field.id);
@@ -2523,8 +2503,8 @@ $('#btnCopiarCampo').addEventListener('click', () => copySelected());
 
 $('#btnPegar').addEventListener('click', async () => {
   // Si hay un campo copiado internamente, pegarlo en la página actual.
-  if (copiedField && sel?.pageIndex !== undefined) {
-    pasteField(sel.pageIndex);
+  if (state.copiedField && state.sel?.pageIndex !== undefined) {
+    pasteField(state.sel.pageIndex);
     return;
   }
   try {
