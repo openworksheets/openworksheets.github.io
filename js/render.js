@@ -322,7 +322,7 @@ const renderers = {
     const options = field.config.options || [];
     const order = ctx.shuffle ? shuffled(options.map((_, i) => i), ctx.rng) : options.map((_, i) => i);
     const inputs = [];
-    const wrap = el('div', { class: 'wpf-choices' });
+    const wrap = el('div', { class: 'wpf-choices' + (field.config.horizontal ? ' wpf-choices--row' : '') });
     order.forEach(origIdx => {
       const input = el('input', { type: 'checkbox' });
       input.addEventListener('change', () => notify(ctx));
@@ -1247,7 +1247,7 @@ function choiceList(field, root, ctx) {
   const group = uid();
   let value = null;
   const inputs = [];
-  const wrap = el('div', { class: 'wpf-choices' });
+  const wrap = el('div', { class: 'wpf-choices' + (field.config.horizontal ? ' wpf-choices--row' : '') });
   order.forEach(origIdx => {
     const input = el('input', { type: 'radio', name: group });
     input.addEventListener('change', () => { value = origIdx; notify(ctx); });

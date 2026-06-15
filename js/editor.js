@@ -1987,6 +1987,7 @@ const configForms = {
       },
       min: 2
     });
+    checkRow(cont, t('cfg.horizontalLayout'), Boolean(cfg.horizontal), v => { cfg.horizontal = v; });
   },
 
   truefalse(cont, field) {
@@ -2034,6 +2035,7 @@ const configForms = {
       min: 2
     });
     checkRow(cont, t('cfg.partialScore'), Boolean(cfg.partial), v => { cfg.partial = v; });
+    checkRow(cont, t('cfg.horizontalLayout'), Boolean(cfg.horizontal), v => { cfg.horizontal = v; });
   },
 
   checkbox(cont, field) {

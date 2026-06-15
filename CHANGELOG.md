@@ -9,6 +9,15 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.7.0] — 2026-06-15
+
+### Añadido
+- Opción **«Mostrar las opciones en horizontal»** en los campos **Opción única**
+  y **Opción múltiple**: las opciones se disponen en fila y saltan a una segunda
+  fila si no caben. Por defecto se mantiene la disposición vertical.
+
+---
+
 ## [1.6.1] — 2026-06-15
 
 ### Corregido
