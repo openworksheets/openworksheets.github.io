@@ -31,7 +31,7 @@
  *   ?short=TOKEN                          → { token, url }  (resolve short link)
  */
 
-/* global ContentService, DriveApp, HtmlService, PropertiesService, CacheService, UrlFetchApp, Utilities */
+/* global ContentService, DriveApp, HtmlService, PropertiesService, CacheService, LockService, MimeType, UrlFetchApp, Utilities */
 
 var SITE_ROOT_FOLDER = 'ZipWebSites';
 var MANIFEST_FILE = 'manifest.json';
@@ -39,6 +39,8 @@ var CACHE_SECONDS = 21600; // 6 hours
 var MAX_BUNDLE_BYTES = 100 * 1024 * 1024; // 100 MB before base64
 var MAX_CHUNK_BYTES = 20 * 1024 * 1024; // 20 MB per chunk (raw bytes)
 var DEFAULT_CHUNK_BYTES = 20 * 1024 * 1024; // 20 MB per chunk (raw bytes)
+var SHORTLINK_FILE = 'shortlinks.json'; // Drive store for short links (token -> url)
+var SHORTLINK_FILE_ID_KEY = '__shortlinks_file_id'; // ScriptProperty caching the Drive file id
 
 function authorize() {
   // Run once to grant Drive and UrlFetch scopes for the deploying user.
@@ -885,25 +887,100 @@ function computeShortToken_(value) {
   return token.slice(0, 12);
 }
 
+// Short links are stored in a single JSON file in Drive (token -> url) so the
+// store can grow without the 500 KB limit of ScriptProperties. Legacy tokens
+// created before this change still live in ScriptProperties and are read as a
+// fallback, so previously shared links keep working.
+
+function getShortLinkFile_() {
+  var props = PropertiesService.getScriptProperties();
+  var fileId = props.getProperty(SHORTLINK_FILE_ID_KEY);
+  if (fileId) {
+    try {
+      return DriveApp.getFileById(fileId);
+    } catch (err) {
+      // File was deleted, trashed or lost; fall through and recreate it.
+    }
+  }
+  var root = getOrCreateRootFolder_();
+  var existing = root.getFilesByName(SHORTLINK_FILE);
+  var file = existing.hasNext()
+    ? existing.next()
+    : root.createFile(SHORTLINK_FILE, '{}', MimeType.PLAIN_TEXT);
+  props.setProperty(SHORTLINK_FILE_ID_KEY, file.getId());
+  return file;
+}
+
+function readShortMap_() {
+  var text = getShortLinkFile_().getBlob().getDataAsString('UTF-8');
+  if (!text) {
+    return {};
+  }
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    return {};
+  }
+}
+
+function writeShortMap_(map) {
+  getShortLinkFile_().setContent(JSON.stringify(map));
+}
+
 function createShortLink_(rawUrl) {
   var url = normalizeDownloadUrl_(rawUrl);
   var token = computeShortToken_(url);
-  var props = PropertiesService.getScriptProperties();
-  var key = 'short_' + token;
-  var stored = props.getProperty(key);
-  if (!stored) {
-    props.setProperty(key, url);
+  var cache = CacheService.getScriptCache();
+  var cacheKey = 'sl_' + token;
+
+  // Already known? Reuse the token without touching storage.
+  if (cache.get(cacheKey)) {
+    return { token: token };
   }
+  var props = PropertiesService.getScriptProperties();
+  if (props.getProperty('short_' + token)) {
+    cache.put(cacheKey, url, CACHE_SECONDS);
+    return { token: token };
+  }
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var map = readShortMap_();
+    if (!map[token]) {
+      map[token] = url;
+      writeShortMap_(map);
+    }
+  } finally {
+    lock.releaseLock();
+  }
+  cache.put(cacheKey, url, CACHE_SECONDS);
   return { token: token };
 }
 
 function resolveShortLink_(token) {
-  var props = PropertiesService.getScriptProperties();
-  var url = props.getProperty('short_' + token);
-  if (!url) {
-    return { error: 'Token no encontrado' };
+  var cache = CacheService.getScriptCache();
+  var cacheKey = 'sl_' + token;
+  var cached = cache.get(cacheKey);
+  if (cached) {
+    return { token: token, url: cached };
   }
-  return { token: token, url: url };
+
+  // New links live in the Drive store.
+  var map = readShortMap_();
+  if (map[token]) {
+    cache.put(cacheKey, map[token], CACHE_SECONDS);
+    return { token: token, url: map[token] };
+  }
+
+  // Legacy links created before the Drive migration live in ScriptProperties.
+  var legacy = PropertiesService.getScriptProperties().getProperty('short_' + token);
+  if (legacy) {
+    cache.put(cacheKey, legacy, CACHE_SECONDS);
+    return { token: token, url: legacy };
+  }
+
+  return { error: 'Token no encontrado' };
 }
 
 function wantsBundle_(e) {

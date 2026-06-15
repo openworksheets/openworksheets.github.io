@@ -35,6 +35,12 @@ Soporta los mismos endpoints que el protocolo `bundle` de
 | `?short=1&url=...` | `{ token }` — crea enlace corto |
 | `?short=TOKEN` | `{ token, url }` — resuelve enlace corto |
 
+Los enlaces cortos se guardan en un archivo `shortlinks.json` dentro de la
+carpeta `ZipWebSites` de tu Drive (con caché en lecturas y bloqueo en
+escrituras), de modo que el almacén puede crecer sin el límite de 500 KB de
+`ScriptProperties`. ⚠️ No borres, muevas ni renombres ese archivo: hacerlo
+rompería todos los enlaces cortos que hayas generado.
+
 ## Pasos para desplegar en tu cuenta
 
 1. Ve a [https://script.google.com](https://script.google.com) e inicia sesión
