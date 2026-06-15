@@ -9,7 +9,7 @@ Las versiones publicadas también están en la página de
 
 ---
 
-## [Sin publicar]
+## [1.6.0] — 2026-06-15
 
 ### Añadido
 - En el panel de un hueco, botón **«Dibujar nuevo hueco»** para añadir otro sin
