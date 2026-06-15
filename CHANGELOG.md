@@ -20,6 +20,10 @@ Las versiones publicadas también están en la página de
 - La **vista previa** se abre ahora en la misma página que se está editando, en
   lugar de empezar siempre por la página 1.
 
+- Botón **«Ver un ejemplo en el editor»** en la página principal, que abre una
+  ficha de ejemplo lista para editar (vía `editor.html?ejemplo=…`, solo rutas
+  relativas del propio sitio).
+
 ### Cambiado
 - El botón de **vista previa** pasa de la barra superior a la barra del lienzo,
   junto al control de zoom, con icono y texto «Vista previa» y un color acorde a

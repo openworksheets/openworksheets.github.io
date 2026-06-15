@@ -2947,3 +2947,21 @@ canvas.addEventListener('drop', e => {
 renderPalette();
 renderCanvas();
 renderPanel();
+
+// Carga de ficha de ejemplo desde ?ejemplo=<ruta>. Solo se admiten rutas
+// relativas del propio sitio (sin esquema ni barra inicial), para no descargar
+// recursos arbitrarios de terceros.
+(async function loadExampleFromUrl() {
+  const path = new URLSearchParams(location.search).get('ejemplo');
+  if (!path || /^(https?:)?\/\//i.test(path) || path.startsWith('/')) return;
+  try {
+    toast(t('toast.generating'));
+    const resp = await fetch(path);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const blob = await resp.blob();
+    await openZipFile(new File([blob], path.split('/').pop() || 'ficha.zip', { type: 'application/zip' }));
+  } catch (e) {
+    console.error(e);
+    toast(t('toast.exportError', { msg: e.message }), 'error');
+  }
+})();
