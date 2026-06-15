@@ -74,13 +74,9 @@ Las fichas admiten las siguientes opciones de control:
 - Entrega automática al agotar el plazo
 - Opción de mostrar u ocultar la nota y la corrección al alumnado
 
-## Seguridad
+## Seguridad y cifrado
 
-OpenWorksheets ofrece un nivel de seguridad alto para el uso en el aula. El alumnado no puede acceder al archivo de la ficha y las entregas pueden cifrarse para que solo el docente pueda leerlas. No obstante, ningún sistema de este tipo es infalible y no sustituye a un sistema de examen de alta seguridad.
-
-## Cifrado
-
-OpenWorksheets incorpora dos mecanismos de cifrado **independientes**, ambos ejecutados íntegramente en el navegador mediante la Web Crypto API (`crypto.subtle`), sin servidor ni envío de datos a terceros.
+OpenWorksheets ofrece un nivel de seguridad alto para el uso en el aula: el alumnado no puede acceder al archivo de la ficha y las entregas pueden cifrarse para que solo el docente pueda leerlas. Incorpora dos mecanismos de cifrado **independientes**, ambos ejecutados íntegramente en el navegador mediante la Web Crypto API (`crypto.subtle`), sin servidor ni envío de datos a terceros.
 
 ### Cifrado de entregas (clave pública)
 
