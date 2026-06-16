@@ -64,6 +64,21 @@ Si dejas `gasUrl` vacío, la aplicación intentará la descarga directa del ZIP 
 si falla por CORS, usará los proxies CORS públicos definidos en `corsProxies`.
 Esta alternativa es menos fiable para archivos en Google Drive.
 
+## Protección automática del despliegue del autor
+
+`config.js` comprueba en tiempo de ejecución el dominio donde se sirve la
+aplicación:
+
+- **Sitio oficial** (`openworksheets.github.io`): se usa el `gasUrl` del autor.
+- **Ejecución local** (`localhost`, `127.0.0.1`, `file://`, `*.local`): se
+  permite, para poder desarrollar y probar.
+- **Cualquier otro dominio** (un fork publicado en otro sitio): se ignora el
+  `gasUrl` del autor y se muestra un aviso enlazando a esta página.
+
+Por eso, si publicas tu propia copia en otro dominio, verás un aviso hasta que
+despliegues tu propio Google Apps Script y pongas tu URL en `gasUrl` siguiendo
+los pasos de más arriba.
+
 ## Cuándo actualizar el despliegue
 
 Si modificas `Code.gs`, debes crear una **nueva implementación** en
