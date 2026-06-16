@@ -54,6 +54,30 @@ export async function importFichaZip(data) {
   return { manifest, files };
 }
 
+// Devuelve solo los ficheros realmente usados por el manifiesto, descartando
+// huérfanos (p. ej. recortes o medios de campos borrados). Un fichero se
+// conserva si su ruta aparece citada en el manifiesto («"ruta"») o si está bajo
+// el prefijo `pkg` de algún campo SCORM (cuyos archivos internos no se citan uno
+// a uno en el manifiesto, solo el prefijo de la carpeta).
+export function usedFiles(manifest, files) {
+  const json = JSON.stringify(manifest);
+  // Prefijos de paquetes (SCORM y webs incrustadas embed zip/elpx): sus archivos
+  // internos no se citan uno a uno en el manifiesto, solo el prefijo `pkg`.
+  const pkgPrefixes = [];
+  for (const page of manifest.pages || []) {
+    for (const f of page.fields || []) {
+      if (f.config?.pkg) pkgPrefixes.push(f.config.pkg);
+    }
+  }
+  const keep = new Map();
+  for (const [path, blob] of files) {
+    if (json.includes('"' + path + '"') || pkgPrefixes.some(pre => path.startsWith(pre))) {
+      keep.set(path, blob);
+    }
+  }
+  return keep;
+}
+
 export function newManifest() {
   return {
     format: FORMAT,

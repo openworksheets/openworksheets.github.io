@@ -42,6 +42,31 @@ pantalla y termina con `__TEST_OK__` o `__TEST_FAIL__`.
 - `run_zoom.js` — script de puppeteer aparte: zoom de página en el editor
   (botones, Ctrl+rueda) y en el visor del alumno, y transición del acordeón
   de la paleta (`node tests/run_zoom.js`, con el servidor en el puerto 8765).
+- `test_scorm.html` — lógica de SCORM 1.2 sin navegador-LMS: parseo del
+  `imsmanifest.xml` (árbol de navegación, recurso de entrada, detección de
+  versión), el runtime `window.API` (LMSInitialize/SetValue/Commit/Finish y
+  errores) y la conversión de la nota SCORM en puntuación de la ficha
+  (`node tests/run_headless.js tests/test_scorm.html`).
+- `run_scorm_editor.js` — script de puppeteer aparte: el campo SCORM en el
+  editor (grupo «Interactivo» de la paleta, creación dibujándolo y panel de
+  configuración con subida del paquete, modo de puntuación y menú)
+  (`node tests/run_scorm_editor.js`, con el servidor en el puerto 8765).
+- `test_player_scorm.html` — integración de extremo a extremo del campo SCORM
+  1.2 en el visor: el Service Worker sirve un SCO, este localiza `window.API`,
+  registra una nota (70/100) y se comprueba que se integra en la puntuación de
+  la ficha (7/10). Requiere `tests/scorm-sw.js` (copia del SW de la raíz, para
+  que el ámbito del worker cubra `/tests/`)
+  (`node tests/run_headless.js tests/test_player_scorm.html`).
+- `scorm-sw.js` — copia del Service Worker de la raíz, necesaria solo para que
+  los tests servidos desde `/tests/` puedan registrarlo dentro de su ámbito. En
+  la aplicación real el SW vive en la raíz.
+- `run_embed_editor.js` — script de puppeteer aparte: el campo «Insertar» con
+  selección de tipo (URL/HTML/ZIP/ELPX); al elegir «Web en ZIP» y subir
+  `web-ejemplo.zip`, comprueba que la web se sirve en vivo en el lienzo y que
+  «Cambiar tipo» reabre el selector
+  (`node tests/run_embed_editor.js`, con el servidor en el puerto 8765).
+- `web-ejemplo.zip` — web mínima (index.html + assets/style.css) para probar el
+  modo «Web en ZIP» del campo «Insertar».
 - `test_doc.pdf` — PDF mínimo usado por las pruebas.
 
 Nota: `--virtual-time-budget` de Chromium headless no espera a los hilos de

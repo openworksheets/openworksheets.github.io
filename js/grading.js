@@ -12,6 +12,7 @@
 
 import { normalizeText, parseDecimal } from './util.js';
 import { parseGaps } from './fieldtypes.js';
+import { scormRatio } from './scorm.js';
 
 export function gradeField(field, answer) {
   const max = Number(field.points) || 0;
@@ -188,6 +189,11 @@ const graders = {
       hits += getPlaced(z.id).filter(t => correct.includes(t)).length;
     });
     return { ratio: total ? hits / total : 0 };
+  },
+
+  scorm(cfg, answer) {
+    // answer = snapshot del runtime SCORM: { raw, min, max, status }
+    return scormRatio(answer, cfg.scoreMode);
   }
 };
 
@@ -228,6 +234,7 @@ export function expectedText(field) {
         const ans = Array.isArray(z.answers) && z.answers.length ? z.answers : z.answer ? [z.answer] : [];
         return ans.join('+');
       }).join(', ');
+    case 'scorm': return cfg.scoreMode === 'completion' ? '✓ completado' : 'puntuación SCORM';
     default: return '';
   }
 }

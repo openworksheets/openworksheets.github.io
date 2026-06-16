@@ -24,9 +24,9 @@ const puppeteer = require('puppeteer-core');
   let fails = 0;
   const check = (name, ok) => { if (!ok) fails++; console.log(`${name}: ${ok ? 'OK' : 'MAL'}`); };
 
-  // Paleta: 4 grupos, todos colapsados al inicio
+  // Paleta: 5 grupos, todos colapsados al inicio
   const groups = await page.$$eval('.ed-group', ns => ns.map(n => n.dataset.group));
-  check('4 grupos en la paleta', groups.join(',') === 'write,choose,relate,design');
+  check('5 grupos en la paleta', groups.join(',') === 'write,choose,relate,external,design');
   let open = await page.$$eval('.ed-group-tools.open', ns => ns.length);
   check('grupos colapsados al inicio', open === 0);
 

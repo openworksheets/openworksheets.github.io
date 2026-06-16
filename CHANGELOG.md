@@ -9,6 +9,33 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [No publicado]
+
+### Añadido
+- El campo **«Insertar (Web/HTML)»** admite ahora **webs empaquetadas**: además
+  de URL y código HTML, se puede subir una **web completa en `.zip`** (un
+  `index.html` con sus carpetas, CSS, JS…) o un **paquete `.elpx` de
+  eXeLearning** (que es un `.zip` con una web dentro). Se sirven desde la propia
+  ficha mediante el Service Worker (igual que el SCORM) y se ven en vivo en el
+  lienzo del editor. Al crear el campo se elige primero el tipo de contenido.
+- **Campo SCORM 1.2** (grupo «Interactivo» de la paleta): el docente sube un
+  paquete SCORM 1.2 (`.zip`) y OpenWorksheets actúa como mini‑LMS en el
+  navegador. Genera el **menú de navegación** del paquete a partir de su
+  `imsmanifest.xml`, ejecuta los SCO en un iframe servido por un *Service
+  Worker* y captura su **puntuación** (`cmi.core.score.raw`) o su estado de
+  finalización mediante el runtime `window.API`. La nota se integra en la
+  puntuación de la ficha de forma proporcional a los puntos del campo, con dos
+  modos: *nota del SCORM* o *aprobado/suspendido*.
+  - El paquete se previsualiza **en vivo en el lienzo del editor** (sin
+    interacción, para poder moverlo y redimensionarlo) y de forma interactiva
+    en la vista previa.
+  - Admite **título y pie** opcionales con sus controles de texto (tipo de
+    letra, tamaño y color), igual que los campos de vídeo/audio/insertar.
+  - Requiere abrir la ficha desde un sitio web (https): el *Service Worker* no
+    está disponible al abrir los HTML como archivo local.
+  - Limitaciones actuales: solo SCORM 1.2 (no 2004 ni secuenciamiento) y la
+    sesión no se reanuda entre recargas.
+
 ## [1.8.0] — 2026-06-16
 
 ### Añadido

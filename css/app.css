@@ -2365,3 +2365,42 @@ input.wpf-gap-input {
     text-size-adjust: 100%;
   }
 }
+
+/* ── Campo SCORM ─────────────────────────────────────────────────────────── */
+/* Visor del alumno: menú de navegación + iframe del SCO */
+.wpf-field-scorm { overflow: hidden; }
+.wpf-scorm-layout { position: absolute; inset: 0; display: flex; min-height: 0; }
+.wpf-scorm-layout.has-menu .wpf-scorm-toc {
+  flex: 0 0 30%; max-width: 220px; min-width: 120px;
+  overflow: auto; background: var(--fondo-suave, #f4f6f9);
+  border-right: 1px solid var(--tinta-tenue, #d6dce5);
+  display: flex; flex-direction: column;
+}
+.wpf-scorm-tocitem {
+  text-align: left; background: none; border: none; cursor: pointer;
+  padding: 8px; font: inherit; font-size: 0.85em; line-height: 1.25;
+  color: var(--tinta, inherit); border-bottom: 1px solid var(--tinta-tenue, #e3e8ef);
+}
+.wpf-scorm-tocitem:hover { background: rgba(0, 0, 0, 0.05); }
+.wpf-scorm-tocitem.active { background: var(--acento, #2b6cb0); color: #fff; font-weight: 600; }
+.wpf-scorm-stage { position: relative; flex: 1 1 auto; min-width: 0; }
+.wpf-scorm-frame { width: 100%; height: 100%; border: none; display: block; }
+.wpf-scorm-lock { position: absolute; inset: 0; background: transparent; cursor: not-allowed; }
+.wpf-scorm-msg {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: 0.8em; font-size: 0.85em; color: var(--tinta-suave);
+  border: 2px dashed var(--tinta-tenue); border-radius: 6px;
+}
+/* Editor: vista en vivo del SCORM en el lienzo (sin interacción, para poder
+   mover/seleccionar la caja; el contenido se ve pero no captura eventos). */
+.ed-field.ed-scorm-field { overflow: hidden; }
+.ed-field.ed-scorm-field .wpf-scorm-layout { pointer-events: none; }
+/* Editor: placeholder cuando aún no hay paquete cargado */
+.ed-scorm-prev {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 6px;
+  background: var(--fondo-suave, #f4f6f9); color: var(--tinta-suave);
+  border: 1px dashed var(--tinta-tenue); pointer-events: none; padding: 8px;
+}
+.ed-scorm-icon svg { width: 32px; height: 32px; opacity: 0.7; }
+.ed-scorm-title { font-size: 0.8rem; text-align: center; word-break: break-word; }

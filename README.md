@@ -39,6 +39,24 @@ Campos en los que el alumno conecta, ordena o coloca elementos.
 | **Arrastrar a zonas** | El alumno arrastra elementos hasta las zonas de destino dibujadas sobre el documento. Dos modos: *escribir las etiquetas* (que parten de una bandeja) o *recortar del propio PDF* trozos de texto o imagen (que parten de su sitio y lo dejan vacío al moverlos). |
 | **Unir con flechas** | El alumno conecta elementos dibujando flechas entre ellos directamente sobre la página. |
 
+### 📦 Interactivo
+
+Contenido interactivo externo que sí se corrige y puntúa.
+
+| Tipo | Descripción |
+|------|-------------|
+| **SCORM (1.2)** | El docente sube un paquete **SCORM 1.2** (`.zip`). OpenWorksheets actúa como mini‑LMS en el navegador: muestra el **menú de navegación** del paquete, ejecuta sus contenidos y captura su **puntuación** (`cmi.core.score.raw`) o su estado de finalización, que se integra en la nota de la ficha de forma proporcional a los puntos del campo. Admite **título y pie** opcionales (con tipo de letra, tamaño y color). El paquete se ve **en vivo en el propio lienzo del editor** (sin interacción, para poder moverlo y redimensionarlo) y de forma interactiva en la vista previa. |
+
+#### Notas sobre SCORM
+
+- **Solo SCORM 1.2** (no SCORM 2004 ni secuenciamiento avanzado). Al subir un paquete 2004 se avisa y no se importa.
+- **Requiere abrir la ficha desde un sitio web (https)**: el paquete se sirve mediante un *Service Worker*, que no está disponible al abrir los HTML como archivo local (`file://`).
+- Dos modos de puntuación: **nota del SCORM** (usa `score.raw` normalizado entre `score.min`/`score.max`) o **aprobado/suspendido** (según `lesson_status`).
+- El paquete viaja **dentro del ZIP** de la ficha, por lo que aumenta su tamaño.
+- El contenido SCORM ejecuta JavaScript propio en el navegador del alumno; la sesión **no se reanuda** entre recargas (se reinicia el intento).
+
+> Hay un paquete SCORM 1.2 de ejemplo en `ejemplos/scorm-ejemplo.zip` (una pregunta que reporta su puntuación) para probar la subida desde el editor.
+
 ### 🎨 Diseño
 
 Elementos decorativos o informativos que no se corrigen ni cuentan en la puntuación.
@@ -49,7 +67,7 @@ Elementos decorativos o informativos que no se corrigen ni cuentan en la puntuac
 | **Imagen** | Imagen decorativa o explicativa superpuesta al documento. |
 | **Vídeo** | Vídeo de YouTube/Vimeo (incrustado), enlace directo o archivo subido, con título y pie opcionales. |
 | **Audio** | Audio desde archivo subido o enlace, con título y pie opcionales. |
-| **Insertar (Web/HTML)** | Contenido externo mediante su código de inserción (iframe) o una URL: Genially, H5P, mapas, presentaciones… |
+| **Insertar (Web/HTML)** | Contenido externo. Al crearlo se elige el tipo: **URL** (se incrusta en un iframe), **código HTML** de inserción (Genially, H5P, mapas…), **web completa en `.zip`** (un `index.html` con sus carpetas/CSS/JS, servida desde la propia ficha) o **paquete `.elpx` de eXeLearning** (un `.zip` con una web dentro). Admite título y pie. |
 | **Tapar zona** | Rectángulo de color que oculta una parte del documento (respuestas, pistas, etc.). |
 | **Línea / Flecha / Rectángulo / Elipse** | Formas geométricas para resaltar, enmarcar o señalar elementos del documento. |
 

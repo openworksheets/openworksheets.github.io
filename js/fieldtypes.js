@@ -130,6 +130,24 @@ export const FIELD_TYPES = {
       };
     }
   },
+  // Paquete SCORM 1.2: contenido interactivo autocorregible. Es gradable: su
+  // nota (cmi.core.score.raw o el estado de finalización) se integra en la
+  // puntuación de la ficha. Los archivos del paquete se guardan descomprimidos
+  // en state.files bajo el prefijo config.pkg ('scorm/<uid>/').
+  scorm: {
+    name: 'SCORM (1.2)',
+    glyph: ICONS.package,
+    defRect: { w: 0.6, h: 0.45 },
+    defaults: () => ({
+      pkg: '',          // prefijo de carpeta en state.files, p. ej. 'scorm/<uid>/'
+      entryHref: '',    // recurso de entrada (href del primer SCO del manifest)
+      title: '',
+      scoreMode: 'scorm',  // 'scorm' = usa score.raw ; 'completion' = aprobado/suspendido
+      showMenu: true,      // mostrar el menú de navegación lateral del paquete
+      toc: [],             // árbol de navegación cacheado del imsmanifest
+      title: '', caption: ''
+    })
+  },
   // Elementos decorativos: no puntúan ni cuentan como preguntas.
   label: {
     name: 'Texto',
@@ -168,14 +186,19 @@ export const FIELD_TYPES = {
     defRect: { w: 0.5, h: 0.08 },
     defaults: () => ({ provider: 'file', url: '', src: '', controls: true, autoplay: false, loop: false, title: '', caption: '' })
   },
-  // Inserción HTML/iframe. mode 'url' (se incrusta en un iframe) o 'html'
-  // (código pegado tal cual, sin sanear: responsabilidad del autor de la ficha).
+  // Inserción de contenido externo. El modo se elige al configurar el campo:
+  //   'url'  → se incrusta una URL en un iframe
+  //   'html' → código pegado tal cual, sin sanear (responsabilidad del autor)
+  //   'zip'  → web completa en un .zip (index + css/js/carpetas), servida por SW
+  //   'elpx' → paquete de eXeLearning (.elpx, que es un .zip con una web dentro)
+  // Los modos 'zip'/'elpx' guardan sus archivos en state.files bajo config.pkg
+  // ('embed/<uid>/') y la entrada en config.entryHref, igual que SCORM.
   embed: {
     name: 'Insertar (Web/HTML)',
     glyph: ICONS.code,
     decor: true,
     defRect: { w: 0.5, h: 0.3 },
-    defaults: () => ({ mode: 'url', url: '', html: '', title: '', caption: '' })
+    defaults: () => ({ mode: '', url: '', html: '', pkg: '', entryHref: '', title: '', caption: '' })
   },
   // Formas de dibujo: para componer fichas desde una hoja en blanco.
   line: {
@@ -211,6 +234,7 @@ export const FIELD_TYPES = {
 export const FIELD_ORDER = [
   'text', 'number', 'single', 'truefalse', 'multi', 'checkbox',
   'select', 'gaps', 'textboxes', 'match', 'order', 'dragdrop', 'arrowmatch',
+  'scorm',
   'label', 'cover', 'image', 'video', 'audio', 'embed', 'line', 'arrow', 'rect', 'ellipse'
 ];
 
@@ -220,6 +244,7 @@ export const PALETTE_GROUPS = [
   { id: 'write',  glyph: ICONS.pencil,         types: ['text', 'number', 'fillgaps'] },
   { id: 'choose', glyph: ICONS.listChecks,      types: ['single', 'multi', 'checkbox', 'truefalse', 'select'] },
   { id: 'relate', glyph: ICONS.arrowLeftRight,  types: ['match', 'order', 'dragdrop', 'arrowmatch'] },
+  { id: 'external', glyph: ICONS.package,        types: ['scorm'] },
   { id: 'design', glyph: ICONS.shapes,          types: ['label', 'image', 'video', 'audio', 'embed', 'cover', 'line', 'arrow', 'rect', 'ellipse'] }
 ];
 

@@ -18,6 +18,7 @@ import { fontStack } from './fonts.js';
 import { gradeField, expectedText } from './grading.js';
 import { buildEntregaData, entregaFilename, entregaResumen } from './entrega.js';
 import { encryptSubmission } from './submissionCrypto.js';
+import { scormSupported, registerScormSw, provisionScormPackage, scormRunBase } from './scormhost.js';
 import { t } from './i18n.js';
 
 function formatCountdown(ms) {
@@ -44,6 +45,11 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     }
     return urls.get(path);
   }
+
+  // Paquetes servidos por el Service Worker: SCORM y webs incrustadas (.zip/.elpx).
+  const needsPkgHost = manifest.pages.some(p => p.fields.some(f =>
+    f.type === 'scorm' || (f.type === 'embed' && (f.config?.mode === 'zip' || f.config?.mode === 'elpx'))));
+  const pkgReady = needsPkgHost && scormSupported() ? registerScormSw() : Promise.resolve(false);
 
   const gradable = f => !isDecorField(f.type) && !f.noScore;
   const totalPoints = manifest.pages.reduce(
@@ -248,7 +254,16 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
       rng,
       shuffle: Boolean(settings.shuffle),
       onChange: () => { updateProgress(); scheduleSave(); },
-      fileUrl
+      fileUrl,
+      pkgHost: needsPkgHost ? {
+        supported: scormSupported(),
+        ready: pkgReady,
+        // Token estable por campo: al reintentar se reescribe la misma caché.
+        token: f => `${manifest.id}-${f.id}`,
+        provision: (token, pkg) => provisionScormPackage(token, files, pkg),
+        runBase: scormRunBase,
+        studentName: datos.alumno || ''
+      } : null
     };
 
     manifest.pages.forEach((page, pi) => {

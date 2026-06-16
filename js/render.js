@@ -14,6 +14,7 @@ import { el, shuffled, shuffledIndices, normalizeText } from './util.js';
 import { parseGaps } from './fieldtypes.js';
 import { fontStack } from './fonts.js';
 import { mdToHtml } from './markdown.js';
+import { Scorm12Runtime } from './scorm.js';
 import { t } from './i18n.js';
 
 // SVG de una casilla de verificación dibujable (campo checkbox).
@@ -90,6 +91,16 @@ export function positionRect(node, rect) {
   node.style.top = (rect.y * 100) + '%';
   node.style.width = (rect.w * 100) + '%';
   node.style.minHeight = (rect.h * 100) + '%';
+}
+
+// Aplana el árbol de navegación SCORM (items anidados) a una lista en
+// preorden con la profundidad de cada elemento, para pintar el menú.
+function flattenToc(items, depth = 0, out = []) {
+  for (const it of items || []) {
+    out.push({ title: it.title, href: it.href, depth });
+    if (it.children && it.children.length) flattenToc(it.children, depth + 1, out);
+  }
+  return out;
 }
 
 function emptyRenderer() {
@@ -295,12 +306,118 @@ export function buildMediaContent(field, fileUrl, opts = {}) {
       // Código pegado tal cual, sin sanear (responsabilidad del autor de la ficha).
       body = el('div', { class: 'wpf-embed-html' });
       body.innerHTML = cfg.html;
+    } else if (cfg.mode === 'zip' || cfg.mode === 'elpx') {
+      // Web completa (.zip) o paquete eXeLearning (.elpx): servida por el SW.
+      body = buildPackageIframe(field, opts.host, cfg.title);
     } else if ((cfg.url || '').trim()) {
       body = el('iframe', { src: cfg.url.trim(), class: 'wpf-media-el', allow: 'fullscreen; autoplay; clipboard-write; encrypted-media; picture-in-picture', allowfullscreen: '' });
     }
   }
   if (!body) body = el('div', { class: 'wpf-media-empty' }, t('render.mediaEmpty'));
   return mediaFigure(field, body, 'wpf-media-' + field.type);
+}
+
+// Iframe que carga una web empaquetada (embed zip/elpx) servida por el Service
+// Worker. La carga es asíncrona (aprovisionamiento del paquete).
+function buildPackageIframe(field, host, title) {
+  const cfg = field.config || {};
+  if (!host || !host.supported || !cfg.pkg || !cfg.entryHref) {
+    const msg = !cfg.pkg || !cfg.entryHref ? t('render.embedEmpty') : t('render.scormNeedsServer');
+    return el('div', { class: 'wpf-media-empty' }, msg);
+  }
+  const frame = el('iframe', {
+    class: 'wpf-media-el',
+    allow: 'fullscreen; autoplay; clipboard-write; encrypted-media; picture-in-picture',
+    allowfullscreen: '', title: title || ''
+  });
+  Promise.resolve(host.ready).then(async ok => {
+    if (!ok) return;
+    const base = await host.provision(host.token(field), cfg.pkg);
+    frame.src = base + encodeURI(cfg.entryHref);
+  }).catch(() => {});
+  return frame;
+}
+
+// Construye la vista de un paquete SCORM (menú de navegación + iframe del SCO),
+// crea su runtime y lo sirve mediante el Service Worker. La usan tanto el visor
+// del alumno como el lienzo del editor (vista en vivo, sin interacción).
+//
+//   host = { supported, ready, token(field), provision(token, pkg), studentName }
+//   opts.onCommit = callback al cambiar la nota/estado del SCORM
+//
+// Devuelve { el, runtime, lock }: si no hay soporte o paquete, `el` es un
+// mensaje y `runtime` es null.
+export function buildScormView(field, host, opts = {}) {
+  const cfg = field.config || {};
+
+  // Sin Service Worker (p. ej. al abrir el HTML como archivo local) o sin
+  // paquete cargado: no podemos servir el SCORM. Mensaje claro, sin runtime.
+  if (!host || !host.supported || !cfg.pkg || !cfg.entryHref) {
+    const msg = !cfg.pkg || !cfg.entryHref ? t('render.scormEmpty') : t('render.scormNeedsServer');
+    return { el: el('div', { class: 'wpf-scorm-msg' }, msg), runtime: null, lock: null };
+  }
+
+  const runtime = new Scorm12Runtime({ studentName: host.studentName });
+  let base = '';
+  let activeBtn = null;
+
+  // El SCO localiza el API subiendo por window.parent.API: lo apuntamos a este
+  // runtime antes de cargar.
+  const aimApi = () => { window.API = runtime; };
+
+  const frame = el('iframe', {
+    class: 'wpf-scorm-frame', allow: 'autoplay; fullscreen; microphone; camera',
+    allowfullscreen: '', title: cfg.title || 'SCORM'
+  });
+
+  function loadHref(href, btn) {
+    if (!base || !href) return;
+    aimApi();
+    frame.src = base + encodeURI(href);
+    if (activeBtn) activeBtn.classList.remove('active');
+    activeBtn = btn || null;
+    if (activeBtn) activeBtn.classList.add('active');
+  }
+
+  // Menú de navegación a partir del árbol del imsmanifest.
+  const flat = flattenToc(cfg.toc || []).filter(it => it.href);
+  const showMenu = cfg.showMenu !== false && flat.length > 1;
+  const menu = el('nav', { class: 'wpf-scorm-toc' });
+  if (!showMenu) menu.hidden = true;
+  if (showMenu) {
+    flat.forEach(it => {
+      const btn = el('button', {
+        class: 'wpf-scorm-tocitem', type: 'button',
+        style: `padding-left:${8 + it.depth * 14}px`,
+        onclick: () => loadHref(it.href, btn)
+      }, it.title || it.href);
+      menu.appendChild(btn);
+    });
+  }
+
+  // Capa que bloquea la interacción (tras la entrega en el visor).
+  const lock = el('div', { class: 'wpf-scorm-lock', hidden: '' });
+
+  const layout = el('div', { class: 'wpf-scorm-layout' + (showMenu ? ' has-menu' : '') }, menu,
+    el('div', { class: 'wpf-scorm-stage' }, frame, lock));
+
+  // Título y pie opcionales, igual que vídeo/audio/insertar.
+  const figure = mediaFigure(field, layout, 'wpf-media-scorm');
+
+  if (typeof opts.onCommit === 'function') runtime.onCommit(opts.onCommit);
+
+  // Carga inicial: esperamos a que el Service Worker tenga el paquete servido.
+  Promise.resolve(host.ready).then(async ok => {
+    if (!ok) { layout.appendChild(el('div', { class: 'wpf-scorm-msg' }, t('render.scormNeedsServer'))); return; }
+    const token = host.token(field);
+    base = await host.provision(token, cfg.pkg);
+    const firstBtn = showMenu ? menu.querySelector('.wpf-scorm-tocitem') : null;
+    loadHref(cfg.entryHref, firstBtn);
+  }).catch(() => {
+    layout.appendChild(el('div', { class: 'wpf-scorm-msg' }, t('render.scormNeedsServer')));
+  });
+
+  return { el: figure, runtime, lock };
 }
 
 const renderers = {
@@ -349,8 +466,44 @@ const renderers = {
   },
 
   embed(field, root, ctx) {
-    root.appendChild(buildMediaContent(field, ctx.fileUrl));
+    root.appendChild(buildMediaContent(field, ctx.fileUrl, { host: ctx.pkgHost }));
     return emptyRenderer();
+  },
+
+  scorm(field, root, ctx) {
+    root.classList.add('wpf-scorm');
+    const view = buildScormView(field, ctx.pkgHost, { onCommit: () => notify(ctx) });
+    root.appendChild(view.el);
+
+    const runtime = view.runtime;
+    if (!runtime) return emptyRenderer();
+
+    // Si hay varios SCORM en la página, reapuntamos window.API al interactuar.
+    const aimApi = () => { window.API = runtime; };
+    root.addEventListener('pointerenter', aimApi);
+    root.addEventListener('focusin', aimApi);
+
+    return {
+      getAnswer: () => runtime.snapshot(),
+      setAnswer: snap => {
+        // Restaura una sesión guardada (autoguardado) sembrando el modelo cmi.
+        if (!snap || typeof snap !== 'object') return;
+        const d = runtime.data;
+        if (snap.suspend_data != null) d['cmi.suspend_data'] = String(snap.suspend_data);
+        if (snap.location != null) d['cmi.core.lesson_location'] = String(snap.location);
+        if (snap.status) d['cmi.core.lesson_status'] = String(snap.status);
+        if (snap.raw != null) d['cmi.core.score.raw'] = String(snap.raw);
+        if (snap.min != null) d['cmi.core.score.min'] = String(snap.min);
+        if (snap.max != null) d['cmi.core.score.max'] = String(snap.max);
+        // El SCO sabrá que es una reanudación.
+        if (snap.suspend_data || snap.location) d['cmi.core.entry'] = 'resume';
+      },
+      isAnswered: () => {
+        const s = runtime.snapshot().status;
+        return Boolean(s) && s !== 'not attempted';
+      },
+      setDisabled: b => { if (view.lock) view.lock.hidden = !b; }
+    };
   },
 
   line: shapeRenderer,

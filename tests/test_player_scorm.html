@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Test player SCORM 1.2 (e2e)</title>
+  <link rel="stylesheet" href="../css/app.css">
+</head>
+<body>
+<div id="app"></div>
+<pre id="out"></pre>
+<script src="../config.js"></script>
+<script type="module">
+import { mountPlayer } from '../js/player.js';
+
+const out = [];
+const log = (...a) => { out.push(a.join(' ')); document.getElementById('out').textContent = out.join('\n'); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+let fails = 0;
+const check = (name, ok) => { if (!ok) fails++; log(`${name}: ${ok ? 'OK' : 'MAL'}`); };
+
+function makePng(w, h, color) {
+  return new Promise(res => {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const g = c.getContext('2d');
+    g.fillStyle = color; g.fillRect(0, 0, w, h);
+    c.toBlob(b => res(b), 'image/png');
+  });
+}
+
+// SCO mínimo y determinista: al cargar localiza window.API, registra una nota
+// de 70/100 y finaliza. Marca window.parent para comprobar que encontró el API.
+const SCO = [
+  '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>',
+  '<scr' + 'ipt>',
+  'function findAPI(w){var n=0;while(w&&n++<10){if(w.API)return w.API;if(w===w.parent)break;w=w.parent;}return null;}',
+  'var api=findAPI(window);',
+  'try{window.parent.__SCO_HAS_API=!!api;}catch(e){}',
+  'if(api){api.LMSInitialize("");api.LMSSetValue("cmi.core.score.min","0");api.LMSSetValue("cmi.core.score.max","100");',
+  'api.LMSSetValue("cmi.core.score.raw","70");api.LMSSetValue("cmi.core.lesson_status","completed");api.LMSCommit("");api.LMSFinish("");}',
+  'document.body.textContent=api?"SCO OK":"NO API";',
+  '</scr' + 'ipt></body></html>'
+].join('\n');
+
+async function main() {
+  try {
+    localStorage.clear();
+    window.confirm = () => true; // el botón «Finalizar» pide confirmación
+
+    const fondo = await makePng(800, 1000, '#ffffff');
+    const manifest = {
+      format: 'workpdf-ficha', version: 1, id: 'wpfscormtest',
+      title: 'Test SCORM', settings: { showScore: true, showCorrection: true },
+      access: {},
+      pages: [{
+        image: 'pages/page-1.png', w: 800, h: 1000, fields: [
+          {
+            id: 'sc1', type: 'scorm', points: 10, fontScale: 1,
+            rect: { x: 0.1, y: 0.1, w: 0.7, h: 0.5 },
+            config: {
+              pkg: 'scorm/s1/', entryHref: 'index.html', title: 'Demo',
+              scoreMode: 'scorm', showMenu: false,
+              toc: [{ title: 'Actividad', href: 'index.html', children: [] }]
+            }
+          }
+        ]
+      }]
+    };
+    const files = new Map([
+      ['pages/page-1.png', fondo],
+      ['scorm/s1/index.html', new Blob([SCO], { type: 'text/html' })],
+      ['scorm/s1/imsmanifest.xml', new Blob(['<manifest/>'], { type: 'application/xml' })]
+    ]);
+
+    const root = document.getElementById('app');
+    mountPlayer(root, { manifest, files }, { preview: true });
+
+    // Esperar a: registro/control del SW + aprovisionamiento + carga del SCO.
+    let loaded = false;
+    for (let i = 0; i < 40; i++) {
+      await sleep(150);
+      if (window.__SCO_HAS_API !== undefined) { loaded = true; break; }
+    }
+    check('el SCO se cargó y encontró window.API', window.__SCO_HAS_API === true);
+
+    check('hay un iframe SCORM en el visor', !!root.querySelector('.wpf-scorm-frame'));
+
+    // Finalizar y comprobar la nota: 70/100 × 10 puntos = 7.
+    await sleep(200);
+    const btnFin = root.querySelector('.al-barra .btn.primary');
+    check('botón de finalizar presente', !!btnFin);
+    btnFin.click();
+
+    let notaza = null;
+    for (let i = 0; i < 20; i++) {
+      await sleep(150);
+      notaza = root.querySelector('.al-resultado .notaza');
+      if (notaza) break;
+    }
+    const txt = notaza ? notaza.textContent.replace(/\s+/g, ' ').trim() : '(sin resultado)';
+    log('nota mostrada:', txt);
+    check('la nota del SCORM se integra: 7 / 10', /^7\s*\/\s*10$/.test(txt));
+  } catch (e) {
+    fails++;
+    log('EXCEPCIÓN:', e.message, e.stack);
+  }
+  log(fails ? '__TEST_FAIL__' : '__TEST_OK__');
+}
+main();
+</script>
+</body>
+</html>

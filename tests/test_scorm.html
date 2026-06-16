@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Test SCORM 1.2</title>
+</head>
+<body>
+<pre id="out"></pre>
+<script type="module">
+import { parseImsManifest, Scorm12Runtime, scormRatio } from '../js/scorm.js';
+import { gradeField } from '../js/grading.js';
+import { usedFiles } from '../js/zipio.js';
+
+const out = [];
+const log = (...a) => { out.push(a.join(' ')); document.getElementById('out').textContent = out.join('\n'); };
+let fails = 0;
+const check = (name, ok) => { if (!ok) fails++; log(`${name}: ${ok ? 'OK' : 'MAL'}`); };
+
+const MANIFEST = `<?xml version="1.0" encoding="UTF-8"?>
+<manifest identifier="MAN-1" version="1"
+  xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2"
+  xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2">
+  <metadata><schema>ADL SCORM</schema><schemaversion>1.2</schemaversion></metadata>
+  <organizations default="ORG-1">
+    <organization identifier="ORG-1">
+      <title>Curso de prueba</title>
+      <item identifier="I1" identifierref="R1"><title>Tema 1</title>
+        <item identifier="I1a" identifierref="R2"><title>Tema 1.1</title></item>
+      </item>
+      <item identifier="I2" identifierref="R3"><title>Tema 2</title></item>
+    </organization>
+  </organizations>
+  <resources>
+    <resource identifier="R1" type="webcontent" adlcp:scormtype="sco" href="tema1.html">
+      <file href="tema1.html"/>
+    </resource>
+    <resource identifier="R2" type="webcontent" adlcp:scormtype="sco" href="tema1-1.html"/>
+    <resource identifier="R3" type="webcontent" adlcp:scormtype="sco" href="tema2.html"/>
+  </resources>
+</manifest>`;
+
+const SCORM2004 = MANIFEST.replace('<schemaversion>1.2</schemaversion>', '<schemaversion>2004 4th Edition</schemaversion>');
+
+try {
+  // ── Parser ──
+  const m = parseImsManifest(MANIFEST);
+  check('versión detectada 1.2', m.version === '1.2');
+  check('organización por defecto', m.defaultOrg === 'ORG-1');
+  check('recurso de entrada (primer SCO)', m.entryHref === 'tema1.html');
+  check('árbol con 2 items raíz', m.organizations[0].items.length === 2);
+  check('item anidado con href', m.organizations[0].items[0].children[0].href === 'tema1-1.html');
+  check('título de organización', m.organizations[0].title === 'Curso de prueba');
+
+  const m2 = parseImsManifest(SCORM2004);
+  check('detecta SCORM 2004', m2.version === '2004');
+
+  // ── Runtime ──
+  const rt = new Scorm12Runtime({ studentName: 'Ada' });
+  check('antes de init, GetValue da error 301', rt.LMSGetValue('cmi.core.score.raw') === '' && rt.LMSGetLastError() === '301');
+  check('LMSInitialize', rt.LMSInitialize('') === 'true');
+  check('student_name', rt.LMSGetValue('cmi.core.student_name') === 'Ada');
+  check('score.raw de solo lectura no falla al leer', rt.LMSGetValue('cmi.core.score.raw') === '');
+  check('SetValue score.raw', rt.LMSSetValue('cmi.core.score.raw', '80') === 'true');
+  rt.LMSSetValue('cmi.core.score.min', '0');
+  rt.LMSSetValue('cmi.core.score.max', '100');
+  rt.LMSSetValue('cmi.core.lesson_status', 'completed');
+  check('escribir elemento de solo lectura da 403', rt.LMSSetValue('cmi.core.student_name', 'X') === 'false' && rt.LMSGetLastError() === '403');
+
+  let committed = false;
+  rt.onCommit(() => { committed = true; });
+  check('LMSCommit', rt.LMSCommit('') === 'true');
+  check('onCommit notificado', committed);
+  check('LMSFinish', rt.LMSFinish('') === 'true');
+
+  const snap = rt.snapshot();
+  check('snapshot raw=80', snap.raw === '80');
+
+  // ── Ratio y grader ──
+  check('scormRatio modo scorm 80/100 = 0.8', Math.abs(scormRatio(snap, 'scorm').ratio - 0.8) < 1e-9);
+  check('scormRatio modo completion (completed) = 1', scormRatio(snap, 'completion').ratio === 1);
+  check('scormRatio sin intentar = blank', scormRatio({ status: 'not attempted', raw: '' }, 'scorm').blank === true);
+
+  const field = { type: 'scorm', points: 5, config: { scoreMode: 'scorm' } };
+  const g = gradeField(field, snap);
+  check('gradeField: 0.8 × 5 = 4', g.earned === 4 && g.max === 5 && g.ok === 'partial');
+
+  const fieldComp = { type: 'scorm', points: 2, config: { scoreMode: 'completion' } };
+  const gc = gradeField(fieldComp, snap);
+  check('gradeField completion: completado = 2 (ok)', gc.earned === 2 && gc.ok === true);
+
+  // Rango no estándar: min=0 max=10, raw=5 → 0.5
+  check('scormRatio con max=10, raw=5 = 0.5',
+    Math.abs(scormRatio({ raw: '5', min: '0', max: '10', status: 'completed' }, 'scorm').ratio - 0.5) < 1e-9);
+
+  // ── Limpieza de ficheros al exportar (usedFiles) ──
+  const mani = {
+    pages: [{
+      image: 'pages/page-1.png',
+      fields: [
+        { id: 'v1', type: 'video', config: { provider: 'file', src: 'media/clip.mp4' } },
+        { id: 'sc1', type: 'scorm', config: { pkg: 'scorm/abc/', entryHref: 'index.html' } }
+      ]
+    }]
+  };
+  const blob = new Blob(['x']);
+  const filesMap = new Map([
+    ['pages/page-1.png', blob],
+    ['media/clip.mp4', blob],
+    ['scorm/abc/index.html', blob],
+    ['scorm/abc/assets/logo.png', blob],
+    ['media/huerfano.mp3', blob],          // de un audio borrado
+    ['scorm/viejo/index.html', blob]       // de un SCORM sustituido
+  ]);
+  const kept = usedFiles(mani, filesMap);
+  check('conserva la imagen de fondo', kept.has('pages/page-1.png'));
+  check('conserva el vídeo referenciado', kept.has('media/clip.mp4'));
+  check('conserva los archivos del paquete SCORM (por prefijo)',
+    kept.has('scorm/abc/index.html') && kept.has('scorm/abc/assets/logo.png'));
+  check('descarta el audio huérfano de un campo borrado', !kept.has('media/huerfano.mp3'));
+  check('descarta el paquete SCORM sustituido', !kept.has('scorm/viejo/index.html'));
+
+  // Tras borrar el campo SCORM, sus archivos ya no se conservan.
+  mani.pages[0].fields = mani.pages[0].fields.filter(f => f.type !== 'scorm');
+  const kept2 = usedFiles(mani, filesMap);
+  check('al borrar el SCORM, su paquete deja de exportarse',
+    !kept2.has('scorm/abc/index.html') && !kept2.has('scorm/abc/assets/logo.png'));
+  check('el vídeo sigue conservándose tras borrar el SCORM', kept2.has('media/clip.mp4'));
+} catch (e) {
+  fails++;
+  log('EXCEPCIÓN:', e.message, e.stack);
+}
+
+log(fails ? '__TEST_FAIL__' : '__TEST_OK__');
+</script>
+</body>
+</html>

@@ -23,7 +23,7 @@ const puppeteer = require('puppeteer-core');
 
   // --- Paleta agrupada ---
   const groups = await page.$$eval('.ed-group', ns => ns.map(n => n.dataset.group));
-  check('4 grupos en la paleta', groups.join(',') === 'write,choose,relate,design');
+  check('5 grupos en la paleta', groups.join(',') === 'write,choose,relate,external,design');
 
   // Al entrar, todos los grupos están colapsados
   let open = await page.$$eval('.ed-group-tools.open', ns => ns.map(n => n.dataset.group));

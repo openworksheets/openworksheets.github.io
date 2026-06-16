@@ -20,12 +20,14 @@
 
 import { el, uid, clamp, toast, downloadBlob, slugify, copyToClipboard, zoomControl } from './util.js';
 import { FIELD_TYPES, PALETTE_GROUPS, fieldTypeName, gapCount, isShapeField } from './fieldtypes.js';
+import { parseImsManifest } from './scorm.js';
 import { FONT_OPTIONS, DEFAULT_FONT, fontStack } from './fonts.js';
-import { buildShapeSvg, CHECKBOX_SVG, buildMediaContent } from './render.js';
+import { buildShapeSvg, CHECKBOX_SVG, buildMediaContent, buildScormView } from './render.js';
+import { scormSupported, registerScormSw, provisionScormPackage, releaseScormPackage, scormRunBase } from './scormhost.js';
 import { mdToHtml } from './markdown.js';
 import { expectedText } from './grading.js';
 import { pdfToPages, imageToPage, isPdf, isImage } from './pdfimport.js';
-import { exportFichaZip, importFichaZip, newManifest } from './zipio.js';
+import { exportFichaZip, importFichaZip, newManifest, usedFiles } from './zipio.js';
 import { buildShortLink, parseDriveId } from './drive.js';
 import { mountPlayer } from './player.js';
 import { t, getLang, applyI18n, initLangSelector } from './i18n.js';
@@ -417,7 +419,22 @@ function renderCanvas() {
         // Se muestra el contenido real, pero con pointer-events:none (vía CSS) y
         // sin autorreproducir, para poder mover y redimensionar el campo encima.
         box.classList.add('ed-media-field');
-        box.appendChild(buildMediaContent(field, fileUrl, { editor: true }));
+        box.appendChild(buildMediaContent(field, fileUrl, { editor: true, host: editorPkgHost() }));
+      } else if (field.type === 'scorm') {
+        box.classList.add('ed-scorm-field');
+        const cfg = field.config || {};
+        const sctx = editorPkgHost();
+        if (cfg.pkg && cfg.entryHref && sctx.supported) {
+          // Vista en vivo del paquete (sin interacción: pointer-events:none vía CSS).
+          box.classList.add('ed-media-field');
+          box.appendChild(buildScormView(field, sctx).el);
+        } else {
+          const icon = el('div', { class: 'ed-scorm-icon' });
+          icon.innerHTML = ICONS.package;
+          box.appendChild(el('div', { class: 'ed-scorm-prev' },
+            icon,
+            el('div', { class: 'ed-scorm-title' }, cfg.title || t('editor.scormNoPkg'))));
+        }
       } else if (isShapeField(field.type)) {
         box.appendChild(buildShapeSvg(field));
       }
@@ -430,6 +447,7 @@ function renderCanvas() {
       setRectStyle(box, field.rect);
       box.style.setProperty('--fs', field.fontScale || 1);
       if (field.fontFamily) box.style.setProperty('--field-font', fontStack(field.fontFamily));
+      if (field.config?.fgColor) box.style.setProperty('--field-fg', field.config.fgColor);
       // En modo hotspot (arrowmatch con áreas definidas), el campo principal no se arrastra:
       // las posiciones las gestionan los overlays de items.
       const isAmHotspot = field.type === 'arrowmatch' && (field.config.items || []).some(i => i.rect);
@@ -1020,6 +1038,7 @@ function deleteSelected() {
       state.sel = null;
     }
   } else {
+    if (field.config?.pkg) { clearPackageFiles(field.config.pkg); resetEditorPkgCache(); }
     const page = state.manifest.pages[state.sel.pageIndex];
     page.fields = page.fields.filter(f => f.id !== field.id);
     state.sel = null;
@@ -1028,6 +1047,41 @@ function deleteSelected() {
   renderCanvas();
   renderPanel();
 }
+
+// Borra de state.files todos los archivos de un paquete (su prefijo): vale para
+// paquetes SCORM y webs incrustadas (embed zip/elpx).
+function clearPackageFiles(prefix) {
+  if (!prefix) return;
+  for (const path of [...state.files.keys()]) {
+    if (path.startsWith(prefix)) { urls.delete(path); state.files.delete(path); }
+  }
+}
+
+// Contexto de hospedaje (SCORM y embed zip/elpx) para la vista en vivo del
+// lienzo del editor: registra el Service Worker una sola vez y aprovisiona cada
+// paquete bajo demanda (cacheado para no reescribir la caché en cada renderCanvas).
+let edPkgReady = null;
+const edPkgProvisioned = new Set();
+function editorPkgHost() {
+  if (!scormSupported()) return { supported: false };
+  if (!edPkgReady) edPkgReady = registerScormSw();
+  return {
+    supported: true,
+    ready: edPkgReady,
+    token: f => 'editor-' + state.manifest.id + '-' + f.id,
+    provision: async (token, pkg) => {
+      if (!edPkgProvisioned.has(token)) {
+        await releaseScormPackage(token);       // limpia un paquete anterior del mismo campo
+        await provisionScormPackage(token, state.files, pkg);
+        edPkgProvisioned.add(token);
+      }
+      return scormRunBase(token);
+    },
+    studentName: ''
+  };
+}
+// Fuerza el reaprovisionamiento (al subir/sustituir/borrar un paquete).
+function resetEditorPkgCache() { edPkgProvisioned.clear(); }
 
 function cloneField(field, offset = 0) {
   const copy = JSON.parse(JSON.stringify(field));
@@ -1400,6 +1454,26 @@ function renderFieldPanel(field) {
     }
   }
 
+  // "Insertar (Web/HTML)": antes de mostrar las opciones, el usuario elige el
+  // tipo de contenido (URL, HTML, web en ZIP o paquete eXeLearning .elpx).
+  if (field.type === 'embed') {
+    const cfg = field.config;
+    const MODES = ['url', 'html', 'zip', 'elpx'];
+    if (!MODES.includes(cfg.mode)) {
+      cont.appendChild(el('p', { class: 'cfg-hint' }, t('cfg.embedChooseIntro')));
+      const pick = m => { cfg.mode = m; markDirty(); renderPanel(); renderCanvas(); };
+      cont.appendChild(el('div', { class: 'ed-mode-choice' },
+        modeChoiceCard(t('cfg.embedUrlTitle'), t('cfg.embedUrlDesc'), () => pick('url')),
+        modeChoiceCard(t('cfg.embedHtmlTitle'), t('cfg.embedHtmlDesc'), () => pick('html')),
+        modeChoiceCard(t('cfg.embedZipTitle'), t('cfg.embedZipDesc'), () => pick('zip')),
+        modeChoiceCard(t('cfg.embedElpxTitle'), t('cfg.embedElpxDesc'), () => pick('elpx'))));
+      cont.appendChild(el('div', { class: 'ed-acciones' },
+        iconBtn({ class: 'btn small danger', onclick: deleteSelected }, ICONS.trash, t('editor.delete'))));
+      panel.appendChild(cont);
+      return;
+    }
+  }
+
   const decor = Boolean(FIELD_TYPES[field.type]?.decor);
   const interactive = !decor && !isShapeField(field.type) && field.type !== 'cover';
   // En "arrastrar a zonas" modo recorte, las piezas son imágenes: el color de
@@ -1465,7 +1539,7 @@ function renderFieldPanel(field) {
   // En modo recorte solo contiene el color del hueco (los recortes conservan su tamaño y color originales).
   // «Casillas» (checkbox) se excluye: son casillas sueltas sobre la página, sin
   // texto ni un recuadro de fondo que estilizar, así que no hay nada de diseño que ajustar.
-  const hasDesign = interactive && field.type !== 'checkbox';
+  const hasDesign = interactive && field.type !== 'checkbox' && field.type !== 'scorm';
   if (hasDesign) {
     // Sección de diseño siempre visible (sin acordeón).
     const accordion = el('div', { class: 'ed-section' });
@@ -1796,20 +1870,20 @@ function rebuildCanvasMedia(field) {
   const box = canvas.querySelector(`.ed-field[data-id="${field.id}"]`);
   if (!box) return;
   box.querySelector('.wpf-media')?.remove();
-  box.appendChild(buildMediaContent(field, fileUrl, { editor: true }));
+  box.appendChild(buildMediaContent(field, fileUrl, { editor: true, host: editorPkgHost() }));
 }
 
-function mediaTitleCaption(cont, field) {
+function mediaTitleCaption(cont, field, rebuild = rebuildCanvasMedia) {
   const cfg = field.config;
   cont.appendChild(el('label', { class: 'f-label' }, t('cfg.mediaTitle')));
   const ti = el('input', { type: 'text', value: cfg.title || '', maxlength: '140' });
   ti.addEventListener('input', () => { cfg.title = ti.value; markDirty(); });
-  ti.addEventListener('change', () => rebuildCanvasMedia(field));
+  ti.addEventListener('change', () => rebuild(field));
   cont.appendChild(ti);
   cont.appendChild(el('label', { class: 'f-label' }, t('cfg.mediaCaption')));
   const ca = el('input', { type: 'text', value: cfg.caption || '', maxlength: '200' });
   ca.addEventListener('input', () => { cfg.caption = ca.value; markDirty(); });
-  ca.addEventListener('change', () => rebuildCanvasMedia(field));
+  ca.addEventListener('change', () => rebuild(field));
   cont.appendChild(ca);
   // El título y el pie son texto: comparten los controles de texto (tamaño,
   // tipo de letra y color) de los campos con texto.
@@ -1874,6 +1948,124 @@ function mediaFileRow(cont, field, accept, folder, label) {
     inp.click();
   });
   cont.appendChild(btn);
+}
+
+// Cuenta los SCO (items con href) del árbol de navegación de un paquete SCORM.
+function scormScoCount(items) {
+  let n = 0;
+  for (const it of items || []) {
+    if (it.href) n++;
+    n += scormScoCount(it.children);
+  }
+  return n;
+}
+
+// Sube un paquete SCORM 1.2 (.zip): lo descomprime a state.files bajo un prefijo
+// único, valida y parsea el imsmanifest.xml y guarda la entrada y el menú.
+function uploadScormPackage(field) {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.zip,application/zip';
+  inp.addEventListener('change', async () => {
+    const file = inp.files[0];
+    if (!file) return;
+    try {
+      const zip = await window.JSZip.loadAsync(file);
+      let mEntry = zip.file('imsmanifest.xml');
+      if (!mEntry) { const arr = zip.file(/imsmanifest\.xml$/i); mEntry = arr && arr[0]; }
+      if (!mEntry) { toast(t('toast.scormNoManifest'), 'error'); return; }
+      const parsed = parseImsManifest(await mEntry.async('string'));
+      if (parsed.version === '2004') { toast(t('toast.scorm2004'), 'error'); return; }
+      if (!parsed.entryHref) { toast(t('toast.scormNoEntry'), 'error'); return; }
+
+      // Carpeta del manifest (normalmente la raíz del zip); las rutas internas
+      // del paquete son relativas a ella.
+      const rootDir = mEntry.name.slice(0, mEntry.name.length - 'imsmanifest.xml'.length);
+      const entries = [];
+      zip.forEach((path, entry) => { if (!entry.dir) entries.push({ path, entry }); });
+
+      clearPackageFiles(field.config.pkg); // descarta el paquete anterior si lo hubiera
+      resetEditorPkgCache();               // fuerza reaprovisionar la vista en vivo
+      const prefix = 'scorm/' + uid() + '/';
+      for (const { path, entry } of entries) {
+        if (rootDir && !path.startsWith(rootDir)) continue;
+        const internal = rootDir ? path.slice(rootDir.length) : path;
+        if (!internal) continue;
+        state.files.set(prefix + internal, await entry.async('blob'));
+      }
+
+      const org = parsed.organizations[0];
+      const cfg = field.config;
+      cfg.pkg = prefix;
+      cfg.entryHref = parsed.entryHref;
+      cfg.title = (org && org.title) || file.name.replace(/\.zip$/i, '');
+      cfg.toc = (org && org.items) || [];
+      markDirty();
+      renderCanvas();
+      renderPanel();
+      toast(t('toast.scormLoaded'), 'ok');
+    } catch {
+      toast(t('toast.scormError'), 'error');
+    }
+  });
+  inp.click();
+}
+
+// Localiza el HTML de entrada de una web empaquetada: prefiere index.html (lo
+// menos profundo); si no, el .html/.htm de menor profundidad.
+function findWebEntry(zip) {
+  const htmls = [];
+  zip.forEach((path, entry) => { if (!entry.dir && /\.x?html?$/i.test(path)) htmls.push(path); });
+  if (!htmls.length) return '';
+  htmls.sort((a, b) => {
+    const ai = /(^|\/)index\.x?html?$/i.test(a) ? 0 : 1;
+    const bi = /(^|\/)index\.x?html?$/i.test(b) ? 0 : 1;
+    if (ai !== bi) return ai - bi;
+    return a.split('/').length - b.split('/').length || a.localeCompare(b);
+  });
+  return htmls[0];
+}
+
+// Sube una web empaquetada para el campo «Insertar»: un .zip con un index y sus
+// recursos, o un .elpx de eXeLearning (que es un .zip con una web dentro). Se
+// descomprime a state.files bajo 'embed/<uid>/' y se guarda la entrada.
+function uploadWebPackage(field, kind) {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = kind === 'elpx' ? '.elpx' : '.zip,application/zip';
+  inp.addEventListener('change', async () => {
+    const file = inp.files[0];
+    if (!file) return;
+    try {
+      const zip = await window.JSZip.loadAsync(file);
+      const entry = findWebEntry(zip);
+      if (!entry) { toast(t('toast.webNoIndex'), 'error'); return; }
+      // Carpeta del index: los recursos de la web son relativos a ella.
+      const rootDir = entry.slice(0, entry.lastIndexOf('/') + 1);
+      const entries = [];
+      zip.forEach((path, e) => { if (!e.dir) entries.push({ path, entry: e }); });
+
+      clearPackageFiles(field.config.pkg);  // descarta un paquete anterior
+      resetEditorPkgCache();
+      const prefix = 'embed/' + uid() + '/';
+      for (const { path, entry: e } of entries) {
+        if (rootDir && !path.startsWith(rootDir)) continue;
+        const internal = rootDir ? path.slice(rootDir.length) : path;
+        if (!internal) continue;
+        state.files.set(prefix + internal, await e.async('blob'));
+      }
+      const cfg = field.config;
+      cfg.pkg = prefix;
+      cfg.entryHref = rootDir ? entry.slice(rootDir.length) : entry;
+      markDirty();
+      renderCanvas();
+      renderPanel();
+      toast(t('toast.webLoaded'), 'ok');
+    } catch {
+      toast(t('toast.webError'), 'error');
+    }
+  });
+  inp.click();
 }
 
 // Sustituye la vista previa SVG de una forma tras cambiar su configuración.
@@ -2166,20 +2358,24 @@ const configForms = {
 
   embed(cont, field) {
     const cfg = field.config;
-    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.embedMode')));
-    const sel = el('select', {},
-      el('option', { value: 'url' }, t('cfg.embedModeUrl')),
-      el('option', { value: 'html' }, t('cfg.embedModeHtml')));
-    sel.value = cfg.mode || 'url';
-    sel.addEventListener('change', () => { cfg.mode = sel.value; markDirty(); rebuildCanvasMedia(field); renderPanel(); });
-    cont.appendChild(sel);
-    if ((cfg.mode || 'url') === 'url') {
+    // Tipo elegido + botón para volver a elegir (re-abre el selector inicial).
+    const modeName = {
+      url: t('cfg.embedUrlTitle'), html: t('cfg.embedHtmlTitle'),
+      zip: t('cfg.embedZipTitle'), elpx: t('cfg.embedElpxTitle')
+    }[cfg.mode] || '';
+    cont.appendChild(el('div', { class: 'ed-acciones', style: 'margin-bottom:8px' },
+      iconBtn({ class: 'btn small ghost', type: 'button',
+        onclick: () => { cfg.mode = ''; markDirty(); renderPanel(); renderCanvas(); } },
+        ICONS.arrowLeft, t('cfg.embedChangeType'))));
+    cont.appendChild(el('p', { class: 'cfg-hint', style: 'margin-top:0' }, modeName));
+
+    if (cfg.mode === 'url') {
       cont.appendChild(el('label', { class: 'f-label' }, t('cfg.embedUrl')));
       const url = el('input', { type: 'url', value: cfg.url || '', placeholder: 'https://…' });
       url.addEventListener('input', () => { cfg.url = url.value; markDirty(); });
       url.addEventListener('change', () => rebuildCanvasMedia(field));
       cont.appendChild(url);
-    } else {
+    } else if (cfg.mode === 'html') {
       cont.appendChild(el('label', { class: 'f-label' }, t('cfg.embedHtml')));
       const ta = el('textarea', { rows: '5', placeholder: '<iframe src="…"></iframe>' });
       ta.value = cfg.html || '';
@@ -2188,8 +2384,54 @@ const configForms = {
       cont.appendChild(ta);
       cont.appendChild(el('p', { class: 'settings-warning' },
         el('small', {}, t('cfg.embedHtmlWarning'))));
+    } else if (cfg.mode === 'zip' || cfg.mode === 'elpx') {
+      if (cfg.pkg && cfg.entryHref) {
+        cont.appendChild(el('p', { class: 'cfg-hint', style: 'margin:4px 0' }, '✓ ' + cfg.entryHref));
+      } else {
+        cont.appendChild(el('p', { class: 'cfg-hint' },
+          cfg.mode === 'elpx' ? t('cfg.embedElpxIntro') : t('cfg.embedZipIntro')));
+      }
+      const label = cfg.mode === 'elpx'
+        ? (cfg.pkg ? t('cfg.embedReplaceElpx') : t('cfg.embedUploadElpx'))
+        : (cfg.pkg ? t('cfg.embedReplaceZip') : t('cfg.embedUploadZip'));
+      const btn = iconBtn({ class: 'btn small media-upload-btn', type: 'button' }, ICONS.folderOpen, label);
+      btn.addEventListener('click', () => uploadWebPackage(field, cfg.mode));
+      cont.appendChild(btn);
+      cont.appendChild(el('p', { class: 'cfg-hint' }, t('cfg.scormServerHint')));
     }
-    mediaTitleCaption(cont, field);
+    // El SCORM/embed-paquete no usa el reconstructor de medios (no lo entiende):
+    // su título/pie redibujan el lienzo.
+    if (cfg.mode === 'zip' || cfg.mode === 'elpx') mediaTitleCaption(cont, field, () => renderCanvas());
+    else mediaTitleCaption(cont, field);
+  },
+
+  scorm(cont, field) {
+    const cfg = field.config;
+    if (cfg.pkg && cfg.entryHref) {
+      const n = scormScoCount(cfg.toc);
+      cont.appendChild(el('p', { class: 'cfg-hint', style: 'margin:4px 0' },
+        '✓ ' + (cfg.title || cfg.entryHref) + (n > 1 ? ` · ${t('cfg.scormScos', { n })}` : '')));
+    } else {
+      cont.appendChild(el('p', { class: 'cfg-hint' }, t('cfg.scormIntro')));
+    }
+    const btn = iconBtn({ class: 'btn small media-upload-btn', type: 'button' }, ICONS.folderOpen,
+      cfg.pkg ? t('cfg.scormReplace') : t('cfg.scormUpload'));
+    btn.addEventListener('click', () => uploadScormPackage(field));
+    cont.appendChild(btn);
+
+    selectRow(cont, t('cfg.scormScoreMode'), cfg.scoreMode || 'scorm', [
+      ['scorm', t('cfg.scormScoreScorm')],
+      ['completion', t('cfg.scormScoreCompletion')]
+    ], v => { cfg.scoreMode = v; });
+
+    // Re-dibuja el lienzo para que la vista en vivo refleje el cambio de menú.
+    checkRow(cont, t('cfg.scormShowMenu'), cfg.showMenu !== false, v => { cfg.showMenu = v; renderCanvas(); });
+
+    cont.appendChild(el('p', { class: 'cfg-hint' }, t('cfg.scormServerHint')));
+
+    // Título y pie (con sus controles de texto), como en vídeo/audio/insertar.
+    // El SCORM no usa el reconstructor de medios: redibuja el lienzo.
+    mediaTitleCaption(cont, field, () => renderCanvas());
   },
 
   text(cont, field) {
@@ -2876,21 +3118,20 @@ function validate() {
           && !(f.config.pieces || []).some(pc => pc.zoneId)) {
         problems.push(t('validate.noPieces', { n: pi + 1 }));
       }
+      if (f.type === 'scorm' && (!f.config.pkg || !f.config.entryHref)) {
+        problems.push(t('validate.noScormPkg', { n: pi + 1 }));
+      }
     });
   });
   return problems;
 }
 
 // Solo los ficheros referenciados por el manifiesto (descarta huérfanos, p. ej.
-// recortes de campos borrados). Se calcula sobre el manifiesto en claro, ya que
-// el de exportación puede ir cifrado y ocultar las rutas.
+// recortes de campos borrados o paquetes SCORM sustituidos). Se calcula sobre el
+// manifiesto en claro, ya que el de exportación puede ir cifrado y ocultar las
+// rutas.
 function referencedFiles() {
-  const json = JSON.stringify(state.manifest);
-  const keep = new Map();
-  for (const [path, blob] of state.files) {
-    if (json.includes('"' + path + '"')) keep.set(path, blob);
-  }
-  return keep;
+  return usedFiles(state.manifest, state.files);
 }
 
 async function exportZip() {
