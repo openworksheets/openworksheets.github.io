@@ -5,10 +5,22 @@ import { toast, copyToClipboard, decompressFromBase64url, downloadBlob, fechaHor
 import { buildShortLink, parseDriveId } from './drive.js';
 import { verifyEntrega } from './entrega.js';
 import { decryptSubmission, isEncryptedSubmission } from './submissionCrypto.js';
-import { t, applyI18n, initLangSelector } from './i18n.js';
+import { t, applyI18n, initLangSelector, getLang } from './i18n.js';
 
 applyI18n();
 initLangSelector();
+
+// Ficha de ejemplo según el idioma activo (fallback: español).
+const EXAMPLE_ZIPS = {
+  es: 'ejemplos/ficha-de-prueba-para-openworksheets.zip',
+  ca: 'ejemplos/fitxa-de-prova-per-a-openworksheets.zip',
+  en: 'ejemplos/test-for-openworksheets.zip'
+};
+const linkEjemplo = document.getElementById('linkEjemplo');
+if (linkEjemplo) {
+  const zip = EXAMPLE_ZIPS[getLang()] || EXAMPLE_ZIPS.es;
+  linkEjemplo.href = 'editor.html?ejemplo=' + zip;
+}
 
 const $ = s => document.querySelector(s);
 const APP_VERSION = window.OPENWORKSHEETS_CONFIG?.appVersion || '';

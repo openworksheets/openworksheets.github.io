@@ -12,6 +12,10 @@ Las versiones publicadas también están en la página de
 ## [No publicado]
 
 ### Añadido
+- La **ficha de ejemplo** de la página de inicio se adapta ahora al **idioma
+  activo**: se muestra la versión en español, catalán o inglés según el idioma
+  seleccionado, con el español como *fallback* para el resto de idiomas. Se
+  retira el antiguo `ficha-ejemplo.zip`.
 - El campo **«Insertar (Web/HTML)»** admite ahora **webs empaquetadas**: además
   de URL y código HTML, se puede subir una **web completa en `.zip`** (un
   `index.html` con sus carpetas, CSS, JS…) o un **paquete `.elpx` de
