@@ -41,10 +41,11 @@ Campos en los que el alumno conecta, ordena o coloca elementos.
 
 ### 📦 Interactivo
 
-Contenido interactivo externo que sí se corrige y puntúa.
+Contenido interactivo externo: webs incrustadas y paquetes SCORM (el SCORM puntúa; «Insertar» es informativo).
 
 | Tipo | Descripción |
 |------|-------------|
+| **Insertar (Web/HTML)** | Contenido externo. Al crearlo se elige el tipo: **URL** (se incrusta en un iframe), **código HTML** de inserción (Genially, H5P, mapas…), **web completa en `.zip`** (un `index.html` con sus carpetas/CSS/JS, servida desde la propia ficha) o **paquete `.elpx` de eXeLearning** (un `.zip` con una web dentro). Admite título y pie. |
 | **SCORM (1.2)** | El docente sube un paquete **SCORM 1.2** (`.zip`). OpenWorksheets actúa como mini‑LMS en el navegador: muestra el **menú de navegación** del paquete, ejecuta sus contenidos y captura su **puntuación** (`cmi.core.score.raw`) o su estado de finalización, que se integra en la nota de la ficha de forma proporcional a los puntos del campo. Admite **título y pie** opcionales (con tipo de letra, tamaño y color). El paquete se ve **en vivo en el propio lienzo del editor** (sin interacción, para poder moverlo y redimensionarlo) y de forma interactiva en la vista previa. |
 
 #### Notas sobre SCORM
@@ -67,7 +68,6 @@ Elementos decorativos o informativos que no se corrigen ni cuentan en la puntuac
 | **Imagen** | Imagen decorativa o explicativa superpuesta al documento. |
 | **Vídeo** | Vídeo de YouTube/Vimeo (incrustado), enlace directo o archivo subido, con título y pie opcionales. |
 | **Audio** | Audio desde archivo subido o enlace, con título y pie opcionales. |
-| **Insertar (Web/HTML)** | Contenido externo. Al crearlo se elige el tipo: **URL** (se incrusta en un iframe), **código HTML** de inserción (Genially, H5P, mapas…), **web completa en `.zip`** (un `index.html` con sus carpetas/CSS/JS, servida desde la propia ficha) o **paquete `.elpx` de eXeLearning** (un `.zip` con una web dentro). Admite título y pie. |
 | **Tapar zona** | Rectángulo de color que oculta una parte del documento (respuestas, pistas, etc.). |
 | **Línea / Flecha / Rectángulo / Elipse** | Formas geométricas para resaltar, enmarcar o señalar elementos del documento. |
 

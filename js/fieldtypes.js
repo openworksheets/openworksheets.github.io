@@ -234,8 +234,8 @@ export const FIELD_TYPES = {
 export const FIELD_ORDER = [
   'text', 'number', 'single', 'truefalse', 'multi', 'checkbox',
   'select', 'gaps', 'textboxes', 'match', 'order', 'dragdrop', 'arrowmatch',
-  'scorm',
-  'label', 'cover', 'image', 'video', 'audio', 'embed', 'line', 'arrow', 'rect', 'ellipse'
+  'embed', 'scorm',
+  'label', 'cover', 'image', 'video', 'audio', 'line', 'arrow', 'rect', 'ellipse'
 ];
 
 // Grupos temáticos de la paleta del editor. El nombre visible
@@ -244,8 +244,8 @@ export const PALETTE_GROUPS = [
   { id: 'write',  glyph: ICONS.pencil,         types: ['text', 'number', 'fillgaps'] },
   { id: 'choose', glyph: ICONS.listChecks,      types: ['single', 'multi', 'checkbox', 'truefalse', 'select'] },
   { id: 'relate', glyph: ICONS.arrowLeftRight,  types: ['match', 'order', 'dragdrop', 'arrowmatch'] },
-  { id: 'external', glyph: ICONS.package,        types: ['scorm'] },
-  { id: 'design', glyph: ICONS.shapes,          types: ['label', 'image', 'video', 'audio', 'embed', 'cover', 'line', 'arrow', 'rect', 'ellipse'] }
+  { id: 'external', glyph: ICONS.package,        types: ['embed', 'scorm'] },
+  { id: 'design', glyph: ICONS.shapes,          types: ['label', 'image', 'video', 'audio', 'cover', 'line', 'arrow', 'rect', 'ellipse'] }
 ];
 
 export function isDecorField(type) {

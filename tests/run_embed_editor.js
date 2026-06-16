@@ -22,8 +22,8 @@ const path = require('path');
   const check = (name, ok) => { if (!ok) fails++; console.log(`${name}: ${ok ? 'OK' : 'MAL'}`); };
   const wait = ms => new Promise(r => setTimeout(r, ms));
 
-  // Grupo «Diseño» → herramienta embed.
-  await page.click('.ed-group[data-group="design"]');
+  // Grupo «Interactivo» → herramienta embed.
+  await page.click('.ed-group[data-group="external"]');
   await wait(150);
   check('paleta: existe el campo Insertar', await page.evaluate(() =>
     !!document.querySelector('.ed-tool[data-type="embed"]')));
