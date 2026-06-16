@@ -2397,7 +2397,6 @@ const configForms = {
       const btn = iconBtn({ class: 'btn small media-upload-btn', type: 'button' }, ICONS.folderOpen, label);
       btn.addEventListener('click', () => uploadWebPackage(field, cfg.mode));
       cont.appendChild(btn);
-      cont.appendChild(el('p', { class: 'cfg-hint' }, t('cfg.scormServerHint')));
     }
     // El SCORM/embed-paquete no usa el reconstructor de medios (no lo entiende):
     // su título/pie redibujan el lienzo.
@@ -2426,8 +2425,6 @@ const configForms = {
 
     // Re-dibuja el lienzo para que la vista en vivo refleje el cambio de menú.
     checkRow(cont, t('cfg.scormShowMenu'), cfg.showMenu !== false, v => { cfg.showMenu = v; renderCanvas(); });
-
-    cont.appendChild(el('p', { class: 'cfg-hint' }, t('cfg.scormServerHint')));
 
     // Título y pie (con sus controles de texto), como en vídeo/audio/insertar.
     // El SCORM no usa el reconstructor de medios: redibuja el lienzo.
