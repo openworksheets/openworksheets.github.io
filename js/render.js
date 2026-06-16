@@ -12,6 +12,7 @@
 
 import { el, shuffled, shuffledIndices, normalizeText } from './util.js';
 import { parseGaps } from './fieldtypes.js';
+import { fontStack } from './fonts.js';
 import { t } from './i18n.js';
 
 // SVG de una casilla de verificación dibujable (campo checkbox).
@@ -36,6 +37,7 @@ export function renderField(field, pageLayer, ctx) {
     root.style.setProperty('--field-bg', `rgba(${r},${g},${b},${op})`);
   }
   if (field.config?.fgColor) root.style.setProperty('--field-fg', field.config.fgColor);
+  if (field.fontFamily) root.style.setProperty('--field-font', fontStack(field.fontFamily));
   pageLayer.appendChild(root);
 
   const maker = renderers[field.type];
@@ -412,9 +414,15 @@ const renderers = {
     const cfg = field.config || {};
     const boxes = cfg.boxes || [];
     // El root es solo un ancla transparente; los cuadros de texto se colocan
-    // libremente sobre la página (igual que las casillas de checkbox).
+    // libremente sobre la página (igual que las casillas de checkbox). Como
+    // cuelgan de la página y no del root, hay que copiarles a mano los ajustes
+    // de diseño (tamaño de texto, color y fondo) que el root ya lleva en sus vars.
     root.classList.add('wpf-tb-hostfield');
     const page = root.parentElement;
+    const fs = root.style.getPropertyValue('--fs');
+    const fg = root.style.getPropertyValue('--field-fg');
+    const bg = root.style.getPropertyValue('--field-bg');
+    const font = root.style.getPropertyValue('--field-font');
 
     const inputs = new Map();
     boxes.forEach((b, i) => {
@@ -423,6 +431,10 @@ const renderers = {
         dataset: { id: b.id },
         'aria-label': t('render.gapAria', { n: i + 1 })
       });
+      if (fs) node.style.setProperty('--fs', fs);
+      if (fg) node.style.setProperty('--field-fg', fg);
+      if (bg) node.style.setProperty('--field-bg', bg);
+      if (font) node.style.setProperty('--field-font', font);
       node.style.left   = (b.rect.x * 100) + '%';
       node.style.top    = (b.rect.y * 100) + '%';
       node.style.width  = (b.rect.w * 100) + '%';

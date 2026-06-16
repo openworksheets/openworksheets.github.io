@@ -20,6 +20,7 @@
 
 import { el, uid, clamp, toast, downloadBlob, slugify, copyToClipboard, zoomControl } from './util.js';
 import { FIELD_TYPES, PALETTE_GROUPS, fieldTypeName, gapCount, isShapeField } from './fieldtypes.js';
+import { FONT_OPTIONS, DEFAULT_FONT, fontStack } from './fonts.js';
 import { buildShapeSvg, CHECKBOX_SVG } from './render.js';
 import { expectedText } from './grading.js';
 import { pdfToPages, imageToPage, isPdf, isImage } from './pdfimport.js';
@@ -365,6 +366,8 @@ function movePage(pi, delta) {
 
 function renderCanvas() {
   canvas.textContent = '';
+  // Fuente global de la ficha: se hereda en los campos (y en la previa del label).
+  canvas.style.setProperty('--ficha-font', fontStack(state.manifest.settings.fontFamily));
   if (!state.manifest.pages.length) {
     canvas.appendChild(el('div', { class: 'ed-empty card anim-in' },
       el('h2', {}, t('editor.emptyTitle')),
@@ -418,6 +421,7 @@ function renderCanvas() {
       }
       setRectStyle(box, field.rect);
       box.style.setProperty('--fs', field.fontScale || 1);
+      if (field.fontFamily) box.style.setProperty('--field-font', fontStack(field.fontFamily));
       // En modo hotspot (arrowmatch con áreas definidas), el campo principal no se arrastra:
       // las posiciones las gestionan los overlays de items.
       const isAmHotspot = field.type === 'arrowmatch' && (field.config.items || []).some(i => i.rect);
@@ -1320,6 +1324,20 @@ function refreshChip(field) {
       : `${fieldTypeName(field.type)} · ${field.points} pt`;
 }
 
+// Desplegable de tipo de letra. Cada opción se previsualiza con su propia
+// fuente. Con `inherit`, añade «Igual que la ficha» (valor vacío = heredar).
+function fontSelect(value, onChange, { inherit = false } = {}) {
+  const sel = el('select', { class: 'font-select' });
+  if (inherit) sel.appendChild(el('option', { value: '' }, t('editor.fontInherit')));
+  FONT_OPTIONS.forEach(f => {
+    sel.appendChild(el('option', { value: f.id, style: `font-family:${f.stack}` },
+      f.id === 'mono' ? t('editor.fontMono') : f.name));
+  });
+  sel.value = value || '';
+  sel.addEventListener('change', () => onChange(sel.value));
+  return sel;
+}
+
 function renderFieldPanel(field) {
   const cont = el('div', {});
   cont.appendChild(el('h3', {},
@@ -1424,7 +1442,9 @@ function renderFieldPanel(field) {
 
   // Acordeón de diseño (tamaño/color de texto y fondo — no para image ni label, que gestionan esto inline).
   // En modo recorte solo contiene el color del hueco (los recortes conservan su tamaño y color originales).
-  const hasDesign = (field.type !== 'cover' && field.type !== 'image' && field.type !== 'label' && !isShapeField(field.type)) || interactive;
+  // «Casillas» (checkbox) se excluye: son casillas sueltas sobre la página, sin
+  // texto ni un recuadro de fondo que estilizar, así que no hay nada de diseño que ajustar.
+  const hasDesign = interactive && field.type !== 'checkbox';
   if (hasDesign) {
     const accordion = el('div', { class: 'ed-accordion' });
     const arrow = el('i', { class: 'ed-accordion-arrow' });
@@ -1467,6 +1487,18 @@ function renderFieldPanel(field) {
       fsNum.addEventListener('input', () => applyFs(fsNum.value));
       body.appendChild(el('label', { class: 'f-label' }, t('editor.fontSize')));
       body.appendChild(el('div', { class: 'rot-row' }, fsRange, fsNum, el('span', {}, '×')));
+      // Tipo de letra del campo (sobrescribe la fuente global de la ficha).
+      const fontSel = fontSelect(field.fontFamily || '', id => {
+        if (id) field.fontFamily = id; else delete field.fontFamily;
+        const node = canvas.querySelector(`[data-id="${field.id}"]`);
+        if (node) {
+          if (id) node.style.setProperty('--field-font', fontStack(id));
+          else node.style.removeProperty('--field-font');
+        }
+        markDirty();
+      }, { inherit: true });
+      body.appendChild(el('label', { class: 'f-label' }, t('editor.font')));
+      body.appendChild(fontSel);
       if (interactive) {
         const cfg = field.config;
         const { wrap: fgWrap } = colorInput(cfg.fgColor || '#1d2c42', v => {
@@ -1902,6 +1934,18 @@ const configForms = {
     fsNum.addEventListener('input', () => applyFs(fsNum.value));
     cont.appendChild(el('label', { class: 'f-label' }, t('editor.fontSize')));
     cont.appendChild(el('div', { class: 'rot-row' }, fsRange, fsNum, el('span', {}, '×')));
+    // Tipo de letra del texto (sobrescribe la fuente global de la ficha).
+    const fontSel = fontSelect(field.fontFamily || '', id => {
+      if (id) field.fontFamily = id; else delete field.fontFamily;
+      const node = canvas.querySelector(`[data-id="${field.id}"]`);
+      if (node) {
+        if (id) node.style.setProperty('--field-font', fontStack(id));
+        else node.style.removeProperty('--field-font');
+      }
+      markDirty();
+    }, { inherit: true });
+    cont.appendChild(el('label', { class: 'f-label' }, t('editor.font')));
+    cont.appendChild(fontSel);
   },
 
   cover(cont, field) {
@@ -2475,10 +2519,38 @@ function updateCryptoSettingsUi() {
   $('#ajCryptoPassword').disabled = !enabled;
 }
 
-function openSettings(afterSave) {
+// Pestañas del diálogo de ajustes: muestra una sección a la vez.
+function activateSettingsTab(name) {
+  const dlg = $('#dlgAjustes');
+  dlg.querySelectorAll('.settings-tab').forEach(tab => {
+    const on = tab.dataset.tab === name;
+    tab.classList.toggle('is-active', on);
+    tab.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  dlg.querySelectorAll('.settings-panel').forEach(p => {
+    const on = p.dataset.panel === name;
+    p.classList.toggle('is-active', on);
+    p.hidden = !on;
+  });
+}
+document.querySelectorAll('#dlgAjustes .settings-tab').forEach(tab => {
+  tab.addEventListener('click', () => activateSettingsTab(tab.dataset.tab));
+});
+
+// Rellena (una vez) el desplegable de fuente global con las opciones del catálogo.
+(function fillFontSelect() {
+  const sel = $('#ajFont');
+  if (!sel) return;
+  FONT_OPTIONS.forEach(f => sel.appendChild(el('option', { value: f.id, style: `font-family:${f.stack}` },
+    f.id === 'mono' ? t('editor.fontMono') : f.name)));
+})();
+
+function openSettings(afterSave, initialTab = 'basic') {
   const dlg = $('#dlgAjustes');
   dlg._afterSave = afterSave || null;
+  activateSettingsTab(initialTab);
   fillTimeSelects();
+  $('#ajFont').value = state.manifest.settings.fontFamily || DEFAULT_FONT;
   $('#ajTitulo').value = state.manifest.title || '';
   $('#ajAutor').value = state.manifest.author || '';
   $('#ajInstrucciones').value = state.manifest.instructions || '';
@@ -2507,12 +2579,14 @@ $('#dlgAjustes form')?.addEventListener('submit', ev => {
   if ($('#ajCifrarEntregas').checked && !cryptoPassword) {
     ev.preventDefault();
     toast(t('crypto.passwordRequired'), 'error');
+    activateSettingsTab('correction');
     $('#ajCryptoPassword').focus();
     return;
   }
   if ($('#ajCifrarEntregas').checked && accessPassword && cryptoPassword && accessPassword === cryptoPassword) {
     ev.preventDefault();
     toast(t('crypto.sameAsAccess'), 'error');
+    activateSettingsTab('correction');
     $('#ajCryptoPassword').focus();
   }
 });
@@ -2529,6 +2603,8 @@ $('#dlgAjustes')?.addEventListener('close', () => {
   state.manifest.settings.showCorrection = $('#ajCorreccion').checked;
   state.manifest.settings.shuffle = $('#ajBarajar').checked;
   state.manifest.settings.maxAttempts = Math.max(0, parseInt($('#ajIntentos').value, 10) || 0);
+  state.manifest.settings.fontFamily = $('#ajFont').value;
+  canvas.style.setProperty('--ficha-font', fontStack(state.manifest.settings.fontFamily));
   state.manifest.settings.encryptSubmissions = $('#ajCifrarEntregas').checked;
   state.submissionCryptoPassword = state.manifest.settings.encryptSubmissions ? $('#ajCryptoPassword').value : '';
   if (!state.manifest.settings.encryptSubmissions) delete state.manifest.submissionCrypto;
@@ -2632,7 +2708,8 @@ async function exportZip() {
     if (exportManifest.settings?.encryptSubmissions !== false) {
       if (!state.submissionCryptoPassword) {
         toast(t('crypto.passwordRequired'), 'error');
-        openSettings(exportZip);
+        openSettings(exportZip, 'correction');
+        $('#ajCryptoPassword').focus();
         return;
       }
       exportManifest.submissionCrypto = await createSubmissionCrypto(state.submissionCryptoPassword);
@@ -2826,8 +2903,41 @@ function scrollPreviewToPage(overlay, idx) {
 
 titleInput.addEventListener('input', () => { state.manifest.title = titleInput.value; markDirty(); });
 
-$('#btnNueva').addEventListener('click', () => {
-  if (!window.confirm(t('editor.confirmNew'))) return;
+// ---------- Menú «Archivo» ----------
+// La barra es solo de iconos, así que las operaciones de archivo (nueva, abrir,
+// añadir páginas y guardar) se agrupan en un único botón con menú desplegable.
+const menuArchivo = $('#menuArchivo');
+const btnArchivo = $('#btnArchivo');
+const menuArchivoList = menuArchivo.querySelector('.topbar-menu-list');
+
+function closeFileMenu() {
+  if (menuArchivoList.hidden) return;
+  menuArchivoList.hidden = true;
+  btnArchivo.setAttribute('aria-expanded', 'false');
+  document.removeEventListener('click', onDocClickFileMenu, true);
+  document.removeEventListener('keydown', onKeyFileMenu, true);
+}
+function openFileMenu() {
+  menuArchivoList.hidden = false;
+  btnArchivo.setAttribute('aria-expanded', 'true');
+  document.addEventListener('click', onDocClickFileMenu, true);
+  document.addEventListener('keydown', onKeyFileMenu, true);
+}
+function onDocClickFileMenu(e) {
+  if (!menuArchivo.contains(e.target)) closeFileMenu();
+}
+function onKeyFileMenu(e) {
+  if (e.key === 'Escape') { closeFileMenu(); btnArchivo.focus(); }
+}
+btnArchivo.addEventListener('click', () => {
+  menuArchivoList.hidden ? openFileMenu() : closeFileMenu();
+});
+// Cada opción ejecuta su acción y cierra el menú.
+const fileMenuItem = (id, fn) => $(id).addEventListener('click', () => { closeFileMenu(); fn(); });
+
+// El menú «Archivo» reemplaza la ficha del editor (abrir o empezar de cero); para
+// añadir páginas a la ficha actual están los botones entre páginas.
+function resetWorksheet() {
   urls.forEach(u => URL.revokeObjectURL(u));
   urls.clear();
   state.manifest = newManifest();
@@ -2838,26 +2948,51 @@ $('#btnNueva').addEventListener('click', () => {
   state.submissionCryptoPassword = '';
   titleInput.value = '';
   state.dirty = false;
+}
+// Solo pide confirmación si hay algo que se perdería (páginas en el editor).
+function confirmDiscardCurrent() {
+  return !state.manifest.pages.length || window.confirm(t('editor.confirmReplace'));
+}
+
+fileMenuItem('#miBlank', () => {
+  if (!confirmDiscardCurrent()) return;
+  resetWorksheet();
   renderCanvas();
   renderPanel();
   refreshPaletteState();
+  addBlankPage();
 });
 
-$('#btnPaginas').addEventListener('click', () => {
+fileMenuItem('#miAddPdf', () => {
   const input = $('#inputPaginas');
-  const handler = e => { addFiles(e.target.files); e.target.value = ''; input.removeEventListener('change', handler); };
+  const handler = async e => {
+    const files = Array.from(e.target.files);
+    e.target.value = '';
+    input.removeEventListener('change', handler);
+    if (!files.length || !confirmDiscardCurrent()) return;
+    resetWorksheet();
+    renderCanvas();
+    renderPanel();
+    refreshPaletteState();
+    await addFiles(files);
+  };
   input.addEventListener('change', handler);
   input.click();
 });
-$('#btnZip').addEventListener('click', () => $('#inputZip').click());
+fileMenuItem('#miOpenZip', () => $('#inputZip').click());
+// «Exportar a PDF» reutiliza el flujo de impresión: el diálogo del navegador
+// permite elegir «Guardar como PDF» como destino.
+fileMenuItem('#miPdf', printWorksheet);
+fileMenuItem('#miSaveZip', exportZip);
+
 $('#inputZip').addEventListener('change', e => {
-  if (e.target.files[0]) openZipFile(e.target.files[0]);
+  const file = e.target.files[0];
   e.target.value = '';
+  if (file && confirmDiscardCurrent()) openZipFile(file);
 });
 $('#btnAjustes').addEventListener('click', openSettings);
 $('#btnCompartir').addEventListener('click', openShare);
 $('#btnImprimir').addEventListener('click', printWorksheet);
-$('#btnExportar').addEventListener('click', exportZip);
 
 // ---------- Pegar desde portapapeles ----------
 

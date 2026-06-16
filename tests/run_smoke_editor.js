@@ -64,13 +64,17 @@ const puppeteer = require('puppeteer-core');
   }
   check('se dibuja un campo', (await page.$$eval('.ed-field', ns => ns.length)) >= 1);
 
-  // «Ficha nueva»: limpia manifest, files y la cache de object URLs.
+  // Menú «Archivo» → «Página en blanco»: reemplaza la ficha actual (limpia
+  // manifest, files y la cache de object URLs) y deja una única hoja en blanco.
   // Es la ruta que dependía de `urls` compartido entre módulos.
-  await page.click('#btnNueva');
-  await new Promise(r => setTimeout(r, 400));
-  check('ficha nueva vuelve al estado vacío', (await page.$$eval('.ed-empty', ns => ns.length)) === 1);
-  check('ficha nueva no deja páginas', (await page.$$eval('.wpf-page', ns => ns.length)) === 0);
-  check('ficha nueva limpia el título', (await page.$eval('#titulo', n => n.value)) === '');
+  await page.click('#btnArchivo');
+  await new Promise(r => setTimeout(r, 150));
+  check('el menú «Archivo» se abre', !(await page.$eval('#menuArchivo .topbar-menu-list', n => n.hidden)));
+  await page.click('#miBlank'); // el confirm de reemplazo se auto-acepta (page.on dialog)
+  await new Promise(r => setTimeout(r, 500));
+  check('reemplazar quita el campo anterior', (await page.$$eval('.ed-field', ns => ns.length)) === 0);
+  check('reemplazar deja una sola página', (await page.$$eval('.wpf-page', ns => ns.length)) === 1);
+  check('reemplazar limpia el título', (await page.$eval('#titulo', n => n.value)) === '');
 
   if (errors.length) {
     console.log('--- ERRORES DE PÁGINA/CONSOLA ---');

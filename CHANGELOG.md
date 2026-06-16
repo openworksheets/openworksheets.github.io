@@ -9,6 +9,55 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [No publicado]
+
+### Añadido
+- **Tipos de letra** seleccionables para los campos con texto. Una **fuente
+  global** de la ficha (en Ajustes → «Datos») se aplica a todos los campos, y
+  cada campo puede elegir **otra distinta** desde su sección «Diseño» (opción
+  «Igual que la ficha» para heredar la global). Catálogo de 8 familias pensadas
+  por propósito: Atkinson Hyperlegible (predeterminada), Lexend (lectura fácil),
+  **OpenDyslexic** (dislexia), Andika (infantil), Patrick Hand (manuscrita),
+  Nunito, Lora (serif) y Monospace.
+- Menú **«Archivo»** en la barra del editor: un único botón agrupa **Página en
+  blanco**, **Abrir ZIP…**, **Abrir PDF o imágenes…**, **Exportar a PDF** y
+  **Guardar ZIP**, en lugar de tenerlos como iconos sueltos. Se abre y cierra al
+  pulsar, con clic fuera o con `Esc`. Las opciones de abrir **reemplazan** la
+  ficha del editor (pidiendo confirmación si hay algo que se perdería); para
+  **añadir** páginas a la ficha actual están los botones entre páginas.
+- Opción **«Exportar a PDF»** en el menú Archivo, que abre el diálogo de
+  impresión del navegador para guardar la ficha como PDF (mismo flujo que el
+  botón Imprimir, más fácil de descubrir).
+
+### Cambiado
+- El diálogo de **Ajustes de la ficha** se organiza ahora en **pestañas**
+  (Datos · Corrección y privacidad · Restricciones de acceso), mostrando una
+  sección a la vez, para que no se desborde verticalmente y los botones queden
+  siempre a la vista.
+- En las **fichas nuevas**, las opciones **«Mostrar la nota al alumnado al
+  finalizar»** y **«Mostrar la corrección detallada»** vienen **marcadas por
+  defecto**.
+- La **barra superior del editor** se reorganiza en bloques separados por
+  familia (Archivo · edición · ficha) con divisores sutiles, y el **selector de
+  idioma** y el **tema** se mueven al extremo derecho, fuera del flujo de
+  trabajo, para ganar claridad.
+- El campo **Casillas** ya no muestra la sección **«Diseño»**: son casillas
+  sueltas sobre la página, sin texto ni un recuadro de fondo que estilizar, así
+  que esos ajustes no aplicaban.
+- Los ajustes de **«Diseño»** se vuelven coherentes en todos los campos: el
+  **color de texto** ahora también tiñe el texto que escribe el alumnado en las
+  respuestas, y en **«Huecos en documento»** el tamaño, el color y el fondo
+  pasan a aplicarse a sus huecos.
+
+### Corregido
+- El texto de ayuda de la **contraseña de acceso del alumnado** era engañoso
+  («solo para abrir la ficha»): en realidad **cifra todo el contenido de la
+  ficha** (páginas y respuestas correctas), así que sin ella no se puede ver
+  nada. El nuevo texto lo explica y advierte de que, si se olvida, la ficha no
+  se puede recuperar.
+
+---
+
 ## [1.7.0] — 2026-06-15
 
 ### Añadido

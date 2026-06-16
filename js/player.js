@@ -14,6 +14,7 @@ function iconBtn(attrs, svgStr, label) {
 }
 import { isDecorField } from './fieldtypes.js';
 import { renderField } from './render.js';
+import { fontStack } from './fonts.js';
 import { gradeField, expectedText } from './grading.js';
 import { buildEntregaData, entregaFilename, entregaResumen } from './entrega.js';
 import { encryptSubmission } from './submissionCrypto.js';
@@ -232,6 +233,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
 
     const rng = mulberry32(datos.seed);
     const doc = el('div', { class: 'al-doc' });
+    doc.style.setProperty('--ficha-font', fontStack(settings.fontFamily));
 
     doc.appendChild(el('div', { class: 'al-cabecera' },
       el('h1', {}, manifest.title || 'OpenWorksheets'),

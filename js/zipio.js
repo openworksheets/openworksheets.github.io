@@ -64,11 +64,12 @@ export function newManifest() {
     instructions: '',
     lang: '',
     settings: {
-      showScore: false,
-      showCorrection: false,
+      showScore: true,
+      showCorrection: true,
       shuffle: false,
       maxAttempts: 0,
-      encryptSubmissions: true
+      encryptSubmissions: true,
+      fontFamily: 'atkinson'
     },
     access: {
       desde: '',
