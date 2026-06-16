@@ -431,9 +431,12 @@ function renderCanvas() {
         } else {
           const icon = el('div', { class: 'ed-scorm-icon' });
           icon.innerHTML = ICONS.package;
-          box.appendChild(el('div', { class: 'ed-scorm-prev' },
+          const prev = el('div', { class: 'ed-scorm-prev' + ((parseFloat(cfg.frameWidth) || 0) > 0 ? ' has-frame' : '') },
             icon,
-            el('div', { class: 'ed-scorm-title' }, cfg.title || t('editor.scormNoPkg'))));
+            el('div', { class: 'ed-scorm-title' }, cfg.title || t('editor.scormNoPkg')));
+          prev.style.setProperty('--media-frame-width', `${Math.max(0, parseFloat(cfg.frameWidth) || 0)}px`);
+          prev.style.setProperty('--media-frame-color', cfg.frameColor || '#1d2c42');
+          box.appendChild(prev);
         }
       } else if (isShapeField(field.type)) {
         box.appendChild(buildShapeSvg(field));
@@ -2099,6 +2102,32 @@ function shapeStrokeConfig(cont, field) {
   ], v => { cfg.style = v; refreshShapePrev(field); });
 }
 
+function mediaFrameConfig(cont, field, rebuild = rebuildCanvasMedia) {
+  const cfg = field.config;
+  cont.appendChild(el('label', { class: 'f-label' }, t('cfg.strokeColor')));
+  const { wrap: colorWrap } = colorInput(cfg.frameColor || '#1d2c42', v => {
+    cfg.frameColor = v;
+    rebuild(field);
+    markDirty();
+  });
+  cont.appendChild(colorWrap);
+  cont.appendChild(el('label', { class: 'f-label' }, t('cfg.strokeWidth')));
+  const widthVal = Math.max(0, parseFloat(cfg.frameWidth) || 0);
+  const widthRange = el('input', { type: 'range', min: '0', max: '14', step: '1', value: String(widthVal) });
+  const widthNum = el('input', { type: 'number', min: '0', max: '14', step: '1', value: String(widthVal), style: 'width:84px' });
+  const applyWidth = v => {
+    v = Math.max(0, Math.min(14, parseFloat(v) || 0));
+    cfg.frameWidth = v;
+    widthRange.value = v;
+    widthNum.value = v;
+    rebuild(field);
+    markDirty();
+  };
+  widthRange.addEventListener('input', () => applyWidth(widthRange.value));
+  widthNum.addEventListener('input', () => applyWidth(widthNum.value));
+  cont.appendChild(el('div', { class: 'rot-row' }, widthRange, widthNum, el('span', {}, 'px')));
+}
+
 const configForms = {
 
   line(cont, field) {
@@ -2372,14 +2401,14 @@ const configForms = {
     if (cfg.mode === 'url') {
       cont.appendChild(el('label', { class: 'f-label' }, t('cfg.embedUrl')));
       const url = el('input', { type: 'url', value: cfg.url || '', placeholder: 'https://…' });
-      url.addEventListener('input', () => { cfg.url = url.value; markDirty(); });
+      url.addEventListener('input', () => { cfg.url = url.value; markDirty(); rebuildCanvasMedia(field); });
       url.addEventListener('change', () => rebuildCanvasMedia(field));
       cont.appendChild(url);
     } else if (cfg.mode === 'html') {
       cont.appendChild(el('label', { class: 'f-label' }, t('cfg.embedHtml')));
       const ta = el('textarea', { rows: '5', placeholder: '<iframe src="…"></iframe>' });
       ta.value = cfg.html || '';
-      ta.addEventListener('input', () => { cfg.html = ta.value; markDirty(); });
+      ta.addEventListener('input', () => { cfg.html = ta.value; markDirty(); rebuildCanvasMedia(field); });
       ta.addEventListener('change', () => rebuildCanvasMedia(field));
       cont.appendChild(ta);
       cont.appendChild(el('p', { class: 'settings-warning' },
@@ -2400,6 +2429,7 @@ const configForms = {
     }
     // El SCORM/embed-paquete no usa el reconstructor de medios (no lo entiende):
     // su título/pie redibujan el lienzo.
+    mediaFrameConfig(cont, field, cfg.mode === 'zip' || cfg.mode === 'elpx' ? (() => renderCanvas()) : rebuildCanvasMedia);
     if (cfg.mode === 'zip' || cfg.mode === 'elpx') mediaTitleCaption(cont, field, () => renderCanvas());
     else mediaTitleCaption(cont, field);
   },
@@ -2425,6 +2455,8 @@ const configForms = {
 
     // Re-dibuja el lienzo para que la vista en vivo refleje el cambio de menú.
     checkRow(cont, t('cfg.scormShowMenu'), cfg.showMenu !== false, v => { cfg.showMenu = v; renderCanvas(); });
+
+    mediaFrameConfig(cont, field, () => renderCanvas());
 
     // Título y pie (con sus controles de texto), como en vídeo/audio/insertar.
     // El SCORM no usa el reconstructor de medios: redibuja el lienzo.

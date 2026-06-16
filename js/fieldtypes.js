@@ -145,7 +145,7 @@ export const FIELD_TYPES = {
       scoreMode: 'scorm',  // 'scorm' = usa score.raw ; 'completion' = aprobado/suspendido
       showMenu: true,      // mostrar el menú de navegación lateral del paquete
       toc: [],             // árbol de navegación cacheado del imsmanifest
-      title: '', caption: ''
+      title: '', caption: '', frameColor: '#1d2c42', frameWidth: 0
     })
   },
   // Elementos decorativos: no puntúan ni cuentan como preguntas.
@@ -198,7 +198,7 @@ export const FIELD_TYPES = {
     glyph: ICONS.code,
     decor: true,
     defRect: { w: 0.5, h: 0.3 },
-    defaults: () => ({ mode: '', url: '', html: '', pkg: '', entryHref: '', title: '', caption: '' })
+    defaults: () => ({ mode: '', url: '', html: '', pkg: '', entryHref: '', title: '', caption: '', frameColor: '#1d2c42', frameWidth: 0 })
   },
   // Formas de dibujo: para componer fichas desde una hoja en blanco.
   line: {

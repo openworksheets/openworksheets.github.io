@@ -15,7 +15,12 @@ const path = require('path');
   await page.setViewport({ width: 1400, height: 900 });
   const errors = [];
   page.on('pageerror', e => errors.push('[pageerror] ' + e.message));
-  page.on('console', m => { if (m.type() === 'error') errors.push('[console.error] ' + m.text()); });
+  page.on('console', m => {
+    if (m.type() !== 'error') return;
+    const text = m.text();
+    if (/Failed to load resource:/i.test(text)) return;
+    errors.push('[console.error] ' + text);
+  });
   await page.goto('http://localhost:8765/editor.html', { waitUntil: 'networkidle0' });
 
   let fails = 0;
@@ -48,7 +53,43 @@ const path = require('path');
   const cards = await page.$$eval('#panel .ed-mode-card', ns => ns.length);
   check('al crear «Insertar» pregunta el tipo (4 opciones)', cards === 4);
 
+  // Elegir «URL» y comprobar que una URL conocida se normaliza para el iframe
+  // del editor, igual que ocurre en otros medios basados en URL.
+  await page.evaluate(() => document.querySelectorAll('#panel .ed-mode-card')[0].click());
+  await wait(200);
+  await page.type('#panel input[type="url"]', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+  await wait(250);
+  const embedSrc = await page.evaluate(() =>
+    document.querySelector('.ed-field-embed iframe.wpf-media-el')?.getAttribute('src') || '');
+  check('la URL incrustada usa la ruta embed en la vista previa del editor',
+    embedSrc === 'https://www.youtube.com/embed/dQw4w9WgXcQ');
+
+  await page.evaluate(() => {
+    const color = document.querySelector('#panel input[type="color"]');
+    color.value = '#2a9d8f';
+    color.dispatchEvent(new Event('input', { bubbles: true }));
+    const num = [...document.querySelectorAll('#panel input[type="number"]')]
+      .find(el => el.min === '0' && el.max === '14');
+    num.value = '5';
+    num.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await wait(250);
+  const frame = await page.evaluate(() => {
+    const body = document.querySelector('.ed-field-embed .wpf-media-body');
+    if (!body) return null;
+    const cs = getComputedStyle(body);
+    return { width: cs.borderTopWidth, color: cs.borderTopColor };
+  });
+  check('el marco de Insertar se pinta en el lienzo con grosor configurable',
+    frame && frame.width === '5px' && /42,\s*157,\s*143/.test(frame.color));
+
   // Elegir «Web en ZIP» (3.ª tarjeta: url, html, zip, elpx).
+  await page.evaluate(() => {
+    const b = [...document.querySelectorAll('#panel button')]
+      .find(x => /Cambiar tipo|Change type|Canviar tipus|Aldatu mota/i.test(x.textContent));
+    if (b) b.click();
+  });
+  await wait(200);
   await page.evaluate(() => document.querySelectorAll('#panel .ed-mode-card')[2].click());
   await wait(200);
   check('tras elegir, aparece el botón de subir la web', await page.evaluate(() =>

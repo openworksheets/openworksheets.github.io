@@ -61,6 +61,25 @@ const puppeteer = require('puppeteer-core');
   check('el panel tiene el selector de puntuación', panel.selects >= 1);
   check('el panel tiene el conmutador de menú', panel.checks >= 1);
 
+  await page.evaluate(() => {
+    const color = document.querySelector('#panel input[type="color"]');
+    color.value = '#e76f51';
+    color.dispatchEvent(new Event('input', { bubbles: true }));
+    const num = [...document.querySelectorAll('#panel input[type="number"]')]
+      .find(el => el.min === '0' && el.max === '14');
+    num.value = '4';
+    num.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await wait(200);
+  const placeholderFrame = await page.evaluate(() => {
+    const box = document.querySelector('.ed-field-scorm .ed-scorm-prev');
+    if (!box) return null;
+    const cs = getComputedStyle(box);
+    return { width: cs.borderTopWidth, color: cs.borderTopColor };
+  });
+  check('el marco del SCORM se pinta también en el placeholder del editor',
+    placeholderFrame && placeholderFrame.width === '4px' && /231,\s*111,\s*81/.test(placeholderFrame.color));
+
   // Subir el paquete SCORM de ejemplo y comprobar la vista en vivo en el lienzo.
   const path = require('path');
   const sample = path.resolve(__dirname, '../ejemplos/scorm-ejemplo.zip');
@@ -80,6 +99,14 @@ const puppeteer = require('puppeteer-core');
   check('vista en vivo del SCORM en el lienzo (iframe)', liveFrame);
   check('el campo ya no muestra el placeholder vacío',
     await page.evaluate(() => !document.querySelector('.ed-field-scorm .ed-scorm-prev')));
+  const liveFrameBorder = await page.evaluate(() => {
+    const body = document.querySelector('.ed-field-scorm .wpf-media-body');
+    if (!body) return null;
+    const cs = getComputedStyle(body);
+    return { width: cs.borderTopWidth, color: cs.borderTopColor };
+  });
+  check('el marco del SCORM se mantiene en la vista en vivo',
+    liveFrameBorder && liveFrameBorder.width === '4px' && /231,\s*111,\s*81/.test(liveFrameBorder.color));
 
   // Paquete con varios SCO: el menú de navegación debe verse en el lienzo y
   // ocultarse al desmarcar «Mostrar menú» (sin pasar por la vista previa).

@@ -253,6 +253,13 @@ function parseMediaUrl(url) {
   return { type: 'file', src: u };
 }
 
+// Para el campo "Insertar -> URL" reutilizamos las mismas normalizaciones de
+// URL que en vídeo cuando la plataforma expone una ruta específica de iframe.
+function normalizeEmbedUrl(url) {
+  const parsed = parseMediaUrl(url);
+  return parsed?.type === 'iframe' ? parsed.src : (url || '').trim();
+}
+
 // Aplica las opciones de reproducción a un <video>/<audio>.
 function applyMediaOpts(node, cfg) {
   node.controls = cfg.controls !== false;
@@ -266,8 +273,12 @@ function applyMediaOpts(node, cfg) {
 function mediaFigure(field, bodyEl, extraClass) {
   const cfg = field.config || {};
   const fig = el('div', { class: 'wpf-media ' + extraClass });
+  const frameWidth = Math.max(0, parseFloat(cfg.frameWidth) || 0);
+  fig.style.setProperty('--media-frame-width', frameWidth + 'px');
+  fig.style.setProperty('--media-frame-color', cfg.frameColor || '#1d2c42');
+  if (frameWidth > 0) fig.classList.add('has-frame');
   if (cfg.title) fig.appendChild(el('div', { class: 'wpf-media-title' }, cfg.title));
-  fig.appendChild(el('div', { class: 'wpf-media-body' }, bodyEl));
+  fig.appendChild(el('div', { class: 'wpf-media-body' + (frameWidth > 0 ? ' has-frame' : '') }, bodyEl));
   if (cfg.caption) fig.appendChild(el('div', { class: 'wpf-media-caption' }, cfg.caption));
   return fig;
 }
@@ -310,7 +321,12 @@ export function buildMediaContent(field, fileUrl, opts = {}) {
       // Web completa (.zip) o paquete eXeLearning (.elpx): servida por el SW.
       body = buildPackageIframe(field, opts.host, cfg.title);
     } else if ((cfg.url || '').trim()) {
-      body = el('iframe', { src: cfg.url.trim(), class: 'wpf-media-el', allow: 'fullscreen; autoplay; clipboard-write; encrypted-media; picture-in-picture', allowfullscreen: '' });
+      body = el('iframe', {
+        src: normalizeEmbedUrl(cfg.url),
+        class: 'wpf-media-el',
+        allow: 'fullscreen; autoplay; clipboard-write; encrypted-media; picture-in-picture',
+        allowfullscreen: ''
+      });
     }
   }
   if (!body) body = el('div', { class: 'wpf-media-empty' }, t('render.mediaEmpty'));
