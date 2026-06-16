@@ -152,6 +152,31 @@ export const FIELD_TYPES = {
     defRect: { w: 0.4, h: 0.3 },
     defaults: () => ({ src: '' })
   },
+  // Multimedia decorativo: no puntúa. provider 'url' (YouTube/Vimeo/enlace
+  // directo) o 'file' (archivo subido, en state.files bajo config.src).
+  video: {
+    name: 'Vídeo',
+    glyph: ICONS.film,
+    decor: true,
+    defRect: { w: 0.5, h: 0.32 },
+    defaults: () => ({ provider: 'url', url: '', src: '', controls: true, autoplay: false, muted: false, loop: false, title: '', caption: '' })
+  },
+  audio: {
+    name: 'Audio',
+    glyph: ICONS.volume,
+    decor: true,
+    defRect: { w: 0.5, h: 0.08 },
+    defaults: () => ({ provider: 'file', url: '', src: '', controls: true, autoplay: false, loop: false, title: '', caption: '' })
+  },
+  // Inserción HTML/iframe. mode 'url' (se incrusta en un iframe) o 'html'
+  // (código pegado tal cual, sin sanear: responsabilidad del autor de la ficha).
+  embed: {
+    name: 'Insertar (Web/HTML)',
+    glyph: ICONS.code,
+    decor: true,
+    defRect: { w: 0.5, h: 0.3 },
+    defaults: () => ({ mode: 'url', url: '', html: '', title: '', caption: '' })
+  },
   // Formas de dibujo: para componer fichas desde una hoja en blanco.
   line: {
     name: 'Línea',
@@ -186,7 +211,7 @@ export const FIELD_TYPES = {
 export const FIELD_ORDER = [
   'text', 'number', 'single', 'truefalse', 'multi', 'checkbox',
   'select', 'gaps', 'textboxes', 'match', 'order', 'dragdrop', 'arrowmatch',
-  'label', 'cover', 'image', 'line', 'arrow', 'rect', 'ellipse'
+  'label', 'cover', 'image', 'video', 'audio', 'embed', 'line', 'arrow', 'rect', 'ellipse'
 ];
 
 // Grupos temáticos de la paleta del editor. El nombre visible
@@ -195,7 +220,7 @@ export const PALETTE_GROUPS = [
   { id: 'write',  glyph: ICONS.pencil,         types: ['text', 'number', 'fillgaps'] },
   { id: 'choose', glyph: ICONS.listChecks,      types: ['single', 'multi', 'checkbox', 'truefalse', 'select'] },
   { id: 'relate', glyph: ICONS.arrowLeftRight,  types: ['match', 'order', 'dragdrop', 'arrowmatch'] },
-  { id: 'design', glyph: ICONS.shapes,          types: ['label', 'image', 'cover', 'line', 'arrow', 'rect', 'ellipse'] }
+  { id: 'design', glyph: ICONS.shapes,          types: ['label', 'image', 'video', 'audio', 'embed', 'cover', 'line', 'arrow', 'rect', 'ellipse'] }
 ];
 
 export function isDecorField(type) {

@@ -13,6 +13,7 @@
 import { el, shuffled, shuffledIndices, normalizeText } from './util.js';
 import { parseGaps } from './fieldtypes.js';
 import { fontStack } from './fonts.js';
+import { mdToHtml } from './markdown.js';
 import { t } from './i18n.js';
 
 // SVG de una casilla de verificación dibujable (campo checkbox).
@@ -224,15 +225,95 @@ function notify(ctx) {
   if (ctx.onChange) ctx.onChange();
 }
 
+// ---------- Multimedia decorativo (vídeo / audio / inserción HTML) ----------
+
+// Convierte una URL en su forma incrustable. YouTube y Vimeo → iframe del
+// reproductor; cualquier otra cosa se trata como archivo directo (<video>/<audio>).
+function parseMediaUrl(url) {
+  const u = (url || '').trim();
+  if (!u) return null;
+  let m;
+  if ((m = u.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/))) {
+    return { type: 'iframe', src: 'https://www.youtube.com/embed/' + m[1] };
+  }
+  if ((m = u.match(/vimeo\.com\/(?:video\/)?(\d+)/))) {
+    return { type: 'iframe', src: 'https://player.vimeo.com/video/' + m[1] };
+  }
+  return { type: 'file', src: u };
+}
+
+// Aplica las opciones de reproducción a un <video>/<audio>.
+function applyMediaOpts(node, cfg) {
+  node.controls = cfg.controls !== false;
+  if (cfg.autoplay) node.autoplay = true;
+  if (cfg.muted) node.muted = true;
+  if (cfg.loop) node.loop = true;
+  node.setAttribute('playsinline', '');
+}
+
+// Envuelve el medio con título y pie opcionales.
+function mediaFigure(field, bodyEl, extraClass) {
+  const cfg = field.config || {};
+  const fig = el('div', { class: 'wpf-media ' + extraClass });
+  if (cfg.title) fig.appendChild(el('div', { class: 'wpf-media-title' }, cfg.title));
+  fig.appendChild(el('div', { class: 'wpf-media-body' }, bodyEl));
+  if (cfg.caption) fig.appendChild(el('div', { class: 'wpf-media-caption' }, cfg.caption));
+  return fig;
+}
+
+// Construye el contenido real de un medio (vídeo/audio/embed) con su título y pie.
+// `fileUrl` resuelve los archivos subidos; opts.editor desactiva la
+// autorreproducción (en el editor no queremos que arranque solo).
+export function buildMediaContent(field, fileUrl, opts = {}) {
+  const cfg = field.config || {};
+  const autoplay = opts.editor ? false : cfg.autoplay;
+  let body;
+  if (field.type === 'video') {
+    if (cfg.provider === 'file') {
+      const url = cfg.src && fileUrl ? fileUrl(cfg.src) : '';
+      if (url) { body = el('video', { src: url, class: 'wpf-media-el' }); applyMediaOpts(body, { ...cfg, autoplay }); }
+    } else {
+      const v = parseMediaUrl(cfg.url);
+      if (v && v.type === 'iframe') {
+        const params = [];
+        if (autoplay) { params.push('autoplay=1'); params.push('muted=1'); }
+        else if (cfg.muted) params.push('muted=1');
+        if (cfg.loop) params.push('loop=1');
+        const src = v.src + (params.length ? (v.src.includes('?') ? '&' : '?') + params.join('&') : '');
+        body = el('iframe', { src, class: 'wpf-media-el', allow: 'autoplay; fullscreen; picture-in-picture', allowfullscreen: '' });
+      } else if (v) {
+        body = el('video', { src: v.src, class: 'wpf-media-el' }); applyMediaOpts(body, { ...cfg, autoplay });
+      }
+    }
+  } else if (field.type === 'audio') {
+    const url = cfg.provider === 'file'
+      ? (cfg.src && fileUrl ? fileUrl(cfg.src) : '')
+      : (cfg.url || '').trim();
+    if (url) { body = el('audio', { src: url, class: 'wpf-media-el wpf-audio-el' }); applyMediaOpts(body, { ...cfg, autoplay }); }
+  } else if (field.type === 'embed') {
+    if (cfg.mode === 'html' && (cfg.html || '').trim()) {
+      // Código pegado tal cual, sin sanear (responsabilidad del autor de la ficha).
+      body = el('div', { class: 'wpf-embed-html' });
+      body.innerHTML = cfg.html;
+    } else if ((cfg.url || '').trim()) {
+      body = el('iframe', { src: cfg.url.trim(), class: 'wpf-media-el', allow: 'fullscreen; autoplay; clipboard-write; encrypted-media; picture-in-picture', allowfullscreen: '' });
+    }
+  }
+  if (!body) body = el('div', { class: 'wpf-media-empty' }, t('render.mediaEmpty'));
+  return mediaFigure(field, body, 'wpf-media-' + field.type);
+}
+
 const renderers = {
 
   // Decorativos: no son preguntas, solo se muestran.
   label(field, root) {
     const cfg = field.config || {};
-    root.appendChild(el('div', {
+    const div = el('div', {
       class: 'wpf-label-text',
       style: `color:${cfg.color || 'inherit'};font-weight:${cfg.bold ? '700' : '400'}`
-    }, cfg.text || ''));
+    });
+    div.innerHTML = mdToHtml(cfg.text || '');
+    root.appendChild(div);
     return emptyRenderer();
   },
 
@@ -254,6 +335,21 @@ const renderers = {
       const url = ctx.fileUrl(src);
       if (url) root.appendChild(el('img', { src: url, class: 'wpf-img-decor', alt: '' }));
     }
+    return emptyRenderer();
+  },
+
+  video(field, root, ctx) {
+    root.appendChild(buildMediaContent(field, ctx.fileUrl));
+    return emptyRenderer();
+  },
+
+  audio(field, root, ctx) {
+    root.appendChild(buildMediaContent(field, ctx.fileUrl));
+    return emptyRenderer();
+  },
+
+  embed(field, root, ctx) {
+    root.appendChild(buildMediaContent(field, ctx.fileUrl));
     return emptyRenderer();
   },
 

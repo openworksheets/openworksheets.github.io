@@ -9,9 +9,28 @@ Las versiones publicadas también están en la página de
 
 ---
 
-## [No publicado]
+## [1.8.0] — 2026-06-16
 
 ### Añadido
+- **Deshacer y rehacer** en el editor: botones en la barra superior y atajos de
+  teclado (Ctrl/Cmd+Z para deshacer, Ctrl/Cmd+Y o Ctrl/Cmd+Mayús+Z para rehacer).
+  Los cambios rápidos se agrupan en un solo paso; abrir o reemplazar una ficha
+  reinicia el historial.
+- El campo **«Texto»** admite ahora **Markdown**: barra con **negrita** y
+  *cursiva* (envuelven la selección), conmutador entre edición Markdown y vista
+  con los efectos aplicados, y soporte de títulos, listas y enlaces. Si se pega
+  Markdown, se interpreta. Mantiene color, tamaño y tipo de letra.
+- El **título y el pie** de los campos de vídeo/audio/insertar admiten también
+  **color y tamaño de texto** (además del tipo de letra).
+- Tres **campos decorativos nuevos** (no puntúan), en el grupo «Diseño» de la
+  paleta, con **título y pie opcionales**:
+  - **Vídeo**: de YouTube/Vimeo (se incrusta el reproductor), enlace directo a un
+    archivo o archivo subido. Opciones: controles, autoreproducir, silenciar, bucle.
+  - **Audio**: archivo subido o enlace directo. Opciones: controles, autoreproducir, bucle.
+  - **Insertar (Web/HTML)**: contenido externo por URL (en un iframe) o pegando su
+    código de inserción/HTML tal cual (sin filtrar; bajo responsabilidad del autor).
+  El contenido real se ve también en el editor (sin autorreproducir), pudiendo
+  mover y redimensionar el campo por encima.
 - **Tipos de letra** seleccionables para los campos con texto. Una **fuente
   global** de la ficha (en Ajustes → «Datos») se aplica a todos los campos, y
   cada campo puede elegir **otra distinta** desde su sección «Diseño» (opción
@@ -30,6 +49,8 @@ Las versiones publicadas también están en la página de
   botón Imprimir, más fácil de descubrir).
 
 ### Cambiado
+- La sección **«Diseño»** del panel de campo se muestra ahora **siempre
+  desplegada** (antes era un acordeón que había que abrir).
 - El diálogo de **Ajustes de la ficha** se organiza ahora en **pestañas**
   (Datos · Corrección y privacidad · Restricciones de acceso), mostrando una
   sección a la vez, para que no se desborde verticalmente y los botones queden
@@ -50,6 +71,13 @@ Las versiones publicadas también están en la página de
   pasan a aplicarse a sus huecos.
 
 ### Corregido
+- Las opciones de abrir/empezar del menú **«Archivo»** solo piden confirmación
+  («¿Reemplazar la ficha actual?») si hay **cambios sin guardar**. Una ficha
+  recién cargada o ya guardada se reemplaza sin avisar.
+- En **«Arrastrar a zonas»** en modo **recorte**, el recuadro principal de la
+  «bandeja» ya no aparece: no se usa (las piezas parten del PDF y van a las
+  zonas) y solo distraía. El campo sigue accesible desde la lista de campos y
+  desde «volver al campo».
 - El texto de ayuda de la **contraseña de acceso del alumnado** era engañoso
   («solo para abrir la ficha»): en realidad **cifra todo el contenido de la
   ficha** (páginas y respuestas correctas), así que sin ella no se puede ver

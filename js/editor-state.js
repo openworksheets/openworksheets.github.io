@@ -30,4 +30,8 @@ export function fileUrl(path) {
   return urls.get(path);
 }
 
-export function markDirty() { state.dirty = true; }
+// Hook opcional para el historial de deshacer/rehacer: se invoca tras cada
+// cambio para programar una instantánea del estado.
+let dirtyHook = null;
+export function onDirty(fn) { dirtyHook = fn; }
+export function markDirty() { state.dirty = true; if (dirtyHook) dirtyHook(); }

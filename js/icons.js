@@ -62,4 +62,11 @@ export const ICONS = {
   arrowRight: icon('<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>'),
   rectH:     icon('<rect width="20" height="12" x="2" y="6" rx="2"/>'),
   circle:    icon('<circle cx="12" cy="12" r="10"/>'),
+  // Deshacer / rehacer
+  undo:      icon('<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H9"/>'),
+  redo:      icon('<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>'),
+  // Multimedia / inserción
+  film:      icon('<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18M17 3v18M3 7.5h4M17 7.5h4M3 12h18M3 16.5h4M17 16.5h4"/>'),
+  volume:    icon('<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19.364 18.364a9 9 0 0 0 0-12.728"/>'),
+  code:      icon('<path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/>'),
 };

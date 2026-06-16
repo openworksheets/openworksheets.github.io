@@ -170,7 +170,9 @@ const puppeteer = require('puppeteer-core');
   // (evita imágenes huérfanas). Volvemos al campo y elegimos «Escribir las etiquetas».
   await page.click('.prev-aviso .btn');
   await wait(200);
-  await page.click('.ed-field');
+  // En modo recorte el recuadro principal ya no es interactivo: se selecciona el
+  // campo desde la lista de campos del panel.
+  await page.evaluate(() => { document.querySelector('.lista-campos .item')?.click(); });
   await wait(150);
   await page.evaluate(() => { document.querySelector('#panel .ed-mode-head button')?.click(); });
   await wait(150);

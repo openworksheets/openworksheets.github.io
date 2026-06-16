@@ -45,10 +45,15 @@ Elementos decorativos o informativos que no se corrigen ni cuentan en la puntuac
 
 | Tipo | Descripción |
 |------|-------------|
-| **Texto** | Bloque de texto fijo: títulos, instrucciones, notas. |
+| **Texto** | Bloque de texto fijo (títulos, instrucciones, notas) con edición **Markdown**: negrita, cursiva, títulos, listas y enlaces, con conmutador entre edición y vista. |
 | **Imagen** | Imagen decorativa o explicativa superpuesta al documento. |
+| **Vídeo** | Vídeo de YouTube/Vimeo (incrustado), enlace directo o archivo subido, con título y pie opcionales. |
+| **Audio** | Audio desde archivo subido o enlace, con título y pie opcionales. |
+| **Insertar (Web/HTML)** | Contenido externo mediante su código de inserción (iframe) o una URL: Genially, H5P, mapas, presentaciones… |
 | **Tapar zona** | Rectángulo de color que oculta una parte del documento (respuestas, pistas, etc.). |
 | **Línea / Flecha / Rectángulo / Elipse** | Formas geométricas para resaltar, enmarcar o señalar elementos del documento. |
+
+Todos los campos con texto comparten ajustes de **tipo de letra** (con una fuente global de la ficha y posibilidad de cambiarla por campo, incluida OpenDyslexic), tamaño y color. El editor admite **deshacer/rehacer** (Ctrl+Z / Ctrl+Y).
 
 ## Flujo de trabajo
 

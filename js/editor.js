@@ -21,7 +21,8 @@
 import { el, uid, clamp, toast, downloadBlob, slugify, copyToClipboard, zoomControl } from './util.js';
 import { FIELD_TYPES, PALETTE_GROUPS, fieldTypeName, gapCount, isShapeField } from './fieldtypes.js';
 import { FONT_OPTIONS, DEFAULT_FONT, fontStack } from './fonts.js';
-import { buildShapeSvg, CHECKBOX_SVG } from './render.js';
+import { buildShapeSvg, CHECKBOX_SVG, buildMediaContent } from './render.js';
+import { mdToHtml } from './markdown.js';
 import { expectedText } from './grading.js';
 import { pdfToPages, imageToPage, isPdf, isImage } from './pdfimport.js';
 import { exportFichaZip, importFichaZip, newManifest } from './zipio.js';
@@ -31,7 +32,7 @@ import { t, getLang, applyI18n, initLangSelector } from './i18n.js';
 import { ICONS } from './icons.js';
 import { createSubmissionCrypto, decryptManifestForStudent, encryptManifestForStudent, isEncryptedManifest } from './submissionCrypto.js';
 import { iconBtn, colorInput } from './editor-ui.js';
-import { state, urls, fileUrl, markDirty } from './editor-state.js';
+import { state, urls, fileUrl, markDirty, onDirty } from './editor-state.js';
 
 applyI18n();
 initLangSelector();
@@ -402,14 +403,21 @@ function renderCanvas() {
         el('span', { class: 'handle' }));
       // Vista previa real de los elementos decorativos
       if (field.type === 'label') {
-        box.appendChild(el('div', {
+        const lp = el('div', {
           class: 'ed-label-prev',
           style: `color:${field.config.color || 'inherit'};font-weight:${field.config.bold ? '700' : '400'}`
-        }, field.config.text || ''));
+        });
+        lp.innerHTML = mdToHtml(field.config.text || '');
+        box.appendChild(lp);
       } else if (field.type === 'cover') {
         box.style.background = field.config.color || '#ffffff';
       } else if (field.type === 'image' && field.config?.src && state.files.has(field.config.src)) {
         box.appendChild(el('img', { src: fileUrl(field.config.src), class: 'ed-img-prev', alt: '' }));
+      } else if (field.type === 'video' || field.type === 'audio' || field.type === 'embed') {
+        // Se muestra el contenido real, pero con pointer-events:none (vía CSS) y
+        // sin autorreproducir, para poder mover y redimensionar el campo encima.
+        box.classList.add('ed-media-field');
+        box.appendChild(buildMediaContent(field, fileUrl, { editor: true }));
       } else if (isShapeField(field.type)) {
         box.appendChild(buildShapeSvg(field));
       }
@@ -448,6 +456,11 @@ function renderCanvas() {
           e.stopPropagation();
           selectField(pi, field.id);
         });
+      } else if (field.type === 'dragdrop' && field.config.mode === 'crops') {
+        // En modo recorte la «bandeja» no se usa (las piezas parten del PDF y van
+        // a las zonas): el recuadro principal se oculta y no es interactivo. El
+        // campo sigue accesible desde la lista de campos y desde «volver al campo».
+        box.classList.add('ed-dd-crops-host');
       } else {
         attachBoxInteraction(box, pageEl, field.rect, {
           onSelect: () => selectField(pi, field.id),
@@ -1131,6 +1144,14 @@ document.addEventListener('keydown', e => {
     return;
   }
 
+  // Deshacer / rehacer (no requieren selección).
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+    e.preventDefault(); undo(); return;
+  }
+  if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey))) {
+    e.preventDefault(); redo(); return;
+  }
+
   // El resto de atajos requieren un campo seleccionado.
   if (!state.sel) return;
   const field = getField(state.sel.pageIndex, state.sel.fieldId);
@@ -1446,17 +1467,11 @@ function renderFieldPanel(field) {
   // texto ni un recuadro de fondo que estilizar, así que no hay nada de diseño que ajustar.
   const hasDesign = interactive && field.type !== 'checkbox';
   if (hasDesign) {
-    const accordion = el('div', { class: 'ed-accordion' });
-    const arrow = el('i', { class: 'ed-accordion-arrow' });
-    arrow.innerHTML = ICONS.chevronRight;
-    const toggle = el('button', { class: 'ed-accordion-toggle', type: 'button' },
-      arrow, t('editor.designSection'));
-    const bodyOuter = el('div', { class: 'ed-accordion-body' });
-    const body = el('div', { class: 'ed-accordion-body-inner' });
-    bodyOuter.appendChild(body);
-    toggle.addEventListener('click', () => accordion.classList.toggle('open'));
-    accordion.appendChild(toggle);
-    accordion.appendChild(bodyOuter);
+    // Sección de diseño siempre visible (sin acordeón).
+    const accordion = el('div', { class: 'ed-section' });
+    accordion.appendChild(el('div', { class: 'ed-section-title' }, t('editor.designSection')));
+    const body = el('div', { class: 'ed-section-body' });
+    accordion.appendChild(body);
 
     // Modo recorte: el único ajuste de diseño es el color del hueco vacío.
     if (dragCrops) {
@@ -1774,6 +1789,93 @@ function textNormOptions(cont, cfg) {
   checkRow(cont, t('cfg.collapseSpaces'), cfg.collapseSpaces !== false, v => { cfg.collapseSpaces = v; });
 }
 
+// Campos de título y pie comunes a los medios decorativos (vídeo, audio, embed).
+// Reconstruye en el lienzo el contenido de un medio tras cambiar su config (sin
+// recargar toda la página: solo ese campo, para que los demás iframes no parpadeen).
+function rebuildCanvasMedia(field) {
+  const box = canvas.querySelector(`.ed-field[data-id="${field.id}"]`);
+  if (!box) return;
+  box.querySelector('.wpf-media')?.remove();
+  box.appendChild(buildMediaContent(field, fileUrl, { editor: true }));
+}
+
+function mediaTitleCaption(cont, field) {
+  const cfg = field.config;
+  cont.appendChild(el('label', { class: 'f-label' }, t('cfg.mediaTitle')));
+  const ti = el('input', { type: 'text', value: cfg.title || '', maxlength: '140' });
+  ti.addEventListener('input', () => { cfg.title = ti.value; markDirty(); });
+  ti.addEventListener('change', () => rebuildCanvasMedia(field));
+  cont.appendChild(ti);
+  cont.appendChild(el('label', { class: 'f-label' }, t('cfg.mediaCaption')));
+  const ca = el('input', { type: 'text', value: cfg.caption || '', maxlength: '200' });
+  ca.addEventListener('input', () => { cfg.caption = ca.value; markDirty(); });
+  ca.addEventListener('change', () => rebuildCanvasMedia(field));
+  cont.appendChild(ca);
+  // El título y el pie son texto: comparten los controles de texto (tamaño,
+  // tipo de letra y color) de los campos con texto.
+  const fsVal = field.fontScale || 1;
+  const fsRange = el('input', { type: 'range', min: '0.6', max: '5', step: '0.1', value: String(fsVal) });
+  const fsNum = el('input', { type: 'number', min: '0.1', max: '20', step: '0.1', value: String(fsVal), style: 'width:72px' });
+  const applyFs = v => {
+    v = Math.max(0.1, parseFloat(v) || 1);
+    field.fontScale = v;
+    fsRange.value = Math.min(v, 5);
+    fsNum.value = v;
+    canvas.querySelector(`[data-id="${field.id}"]`)?.style.setProperty('--fs', v);
+    markDirty();
+  };
+  fsRange.addEventListener('input', () => applyFs(fsRange.value));
+  fsNum.addEventListener('input', () => applyFs(fsNum.value));
+  cont.appendChild(el('label', { class: 'f-label' }, t('editor.fontSize')));
+  cont.appendChild(el('div', { class: 'rot-row' }, fsRange, fsNum, el('span', {}, '×')));
+
+  const fontSel = fontSelect(field.fontFamily || '', id => {
+    if (id) field.fontFamily = id; else delete field.fontFamily;
+    const node = canvas.querySelector(`[data-id="${field.id}"]`);
+    if (node) {
+      if (id) node.style.setProperty('--field-font', fontStack(id));
+      else node.style.removeProperty('--field-font');
+    }
+    markDirty();
+  }, { inherit: true });
+  cont.appendChild(el('label', { class: 'f-label' }, t('editor.font')));
+  cont.appendChild(fontSel);
+
+  const { wrap: fgWrap } = colorInput(cfg.fgColor || '#1d2c42', v => {
+    cfg.fgColor = v;
+    canvas.querySelector(`[data-id="${field.id}"]`)?.style.setProperty('--field-fg', v);
+    markDirty();
+  });
+  cont.appendChild(el('label', { class: 'f-label' }, t('cfg.fieldFg')));
+  cont.appendChild(fgWrap);
+}
+
+// Botón para subir un archivo multimedia (vídeo/audio) a state.files.
+function mediaFileRow(cont, field, accept, folder, label) {
+  const cfg = field.config;
+  if (cfg.src && state.files.has(cfg.src)) {
+    cont.appendChild(el('p', { class: 'cfg-hint', style: 'margin:4px 0' }, '✓ ' + cfg.src.split('/').pop()));
+  }
+  const btn = iconBtn({ class: 'btn small media-upload-btn', type: 'button' }, ICONS.folderOpen, label);
+  btn.addEventListener('click', () => {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = accept;
+    inp.addEventListener('change', () => {
+      const f = inp.files[0]; if (!f) return;
+      const ext = (f.name.split('.').pop() || 'bin').toLowerCase();
+      const path = folder + '/' + uid() + '.' + ext;
+      if (cfg.src) { urls.delete(cfg.src); state.files.delete(cfg.src); }
+      state.files.set(path, f);
+      cfg.src = path;
+      markDirty();
+      rebuildCanvasMedia(field);
+      renderPanel();
+    });
+    inp.click();
+  });
+  cont.appendChild(btn);
+}
+
 // Sustituye la vista previa SVG de una forma tras cambiar su configuración.
 function refreshShapePrev(field) {
   const old = canvas.querySelector(`.ed-field[data-id="${field.id}"] .wpf-shape`);
@@ -1895,15 +1997,41 @@ const configForms = {
     const cfg = field.config;
     const prev = () => canvas.querySelector(`.ed-field[data-id="${field.id}"] .ed-label-prev`);
     cont.appendChild(el('label', { class: 'f-label' }, t('cfg.labelText')));
-    const ta = el('textarea', { rows: '3' });
+    const syncPrev = () => { const p = prev(); if (p) p.innerHTML = mdToHtml(cfg.text || ''); };
+    const ta = el('textarea', { class: 'md-textarea', rows: '4' });
     ta.value = cfg.text || '';
-    ta.addEventListener('input', () => {
-      cfg.text = ta.value;
-      const p = prev();
-      if (p) p.textContent = cfg.text;
-      markDirty();
+    ta.addEventListener('input', () => { cfg.text = ta.value; syncPrev(); markDirty(); });
+    const preview = el('div', { class: 'md-preview', hidden: true });
+    // Barra: negrita y cursiva (insertan marcas Markdown en la selección) y
+    // conmutador entre edición Markdown y vista con los efectos aplicados.
+    const wrapSel = mk => {
+      const s = ta.selectionStart, e = ta.selectionEnd;
+      ta.value = ta.value.slice(0, s) + mk + ta.value.slice(s, e) + mk + ta.value.slice(e);
+      cfg.text = ta.value; syncPrev(); markDirty();
+      ta.focus();
+      ta.selectionStart = s + mk.length; ta.selectionEnd = e + mk.length;
+    };
+    const tbtn = (label, title, cls, fn) => {
+      const b = el('button', { class: 'btn small md-btn ' + cls, type: 'button', title }, label);
+      b.addEventListener('click', fn);
+      return b;
+    };
+    const bBtn = tbtn('B', t('md.bold'), 'md-b', () => wrapSel('**'));
+    const iBtn = tbtn('I', t('md.italic'), 'md-i', () => wrapSel('*'));
+    let showingPreview = false;
+    const toggle = el('button', { class: 'btn small ghost md-toggle', type: 'button' }, t('md.preview'));
+    toggle.addEventListener('click', () => {
+      showingPreview = !showingPreview;
+      if (showingPreview) preview.innerHTML = mdToHtml(cfg.text || '');
+      preview.hidden = !showingPreview;
+      ta.hidden = showingPreview;
+      bBtn.disabled = iBtn.disabled = showingPreview;
+      toggle.textContent = showingPreview ? t('md.edit') : t('md.preview');
     });
+    cont.appendChild(el('div', { class: 'md-bar' }, bBtn, iBtn, el('span', { class: 'md-bar-spacer' }), toggle));
     cont.appendChild(ta);
+    cont.appendChild(preview);
+    cont.appendChild(el('p', { class: 'cfg-hint' }, t('cfg.labelMdHint')));
     cont.appendChild(el('label', { class: 'f-label' }, t('cfg.labelColor')));
     const { wrap: labelColorWrap } = colorInput(cfg.color || '#1d2c42', v => {
       cfg.color = v;
@@ -1912,11 +2040,6 @@ const configForms = {
       markDirty();
     });
     cont.appendChild(labelColorWrap);
-    checkRow(cont, t('cfg.labelBold'), Boolean(cfg.bold), v => {
-      cfg.bold = v;
-      const p = prev();
-      if (p) p.style.fontWeight = v ? '700' : '400';
-    });
     // Tamaño de texto (antes en el acordeón de diseño)
     const fsVal = field.fontScale || 1;
     const fsRange = el('input', { type: 'range', min: '0.6', max: '5', step: '0.1', value: String(fsVal) });
@@ -1982,13 +2105,91 @@ const configForms = {
         cfg.src = path;
         markDirty();
         renderCanvas();
-        renderFieldPanel(field);
+        renderPanel();
       });
       inp.click();
     });
     cont.appendChild(btn);
     cont.appendChild(el('p', { style: 'font-size:.85rem;color:var(--tinta-suave);margin-top:8px' },
       t('cfg.imageHint')));
+  },
+
+  video(cont, field) {
+    const cfg = field.config;
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.mediaSource')));
+    const sel = el('select', {},
+      el('option', { value: 'url' }, t('cfg.mediaSourceUrl')),
+      el('option', { value: 'file' }, t('cfg.mediaSourceFile')));
+    sel.value = cfg.provider || 'url';
+    sel.addEventListener('change', () => { cfg.provider = sel.value; markDirty(); rebuildCanvasMedia(field); renderPanel(); });
+    cont.appendChild(sel);
+    if ((cfg.provider || 'url') === 'url') {
+      cont.appendChild(el('label', { class: 'f-label' }, t('cfg.videoUrl')));
+      const url = el('input', { type: 'url', value: cfg.url || '', placeholder: 'https://youtu.be/… , https://vimeo.com/… , …/video.mp4' });
+      url.addEventListener('input', () => { cfg.url = url.value; markDirty(); });
+      url.addEventListener('change', () => rebuildCanvasMedia(field));
+      cont.appendChild(url);
+      cont.appendChild(el('p', { class: 'cfg-hint' }, t('cfg.videoUrlHint')));
+    } else {
+      mediaFileRow(cont, field, 'video/mp4,video/webm,video/ogg', 'media', t('cfg.uploadVideo'));
+    }
+    checkRow(cont, t('cfg.mediaControls'), cfg.controls !== false, v => { cfg.controls = v; rebuildCanvasMedia(field); });
+    checkRow(cont, t('cfg.mediaAutoplay'), Boolean(cfg.autoplay), v => { cfg.autoplay = v; rebuildCanvasMedia(field); });
+    checkRow(cont, t('cfg.mediaMuted'), Boolean(cfg.muted), v => { cfg.muted = v; rebuildCanvasMedia(field); });
+    checkRow(cont, t('cfg.mediaLoop'), Boolean(cfg.loop), v => { cfg.loop = v; rebuildCanvasMedia(field); });
+    mediaTitleCaption(cont, field);
+  },
+
+  audio(cont, field) {
+    const cfg = field.config;
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.mediaSource')));
+    const sel = el('select', {},
+      el('option', { value: 'file' }, t('cfg.mediaSourceFile')),
+      el('option', { value: 'url' }, t('cfg.mediaSourceUrl')));
+    sel.value = cfg.provider || 'file';
+    sel.addEventListener('change', () => { cfg.provider = sel.value; markDirty(); rebuildCanvasMedia(field); renderPanel(); });
+    cont.appendChild(sel);
+    if ((cfg.provider || 'file') === 'file') {
+      mediaFileRow(cont, field, 'audio/mpeg,audio/ogg,audio/wav,audio/mp4,audio/webm', 'media', t('cfg.uploadAudio'));
+    } else {
+      cont.appendChild(el('label', { class: 'f-label' }, t('cfg.audioUrl')));
+      const url = el('input', { type: 'url', value: cfg.url || '', placeholder: 'https://…/audio.mp3' });
+      url.addEventListener('input', () => { cfg.url = url.value; markDirty(); });
+      url.addEventListener('change', () => rebuildCanvasMedia(field));
+      cont.appendChild(url);
+    }
+    checkRow(cont, t('cfg.mediaControls'), cfg.controls !== false, v => { cfg.controls = v; rebuildCanvasMedia(field); });
+    checkRow(cont, t('cfg.mediaAutoplay'), Boolean(cfg.autoplay), v => { cfg.autoplay = v; rebuildCanvasMedia(field); });
+    checkRow(cont, t('cfg.mediaLoop'), Boolean(cfg.loop), v => { cfg.loop = v; rebuildCanvasMedia(field); });
+    mediaTitleCaption(cont, field);
+  },
+
+  embed(cont, field) {
+    const cfg = field.config;
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.embedMode')));
+    const sel = el('select', {},
+      el('option', { value: 'url' }, t('cfg.embedModeUrl')),
+      el('option', { value: 'html' }, t('cfg.embedModeHtml')));
+    sel.value = cfg.mode || 'url';
+    sel.addEventListener('change', () => { cfg.mode = sel.value; markDirty(); rebuildCanvasMedia(field); renderPanel(); });
+    cont.appendChild(sel);
+    if ((cfg.mode || 'url') === 'url') {
+      cont.appendChild(el('label', { class: 'f-label' }, t('cfg.embedUrl')));
+      const url = el('input', { type: 'url', value: cfg.url || '', placeholder: 'https://…' });
+      url.addEventListener('input', () => { cfg.url = url.value; markDirty(); });
+      url.addEventListener('change', () => rebuildCanvasMedia(field));
+      cont.appendChild(url);
+    } else {
+      cont.appendChild(el('label', { class: 'f-label' }, t('cfg.embedHtml')));
+      const ta = el('textarea', { rows: '5', placeholder: '<iframe src="…"></iframe>' });
+      ta.value = cfg.html || '';
+      ta.addEventListener('input', () => { cfg.html = ta.value; markDirty(); });
+      ta.addEventListener('change', () => rebuildCanvasMedia(field));
+      cont.appendChild(ta);
+      cont.appendChild(el('p', { class: 'settings-warning' },
+        el('small', {}, t('cfg.embedHtmlWarning'))));
+    }
+    mediaTitleCaption(cont, field);
   },
 
   text(cont, field) {
@@ -2755,6 +2956,7 @@ async function openZipFile(file) {
     renderCanvas();
     renderPanel();
     refreshPaletteState();
+    resetHistory();
     toast(t('toast.fichaLoaded', { title: state.manifest.title || file.name }), 'ok');
   } catch (e) {
     console.error(e);
@@ -2948,10 +3150,12 @@ function resetWorksheet() {
   state.submissionCryptoPassword = '';
   titleInput.value = '';
   state.dirty = false;
+  resetHistory();
 }
-// Solo pide confirmación si hay algo que se perdería (páginas en el editor).
+// Solo pide confirmación si hay cambios sin guardar que se perderían. Una ficha
+// recién cargada o ya guardada (state.dirty = false) se reemplaza sin avisar.
 function confirmDiscardCurrent() {
-  return !state.manifest.pages.length || window.confirm(t('editor.confirmReplace'));
+  return !state.dirty || window.confirm(t('editor.confirmReplace'));
 }
 
 fileMenuItem('#miBlank', () => {
@@ -3114,9 +3318,97 @@ canvas.addEventListener('drop', e => {
   else addFiles(e.dataTransfer.files);
 });
 
+// ---------- Historial (deshacer / rehacer) ----------
+// Cada paso es una instantánea del manifiesto (+ archivos y numeración). Los
+// cambios rápidos se agrupan: la instantánea se confirma tras una breve pausa.
+const UNDO_LIMIT = 80;
+let undoStack = [];
+let redoStack = [];
+let committed = null;
+let historyTimer = null;
+
+function snapshot() {
+  return {
+    json: JSON.stringify(state.manifest),
+    files: new Map(state.files),
+    pageSeq: state.pageSeq,
+    cryptoPw: state.submissionCryptoPassword
+  };
+}
+
+function restoreSnapshot(snap) {
+  state.manifest = JSON.parse(snap.json);
+  state.files = new Map(snap.files);
+  state.pageSeq = snap.pageSeq;
+  state.submissionCryptoPassword = snap.cryptoPw;
+  state.sel = null;
+  state.activeTool = null;
+  urls.forEach(u => URL.revokeObjectURL(u));
+  urls.clear();
+  titleInput.value = state.manifest.title || '';
+  state.dirty = true;
+  renderCanvas();
+  renderPanel();
+  refreshPaletteState();
+}
+
+function resetHistory() {
+  undoStack = [];
+  redoStack = [];
+  committed = snapshot();
+  clearTimeout(historyTimer);
+  historyTimer = null;
+  updateUndoButtons();
+}
+
+function commitHistory() {
+  clearTimeout(historyTimer);
+  historyTimer = null;
+  const snap = snapshot();
+  if (!committed) { committed = snap; return; }
+  if (snap.json === committed.json && snap.pageSeq === committed.pageSeq) return;
+  undoStack.push(committed);
+  if (undoStack.length > UNDO_LIMIT) undoStack.shift();
+  committed = snap;
+  redoStack = [];
+  updateUndoButtons();
+}
+
+function scheduleCommit() {
+  clearTimeout(historyTimer);
+  historyTimer = setTimeout(commitHistory, 450);
+}
+
+function undo() {
+  commitHistory();
+  if (!undoStack.length) return;
+  redoStack.push(committed);
+  committed = undoStack.pop();
+  restoreSnapshot(committed);
+  updateUndoButtons();
+}
+
+function redo() {
+  if (!redoStack.length) return;
+  undoStack.push(committed);
+  committed = redoStack.pop();
+  restoreSnapshot(committed);
+  updateUndoButtons();
+}
+
+function updateUndoButtons() {
+  const u = $('#btnDeshacer'); if (u) u.disabled = undoStack.length === 0;
+  const r = $('#btnRehacer'); if (r) r.disabled = redoStack.length === 0;
+}
+
+onDirty(scheduleCommit);
+$('#btnDeshacer')?.addEventListener('click', undo);
+$('#btnRehacer')?.addEventListener('click', redo);
+
 renderPalette();
 renderCanvas();
 renderPanel();
+resetHistory();
 
 // Carga de ficha de ejemplo desde ?ejemplo=<ruta>. Solo se admiten rutas
 // relativas del propio sitio (sin esquema ni barra inicial), para no descargar
