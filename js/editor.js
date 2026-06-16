@@ -1418,9 +1418,27 @@ function fontSelect(value, onChange, { inherit = false } = {}) {
 
 function renderFieldPanel(field) {
   const cont = el('div', {});
-  cont.appendChild(el('h3', {},
+  const descKey = 'field.desc.' + field.type;
+  const fieldDesc = t(descKey) !== descKey ? t(descKey) : '';
+  const head = el('h3', {},
     el('span', { class: 'tipo-chip' }, fieldTypeName(field.type)),
-    t('editor.fieldConfig')));
+    t('editor.fieldConfig'));
+  if (fieldDesc) {
+    const helpBtn = el('button', { class: 'field-help-btn', type: 'button', 'aria-expanded': 'false' }, '?');
+    const helpBox = el('p', { class: 'field-help-text', hidden: '' }, fieldDesc);
+    helpBtn.addEventListener('click', () => {
+      const showing = helpBox.hidden;
+      helpBox.hidden = !showing;
+      helpBtn.setAttribute('aria-expanded', showing ? 'true' : 'false');
+      helpBtn.classList.toggle('is-open', showing);
+    });
+    head.appendChild(el('span', { class: 'spacer' }));
+    head.appendChild(helpBtn);
+    cont.appendChild(head);
+    cont.appendChild(helpBox);
+  } else {
+    cont.appendChild(head);
+  }
 
   // "Arrastrar a zonas": antes de mostrar las opciones, el usuario elige el
   // medio (escribir etiquetas o recortar del PDF). Hasta entonces no se muestra

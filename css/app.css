@@ -1200,6 +1200,37 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   border-bottom: 2px solid var(--tinta-tenue);
   padding-bottom: 8px;
 }
+.ed-panel h3 .spacer { flex: 1; }
+.field-help-btn {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--tinta-tenue);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--tinta-suave);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+.field-help-btn:hover,
+.field-help-btn.is-open {
+  border-color: var(--rojo);
+  color: var(--rojo);
+  background: var(--rojo-claro);
+}
+.field-help-text {
+  margin: 8px 0 12px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--tinta-suave);
+  white-space: pre-line;
+}
 .ed-panel .tipo-chip {
   font-size: 0.68rem;
   background: var(--tinta);
