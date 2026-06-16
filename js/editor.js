@@ -2733,7 +2733,7 @@ async function openZipFile(file) {
   try {
     const ficha = await importFichaZip(file);
     if (isEncryptedManifest(ficha.manifest)) {
-      const password = window.prompt(t('alumno.encryptedDesc'));
+      const password = window.prompt(t('editor.encryptedPrompt'));
       if (!password) return;
       ficha.manifest = await decryptManifestForStudent(ficha.manifest, password, { keepPassword: true });
     }
@@ -2766,7 +2766,7 @@ async function mergeZipFile(file, insertAt) {
   try {
     const ficha = await importFichaZip(file);
     if (isEncryptedManifest(ficha.manifest)) {
-      const password = window.prompt(t('alumno.encryptedDesc'));
+      const password = window.prompt(t('editor.encryptedPrompt'));
       if (!password) return;
       ficha.manifest = await decryptManifestForStudent(ficha.manifest, password, { keepPassword: true });
     }

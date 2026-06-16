@@ -54,7 +54,11 @@ Las versiones publicadas también están en la página de
   («solo para abrir la ficha»): en realidad **cifra todo el contenido de la
   ficha** (páginas y respuestas correctas), así que sin ella no se puede ver
   nada. El nuevo texto lo explica y advierte de que, si se olvida, la ficha no
-  se puede recuperar.
+  se puede recuperar, y de que esa contraseña también se pedirá al **reabrir la
+  ficha en el editor**.
+- Al **abrir en el editor una ficha protegida** con la contraseña del alumnado,
+  el mensaje que pedía la contraseña era el del alumno («…que te ha dado tu
+  docente…»). Ahora muestra un texto adecuado para el profesorado.
 
 ---
 

@@ -126,6 +126,7 @@ const STRINGS = {
     'editor.deletePage': 'Eliminar página',
     'editor.confirmNew': '¿Limpiar todo y empezar una ficha nueva? Se perderán los cambios no guardados.',
     'editor.confirmReplace': '¿Reemplazar la ficha actual? Se perderán los cambios no guardados.',
+    'editor.encryptedPrompt': 'Esta ficha está protegida con la contraseña de acceso del alumnado. Escríbela para abrirla en el editor.',
     'editor.confirmDelete': '¿Eliminar la página {n}{fields}?',
     'editor.confirmDeleteFields': ' y sus {n} campos',
 
@@ -334,7 +335,7 @@ const STRINGS = {
     'dlg.access.autoEntrega': 'Forzar entrega si el plazo termina mientras el alumnado responde',
     'dlg.access.tiempo': 'Tiempo límite por intento en minutos (0 = sin límite)',
     'dlg.access.password': 'Contraseña para que el alumnado abra la ficha (vacía = sin contraseña)',
-    'dlg.access.hint': 'El alumnado necesitará esta contraseña para abrir la ficha: con ella se cifra todo su contenido (las páginas y las respuestas correctas), de modo que sin la contraseña no se puede ver nada. Anótala bien, porque si la olvidas no podrás recuperar la ficha, y no debe coincidir con la contraseña de cifrado de las entregas.',
+    'dlg.access.hint': 'El alumnado necesitará esta contraseña para abrir la ficha: con ella se cifra todo su contenido (las páginas y las respuestas correctas), de modo que sin la contraseña no se puede ver nada. También te la pedirá a ti al volver a abrir la ficha en el editor. Anótala bien, porque si la olvidas no podrás recuperar la ficha, y no debe coincidir con la contraseña de cifrado de las entregas.',
 
     // Editor — vista previa
     'preview.banner': 'Vista previa: así lo verá el alumnado',
@@ -681,6 +682,7 @@ const STRINGS = {
     'editor.deletePage': 'Delete page',
     'editor.confirmNew': 'Clear everything and start a new worksheet? Unsaved changes will be lost.',
     'editor.confirmReplace': 'Replace the current worksheet? Unsaved changes will be lost.',
+    'editor.encryptedPrompt': 'This worksheet is protected with the student access password. Enter it to open it in the editor.',
     'editor.confirmDelete': 'Delete page {n}{fields}?',
     'editor.confirmDeleteFields': ' and its {n} fields',
     'editor.noField': 'No field selected',
@@ -843,7 +845,7 @@ const STRINGS = {
     'dlg.access.autoEntrega': 'Force submission if the deadline passes while the student is answering',
     'dlg.access.tiempo': 'Time limit per attempt in minutes (0 = no limit)',
     'dlg.access.password': 'Password for students to open the worksheet (empty = none)',
-    'dlg.access.hint': 'Students will need this password to open the worksheet: it encrypts all of its content (the pages and the correct answers), so without the password nothing can be seen. Write it down carefully, because if you lose it you will not be able to recover the worksheet, and it must not match the encryption password for submissions.',
+    'dlg.access.hint': 'Students will need this password to open the worksheet: it encrypts all of its content (the pages and the correct answers), so without the password nothing can be seen. It will also be asked of you when you reopen the worksheet in the editor. Write it down carefully, because if you lose it you will not be able to recover the worksheet, and it must not match the encryption password for submissions.',
 
     'preview.banner': 'Preview: this is how students will see it',
     'preview.tip': 'See the worksheet as students will see it when they open it',
@@ -1208,6 +1210,7 @@ const STRINGS = {
     'editor.deletePage': 'Eliminar pàgina',
     'editor.confirmNew': 'Netejar-ho tot i començar una fitxa nova? Els canvis no desats es perdran.',
     'editor.confirmReplace': 'Vols reemplaçar la fitxa actual? Es perdran els canvis no desats.',
+    'editor.encryptedPrompt': 'Aquesta fitxa està protegida amb la contrasenya d\'accés de l\'alumnat. Escriu-la per obrir-la a l\'editor.',
     'editor.confirmDelete': 'Eliminar la pàgina {n}{fields}?',
     'editor.confirmDeleteFields': ' i els seus {n} camps',
     'editor.noField': 'Cap camp seleccionat',
@@ -1370,7 +1373,7 @@ const STRINGS = {
     'dlg.access.autoEntrega': 'Forçar el lliurament si el termini acaba mentre l\'alumnat respon',
     'dlg.access.tiempo': 'Temps límit per intent en minuts (0 = sense límit)',
     'dlg.access.password': 'Contrasenya perquè l\'alumnat obri la fitxa (buida = sense contrasenya)',
-    'dlg.access.hint': 'L\'alumnat necessitarà aquesta contrasenya per obrir la fitxa: amb ella se\'n xifra tot el contingut (les pàgines i les respostes correctes), de manera que sense la contrasenya no es pot veure res. Anota-la bé, perquè si l\'oblides no podràs recuperar la fitxa, i no ha de coincidir amb la contrasenya de xifratge dels lliuraments.',
+    'dlg.access.hint': 'L\'alumnat necessitarà aquesta contrasenya per obrir la fitxa: amb ella se\'n xifra tot el contingut (les pàgines i les respostes correctes), de manera que sense la contrasenya no es pot veure res. També te la demanarà a tu en tornar a obrir la fitxa a l\'editor. Anota-la bé, perquè si l\'oblides no podràs recuperar la fitxa, i no ha de coincidir amb la contrasenya de xifratge dels lliuraments.',
 
     'preview.banner': 'Vista prèvia: així ho veurà l\'alumnat',
     'preview.tip': 'Veure la fitxa tal com la veurà l\'alumnat en obrir-la',
@@ -1735,6 +1738,7 @@ const STRINGS = {
     'editor.deletePage': 'Eliminar páxina',
     'editor.confirmNew': '¿Limpar todo e comezar unha ficha nova? Os cambios non gardados perderanse.',
     'editor.confirmReplace': 'Substituír a ficha actual? Perderanse os cambios non gardados.',
+    'editor.encryptedPrompt': 'Esta ficha está protexida co contrasinal de acceso do alumnado. Escríbeo para abrila no editor.',
     'editor.confirmDelete': 'Eliminar a páxina {n}{fields}?',
     'editor.confirmDeleteFields': ' e os seus {n} campos',
     'editor.noField': 'Sen campo seleccionado',
@@ -1897,7 +1901,7 @@ const STRINGS = {
     'dlg.access.autoEntrega': 'Forzar a entrega se o prazo remata mentres o alumnado responde',
     'dlg.access.tiempo': 'Tempo límite por intento en minutos (0 = sen límite)',
     'dlg.access.password': 'Contrasinal para que o alumnado abra a ficha (baleiro = sen contrasinal)',
-    'dlg.access.hint': 'O alumnado necesitará este contrasinal para abrir a ficha: con el cífrase todo o seu contido (as páxinas e as respostas correctas), de maneira que sen o contrasinal non se pode ver nada. Anótao ben, porque se o esqueces non poderás recuperar a ficha, e non debe coincidir co contrasinal de cifrado das entregas.',
+    'dlg.access.hint': 'O alumnado necesitará este contrasinal para abrir a ficha: con el cífrase todo o seu contido (as páxinas e as respostas correctas), de maneira que sen o contrasinal non se pode ver nada. Tamén cho pedirá a ti ao volver abrir a ficha no editor. Anótao ben, porque se o esqueces non poderás recuperar a ficha, e non debe coincidir co contrasinal de cifrado das entregas.',
 
     'preview.banner': 'Vista previa: así o verá o alumnado',
     'preview.tip': 'Ver a ficha tal como a verá o alumnado ao abrila',
@@ -2262,6 +2266,7 @@ const STRINGS = {
     'editor.deletePage': 'Orrialdea ezabatu',
     'editor.confirmNew': 'Dena garbitu eta fitxa berri bat hasi? Gorde gabeko aldaketak galduko dira.',
     'editor.confirmReplace': 'Uneko fitxa ordeztu nahi duzu? Gorde gabeko aldaketak galduko dira.',
+    'editor.encryptedPrompt': 'Fitxa hau ikasleen sarbide-pasahitzarekin babestuta dago. Idatzi ezazu editorean irekitzeko.',
     'editor.confirmDelete': '{n}. orrialdea ezabatu{fields}?',
     'editor.confirmDeleteFields': ' eta bere {n} eremuak',
     'editor.noField': 'Eremurik hautatu gabe',
@@ -2424,7 +2429,7 @@ const STRINGS = {
     'dlg.access.autoEntrega': 'Entrega behartu epea amaitzen bada ikasleek erantzuten duten bitartean',
     'dlg.access.tiempo': 'Saialdi bakoitzeko denbora-muga minututan (0 = mugarik ez)',
     'dlg.access.password': 'Ikasleak fitxa irekitzeko pasahitza (hutsik = pasahitzik ez)',
-    'dlg.access.hint': 'Ikasleek pasahitz hau beharko dute fitxa irekitzeko: berarekin eduki guztia zifratzen da (orriak eta erantzun zuzenak), beraz, pasahitzik gabe ezin da ezer ikusi. Idatzi ezazu ondo, ahazten baduzu ezingo baituzu fitxa berreskuratu, eta ez du entregak zifratzeko pasahitzaren berdina izan behar.',
+    'dlg.access.hint': 'Ikasleek pasahitz hau beharko dute fitxa irekitzeko: berarekin eduki guztia zifratzen da (orriak eta erantzun zuzenak), beraz, pasahitzik gabe ezin da ezer ikusi. Editorean fitxa berriz irekitzean zuri ere eskatuko dizu. Idatzi ezazu ondo, ahazten baduzu ezingo baituzu fitxa berreskuratu, eta ez du entregak zifratzeko pasahitzaren berdina izan behar.',
 
     'preview.banner': 'Aurrebista: ikasleek honela ikusiko dute',
     'preview.tip': 'Ikusi fitxa ikasleek irekitzean ikusiko duten bezala',
