@@ -441,7 +441,7 @@ function renderCanvas() {
       } else if (isShapeField(field.type)) {
         box.appendChild(buildShapeSvg(field));
       }
-      if (field.type === 'image' || field.type === 'label') {
+      if (field.type === 'image' || field.type === 'label' || field.type === 'cover') {
         const rotHandle = el('span', { class: 'rot-handle', title: t('editor.rotate') });
         box.appendChild(rotHandle);
         if (field.rotate) box.style.transform = `rotate(${field.rotate}deg)`;
@@ -1531,8 +1531,8 @@ function renderFieldPanel(field) {
   const formBuilder = configForms[field.type];
   if (formBuilder) formBuilder(cont, field);
 
-  // Rotación (solo image y label)
-  if (field.type === 'image' || field.type === 'label') {
+  // Rotación (image, label y cover)
+  if (field.type === 'image' || field.type === 'label' || field.type === 'cover') {
     const rotInp = el('input', { type: 'number', class: 'rot-input', step: '1', value: String(field.rotate || 0) });
     const applyRot = (deg, fromInput = false) => {
       field.rotate = deg;
