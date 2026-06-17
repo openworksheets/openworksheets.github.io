@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Test export web</title>
+  <!-- base=/ para que los fetch de APP_FILES e imports resuelvan a la raíz
+       (igual que en editor.html), no a /tests/. -->
+  <base href="/">
+</head>
+<body>
+<pre id="out"></pre>
+<script>
+window.onerror = (m, s, l) => { document.getElementById('out').textContent += '\nONERROR: ' + m + ' @ ' + s + ':' + l; };
+window.onunhandledrejection = e => { document.getElementById('out').textContent += '\nREJECT: ' + (e.reason && e.reason.message || e.reason); };
+</script>
+<script src="/vendor/jszip.min.js"></script>
+<script type="module">
+import { importFichaZip } from '/js/zipio.js';
+import { exportWebPackage } from '/js/webexport.js';
+
+const out = [];
+const log = (...a) => { out.push(a.join(' ')); document.getElementById('out').textContent = out.join('\n'); };
+let fails = 0;
+const check = (name, ok) => { if (!ok) fails++; log(`${name}: ${ok ? 'OK' : 'MAL'}`); };
+
+async function main() {
+  try {
+    log('JSZip:', typeof window.JSZip);
+    const resp = await fetch('/ejemplos/test-for-openworksheets.owpkg');
+    const ficha = await importFichaZip(await resp.blob());
+    log('ficha cargada:', ficha.manifest.title);
+
+    const blob = await exportWebPackage(ficha);
+    log('paquete web:', blob.size, 'bytes');
+
+    const zip = await window.JSZip.loadAsync(blob);
+    const names = Object.keys(zip.files);
+    const has = p => names.includes(p);
+
+    check('contiene index.html', has('index.html'));
+    check('contiene ficha.owpkg', has('ficha.owpkg'));
+    check('contiene js/webrun.js', has('js/webrun.js'));
+    check('contiene js/verifyview.js', has('js/verifyview.js'));
+    check('contiene js/player.js', has('js/player.js'));
+    check('contiene js/render.js', has('js/render.js'));
+    check('contiene css/app.css', has('css/app.css'));
+    check('contiene vendor/jszip.min.js', has('vendor/jszip.min.js'));
+    check('contiene scorm-sw.js', has('scorm-sw.js'));
+    check('NO incluye el editor', !has('js/editor.js') && !has('editor.html'));
+
+    const indexHtml = await zip.file('index.html').async('string');
+    check('index.html arranca webrun.js', indexHtml.includes('js/webrun.js'));
+    check('index.html lleva el título', indexHtml.includes(ficha.manifest.title));
+
+    // La ficha empaquetada debe ser un .owpkg válido reabrible.
+    const inner = await importFichaZip(await zip.file('ficha.owpkg').async('blob'));
+    check('ficha.owpkg reabrible', inner.manifest.title === ficha.manifest.title);
+    check('ficha.owpkg conserva páginas', (inner.manifest.pages || []).length === (ficha.manifest.pages || []).length);
+
+    log(fails === 0 ? '__TEST_OK__' : `__TEST_FAIL__ (${fails})`);
+  } catch (e) {
+    log('__TEST_FAIL__', e.message);
+  }
+}
+main();
+</script>
+</body>
+</html>

@@ -442,7 +442,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     // de voz o si la URL resultante supera el tope holgado. En esos casos solo
     // queda la descarga del archivo, que sí contiene el audio.
     let shareUrl = '';
-    if (!scormMode) {
+    if (!scormMode && opts.shareLink !== false) {
       try {
         const encoded = await compressToBase64url(entregaArchivo);
         const u = new URL('./index.html', window.location.href);

@@ -17,6 +17,9 @@ pantalla y termina con `__TEST_OK__` o `__TEST_FAIL__`.
 - `test_player.html` — visor del alumno completo: identificación, respuesta de
   los distintos tipos de campo, autoguardado, corrección, nota, marcas e intentos.
 - `test_zip.html` — exportación e importación del ZIP de ficha en el navegador.
+- `test_webexport.html` — exportación a página web autónoma (*Archivo → Exportar
+  a web*): comprueba que el ZIP incluye el visor, el `index.html` de arranque y
+  la ficha empaquetada reabrible, y que no arrastra el editor.
 - `test_pdf.html` — conversión de PDF a imágenes de página con pdf.js.
 - `test_ampos.html` — precisión de posición de los hotspots de «Unir con
   flechas» en el visor respecto a la imagen de fondo (tolerancia < 1 px).

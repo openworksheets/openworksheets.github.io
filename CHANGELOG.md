@@ -9,6 +9,23 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.10.0] — 2026-06-17
+
+### Añadido
+- **Exportación a página web autónoma** (menú *Archivo → Exportar a web (ZIP)*):
+  genera un ZIP con una copia del visor del alumnado y un `index.html`. Basta con
+  descomprimirlo y subir su contenido a cualquier alojamiento web propio para
+  tener la ficha funcionando sin depender de OpenWorksheets ni de Google Drive.
+  - Conserva la contraseña de acceso y el cifrado de entrega de la ficha (a
+    diferencia del SCORM, aquí no hay un LMS que gestione el acceso).
+  - El alumnado responde y, al terminar, puede descargar su archivo de entrega
+    (`.owsub`) **o copiar el enlace de entrega**: el propio `index.html` del
+    paquete detecta el enlace (`#e=…`) y muestra al docente la verificación de la
+    entrega (integridad, respuestas, nota y audio de las grabaciones), sin
+    depender de la web pública de OpenWorksheets.
+  - Debe servirse por http(s): no funciona abriendo el `index.html` como archivo
+    local (el navegador bloquea la carga de la ficha y el Service Worker).
+
 ## [1.9.3] — 2026-06-17
 
 ### Cambiado

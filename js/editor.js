@@ -29,6 +29,7 @@ import { expectedText } from './grading.js';
 import { pdfToPages, imageToPage, isPdf, isImage } from './pdfimport.js';
 import { exportFichaZip, importFichaZip, newManifest, usedFiles } from './zipio.js';
 import { exportScormPackage } from './scormexport.js';
+import { exportWebPackage } from './webexport.js';
 import { buildShortLink, parseDriveId } from './drive.js';
 import { mountPlayer } from './player.js';
 import { t, getLang, applyI18n, initLangSelector } from './i18n.js';
@@ -3236,37 +3237,64 @@ function referencedFiles() {
   return usedFiles(state.manifest, state.files);
 }
 
-async function exportZip() {
+// Valida la ficha y prepara el manifiesto de exportación (cifrado de entrega y
+// contraseña de acceso). Devuelve el manifiesto listo, o null si no se puede
+// continuar (sin páginas, o falta la contraseña de cifrado: abre Ajustes y
+// reintenta con `retry`). Lo comparten la exportación a ZIP y a web.
+async function prepareExportManifest(retry) {
   state.manifest.title = titleInput.value.trim();
   const problems = validate();
   if (problems.length) {
     const blocking = !state.manifest.pages.length;
     const msg = t('validate.review', { problems: problems.join('\n· ') });
-    if (blocking) { window.alert(msg); return; }
-    if (!window.confirm(msg + t('validate.anyway'))) return;
+    if (blocking) { window.alert(msg); return null; }
+    if (!window.confirm(msg + t('validate.anyway'))) return null;
   }
   state.manifest.lang = getLang();
+  let exportManifest = JSON.parse(JSON.stringify(state.manifest));
+  if (exportManifest.settings?.encryptSubmissions !== false) {
+    if (!state.submissionCryptoPassword) {
+      toast(t('crypto.passwordRequired'), 'error');
+      openSettings(retry, 'correction');
+      $('#ajCryptoPassword').focus();
+      return null;
+    }
+    exportManifest.submissionCrypto = await createSubmissionCrypto(state.submissionCryptoPassword);
+  } else {
+    delete exportManifest.submissionCrypto;
+  }
+  if (exportManifest.access?.password) {
+    exportManifest = await encryptManifestForStudent(exportManifest, exportManifest.access.password);
+  }
+  return exportManifest;
+}
+
+async function exportZip() {
   try {
+    const exportManifest = await prepareExportManifest(exportZip);
+    if (!exportManifest) return;
     toast(t('toast.generating'));
-    let exportManifest = JSON.parse(JSON.stringify(state.manifest));
-    if (exportManifest.settings?.encryptSubmissions !== false) {
-      if (!state.submissionCryptoPassword) {
-        toast(t('crypto.passwordRequired'), 'error');
-        openSettings(exportZip, 'correction');
-        $('#ajCryptoPassword').focus();
-        return;
-      }
-      exportManifest.submissionCrypto = await createSubmissionCrypto(state.submissionCryptoPassword);
-    } else {
-      delete exportManifest.submissionCrypto;
-    }
-    if (exportManifest.access?.password) {
-      exportManifest = await encryptManifestForStudent(exportManifest, exportManifest.access.password);
-    }
     const blob = await exportFichaZip({ manifest: exportManifest, files: referencedFiles() });
     downloadBlob(blob, slugify(state.manifest.title || 'ficha') + '.owpkg');
     state.dirty = false;
     toast(t('toast.exported'), 'ok');
+  } catch (e) {
+    console.error(e);
+    toast(t('toast.exportError', { msg: e.message }), 'error');
+  }
+}
+
+// Exporta la ficha como página web autónoma (ZIP para subir a un sitio web). A
+// diferencia del SCORM conserva el cifrado de entrega y la contraseña de acceso.
+async function exportWeb() {
+  try {
+    const exportManifest = await prepareExportManifest(exportWeb);
+    if (!exportManifest) return;
+    toast(t('toast.generatingWeb'));
+    const blob = await exportWebPackage({ manifest: exportManifest, files: referencedFiles() });
+    downloadBlob(blob, slugify(state.manifest.title || 'ficha') + '-web.zip');
+    state.dirty = false;
+    toast(t('toast.webExported'), 'ok');
   } catch (e) {
     console.error(e);
     toast(t('toast.exportError', { msg: e.message }), 'error');
@@ -3557,6 +3585,7 @@ fileMenuItem('#miOpenZip', () => $('#inputZip').click());
 // permite elegir «Guardar como PDF» como destino.
 fileMenuItem('#miPdf', printWorksheet);
 fileMenuItem('#miSaveScorm', exportScorm);
+fileMenuItem('#miSaveWeb', exportWeb);
 fileMenuItem('#miSaveZip', exportZip);
 
 $('#inputZip').addEventListener('change', e => {
