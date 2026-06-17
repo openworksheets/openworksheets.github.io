@@ -11,6 +11,9 @@ Las versiones publicadas también están en la página de
 
 ## [1.12.0] — 2026-06-17
 
+### Corregido
+- El espacio entre el texto introductorio y las fichas de la portada ahora es igual al espacio entre las fichas y el apartado «Seguridad y privacidad».
+
 ### Cambiado
 - **Pantalla de inicio más simple y clara**: la portada se reduce ahora a tres
   pasos —*Crea*, *Comparte* y *Revisa las entregas*—, cada uno con su botón. La
