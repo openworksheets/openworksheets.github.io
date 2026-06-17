@@ -92,7 +92,7 @@ async function testPlayerScorm() {
   let graded = null;
   mountPlayer(root, { manifest, files }, {
     studentName: 'Ana Pérez',
-    onGraded: g => { graded = g; }
+    onGraded: g => { graded = g; return true; } // simula LMS que recibe la nota
   });
   await sleep(100);
 
@@ -113,7 +113,33 @@ async function testPlayerScorm() {
   // No debe ofrecer descarga de entrega ni enlace (los gestiona el LMS).
   const botones = [...root.querySelectorAll('.al-resultado .acciones button')].map(b => b.textContent);
   ok &= check('sin botón de descargar entrega', !botones.some(t => /Descargar/i.test(t)));
-  ok &= check('aviso de envío a la plataforma', root.textContent.includes('enviado a la plataforma'));
+  ok &= check('aviso de envío a la plataforma', root.textContent.includes('se ha enviado a la plataforma'));
+  return Boolean(ok);
+}
+
+// Sin LMS (onGraded devuelve false): el visor avisa de que NO se envió.
+async function testPlayerNoLms() {
+  let ok = true;
+  localStorage.clear();
+  localStorage.setItem('wpf-lang', 'es');
+  const manifest = {
+    format: 'workpdf-ficha', version: 1, id: 'scormnolms1', title: 'Sin LMS',
+    settings: { showScore: true, showCorrection: false },
+    pages: [{ image: 'pages/page-1.png', w: 400, h: 500, fields: [
+      { id: 'f1', type: 'single', rect: { x: 0.1, y: 0.1, w: 0.3, h: 0.12 }, points: 4, fontScale: 1,
+        config: { options: ['No', 'Sí'], correct: 1 } }
+    ] }]
+  };
+  const files = new Map([['pages/page-1.png', await makeImage()]]);
+  const root = document.getElementById('app');
+  root.textContent = '';
+  mountPlayer(root, { manifest, files }, { studentName: '', onGraded: () => false });
+  await sleep(100);
+  [...root.querySelectorAll('[data-id="f1"] .wpf-choice')].find(l => l.textContent.trim() === 'Sí').querySelector('input').click();
+  [...root.querySelectorAll('button')].find(b => b.textContent.includes('Finalizar')).click();
+  await sleep(200);
+  ok &= check('avisa de que NO se ha enviado (sin LMS)', root.textContent.includes('no se ha enviado'));
+  ok &= check('no muestra el aviso de envío correcto', !root.textContent.includes('se ha enviado a la plataforma'));
   return Boolean(ok);
 }
 
@@ -121,7 +147,8 @@ async function main() {
   try {
     const a = await testReporter();
     const b = await testPlayerScorm();
-    log(a && b ? '__TEST_OK__' : '__TEST_FAIL__');
+    const c = await testPlayerNoLms();
+    log(a && b && c ? '__TEST_OK__' : '__TEST_FAIL__');
   } catch (e) {
     log('__TEST_FAIL__', e.message, e.stack);
   }

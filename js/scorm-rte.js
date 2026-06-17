@@ -79,8 +79,9 @@ export class ScormReporter {
   }
 
   // score: 0–100 ; passed: bool ; statusMode: 'score' | 'completion'
+  // Devuelve true si la nota se envió al LMS, false si no hay LMS o falló.
   report({ score, passed, statusMode }) {
-    if (!this.api || !this.initialized) return;
+    if (!this.api || !this.initialized) return false;
     try {
       this.api.LMSSetValue('cmi.core.score.min', '0');
       this.api.LMSSetValue('cmi.core.score.max', '100');
@@ -90,7 +91,10 @@ export class ScormReporter {
       this.api.LMSSetValue('cmi.core.session_time',
         toCmiTimespan((Date.now() - this.startTime) / 1000));
       this.api.LMSCommit('');
-    } catch { /* el LMS rechazó la escritura: nada que hacer */ }
+      return true;
+    } catch {
+      return false; // el LMS rechazó la escritura
+    }
   }
 
   finish() {

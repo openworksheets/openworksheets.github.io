@@ -27,6 +27,9 @@ Las versiones publicadas también están en la página de
   - Dentro del SCORM, la **nota, los intentos y el progreso los gestiona el LMS**:
     se desactivan el cifrado de entrega, el enlace de entrega y la contraseña de
     acceso de la ficha (innecesarios porque el resultado viaja al LMS).
+  - La pantalla final **confirma si el resultado se envió** al LMS; si la ficha se
+    abre **fuera de un LMS** (o en vista previa que no lo expone), avisa de que la
+    nota **no se ha enviado**, para no dar una confirmación falsa.
 - **Campo «Grabación de voz»** (grupo «Responder» de la paleta): el alumnado
   graba su voz con el micrófono (`MediaRecorder`, Opus mono) directamente sobre
   la ficha. Pensado para idiomas, lectura en voz alta, música o infantil.

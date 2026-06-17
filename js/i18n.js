@@ -53,6 +53,7 @@ const STRINGS = {
     'toast.generatingScorm': 'Generando el paquete SCORM…',
     'toast.scormExported': 'Paquete SCORM 1.2 generado. Súbelo a Moodle como actividad SCORM.',
     'player.scormSent': 'Tu resultado se ha enviado a la plataforma.',
+    'player.scormNotSent': 'No se ha detectado ninguna plataforma (LMS), así que el resultado no se ha enviado. Estás viendo la ficha fuera de un LMS o en modo de vista previa.',
     'nav.titlePlaceholder': 'Título de la ficha…',
 
     // Títulos de página
@@ -724,6 +725,7 @@ const STRINGS = {
     'toast.generatingScorm': 'Generating the SCORM package…',
     'toast.scormExported': 'SCORM 1.2 package created. Upload it to Moodle as a SCORM activity.',
     'player.scormSent': 'Your result has been sent to the platform.',
+    'player.scormNotSent': 'No platform (LMS) was detected, so the result was not sent. You are viewing the worksheet outside an LMS or in preview mode.',
     'nav.titlePlaceholder': 'Worksheet title…',
 
     'page.title.index': 'OpenWorksheets · Interactive self-correcting worksheets',
@@ -1362,6 +1364,7 @@ const STRINGS = {
     'toast.generatingScorm': 'Generant el paquet SCORM…',
     'toast.scormExported': 'Paquet SCORM 1.2 generat. Puja\'l a Moodle com a activitat SCORM.',
     'player.scormSent': 'El teu resultat s\'ha enviat a la plataforma.',
+    'player.scormNotSent': 'No s\'ha detectat cap plataforma (LMS), així que el resultat no s\'ha enviat. Estàs veient la fitxa fora d\'un LMS o en mode de vista prèvia.',
     'nav.titlePlaceholder': 'Títol de la fitxa…',
 
     'page.title.index': 'OpenWorksheets · Fitxes interactives autocorregibles',
@@ -2000,6 +2003,7 @@ const STRINGS = {
     'toast.generatingScorm': 'Xerando o paquete SCORM…',
     'toast.scormExported': 'Paquete SCORM 1.2 xerado. Súbeo a Moodle como actividade SCORM.',
     'player.scormSent': 'O teu resultado enviouse á plataforma.',
+    'player.scormNotSent': 'Non se detectou ningunha plataforma (LMS), así que o resultado non se enviou. Estás vendo a ficha fóra dun LMS ou en modo de vista previa.',
     'nav.titlePlaceholder': 'Título da ficha…',
 
     'page.title.index': 'OpenWorksheets · Fichas interactivas autocorrixibles',
@@ -2638,6 +2642,7 @@ const STRINGS = {
     'toast.generatingScorm': 'SCORM paketea sortzen…',
     'toast.scormExported': 'SCORM 1.2 paketea sortuta. Igo Moodlera SCORM jarduera gisa.',
     'player.scormSent': 'Zure emaitza plataformara bidali da.',
+    'player.scormNotSent': 'Ez da plataformarik (LMS) detektatu, beraz, emaitza ez da bidali. Fitxa LMS batetik kanpo edo aurrebista moduan ikusten ari zara.',
     'nav.titlePlaceholder': 'Fitxaren izenburua…',
 
     'page.title.index': 'OpenWorksheets · Fitxa interaktibo autoaztergarriak',

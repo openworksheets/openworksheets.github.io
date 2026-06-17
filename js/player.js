@@ -444,7 +444,9 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     }
 
     // Reporta la nota al LMS (normalización a 0–100 la hace el envoltorio SCORM).
-    if (scormMode) opts.onGraded({ earned, total: totalPoints, nota10: entrega.nota10 });
+    // onGraded devuelve si el LMS recibió la nota (false si se abre fuera de un LMS).
+    let scormReported = false;
+    if (scormMode) scormReported = opts.onGraded({ earned, total: totalPoints, nota10: entrega.nota10 }) === true;
 
     if (!preview) {
       datos.attempts += 1;
@@ -508,7 +510,8 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
       el('div', { class: 'detalle' },
         `${datos.alumno}${datos.grupo ? ' · ' + datos.grupo : ''} · ${fechaHora(new Date(entrega.fecha))}`),
       scormMode
-        ? el('p', { class: 'al-info', style: 'margin-top:12px;color:var(--verde);font-weight:700' }, t('player.scormSent'))
+        ? el('p', { class: 'al-info', style: 'margin-top:12px;font-weight:700;color:' + (scormReported ? 'var(--verde)' : 'var(--rojo)') },
+            t(scormReported ? 'player.scormSent' : 'player.scormNotSent'))
         : (() => { const p = el('p', { class: 'al-info', style: 'margin-top:12px' }); p.innerHTML = t('player.submissionInfo'); return p; })(),
       hasPending ? el('p', { class: 'al-info al-pending-hint', style: 'margin-top:8px' }, t('player.pendingReview')) : null,
       (!preview && !scormMode && !shareUrl) ? el('p', { class: 'al-info', style: 'margin-top:8px' }, t('player.shareDisabled')) : null,

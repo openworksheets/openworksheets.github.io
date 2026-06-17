@@ -36,10 +36,11 @@ async function main() {
     // El nombre lo conoce el LMS: evitamos la pantalla de identificación.
     studentName: reporter.studentName(),
     // Al corregir, normalizamos la nota a 0–100 y la enviamos al LMS.
+    // Devolvemos si se envió, para que el visor lo refleje en la pantalla final.
     onGraded: ({ earned, total }) => {
       const score = total > 0 ? (earned / total) * 100 : 0;
       const passed = score >= (Number(cfg.masteryScore) || 0);
-      reporter.report({ score, passed, statusMode: cfg.statusMode });
+      return reporter.report({ score, passed, statusMode: cfg.statusMode });
     }
   });
 }
