@@ -9,6 +9,30 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.9.2] — 2026-06-17
+
+### Corregido
+- **«Unir» (match): la respuesta del alumno se veía en blanco al emparejar con
+  un distractor**. El texto legible de la entrega indexaba el índice elegido
+  sobre las parejas en vez de sobre el conjunto «derechas + distractores», de
+  modo que al marcar un distractor la elección desaparecía del verificador y del
+  resumen copiado (la nota sí era correcta). Ahora se muestra la opción marcada.
+- **«Arrastrar a zonas»: posible nota inflada con respuestas duplicadas**. Si
+  dos zonas compartían la misma respuesta correcta, apilar las dos fichas
+  iguales en una sola zona contaba doble y compensaba la zona dejada vacía. Cada
+  hueco correcto se cuenta ahora una única vez (intersección de multiconjuntos).
+- **Pérdida silenciosa de la lista de resultados de clase al llenarse el
+  almacenamiento**. Las entregas con grabación de voz (audio incrustado) pueden
+  agotar la cuota de `localStorage`; el guardado fallaba sin avisar y la lista
+  se perdía al recargar. Ahora se muestra un aviso para exportar el CSV antes de
+  perder las calificaciones.
+
+### Seguridad
+- **Inyección de fórmulas en la exportación CSV de resultados de clase**. Un
+  nombre o grupo de alumno que empezara por `=`, `+`, `-` o `@` se interpretaba
+  como fórmula al abrir el CSV en Excel/LibreOffice. Esas celdas se escapan
+  ahora con un apóstrofo para forzar texto literal.
+
 ## [1.9.1] — 2026-06-17
 
 ### Corregido

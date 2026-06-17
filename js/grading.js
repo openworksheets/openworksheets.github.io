@@ -191,7 +191,14 @@ const graders = {
     zones.forEach(z => {
       const correct = zoneCorrect(z);
       total += correct.length;
-      hits += getPlaced(z.id).filter(t => correct.includes(t)).length;
+      // Intersección de multiconjuntos: cada hueco correcto se cuenta una sola
+      // vez. Así apilar fichas duplicadas (cuando dos zonas comparten respuesta)
+      // no infla la nota ni compensa una zona dejada vacía.
+      const remaining = correct.slice();
+      getPlaced(z.id).forEach(t => {
+        const k = remaining.indexOf(t);
+        if (k >= 0) { hits++; remaining.splice(k, 1); }
+      });
     });
     return { ratio: total ? hits / total : 0 };
   },
@@ -288,9 +295,14 @@ export function answerText(field, answer) {
     case 'match': {
       const pairs = cfg.pairs || [];
       const given = Array.isArray(answer) ? answer : [];
+      // given[i] indexa sobre rights = derechas de las parejas + distractores
+      // (igual que en render.js). Usar pairs[j] perdía las elecciones de
+      // distractores (j >= pairs.length → undefined): la respuesta del alumno
+      // se veía en blanco en el verificador aunque hubiese marcado algo.
+      const rights = pairs.map(p => p.right).concat(cfg.distractors || []);
       return pairs.map((p, i) => {
         const j = Number(given[i]);
-        return Number.isInteger(j) && pairs[j] ? `${p.left} → ${pairs[j].right}` : null;
+        return Number.isInteger(j) && rights[j] != null ? `${p.left} → ${rights[j]}` : null;
       }).filter(Boolean).join(' · ');
     }
     case 'order': {

@@ -250,8 +250,20 @@ function loadClassResults() {
   } catch { return []; }
 }
 
+let classSaveWarned = false;
 function saveClassResults() {
-  try { localStorage.setItem(CLASS_STORAGE_KEY, JSON.stringify(classResults)); } catch { /* cuota llena */ }
+  try {
+    localStorage.setItem(CLASS_STORAGE_KEY, JSON.stringify(classResults));
+    classSaveWarned = false;
+  } catch {
+    // Cuota llena (las grabaciones de voz son data-URLs grandes): la lista sigue
+    // en memoria pero ya no se persiste. Avisamos una vez para que el docente
+    // exporte el CSV antes de recargar y perder las calificaciones.
+    if (!classSaveWarned) {
+      classSaveWarned = true;
+      toast(t('toast.classSaveFailed'), 'error');
+    }
+  }
 }
 
 const classResults = loadClassResults();
@@ -436,7 +448,15 @@ function renderClassTable() {
 
 function buildClassCsv() {
   const sep = ';';
-  const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  // Neutraliza la inyección de fórmulas (CSV injection): un alumno podría
+  // ponerse de nombre «=HYPERLINK(...)» o «=1+1» y la fórmula se ejecutaría al
+  // abrir el docente el CSV en Excel/LibreOffice. Se antepone un apóstrofo a las
+  // celdas que empiezan por un carácter de fórmula para forzar texto literal.
+  const q = v => {
+    let s = String(v ?? '');
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return `"${s.replace(/"/g, '""')}"`;
+  };
   const headers = [
     t('entrega.student'), t('index.colGroup'), t('entrega.sheet'),
     t('entrega.date'), 'Punt.', 'Total',
