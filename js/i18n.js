@@ -505,7 +505,7 @@ const STRINGS = {
     'validate.anyway': '\n\n¿Exportar de todas formas?',
 
     // Player — pantalla de inicio
-    'player.nameLabel': 'Nombre y apellidos *',
+    'player.nameLabel': 'Nombre y apellidos o código de alumno/a *',
     'player.groupLabel': 'Grupo o identificador (opcional)',
     'player.startBtn': 'Comenzar la ficha',
     'player.enterName': 'Escribe tu nombre para empezar.',
@@ -1038,7 +1038,7 @@ const STRINGS = {
     'validate.review': 'Before exporting, please review:\n\n· {problems}',
     'validate.anyway': '\n\nExport anyway?',
 
-    'player.nameLabel': 'Full name *',
+    'player.nameLabel': 'Full name or student code *',
     'player.groupLabel': 'Group or identifier (optional)',
     'player.startBtn': 'Start worksheet',
     'player.enterName': 'Enter your name to start.',
@@ -1684,7 +1684,7 @@ const STRINGS = {
     'validate.review': 'Abans d\'exportar, revisa:\n\n· {problems}',
     'validate.anyway': '\n\nExportar igualment?',
 
-    'player.nameLabel': 'Nom i cognoms *',
+    'player.nameLabel': 'Nom i cognoms o codi d\'alumne/a *',
     'player.groupLabel': 'Grup o identificador (opcional)',
     'player.startBtn': 'Començar la fitxa',
     'player.enterName': 'Escriu el teu nom per començar.',
@@ -2330,7 +2330,7 @@ const STRINGS = {
     'validate.review': 'Antes de exportar, revisa:\n\n· {problems}',
     'validate.anyway': '\n\nExportar de todas formas?',
 
-    'player.nameLabel': 'Nome e apelidos *',
+    'player.nameLabel': 'Nome e apelidos ou código de alumno/a *',
     'player.groupLabel': 'Grupo ou identificador (opcional)',
     'player.startBtn': 'Comezar a ficha',
     'player.enterName': 'Escribe o teu nome para comezar.',
@@ -2976,7 +2976,7 @@ const STRINGS = {
     'validate.review': 'Esportatu aurretik, berrikusi:\n\n· {problems}',
     'validate.anyway': '\n\nEsportatu hala ere?',
 
-    'player.nameLabel': 'Izena eta abizenak *',
+    'player.nameLabel': 'Izena eta abizenak edo ikasle-kodea *',
     'player.groupLabel': 'Taldea edo identifikatzailea (aukerakoa)',
     'player.startBtn': 'Fitxa hasi',
     'player.enterName': 'Idatzi zure izena hasteko.',

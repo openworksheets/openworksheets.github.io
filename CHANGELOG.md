@@ -9,6 +9,14 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.9.3] — 2026-06-17
+
+### Cambiado
+- **Identificación del alumnado más respetuosa con la privacidad**: el campo de
+  nombre de la pantalla de inicio pasa a ser «Nombre y apellidos o código de
+  alumno/a», indicando que se puede usar un código en lugar del nombre real.
+  Traducido a los cinco idiomas.
+
 ## [1.9.2] — 2026-06-17
 
 ### Corregido
