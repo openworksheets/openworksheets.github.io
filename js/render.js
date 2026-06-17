@@ -529,7 +529,7 @@ const renderers = {
   record(field, root, ctx) {
     root.classList.add('wpf-record');
     const cfg = field.config || {};
-    const maxSec = Math.max(5, Math.min(600, Number(cfg.maxSec) || 60));
+    const maxSec = Math.max(5, Math.min(600, Number(cfg.maxSec) || 30));
 
     if (cfg.prompt) root.appendChild(el('div', { class: 'wpf-record-prompt' }, cfg.prompt));
 

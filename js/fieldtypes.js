@@ -159,7 +159,7 @@ export const FIELD_TYPES = {
     name: 'Grabación de voz',
     glyph: ICONS.mic,
     defRect: { w: 0.4, h: 0.1 },
-    defaults: () => ({ scoreMode: 'manual', maxSec: 60, prompt: '' })
+    defaults: () => ({ scoreMode: 'manual', maxSec: 30, prompt: '' })
   },
   // Elementos decorativos: no puntúan ni cuentan como preguntas.
   label: {

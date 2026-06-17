@@ -650,9 +650,10 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 /* Calificación manual de grabaciones de voz en el revisor */
 .vr-audio { width: 100%; max-width: 260px; height: 34px; vertical-align: middle; }
 .vr-grade-cell { white-space: nowrap; }
-.vr-grade {
-  width: 4.5em;
-  padding: 2px 6px;
+.verify-table input.vr-grade {
+  width: 3.6em;
+  box-sizing: border-box;
+  padding: 2px 5px;
   border: 1px solid var(--tinta-tenue);
   border-radius: 4px;
   background: var(--papel);

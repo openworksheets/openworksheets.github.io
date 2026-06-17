@@ -159,21 +159,33 @@ function hasManualPending(data) {
   return (data.respuestas || []).some(r => r.tipo === 'record' && r.resultado === 'pendiente');
 }
 
+// HTML del badge de resultado de una respuesta. Si el profesor ya ha puesto
+// nota manual (grabaciones), refleja esa nota (correcta/parcial/incorrecta)
+// en vez del «pendiente» de la entrega original.
+function resultBadgeHtml(r, resp) {
+  const singKey = { correcta: 'entrega.correct', incorrecta: 'entrega.incorrect', parcial: 'entrega.partial', pendiente: 'entrega.pending', 'en blanco': 'entrega.blank' };
+  const badgeCls = { correcta: 'ok', incorrecta: 'err', parcial: 'partial', pendiente: 'pending', 'en blanco': 'blank' };
+  const iconMap = { correcta: '✓', incorrecta: '✗', parcial: '~', pendiente: '⋯', 'en blanco': '·' };
+  let key;
+  if (r.overrides && resp.id in r.overrides) {
+    const max = Number(resp.maximo) || 0;
+    const ratio = max > 0 ? Number(r.overrides[resp.id]) / max : 0;
+    key = ratio >= 1 ? 'correcta' : ratio > 0 ? 'parcial' : 'incorrecta';
+  } else {
+    key = resp.resultado;
+  }
+  return `<span class="vr-badge ${badgeCls[key] || 'blank'}">${iconMap[key] || '·'} ${esc(t(singKey[key] || 'entrega.blank'))}</span>`;
+}
+
 function renderVerificacion(r) {
   const data = r.data;
   const valid = r.valid;
-  const singKey = { correcta: 'entrega.correct', incorrecta: 'entrega.incorrect', parcial: 'entrega.partial', pendiente: 'entrega.pending', 'en blanco': 'entrega.blank' };
-  const badgeCls = { correcta: 'ok', incorrecta: 'err', parcial: 'partial', pendiente: 'pending', 'en blanco': 'blank' };
-  const icon = { correcta: '✓', incorrecta: '✗', parcial: '~', pendiente: '⋯', 'en blanco': '·' };
 
   const integridad = valid
     ? `<span class="vr-badge ok">${esc(t('verify.ok'))}</span>`
     : `<span class="vr-badge err">${esc(t('verify.tampered'))}</span>`;
 
   const rows = (data.respuestas || []).map((resp, i) => {
-    const cls = badgeCls[resp.resultado] || 'blank';
-    const ic = icon[resp.resultado] || '·';
-    const label = t(singKey[resp.resultado] || 'entrega.blank');
     const isRecord = resp.tipo === 'record';
     // Celda de respuesta: el audio se inserta tras volcar el HTML (data-fid).
     const ansCell = isRecord
@@ -183,7 +195,7 @@ function renderVerificacion(r) {
     const manual = isRecord && resp.resultado === 'pendiente';
     const ptsVal = r.overrides && resp.id in r.overrides ? r.overrides[resp.id] : resp.puntos;
     const ptsCell = manual
-      ? `<td class="vr-grade-cell"><input type="number" class="vr-grade" data-fid="${esc(resp.id)}" min="0" max="${formatNum(resp.maximo)}" step="0.5" value="${formatNum(ptsVal)}"> / ${formatNum(resp.maximo)}</td>`
+      ? `<td class="vr-grade-cell"><input type="text" inputmode="decimal" class="vr-grade" data-fid="${esc(resp.id)}" data-max="${resp.maximo}" value="${formatNum(ptsVal)}"> / ${formatNum(resp.maximo)}</td>`
       : `<td style="white-space:nowrap">${formatNum(ptsVal)} / ${formatNum(resp.maximo)}</td>`;
     return `<tr>
       <td>${i + 1}</td>
@@ -191,7 +203,7 @@ function renderVerificacion(r) {
       <td>${esc(t('field.' + resp.tipo) || resp.tipo)}</td>
       ${ansCell}
       ${ptsCell}
-      <td><span class="vr-badge ${cls}">${ic} ${esc(label)}</span></td>
+      <td class="vr-result-cell" data-fid="${esc(resp.id)}">${resultBadgeHtml(r, resp)}</td>
     </tr>`;
   }).join('');
 
@@ -283,7 +295,7 @@ function showDetail(r) {
     renderClassTable();
   };
   out.querySelectorAll('.vr-grade').forEach(inp => {
-    const max = parseFloat(inp.max) || 0;
+    const max = parseFloat(inp.dataset.max) || 0;
     const apply = (normalize) => {
       let v = parseFloat(String(inp.value).replace(',', '.'));
       if (isNaN(v)) v = 0;
@@ -291,6 +303,9 @@ function showDetail(r) {
       r.overrides = r.overrides || {};
       r.overrides[inp.dataset.fid] = v;
       if (normalize) inp.value = formatNum(v);
+      // Actualiza el badge de resultado de esa fila para que deje de poner «pendiente».
+      const cell = out.querySelector(`.vr-result-cell[data-fid="${inp.dataset.fid}"]`);
+      if (cell) cell.innerHTML = resultBadgeHtml(r, { id: inp.dataset.fid, maximo: max });
       saveClassResults();
       refreshScore();
     };
@@ -353,6 +368,7 @@ function renderClassTable() {
     <div class="class-toolbar">
       <span class="class-count">${n} ${n === 1 ? esc(t('index.classCountSing')) : esc(t('index.classCountPlur'))}</span>
       <div class="class-actions">
+        <button class="btn small" id="btnCopyCsv">${esc(t('index.btnCopyCsv'))}</button>
         <button class="btn small" id="btnExportCsv">${esc(t('index.btnExportCsv'))}</button>
         <button class="btn small" id="btnClearClass">${esc(t('index.btnClearClass'))}</button>
       </div>
@@ -402,6 +418,7 @@ function renderClassTable() {
     });
   });
 
+  $('#btnCopyCsv').addEventListener('click', copyClassCsv);
   $('#btnExportCsv').addEventListener('click', exportClassCsv);
   $('#btnClearClass').addEventListener('click', () => {
     classResults.length = 0;
@@ -413,8 +430,8 @@ function renderClassTable() {
   });
 }
 
-function exportClassCsv() {
-  const BOM = '﻿', sep = ';';
+function buildClassCsv() {
+  const sep = ';';
   const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
   const headers = [
     t('entrega.student'), t('index.colGroup'), t('entrega.sheet'),
@@ -431,10 +448,20 @@ function exportClassCsv() {
       r.valid ? '✓' : '✗', d.codigo
     ].map(q).join(sep);
   });
+  return [headers, ...rows].join('\n');
+}
+
+function exportClassCsv() {
+  const BOM = '﻿';
   downloadBlob(
-    new Blob([BOM + [headers, ...rows].join('\n')], { type: 'text/csv;charset=utf-8' }),
+    new Blob([BOM + buildClassCsv()], { type: 'text/csv;charset=utf-8' }),
     'resultados_clase.csv'
   );
+}
+
+async function copyClassCsv() {
+  const ok = await copyToClipboard(buildClassCsv());
+  toast(ok ? t('toast.copied') : t('toast.notCopied'), ok ? 'ok' : 'error');
 }
 
 async function processEntregaData(raw) {

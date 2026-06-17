@@ -28,7 +28,7 @@ Las versiones publicadas también están en la página de
   - El audio **se incrusta cifrado** dentro de la entrega cuando la ficha tiene
     activado el cifrado de entregas (solo el docente puede oírlo); si no, viaja
     como cualquier otra respuesta. **Duración máxima configurable** por campo
-    (60 s por defecto) y enunciado opcional.
+    (30 s por defecto) y enunciado opcional.
   - Por el tamaño del audio, una ficha con grabaciones **deshabilita la entrega
     por enlace** (la URL sería inmanejable): la entrega pasa a ser por
     **descarga de archivo**. El visor también recurre a la descarga si el enlace

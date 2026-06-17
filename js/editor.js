@@ -2425,8 +2425,8 @@ const configForms = {
       (cfg.scoreMode || 'manual') === 'manual' ? t('cfg.recordManualHint') : t('cfg.recordParticipationHint')));
 
     cont.appendChild(el('label', { class: 'f-label' }, t('cfg.recordMaxSec')));
-    const sec = el('input', { type: 'number', min: '5', max: '600', step: '5', value: String(cfg.maxSec || 60) });
-    sec.addEventListener('input', () => { cfg.maxSec = Math.max(5, Math.min(600, parseInt(sec.value, 10) || 60)); markDirty(); });
+    const sec = el('input', { type: 'number', min: '5', max: '600', step: '5', value: String(cfg.maxSec || 30) });
+    sec.addEventListener('input', () => { cfg.maxSec = Math.max(5, Math.min(600, parseInt(sec.value, 10) || 30)); markDirty(); });
     cont.appendChild(sec);
 
     cont.appendChild(el('label', { class: 'f-label' }, t('cfg.recordPrompt')));
