@@ -9,6 +9,30 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [No publicado]
+
+### Cambiado
+- **Pantalla de inicio más simple y clara**: la portada se reduce ahora a tres
+  pasos —*Crea*, *Comparte* y *Revisa las entregas*—, cada uno con su botón. La
+  autocorrección instantánea se menciona dentro de *Comparte* (ya no ocupa una
+  tarjeta propia) y *Revisa las entregas* sustituye al antiguo paso 4.
+- **Generar enlace** se abre ahora en un **modal** (con botón de cierre y cierre
+  al pulsar fuera o con Esc), dejando la portada despejada.
+- **Ver y verificar entregas** pasa a su **propia página** (`entregas.html`), que
+  ocupa todo el ancho y tiene su botón *Volver al inicio*, en lugar de un modal.
+  El arrastrar y soltar de archivos `.owsub` sigue disponible y los enlaces de
+  entrega del alumnado (`#e=…`, que apuntan a `index.html` por compatibilidad)
+  se redirigen automáticamente a esta página.
+- **La corrección de la web exportada es ahora la misma página** que la del
+  programa principal: los paquetes «Exportar a web» incluyen una copia de
+  `entregas.html` (sin la analítica ni el `config.js` del autor, y sin el botón
+  «Volver al inicio», que ahí no tiene destino), y al abrir un enlace de entrega
+  (`#e=…`) o `#corregir` el visor redirige a ella. Antes la exportación mostraba
+  un panel propio, parecido pero distinto.
+- **El detalle de una entrega ya no se abre solo**: al añadir entregas solo se
+  actualiza la tabla de resultados. El detalle (respuestas pregunta a pregunta)
+  aparece únicamente al **pulsar una fila** y se cierra con su botón **✕**.
+
 ## [1.11.0] — 2026-06-17
 
 ### Añadido

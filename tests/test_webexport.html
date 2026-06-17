@@ -53,6 +53,14 @@ async function main() {
     check('index.html arranca webrun.js', indexHtml.includes('js/webrun.js'));
     check('index.html lleva el título', indexHtml.includes(ficha.manifest.title));
 
+    // Página de corrección del docente: la misma «Ver y verificar entregas».
+    check('contiene entregas.html', has('entregas.html'));
+    check('contiene js/entregas.js', has('js/entregas.js'));
+    const entregasHtml = await zip.file('entregas.html').async('string');
+    check('entregas.html arranca js/entregas.js', entregasHtml.includes('js/entregas.js'));
+    check('entregas.html SIN analítica', !/analytics/.test(entregasHtml));
+    check('entregas.html SIN config.js del autor', !entregasHtml.includes('config.js'));
+
     // La ficha empaquetada debe ser un .owpkg válido reabrible.
     const inner = await importFichaZip(await zip.file('ficha.owpkg').async('blob'));
     check('ficha.owpkg reabrible', inner.manifest.title === ficha.manifest.title);

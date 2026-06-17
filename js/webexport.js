@@ -30,7 +30,10 @@ const APP_FILES = [
   'js/player.js', 'js/render.js', 'js/grading.js', 'js/fieldtypes.js',
   'js/fonts.js', 'js/entrega.js', 'js/submissionCrypto.js', 'js/scormhost.js',
   'js/scorm.js', 'js/util.js', 'js/icons.js', 'js/i18n.js', 'js/markdown.js',
-  'js/zipio.js', 'js/verifyview.js', 'js/classview.js', 'js/webrun.js'
+  'js/zipio.js', 'js/verifyview.js', 'js/classview.js', 'js/webrun.js',
+  // Página de corrección del docente: es la misma «Ver y verificar entregas» del
+  // programa principal. webrun.js redirige aquí los enlaces de entrega (#e=…).
+  'js/entregas.js', 'js/theme.js'
 ];
 
 function escapeHtml(s) {
@@ -61,6 +64,28 @@ function buildIndexHtml(manifest) {
 `;
 }
 
+// Adapta la página «entregas.html» del programa principal para el paquete: se
+// reutiliza tal cual para que la corrección sea idéntica, pero se le quitan:
+//   - la analítica y el config.js del autor (no deben viajar a sitios ajenos),
+//   - el botón «Volver al inicio», porque en el paquete index.html es la ficha
+//     del alumnado, no una portada a la que tenga sentido volver.
+// Como sin config.js se pierde el número de versión, se inyecta directamente.
+function adaptEntregasHtml(html) {
+  let out = html
+    .split('\n')
+    .filter(line => !/analytics|config\.js|nav\.backHome/.test(line))
+    .join('\n');
+  // La marca sigue enlazando a index.html (la ficha, portada del paquete), pero
+  // sin el tooltip «Volver al inicio», que aquí no aplica.
+  out = out.replace(/ title="Volver al inicio"/g, '');
+  const version = window.OPENWORKSHEETS_CONFIG?.appVersion;
+  if (version) {
+    out = out.replace(/(<span data-app-version>)[^<]*(<\/span>)/,
+      `$1${escapeHtml(version)}$2`);
+  }
+  return out;
+}
+
 // ficha = { manifest, files: Map<ruta, Blob> }  (manifest ya saneado/cifrado).
 // Devuelve un Blob con el ZIP de la página web autónoma.
 export async function exportWebPackage(ficha) {
@@ -77,8 +102,13 @@ export async function exportWebPackage(ficha) {
   // 2) La ficha, empaquetada con el formato estándar de OpenWorksheets.
   zip.file('ficha.owpkg', await exportFichaZip(ficha));
 
-  // 3) Página de arranque.
+  // 3) Página de arranque del alumnado.
   zip.file('index.html', buildIndexHtml(ficha.manifest));
+
+  // 4) Página de corrección del docente (misma que el programa principal).
+  const entregasResp = await fetch(new URL('entregas.html', base).href);
+  if (!entregasResp.ok) throw new Error(`No se pudo leer «entregas.html» (HTTP ${entregasResp.status})`);
+  zip.file('entregas.html', adaptEntregasHtml(await entregasResp.text()));
 
   return zip.generateAsync({
     type: 'blob',

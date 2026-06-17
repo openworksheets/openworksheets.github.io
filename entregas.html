@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenWorksheets · Ver y verificar entregas</title>
+  <meta name="description" content="Abre los archivos de entrega del alumnado para ver la puntuación, las respuestas a cada pregunta y comprobar que no se han modificado.">
+  <meta name="analytics-endpoint" content="https://bilateria.org/app/estadistica/openworksheets/track.php">
+  <meta name="analytics-site-id" content="openworksheets">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/app.css">
+  <script>(function(){var t=localStorage.getItem('wpf-tema');if(t)document.documentElement.setAttribute('data-theme',t);})();</script>
+</head>
+<body>
+
+  <header class="topbar">
+    <a class="brand" href="index.html" title="Volver al inicio">OpenWorksheets <span class="tag" data-i18n="nav.tagline">fichas autocorregibles</span></a>
+    <span class="spacer"></span>
+    <select id="selLang" class="sel-lang" aria-label="Idioma / Language">
+      <option value="es">Español</option>
+      <option value="ca">Català</option>
+      <option value="gl">Galego</option>
+      <option value="eu">Euskara</option>
+      <option value="en">English</option>
+    </select>
+    <button class="btn small ghost" id="btnTema" title="Tema: automático (sigue al sistema)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8M12 17v4"/></svg></button>
+    <a class="btn small" href="index.html" data-i18n="nav.backHome"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><path d="m12 19-7-7 7-7M19 12H5"/></svg> Volver al inicio</a>
+  </header>
+
+  <main class="page-wrap">
+
+    <section id="verifySection" class="card steps-box anim-in">
+      <h1 class="page-title" data-i18n="index.verifyTitle">Ver y verificar una entrega</h1>
+      <p data-i18n="index.verifyDesc">Abre uno o varios archivos de entrega para ver la puntuación, las respuestas a cada pregunta y comprobar que no han sido modificados. También puedes recibir la entrega mediante un enlace que el alumnado te envía al terminar la ficha.</p>
+      <button class="btn primary" id="btnVerificar" data-i18n="index.btnOpenEntregas">Abrir archivos de entrega (.owsub)</button>
+      <input type="file" id="inputEntrega" accept=".owsub" multiple style="display:none">
+      <p class="drop-hint" data-i18n="index.dropHint">También puedes arrastrar y soltar los archivos aquí.</p>
+      <div id="classTbl" style="display:none"></div>
+      <div id="salidaVerificacion" class="link-out" style="display:none"></div>
+    </section>
+
+  </main>
+
+  <footer class="pie">
+    <span data-i18n="index.footer">OpenWorksheets · aplicación web para crear fichas autocorregibles</span>
+    <span class="pie-linea">
+      <span>v<span data-app-version>1.0.0</span></span>
+      <span class="pie-sep">·</span>
+      <a href="https://bilateria.org" target="_blank" rel="noopener">© 2026 Juan José de Haro</a>
+      <span class="pie-sep">·</span>
+      <a href="https://github.com/openworksheets/openworksheets.github.io" target="_blank" rel="noopener">GitHub</a>
+      <span class="pie-sep">·</span>
+      <a href="https://github.com/openworksheets/openworksheets.github.io/issues" target="_blank" rel="noopener" data-i18n="footer.issues">Problemas y sugerencias</a>
+      <span class="pie-sep">·</span>
+      <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener">AGPLv3</a>
+    </span>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/analytics.js" defer></script>
+  <script type="module" src="js/entregas.js"></script>
+</body>
+</html>

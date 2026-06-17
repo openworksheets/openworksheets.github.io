@@ -48,12 +48,19 @@ export function createClassPanel({ tableEl, detailEl, storageKey = 'openworkshee
     classResults.push(entry);
     save();
     render();
-    showDetail(entry);
     return entry;
   }
 
+  function hideDetail() {
+    detailEl.style.display = 'none';
+    detailEl.innerHTML = '';
+  }
+
+  // El detalle de una entrega solo se muestra al pulsar su fila en la tabla; se
+  // cierra con su botón ✕.
   function showDetail(r) {
     detailEl.innerHTML = renderVerificacion(r);
+    detailEl.style.position = 'relative';
     detailEl.style.display = 'block';
     detailEl.style.borderColor = r.valid ? 'var(--verde)' : 'var(--rojo)';
     detailEl.style.background = r.valid ? 'var(--verde-claro)' : 'var(--rojo-claro)';
@@ -61,6 +68,14 @@ export function createClassPanel({ tableEl, detailEl, storageKey = 'openworkshee
       detailEl.insertAdjacentHTML('afterbegin', `<p style="color:var(--rojo);font-weight:600;margin-bottom:8px">✗ ${esc(t('verify.tampered'))}</p>`);
     }
     mountVerificacion(detailEl, r, { onGradeChange: () => { save(); render(); } });
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'vr-close';
+    closeBtn.title = t('dlg.close');
+    closeBtn.setAttribute('aria-label', t('dlg.close'));
+    closeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+    closeBtn.addEventListener('click', hideDetail);
+    detailEl.appendChild(closeBtn);
     detailEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
@@ -170,8 +185,7 @@ export function createClassPanel({ tableEl, detailEl, storageKey = 'openworkshee
       classResults.length = 0;
       save();
       render();
-      detailEl.style.display = 'none';
-      detailEl.innerHTML = '';
+      hideDetail();
     });
   }
 

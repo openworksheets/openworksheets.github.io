@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Test detalle de entrega</title>
+  <base href="/">
+</head>
+<body>
+<pre id="out"></pre>
+<div id="tbl"></div>
+<div id="detail" style="display:none"></div>
+<script>
+window.onerror = (m, s, l) => { document.getElementById('out').textContent += '\nONERROR: ' + m + ' @ ' + s + ':' + l; };
+window.onunhandledrejection = e => { document.getElementById('out').textContent += '\nREJECT: ' + (e.reason && e.reason.message || e.reason); };
+</script>
+<script type="module">
+import { createClassPanel } from '/js/classview.js';
+
+const out = [];
+const log = (...a) => { out.push(a.join(' ')); document.getElementById('out').textContent = out.join('\n'); };
+let fails = 0;
+const check = (name, ok) => { if (!ok) fails++; log(`${name}: ${ok ? 'OK' : 'MAL'}`); };
+
+const tableEl = document.getElementById('tbl');
+const detailEl = document.getElementById('detail');
+
+function run() {
+  try {
+    const panel = createClassPanel({ tableEl, detailEl, storageKey: 'test:classdetail:' + Math.random() });
+    const data = {
+      alumno: 'juanito', titulo: 'Ficha X', grupo: '', fecha: Date.now(),
+      nota: 0, total: 14, fichaId: 'f1', codigo: 'abc',
+      respuestas: [{ id: 'q1', tipo: 'short', pagina: 2, respuesta: '', puntos: 0, maximo: 1 }]
+    };
+
+    panel.addEntrega(data, true);
+    check('tras añadir: detalle OCULTO', detailEl.style.display === 'none');
+    check('tras añadir: tabla visible con 1 fila', tableEl.style.display === 'block' && tableEl.querySelectorAll('tbody tr').length === 1);
+
+    // Pulsar la fila → muestra el detalle con su ✕
+    tableEl.querySelector('tbody tr').click();
+    check('al pulsar fila: detalle VISIBLE', detailEl.style.display === 'block');
+    check('detalle muestra al alumno', /juanito/.test(detailEl.textContent));
+    const closeBtn = detailEl.querySelector('.vr-close');
+    check('detalle tiene botón ✕', !!closeBtn);
+
+    // Pulsar ✕ → cierra
+    closeBtn.click();
+    check('al pulsar ✕: detalle OCULTO', detailEl.style.display === 'none');
+
+    log(fails === 0 ? '__TEST_OK__' : `__TEST_FAIL__ (${fails})`);
+  } catch (e) {
+    log('__TEST_FAIL__', e.message);
+  }
+}
+run();
+</script>
+</body>
+</html>

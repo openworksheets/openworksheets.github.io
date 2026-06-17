@@ -388,6 +388,8 @@ textarea { resize: vertical; min-height: 70px; }
 }
 .home-card p { flex: 1; color: var(--tinta-suave); font-size: 0.95rem; }
 
+.page-title { margin-top: 0; }
+
 .steps-box { margin-top: 34px; }
 .steps-box ol { padding-left: 22px; }
 .steps-box li { margin-bottom: 6px; }
@@ -464,6 +466,34 @@ dialog .dlg-buttons {
 #dlgAjustes {
   max-width: 640px;
 }
+/* Modales de la pantalla de inicio (compartir y verificar entregas) */
+.home-dialog {
+  position: relative;
+  max-width: 680px;
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+}
+.home-dialog h2 { margin-top: 0; padding-right: 32px; }
+.home-dialog .steps-ol { padding-left: 22px; margin: 0 0 16px; }
+.home-dialog .steps-ol li { margin-bottom: 6px; }
+.dlg-x {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--tinta-suave);
+  cursor: pointer;
+}
+.dlg-x:hover { background: var(--tinta-tenue); color: var(--tinta); }
+.dlg-x svg { width: 20px; height: 20px; }
 /* Pestañas del diálogo de ajustes: una sección visible a la vez para que el
    modal no se desborde verticalmente. */
 .settings-tabs {
@@ -682,6 +712,26 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 
 .drop-hint { font-size: 0.82rem; color: var(--tinta-suave); margin: 4px 0 0; }
 #verifySection.drag-over { outline: 3px dashed var(--azul-claro); outline-offset: -4px; background: color-mix(in srgb, var(--azul-claro) 15%, transparent); }
+
+/* Botón ✕ para cerrar el detalle de una entrega (panel de clase). */
+.vr-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--tinta-suave);
+  cursor: pointer;
+}
+.vr-close:hover { background: color-mix(in srgb, var(--tinta) 12%, transparent); color: var(--tinta); }
+.vr-close svg { width: 18px; height: 18px; }
 
 .class-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
 .class-count { font-weight: 600; font-size: 0.88rem; }
