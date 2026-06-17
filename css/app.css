@@ -249,7 +249,8 @@ small { color: var(--tinta-suave); }
   top: calc(100% + 6px);
   left: 0;
   z-index: 60;
-  min-width: 232px;
+  min-width: 288px;
+  max-width: 340px;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -277,13 +278,18 @@ small { color: var(--tinta-suave); }
   text-align: left;
   cursor: pointer;
 }
-.topbar-menu-item svg { width: 17px; height: 17px; flex-shrink: 0; stroke-width: 2px; }
+.topbar-menu-item svg { width: 17px; height: 17px; flex-shrink: 0; stroke-width: 2px; margin-top: 1px; }
 .topbar-menu-item:hover,
 .topbar-menu-item:focus-visible { background: var(--ambar-claro); outline: none; }
 .topbar-menu-sep { height: 1px; margin: 5px 8px; background: var(--tinta-tenue); }
 .topbar-menu-item--primary { color: var(--rojo); font-weight: 600; }
 .topbar-menu-item--primary:hover,
 .topbar-menu-item--primary:focus-visible { background: var(--rojo-claro); }
+/* Opción de menú con título + subtítulo descriptivo en dos líneas. */
+.topbar-menu-item { align-items: flex-start; }
+.mi-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.mi-sub { font-size: 0.76rem; font-weight: 400; line-height: 1.25; color: var(--tinta-suave); }
+.topbar-menu-item--primary .mi-sub { color: var(--rojo); opacity: 0.8; }
 
 .color-input-wrap { display: inline-flex; align-items: center; gap: 4px; }
 .color-input-wrap input[type="color"] { width: 36px; height: 28px; padding: 2px; border-radius: 4px; border: 1px solid var(--borde); cursor: pointer; }

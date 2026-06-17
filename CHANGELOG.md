@@ -84,6 +84,14 @@ Las versiones publicadas también están en la página de
   - Limitaciones actuales: solo SCORM 1.2 (no 2004 ni secuenciamiento) y la
     sesión no se reanuda entre recargas.
 
+### Cambiado
+- **Menú «Archivo» más claro para el profesorado**: cada opción muestra ahora un
+  **subtítulo** que explica para qué sirve. Se distingue mejor *guardar* de
+  *exportar*: **«Guardar ficha (ZIP)»** (antes «Guardar ZIP») es la acción
+  principal —el formato propio para compartir con el alumnado y volver a editar—
+  y queda separada del grupo de **exportaciones** («Exportar a PDF» y «Exportar a
+  SCORM 1.2»). «Abrir ZIP» pasa a «Abrir ficha (ZIP)».
+
 ### Corregido
 - Al guardar los ajustes de la ficha desde el botón ⚙️ se lanzaba una excepción
   silenciosa en consola (`cb is not a function`); no afectaba al guardado, pero
