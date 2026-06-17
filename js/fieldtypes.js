@@ -148,6 +148,19 @@ export const FIELD_TYPES = {
       title: '', caption: '', frameColor: '#1d2c42', frameWidth: 0
     })
   },
+  // Grabación de voz: el alumno graba audio con el micrófono. No es
+  // autocorregible. Dos modos de puntuación:
+  //   'manual'        → el profesor pone la nota al revisar la entrega
+  //                     (cuenta como «pendiente» hasta entonces).
+  //   'participation' → automática: grabar algo = puntos completos.
+  // El audio viaja incrustado en la entrega (data-URL base64); por su tamaño,
+  // la presencia de este campo deshabilita la entrega por enlace (solo archivo).
+  record: {
+    name: 'Grabación de voz',
+    glyph: ICONS.mic,
+    defRect: { w: 0.4, h: 0.1 },
+    defaults: () => ({ scoreMode: 'manual', maxSec: 60, prompt: '' })
+  },
   // Elementos decorativos: no puntúan ni cuentan como preguntas.
   label: {
     name: 'Texto',
@@ -234,14 +247,14 @@ export const FIELD_TYPES = {
 export const FIELD_ORDER = [
   'text', 'number', 'single', 'truefalse', 'multi', 'checkbox',
   'select', 'gaps', 'textboxes', 'match', 'order', 'dragdrop', 'arrowmatch',
-  'embed', 'scorm',
+  'record', 'embed', 'scorm',
   'label', 'cover', 'image', 'video', 'audio', 'line', 'arrow', 'rect', 'ellipse'
 ];
 
 // Grupos temáticos de la paleta del editor. El nombre visible
 // se obtiene de i18n con la clave 'palette.<id>'.
 export const PALETTE_GROUPS = [
-  { id: 'write',  glyph: ICONS.pencil,         types: ['text', 'number', 'fillgaps'] },
+  { id: 'write',  glyph: ICONS.pencil,         types: ['text', 'number', 'fillgaps', 'record'] },
   { id: 'choose', glyph: ICONS.listChecks,      types: ['single', 'multi', 'checkbox', 'truefalse', 'select'] },
   { id: 'relate', glyph: ICONS.arrowLeftRight,  types: ['match', 'order', 'dragdrop', 'arrowmatch'] },
   { id: 'external', glyph: ICONS.package,        types: ['embed', 'scorm'] },

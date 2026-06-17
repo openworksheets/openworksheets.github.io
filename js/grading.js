@@ -19,6 +19,11 @@ export function gradeField(field, answer) {
   const res = graders[field.type]
     ? graders[field.type](field.config || {}, answer)
     : { ratio: 0, blank: true };
+  // Campos no autocorregibles (grabación de voz en modo manual): quedan
+  // pendientes de que el profesor ponga la nota al revisar la entrega.
+  if (res.pending) {
+    return { earned: 0, max, ok: 'pending' };
+  }
   const ratio = Math.max(0, Math.min(1, res.ratio));
   return {
     earned: Math.round(ratio * max * 100) / 100,
@@ -194,6 +199,16 @@ const graders = {
   scorm(cfg, answer) {
     // answer = snapshot del runtime SCORM: { raw, min, max, status }
     return scormRatio(answer, cfg.scoreMode);
+  },
+
+  record(cfg, answer) {
+    // answer = data-URL del audio grabado (string) o vacío.
+    const has = typeof answer === 'string' && answer.startsWith('data:');
+    if (!has) return { ratio: 0, blank: true };
+    // 'participation': grabar algo basta para los puntos completos.
+    if (cfg.scoreMode === 'participation') return { ratio: 1 };
+    // 'manual' (por defecto): lo puntúa el profesor al revisar la entrega.
+    return { pending: true };
   }
 };
 

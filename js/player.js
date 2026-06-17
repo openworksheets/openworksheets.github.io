@@ -46,6 +46,13 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     return urls.get(path);
   }
 
+  // La grabación de voz incrusta el audio (base64) en la entrega: por su tamaño,
+  // la compartición por enlace queda deshabilitada (se entrega por archivo).
+  const hasRecordFields = manifest.pages.some(p => p.fields.some(f => f.type === 'record'));
+  // Tope holgado para el enlace de entrega: muy por debajo del límite real de
+  // Firefox (~65 536) y de Chrome (~2 MB). Por encima, solo descarga de archivo.
+  const MAX_SHARE_URL = 16000;
+
   // Paquetes servidos por el Service Worker: SCORM y webs incrustadas (.zip/.elpx).
   const needsPkgHost = manifest.pages.some(p => p.fields.some(f =>
     f.type === 'scorm' || (f.type === 'embed' && (f.config?.mode === 'zip' || f.config?.mode === 'elpx'))));
@@ -106,9 +113,11 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     correctionShown: state?.correctionShown || false
   };
 
+  // Para el autoguardado: los campos pesados (grabación de voz) exponen
+  // getSaveAnswer() para no persistir el audio en localStorage (cuota ~5 MB).
   function collectAnswers() {
     const out = {};
-    controllers.forEach(c => { out[c.field.id] = c.getAnswer(); });
+    controllers.forEach(c => { out[c.field.id] = c.getSaveAnswer ? c.getSaveAnswer() : c.getAnswer(); });
     return out;
   }
 
@@ -413,16 +422,20 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     });
     const entregaArchivo = await encryptSubmission(entrega, manifest.submissionCrypto);
 
+    // Enlace de entrega (opción A+B): se deshabilita si la ficha tiene grabación
+    // de voz o si la URL resultante supera el tope holgado. En esos casos solo
+    // queda la descarga del archivo, que sí contiene el audio.
+    let shareUrl = '';
+    try {
+      const encoded = await compressToBase64url(entregaArchivo);
+      const u = new URL('./index.html', window.location.href);
+      u.hash = 'e=' + encoded;
+      if (!hasRecordFields && u.href.length <= MAX_SHARE_URL) shareUrl = u.href;
+    } catch {}
+
     if (!preview) {
       datos.attempts += 1;
       datos.startedAt = 0;
-      let shareUrl = '';
-      try {
-        const encoded = await compressToBase64url(entregaArchivo);
-        const u = new URL('./index.html', window.location.href);
-        u.hash = 'e=' + encoded;
-        shareUrl = u.href;
-      } catch {}
       datos.lastEntrega = {
         nota: entrega.nota, total: entrega.total, codigo: entrega.codigo, fecha: entrega.fecha,
         alumno: entrega.alumno, titulo: entrega.titulo, shareUrl
@@ -457,9 +470,13 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     const showScore = settings.showScore !== false;
     const canRetry = !datos.correctionShown && (preview || attemptsLeft() > 0);
 
+    const hasPending = gradeResults.some(g => g.res.ok === 'pending');
+
     const acciones = el('div', { class: 'acciones' });
     acciones.appendChild(iconBtn({ class: 'btn dark', onclick: () => downloadEntrega(entregaArchivo, entrega) }, ICONS.download, t('player.downloadBtn')));
-    acciones.appendChild(iconBtn({ class: 'btn', onclick: () => shareEntrega(entregaArchivo) }, ICONS.share, t('player.shareBtn')));
+    if (shareUrl) {
+      acciones.appendChild(iconBtn({ class: 'btn', onclick: () => copyShareUrl(shareUrl) }, ICONS.share, t('player.shareBtn')));
+    }
     const copyBtn = iconBtn({ class: 'btn', onclick: () => copyResumen(entrega, detalleCorreccion) }, ICONS.copy, t('player.copyBtn'));
     const printBtn = el('button', { class: 'btn', onclick: () => window.print() }, t('player.printBtn'));
     if (!showScore) { copyBtn.disabled = true; printBtn.disabled = true; }
@@ -476,6 +493,8 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
       el('div', { class: 'detalle' },
         `${datos.alumno}${datos.grupo ? ' · ' + datos.grupo : ''} · ${fechaHora(new Date(entrega.fecha))}`),
       (() => { const p = el('p', { class: 'al-info', style: 'margin-top:12px' }); p.innerHTML = t('player.submissionInfo'); return p; })(),
+      hasPending ? el('p', { class: 'al-info al-pending-hint', style: 'margin-top:8px' }, t('player.pendingReview')) : null,
+      (!preview && !shareUrl) ? el('p', { class: 'al-info', style: 'margin-top:8px' }, t('player.shareDisabled')) : null,
       showCorrection ? el('p', { class: 'al-correction-hint al-info', style: 'margin-top:8px', hidden: canRetry }, t('player.correctionHint')) : null,
       acciones);
 
@@ -515,16 +534,9 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     downloadBlob(blob, entregaFilename(entrega, meta));
   }
 
-  async function shareEntrega(entregaArchivo) {
-    try {
-      const encoded = await compressToBase64url(entregaArchivo);
-      const indexUrl = new URL('./index.html', window.location.href);
-      indexUrl.hash = 'e=' + encoded;
-      const ok = await copyToClipboard(indexUrl.href);
-      toast(ok ? t('toast.shareUrlCopied') : t('toast.shareUrlError'), ok ? 'ok' : 'error');
-    } catch {
-      toast(t('toast.shareUrlError'), 'error');
-    }
+  async function copyShareUrl(url) {
+    const ok = await copyToClipboard(url);
+    toast(ok ? t('toast.shareUrlCopied') : t('toast.shareUrlError'), ok ? 'ok' : 'error');
   }
 
   async function copyResumen(entrega, detalle = []) {

@@ -438,6 +438,13 @@ function renderCanvas() {
           prev.style.setProperty('--media-frame-color', cfg.frameColor || '#1d2c42');
           box.appendChild(prev);
         }
+      } else if (field.type === 'record') {
+        box.classList.add('ed-record-field');
+        const icon = el('span', { class: 'ed-record-icon' });
+        icon.innerHTML = ICONS.mic;
+        box.appendChild(el('div', { class: 'ed-record-prev' },
+          icon,
+          el('div', { class: 'ed-record-prev-txt' }, field.config?.prompt || t('cfg.recordPromptPlaceholder'))));
       } else if (isShapeField(field.type)) {
         box.appendChild(buildShapeSvg(field));
       }
@@ -2403,6 +2410,32 @@ const configForms = {
     mediaTitleCaption(cont, field);
   },
 
+  record(cont, field) {
+    const cfg = field.config;
+    // Aviso: el audio se incrusta en la entrega; eso deshabilita la entrega por
+    // enlace (queda solo la descarga del archivo).
+    cont.appendChild(el('p', { class: 'settings-warning' },
+      el('small', {}, t('cfg.recordLinkWarning'))));
+
+    selectRow(cont, t('cfg.recordScoreMode'), cfg.scoreMode || 'manual', [
+      ['manual', t('cfg.recordScoreManual')],
+      ['participation', t('cfg.recordScoreParticipation')]
+    ], v => { cfg.scoreMode = v; renderPanel(); });
+    cont.appendChild(el('p', { class: 'cfg-hint' },
+      (cfg.scoreMode || 'manual') === 'manual' ? t('cfg.recordManualHint') : t('cfg.recordParticipationHint')));
+
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.recordMaxSec')));
+    const sec = el('input', { type: 'number', min: '5', max: '600', step: '5', value: String(cfg.maxSec || 60) });
+    sec.addEventListener('input', () => { cfg.maxSec = Math.max(5, Math.min(600, parseInt(sec.value, 10) || 60)); markDirty(); });
+    cont.appendChild(sec);
+
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.recordPrompt')));
+    const pr = el('input', { type: 'text', value: cfg.prompt || '', maxlength: '200', placeholder: t('cfg.recordPromptPlaceholder') });
+    pr.addEventListener('input', () => { cfg.prompt = pr.value; markDirty(); });
+    pr.addEventListener('change', () => renderCanvas());
+    cont.appendChild(pr);
+  },
+
   embed(cont, field) {
     const cfg = field.config;
     // Tipo elegido + botón para volver a elegir (re-abre el selector inicial).
@@ -3154,7 +3187,9 @@ function validate() {
   state.manifest.pages.forEach((p, pi) => {
     p.fields.forEach(f => {
       if (FIELD_TYPES[f.type]?.decor) return; // los decorativos no necesitan respuesta
-      if (!f.noScore) { // los que no puntúan no requieren respuesta correcta
+      // La grabación de voz no tiene respuesta correcta (se valora a mano o por
+      // participación): no requiere comprobación de solución.
+      if (!f.noScore && f.type !== 'record') {
         const e = expectedText(f);
         if (!e || !e.trim()) problems.push(t('validate.noAnswer', { n: pi + 1, type: fieldTypeName(f.type) }));
       }

@@ -59,6 +59,7 @@ export function renderField(field, pageLayer, ctx) {
       root.classList.remove('mark-ok', 'mark-ko', 'mark-partial', 'mark-blank');
       const cls = result.ok === true ? 'mark-ok'
         : result.ok === 'partial' ? 'mark-partial'
+        : result.ok === 'pending' ? 'mark-pending'
         : result.ok === 'blank' ? 'mark-blank' : 'mark-ko';
       root.classList.add(cls);
       let badge = root.querySelector(':scope > .wpf-badge');
@@ -66,7 +67,7 @@ export function renderField(field, pageLayer, ctx) {
         badge = el('span', { class: 'wpf-badge' });
         root.appendChild(badge);
       }
-      badge.textContent = result.ok === true ? '✓' : result.ok === 'partial' ? '½' : '✗';
+      badge.textContent = result.ok === true ? '✓' : result.ok === 'partial' ? '½' : result.ok === 'pending' ? '⋯' : '✗';
       if (expected && result.ok !== true) {
         let exp = root.querySelector(':scope > .wpf-expected');
         if (!exp) {
@@ -519,6 +520,151 @@ const renderers = {
         return Boolean(s) && s !== 'not attempted';
       },
       setDisabled: b => { if (view.lock) view.lock.hidden = !b; }
+    };
+  },
+
+  // Grabación de voz: el alumno graba audio con el micrófono (MediaRecorder).
+  // La respuesta es un data-URL base64; no se persiste en el autoguardado
+  // (getSaveAnswer → '') para no llenar localStorage.
+  record(field, root, ctx) {
+    root.classList.add('wpf-record');
+    const cfg = field.config || {};
+    const maxSec = Math.max(5, Math.min(600, Number(cfg.maxSec) || 60));
+
+    if (cfg.prompt) root.appendChild(el('div', { class: 'wpf-record-prompt' }, cfg.prompt));
+
+    const supported = typeof window.MediaRecorder !== 'undefined'
+      && navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+
+    let dataUrl = '';
+    let disabled = false;
+    let recording = false;
+    let recorder = null;
+    let stream = null;
+    let chunks = [];
+    let tick = null;
+    let startedAt = 0;
+
+    const audioEl = el('audio', { class: 'wpf-record-audio' });
+    audioEl.controls = true;
+    audioEl.style.display = 'none';
+
+    const dot = el('span', { class: 'wpf-record-dot' });
+    const recLabel = el('span', {}, t('record.start'));
+    const recBtn = el('button', { class: 'wpf-record-btn', type: 'button' }, dot, recLabel);
+    const timeEl = el('span', { class: 'wpf-record-time' }, '');
+    const redoBtn = el('button', { class: 'wpf-record-redo', type: 'button' }, t('record.redo'));
+    redoBtn.style.display = 'none';
+    const hint = el('span', { class: 'wpf-record-hint' }, t('record.max', { s: maxSec }));
+
+    const fmt = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+
+    function stopStream() {
+      if (stream) { stream.getTracks().forEach(tr => tr.stop()); stream = null; }
+    }
+
+    function showRecorded() {
+      audioEl.src = dataUrl;
+      audioEl.style.display = '';
+      redoBtn.style.display = disabled ? 'none' : '';
+      hint.style.display = 'none';
+    }
+
+    async function start() {
+      if (disabled || recording || !supported) return;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch {
+        hint.textContent = t('record.denied');
+        hint.style.display = '';
+        hint.classList.add('wpf-record-error');
+        return;
+      }
+      chunks = [];
+      let mime = '';
+      const can = window.MediaRecorder.isTypeSupported?.bind(window.MediaRecorder);
+      if (can?.('audio/webm;codecs=opus')) mime = 'audio/webm;codecs=opus';
+      else if (can?.('audio/webm')) mime = 'audio/webm';
+      else if (can?.('audio/mp4')) mime = 'audio/mp4';
+      try {
+        recorder = new MediaRecorder(stream, mime ? { mimeType: mime, audioBitsPerSecond: 32000 } : { audioBitsPerSecond: 32000 });
+      } catch {
+        recorder = new MediaRecorder(stream);
+      }
+      recorder.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+      recorder.onstop = () => {
+        stopStream();
+        const blob = new Blob(chunks, { type: recorder.mimeType || mime || 'audio/webm' });
+        const reader = new FileReader();
+        reader.onload = () => {
+          dataUrl = String(reader.result || '');
+          showRecorded();
+          notify(ctx);
+        };
+        reader.readAsDataURL(blob);
+      };
+      recorder.start();
+      recording = true;
+      startedAt = Date.now();
+      recBtn.classList.add('is-recording');
+      recLabel.textContent = t('record.stop');
+      audioEl.style.display = 'none';
+      redoBtn.style.display = 'none';
+      hint.style.display = 'none';
+      timeEl.textContent = '0:00';
+      tick = setInterval(() => {
+        const sec = Math.floor((Date.now() - startedAt) / 1000);
+        timeEl.textContent = fmt(sec);
+        if (sec >= maxSec) stop();
+      }, 250);
+    }
+
+    function stop() {
+      if (!recording) return;
+      recording = false;
+      clearInterval(tick);
+      recBtn.classList.remove('is-recording');
+      recLabel.textContent = t('record.start');
+      try { recorder.stop(); } catch { stopStream(); }
+    }
+
+    recBtn.addEventListener('click', () => { recording ? stop() : start(); });
+    redoBtn.addEventListener('click', () => {
+      if (disabled) return;
+      dataUrl = '';
+      audioEl.removeAttribute('src');
+      audioEl.style.display = 'none';
+      redoBtn.style.display = 'none';
+      timeEl.textContent = '';
+      hint.textContent = t('record.max', { s: maxSec });
+      hint.classList.remove('wpf-record-error');
+      hint.style.display = '';
+      notify(ctx);
+    });
+
+    if (!supported) {
+      recBtn.disabled = true;
+      hint.textContent = t('record.unsupported');
+      hint.classList.add('wpf-record-error');
+    }
+
+    root.appendChild(el('div', { class: 'wpf-record-bar' }, recBtn, timeEl, redoBtn, hint));
+    root.appendChild(audioEl);
+
+    return {
+      getAnswer: () => dataUrl || '',
+      // El audio no se guarda en el autoguardado (cuota de localStorage ~5 MB).
+      getSaveAnswer: () => '',
+      setAnswer: v => {
+        if (typeof v === 'string' && v.startsWith('data:')) { dataUrl = v; showRecorded(); }
+      },
+      isAnswered: () => Boolean(dataUrl),
+      setDisabled: b => {
+        disabled = b;
+        if (b && recording) stop();
+        recBtn.disabled = b;
+        redoBtn.style.display = b || !dataUrl ? 'none' : '';
+      }
     };
   },
 

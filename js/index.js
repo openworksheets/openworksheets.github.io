@@ -127,6 +127,7 @@ function esc(s) {
 
 function formatAnswer(val) {
   if (val === null || val === undefined || val === '') return '—';
+  if (typeof val === 'string' && val.startsWith('data:')) return '🎙';
   if (Array.isArray(val)) return val.length ? val.map(String).join(' · ') : '—';
   if (typeof val === 'object') {
     const pairs = Object.entries(val).map(([k, v]) => `${k} → ${v}`);
@@ -135,28 +136,68 @@ function formatAnswer(val) {
   return String(val) || '—';
 }
 
-function renderVerificacion(data, valid) {
-  const singKey = { correcta: 'entrega.correct', incorrecta: 'entrega.incorrect', parcial: 'entrega.partial', 'en blanco': 'entrega.blank' };
-  const badgeCls = { correcta: 'ok', incorrecta: 'err', parcial: 'partial', 'en blanco': 'blank' };
-  const icon = { correcta: '✓', incorrecta: '✗', parcial: '~', 'en blanco': '·' };
+// ---- Nota efectiva con la calificación manual del profesor ----
+// El profesor puede poner la nota de los campos de grabación de voz «pendientes»
+// al revisar la entrega. Esos ajustes se guardan en r.overrides (por id de
+// campo) SIN tocar la entrega original del alumno (su firma sigue siendo válida).
+// Las funciones eff* devuelven la nota teniendo en cuenta esos ajustes.
+function effNota(r) {
+  if (!r.overrides) return r.data.nota;
+  const n = (r.data.respuestas || []).reduce(
+    (s, resp) => s + Number(r.overrides[resp.id] ?? resp.puntos ?? 0), 0);
+  return Math.round(n * 100) / 100;
+}
+function effNota10(r) {
+  const total = r.data.total || 0;
+  return total > 0 ? Math.round(effNota(r) / total * 1000) / 100 : 0;
+}
+function effPct(r) {
+  const total = r.data.total || 0;
+  return total > 0 ? Math.round(effNota(r) / total * 100) : 0;
+}
+function hasManualPending(data) {
+  return (data.respuestas || []).some(r => r.tipo === 'record' && r.resultado === 'pendiente');
+}
+
+function renderVerificacion(r) {
+  const data = r.data;
+  const valid = r.valid;
+  const singKey = { correcta: 'entrega.correct', incorrecta: 'entrega.incorrect', parcial: 'entrega.partial', pendiente: 'entrega.pending', 'en blanco': 'entrega.blank' };
+  const badgeCls = { correcta: 'ok', incorrecta: 'err', parcial: 'partial', pendiente: 'pending', 'en blanco': 'blank' };
+  const icon = { correcta: '✓', incorrecta: '✗', parcial: '~', pendiente: '⋯', 'en blanco': '·' };
 
   const integridad = valid
     ? `<span class="vr-badge ok">${esc(t('verify.ok'))}</span>`
     : `<span class="vr-badge err">${esc(t('verify.tampered'))}</span>`;
 
-  const rows = (data.respuestas || []).map((r, i) => {
-    const cls = badgeCls[r.resultado] || 'blank';
-    const ic = icon[r.resultado] || '·';
-    const label = t(singKey[r.resultado] || 'entrega.blank');
+  const rows = (data.respuestas || []).map((resp, i) => {
+    const cls = badgeCls[resp.resultado] || 'blank';
+    const ic = icon[resp.resultado] || '·';
+    const label = t(singKey[resp.resultado] || 'entrega.blank');
+    const isRecord = resp.tipo === 'record';
+    // Celda de respuesta: el audio se inserta tras volcar el HTML (data-fid).
+    const ansCell = isRecord
+      ? `<td class="vr-ans vr-audio-cell" data-fid="${esc(resp.id)}"></td>`
+      : `<td class="vr-ans">${esc(formatAnswer(resp.respuesta))}</td>`;
+    // Celda de puntos: editable cuando es grabación manual pendiente de nota.
+    const manual = isRecord && resp.resultado === 'pendiente';
+    const ptsVal = r.overrides && resp.id in r.overrides ? r.overrides[resp.id] : resp.puntos;
+    const ptsCell = manual
+      ? `<td class="vr-grade-cell"><input type="number" class="vr-grade" data-fid="${esc(resp.id)}" min="0" max="${formatNum(resp.maximo)}" step="0.5" value="${formatNum(ptsVal)}"> / ${formatNum(resp.maximo)}</td>`
+      : `<td style="white-space:nowrap">${formatNum(ptsVal)} / ${formatNum(resp.maximo)}</td>`;
     return `<tr>
       <td>${i + 1}</td>
-      <td>${r.pagina}</td>
-      <td>${esc(t('field.' + r.tipo) || r.tipo)}</td>
-      <td class="vr-ans">${esc(formatAnswer(r.respuesta))}</td>
-      <td style="white-space:nowrap">${formatNum(r.puntos)} / ${formatNum(r.maximo)}</td>
+      <td>${resp.pagina}</td>
+      <td>${esc(t('field.' + resp.tipo) || resp.tipo)}</td>
+      ${ansCell}
+      ${ptsCell}
       <td><span class="vr-badge ${cls}">${ic} ${esc(label)}</span></td>
     </tr>`;
   }).join('');
+
+  const gradeHint = hasManualPending(data)
+    ? `<p class="vr-grade-hint">${esc(t('verify.gradeHint'))}</p>`
+    : '';
 
   return `<div class="verify-card">
     <div class="verify-header">
@@ -165,9 +206,10 @@ function renderVerificacion(data, valid) {
         <strong>${esc(t('entrega.sheet'))}:</strong> ${esc(data.titulo)}<br>
         <strong>${esc(t('entrega.student'))}:</strong> ${esc(data.alumno)}${data.grupo ? ' (' + esc(data.grupo) + ')' : ''}<br>
         <strong>${esc(t('entrega.date'))}:</strong> ${esc(fechaHora(new Date(data.fecha)))}<br>
-        <strong>${esc(t('entrega.score'))}:</strong> ${formatNum(data.nota)} / ${formatNum(data.total)} &nbsp;(${formatNum(data.nota10)} ${esc(t('entrega.over10'))})
+        <strong>${esc(t('entrega.score'))}:</strong> <span class="vr-score-val">${formatNum(effNota(r))} / ${formatNum(data.total)} &nbsp;(${formatNum(effNota10(r))} ${esc(t('entrega.over10'))})</span>
       </div>
     </div>
+    ${gradeHint}
     <table class="verify-table">
       <thead><tr>
         <th>#</th>
@@ -201,20 +243,61 @@ let classSort = { col: 'fecha', dir: -1 };
 
 function addToClass(data, valid) {
   const pct = data.total > 0 ? Math.round(data.nota / data.total * 100) : 0;
-  classResults.push({ data, valid, pct });
+  const entry = { data, valid, pct };
+  classResults.push(entry);
   saveClassResults();
   renderClassTable();
+  return entry;
 }
 
-function showDetail(data, valid) {
+function showDetail(r) {
   const out = $('#salidaVerificacion');
-  out.innerHTML = renderVerificacion(data, valid);
+  out.innerHTML = renderVerificacion(r);
   out.style.display = 'block';
-  out.style.borderColor = valid ? 'var(--verde)' : 'var(--rojo)';
-  out.style.background = valid ? 'var(--verde-claro)' : 'var(--rojo-claro)';
-  if (!valid) {
+  out.style.borderColor = r.valid ? 'var(--verde)' : 'var(--rojo)';
+  out.style.background = r.valid ? 'var(--verde-claro)' : 'var(--rojo-claro)';
+  if (!r.valid) {
     out.insertAdjacentHTML('afterbegin', `<p style="color:var(--rojo);font-weight:600;margin-bottom:8px">✗ ${esc(t('verify.tampered'))}</p>`);
   }
+
+  // Inserta el reproductor de audio de cada grabación (la respuesta es un data-URL).
+  out.querySelectorAll('.vr-audio-cell').forEach(td => {
+    const resp = (r.data.respuestas || []).find(x => String(x.id) === td.dataset.fid);
+    const url = resp && typeof resp.respuesta === 'string' && resp.respuesta.startsWith('data:') ? resp.respuesta : '';
+    if (url) {
+      const audio = document.createElement('audio');
+      audio.controls = true;
+      audio.src = url;
+      audio.preload = 'metadata';
+      audio.className = 'vr-audio';
+      td.appendChild(audio);
+    } else {
+      td.textContent = '—';
+    }
+  });
+
+  // Calificación manual: el profesor edita los puntos de cada grabación pendiente.
+  const scoreEl = out.querySelector('.vr-score-val');
+  const refreshScore = () => {
+    if (scoreEl) scoreEl.innerHTML = `${formatNum(effNota(r))} / ${formatNum(r.data.total)} &nbsp;(${formatNum(effNota10(r))} ${esc(t('entrega.over10'))})`;
+    renderClassTable();
+  };
+  out.querySelectorAll('.vr-grade').forEach(inp => {
+    const max = parseFloat(inp.max) || 0;
+    const apply = (normalize) => {
+      let v = parseFloat(String(inp.value).replace(',', '.'));
+      if (isNaN(v)) v = 0;
+      v = Math.max(0, Math.min(max, v));
+      r.overrides = r.overrides || {};
+      r.overrides[inp.dataset.fid] = v;
+      if (normalize) inp.value = formatNum(v);
+      saveClassResults();
+      refreshScore();
+    };
+    inp.addEventListener('input', () => apply(false));
+    inp.addEventListener('change', () => apply(true));
+  });
+
   out.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -229,8 +312,8 @@ function renderClassTable() {
       col === 'alumno' ? r.data.alumno :
       col === 'grupo'  ? (r.data.grupo || '') :
       col === 'titulo' ? r.data.titulo :
-      col === 'pct'    ? r.pct :
-      col === 'nota10' ? r.data.nota10 : r.data.fecha;
+      col === 'pct'    ? effPct(r) :
+      col === 'nota10' ? effNota10(r) : r.data.fecha;
     const va = get(a), vb = get(b);
     return dir * (typeof va === 'string' ? va.localeCompare(vb) : va - vb);
   });
@@ -238,24 +321,26 @@ function renderClassTable() {
   const hasGroups    = classResults.some(r => r.data.grupo);
   const hasManySheets = new Set(classResults.map(r => r.data.fichaId)).size > 1;
   const n    = classResults.length;
-  const avg  = formatNum(classResults.reduce((s, r) => s + r.data.nota10, 0) / n);
-  const pass = classResults.filter(r => r.data.nota10 >= 5).length;
+  const avg  = formatNum(classResults.reduce((s, r) => s + effNota10(r), 0) / n);
+  const pass = classResults.filter(r => effNota10(r) >= 5).length;
 
   const arrow = c => c === col ? (dir > 0 ? ' ↑' : ' ↓') : ' ↕';
   const thSort = (c, label, right = false) => `<th data-sort="${c}" class="cl-sort${right ? ' cl-num' : ''}">${esc(label)}${arrow(c)}</th>`;
 
   const rows = sorted.map((r, rowIdx) => {
     const d   = r.data;
-    const cls = r.pct >= 70 ? 'score-high' : r.pct >= 50 ? 'score-mid' : 'score-low';
+    const pct = effPct(r);
+    const cls = pct >= 70 ? 'score-high' : pct >= 50 ? 'score-mid' : 'score-low';
     const dup = classResults.filter(cr => cr.data.alumno === d.alumno && cr.data.fichaId === d.fichaId).length > 1;
     const badge = r.valid ? `<span class="vr-badge ok">✓</span>` : `<span class="vr-badge err">✗</span>`;
+    const pend = hasManualPending(d) ? `<span class="cl-pending" title="${esc(t('index.pendingTip'))}"> ⋯</span>` : '';
     return `<tr class="${cls}" data-ri="${r._i}">
       <td>${rowIdx + 1}</td>
       <td>${esc(d.alumno)}${dup ? `<span class="dup-warn" title="${esc(t('index.classDup'))}"> ⚠</span>` : ''}</td>
       ${hasGroups    ? `<td>${esc(d.grupo || '—')}</td>` : ''}
       ${hasManySheets ? `<td>${esc(d.titulo)}</td>` : ''}
-      <td class="cl-num">${formatNum(d.nota10)}</td>
-      <td class="cl-num">${r.pct}%</td>
+      <td class="cl-num">${formatNum(effNota10(r))}${pend}</td>
+      <td class="cl-num">${pct}%</td>
       <td class="cl-date">${esc(fechaHora(new Date(d.fecha)))}</td>
       <td class="cl-num">${badge}</td>
       <td class="cl-del"><button class="cl-del-btn" data-ri="${r._i}" title="${esc(t('index.delRow'))}">✕</button></td>
@@ -303,8 +388,7 @@ function renderClassTable() {
   container.querySelectorAll('tbody tr').forEach(tr => {
     tr.addEventListener('click', e => {
       if (e.target.closest('.cl-del-btn')) return;
-      const r = classResults[Number(tr.dataset.ri)];
-      showDetail(r.data, r.valid);
+      showDetail(classResults[Number(tr.dataset.ri)]);
     });
   });
 
@@ -343,7 +427,7 @@ function exportClassCsv() {
     return [
       d.alumno, d.grupo || '', d.titulo,
       fechaHora(new Date(d.fecha)),
-      d.nota, d.total, d.nota10, r.pct,
+      effNota(r), d.total, effNota10(r), effPct(r),
       r.valid ? '✓' : '✗', d.codigo
     ].map(q).join(sep);
   });
@@ -377,8 +461,8 @@ async function processEntregaData(raw) {
     }
   }
   const res = await verifyEntrega(data);
-  addToClass(data, res.valid);
-  showDetail(data, res.valid);
+  const entry = addToClass(data, res.valid);
+  showDetail(entry);
 }
 
 function showBadJson() {

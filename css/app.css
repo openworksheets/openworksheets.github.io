@@ -645,6 +645,31 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .vr-badge.err { background: var(--rojo-claro);  color: var(--rojo); }
 .vr-badge.partial { background: var(--ambar-claro); color: var(--ambar); }
 .vr-badge.blank { background: var(--tinta-tenue); color: var(--tinta-suave); }
+.vr-badge.pending { background: var(--azul-claro); color: var(--tinta-suave); }
+
+/* Calificación manual de grabaciones de voz en el revisor */
+.vr-audio { width: 100%; max-width: 260px; height: 34px; vertical-align: middle; }
+.vr-grade-cell { white-space: nowrap; }
+.vr-grade {
+  width: 4.5em;
+  padding: 2px 6px;
+  border: 1px solid var(--tinta-tenue);
+  border-radius: 4px;
+  background: var(--papel);
+  color: var(--tinta);
+  font: inherit;
+  text-align: right;
+}
+.vr-grade-hint {
+  margin: 8px 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--azul-claro);
+  color: var(--tinta-suave);
+  font-size: 0.85rem;
+}
+.al-pending-hint { font-style: italic; }
+.cl-pending { color: var(--tinta-suave); cursor: help; }
 
 /* ---------- Tabla de clase ---------- */
 
@@ -1547,6 +1572,70 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .wpf-embed-html iframe { width: 100%; height: 100%; border: none; }
 .wpf-media-body.has-frame .wpf-media-el,
 .wpf-media-body.has-frame .wpf-embed-html { border-radius: 0; }
+
+/* Grabación de voz (alumno) */
+.wpf-field-record {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  justify-content: center;
+}
+.wpf-record-prompt { font-weight: 600; line-height: 1.25; color: var(--field-fg, inherit); }
+.wpf-record-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5em; }
+.wpf-record-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  padding: 0.35em 0.9em;
+  border: 2px solid var(--tinta);
+  border-radius: 999px;
+  background: var(--papel);
+  color: var(--tinta);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1.2;
+}
+.wpf-record-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.wpf-record-dot {
+  width: 0.8em;
+  height: 0.8em;
+  border-radius: 50%;
+  background: var(--rojo);
+  flex: 0 0 auto;
+}
+.wpf-record-btn.is-recording { border-color: var(--rojo); color: var(--rojo); }
+.wpf-record-btn.is-recording .wpf-record-dot { animation: wpf-record-pulse 1s ease-in-out infinite; }
+@keyframes wpf-record-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+.wpf-record-time { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--rojo); }
+.wpf-record-redo {
+  border: none;
+  background: none;
+  color: var(--tinta-suave);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.2em;
+}
+.wpf-record-hint { font-size: 0.85em; color: var(--tinta-suave); }
+.wpf-record-hint.wpf-record-error { color: var(--rojo); }
+.wpf-record-audio { width: 100%; max-width: 320px; height: 36px; }
+.wpf-field-record.mark-pending { outline: 3px solid rgba(74, 88, 112, 0.35); outline-offset: 2px; border-radius: 6px; }
+.mark-pending > .wpf-badge { background: var(--tinta-suave); }
+
+/* Vista del campo de grabación en el lienzo del editor */
+.ed-field.ed-record-field .ed-record-prev {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  height: 100%;
+  padding: 0 0.6em;
+  color: var(--tinta-suave);
+  overflow: hidden;
+}
+.ed-record-icon { flex: 0 0 auto; display: inline-flex; }
+.ed-record-icon svg { width: 1.6em; height: 1.6em; }
+.ed-record-prev-txt { font-size: calc(1.6cqw * var(--fs, 1)); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wpf-media-empty {
   width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;

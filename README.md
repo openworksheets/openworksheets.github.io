@@ -15,6 +15,7 @@ Campos en los que el alumno teclea su respuesta.
 | **Respuesta corta** | El alumno escribe texto libre. Admite varias respuestas correctas alternativas y opciones de normalización (tildes, mayúsculas, espacios). |
 | **Respuesta numérica** | El alumno introduce un número. Acepta coma o punto como separador decimal y permite definir una tolerancia de error. |
 | **Rellenar huecos** | El alumno rellena palabras o frases que faltan. Dos modos: *escribir un texto con huecos* (marcados con corchetes en el enunciado) o *marcar huecos sobre el documento* (dibujando un cuadro sobre cada hueco que ya existe en el PDF o imagen). Admite varias respuestas válidas por hueco y puntuación proporcional. |
+| **Grabación de voz** | El alumno graba su voz con el micrófono. No se autocorrige: se valora *manualmente* (el docente pone la nota al revisar la entrega) o por *participación* (grabar algo otorga los puntos completos). El audio viaja dentro de la entrega; por su tamaño, su presencia deshabilita la entrega por enlace (queda solo la descarga de archivo). Duración máxima configurable. |
 
 ### ☑️ Elegir
 
@@ -82,6 +83,8 @@ Todos los campos con texto comparten ajustes de **tipo de letra** (con una fuent
 ## Entregas y verificación
 
 El docente puede abrir los archivos de entrega desde la página principal para ver la puntuación, las respuestas y comprobar automáticamente que no han sido modificados. Es posible cargar múltiples archivos a la vez o recibirlos mediante el enlace que genera el alumnado al terminar. Los resultados de toda una clase se muestran en una tabla ordenable y se pueden exportar a CSV.
+
+Las respuestas que no se autocorrigen —las **grabaciones de voz** en modo *manual*— aparecen como **pendientes**: al abrir la entrega, el docente reproduce cada audio y escribe su puntuación, y la nota total, la nota sobre 10, el porcentaje y el CSV de la clase se recalculan al instante. Estos ajustes se guardan localmente en el navegador del docente **sin modificar la entrega original** del alumnado, por lo que su verificación de integridad sigue siendo válida.
 
 La verificación de integridad es automática y avisa si algún archivo ha sido manipulado. Las entregas también pueden cifrarse para que solo el docente pueda leerlas (ver [Seguridad y cifrado](#seguridad-y-cifrado)).
 

@@ -12,6 +12,29 @@ Las versiones publicadas también están en la página de
 ## [No publicado]
 
 ### Añadido
+- **Campo «Grabación de voz»** (grupo «Escribir» de la paleta): el alumnado
+  graba su voz con el micrófono (`MediaRecorder`, Opus mono) directamente sobre
+  la ficha. Pensado para idiomas, lectura en voz alta, música o infantil.
+  - **Dos modos de puntuación**: *Manual* (la pone el profesor al revisar la
+    entrega; queda como «pendiente» hasta entonces) o *Participación*
+    (automática: grabar algo otorga los puntos completos). El modo *sin puntuar*
+    se obtiene, como en cualquier campo, con la casilla de anular puntuación.
+  - **Calificación en el revisor de entregas** (página de inicio): al abrir una
+    entrega, cada grabación se **reproduce** y, si es de modo manual, muestra un
+    **campo editable de puntos**; la nota total, la nota sobre 10, el % y el CSV
+    de la clase se **recalculan automáticamente**. El ajuste del profesor se
+    guarda como una capa local **sin alterar la entrega original** del alumnado,
+    cuya verificación de integridad sigue siendo válida.
+  - El audio **se incrusta cifrado** dentro de la entrega cuando la ficha tiene
+    activado el cifrado de entregas (solo el docente puede oírlo); si no, viaja
+    como cualquier otra respuesta. **Duración máxima configurable** por campo
+    (60 s por defecto) y enunciado opcional.
+  - Por el tamaño del audio, una ficha con grabaciones **deshabilita la entrega
+    por enlace** (la URL sería inmanejable): la entrega pasa a ser por
+    **descarga de archivo**. El visor también recurre a la descarga si el enlace
+    superara un tope holgado (muy por debajo de los límites de Chrome y Firefox).
+    El audio **no se guarda en el autoguardado** del navegador para no agotar el
+    almacenamiento local.
 - La **ficha de ejemplo** de la página de inicio se adapta ahora al **idioma
   activo**: se muestra la versión en español, catalán o inglés según el idioma
   seleccionado, con el español como *fallback* para el resto de idiomas. Se

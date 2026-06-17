@@ -46,7 +46,7 @@ export async function buildEntregaData({ manifest, alumno, grupo, resultados, ea
       respuesta: r.answer,
       puntos: r.earned,
       maximo: r.max,
-      resultado: r.ok === true ? 'correcta' : r.ok === 'partial' ? 'parcial' : r.ok === 'blank' ? 'en blanco' : 'incorrecta'
+      resultado: r.ok === true ? 'correcta' : r.ok === 'partial' ? 'parcial' : r.ok === 'pending' ? 'pendiente' : r.ok === 'blank' ? 'en blanco' : 'incorrecta'
     }))
   };
   data.codigo = await shortCode(SALT + canonicalPayload(data));
@@ -103,8 +103,8 @@ export function entregaResumen(data, { includeScore = true, detail = null } = {}
   ].filter(l => l !== null);
   if (includeScore) {
     // mapa resultado (almacenado en español) → claves i18n
-    const singKey = { correcta: 'entrega.correct', incorrecta: 'entrega.incorrect', parcial: 'entrega.partial', 'en blanco': 'entrega.blank' };
-    const plurKey = { correcta: 'entrega.corrects', incorrecta: 'entrega.incorrects', parcial: 'entrega.partials', 'en blanco': 'entrega.blanks' };
+    const singKey = { correcta: 'entrega.correct', incorrecta: 'entrega.incorrect', parcial: 'entrega.partial', pendiente: 'entrega.pending', 'en blanco': 'entrega.blank' };
+    const plurKey = { correcta: 'entrega.corrects', incorrecta: 'entrega.incorrects', parcial: 'entrega.partials', pendiente: 'entrega.pendings', 'en blanco': 'entrega.blanks' };
     const porTipo = {};
     for (const r of data.respuestas || []) {
       porTipo[r.resultado] = (porTipo[r.resultado] || 0) + 1;
@@ -115,8 +115,9 @@ export function entregaResumen(data, { includeScore = true, detail = null } = {}
   if (detail && detail.length) {
     lines.push('', t('entrega.detail') + ':');
     detail.forEach((d, i) => {
-      const icon = d.ok === true ? '✓' : d.ok === 'partial' ? '½' : '✗';
-      const ans = Array.isArray(d.answer) ? d.answer.join(', ') : String(d.answer ?? '');
+      const icon = d.ok === true ? '✓' : d.ok === 'partial' ? '½' : d.ok === 'pending' ? '⋯' : '✗';
+      const ans = Array.isArray(d.answer) ? d.answer.join(', ')
+        : (typeof d.answer === 'string' && d.answer.startsWith('data:') ? '🎙' : String(d.answer ?? ''));
       let line = `  ${i + 1}. ${ans} ${icon}`;
       if (d.ok !== true && d.expected) line += `  →  ${t('entrega.solution')}: ${d.expected}`;
       lines.push(line);
