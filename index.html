@@ -37,31 +37,35 @@
         Sube un PDF o una imagen, coloca encima campos interactivos y compártelo con tu
         alumnado mediante un simple enlace. Sin servidor, sin cuentas, sin instalaciones.
       </p>
-      <p style="margin-top:18px">
-        <a class="btn primary" href="editor.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon" style="width:16px;height:16px"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> <span data-i18n="index.heroBtn">Empezar a crear</span></a>
-      </p>
-      <p style="margin-top:10px;font-size:.9rem">
-        <a id="linkEjemplo" href="editor.html?ejemplo=ejemplos/ficha-de-prueba-para-openworksheets.owpkg" data-i18n="index.heroExample">Ver un ejemplo en el editor</a>
-      </p>
     </section>
 
     <section class="home-grid">
       <div class="card home-card anim-in">
-        <span class="num">1</span>
+        <div class="home-card-top">
+          <span class="num">1</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="home-icon" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </div>
         <h3 data-i18n="index.card1.title">Crea</h3>
         <p data-i18n="index.card1.desc">Sube tu PDF y dibuja encima respuestas cortas,
         opciones, huecos, emparejamientos, ordenaciones o zonas de arrastre. Configura
         respuestas correctas y puntuación.</p>
-        <a class="btn primary" href="editor.html" data-i18n="index.card1.btn">Abrir el editor</a>
+        <a id="linkEjemplo" class="home-example" href="editor.html?ejemplo=ejemplos/ficha-de-prueba-para-openworksheets.owpkg" data-i18n="index.heroExample">Ver un ejemplo</a>
+        <a class="btn" href="editor.html" data-i18n="index.card1.btn">Abrir el editor</a>
       </div>
       <div class="card home-card anim-in">
-        <span class="num">2</span>
+        <div class="home-card-top">
+          <span class="num">2</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="home-icon" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
+        </div>
         <h3 data-i18n="index.card2.title">Comparte</h3>
         <p data-i18n="index.card2.desc">Exporta la ficha como un paquete, súbela a un alojamiento público (como Google Drive) y genera el enlace para tu alumnado. La abren en el navegador, responden y reciben su corrección al instante.</p>
         <button class="btn" id="btnAbrirCompartir" data-i18n="index.card2.btn">Generar enlace</button>
       </div>
       <div class="card home-card anim-in">
-        <span class="num">3</span>
+        <div class="home-card-top">
+          <span class="num">3</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="home-icon" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
+        </div>
         <h3 data-i18n="index.card3.title">Revisa las entregas</h3>
         <p data-i18n="index.card3.desc">Al terminar, el alumnado puede enviarte su entrega como archivo o enlace. Ábrela para ver la puntuación, las respuestas a cada pregunta y comprobar que no se ha modificado.</p>
         <a class="btn" href="entregas.html" data-i18n="index.card3.btn">Abrir entregas</a>
@@ -90,6 +94,8 @@
         </ul>
         Es muy recomendable utilizar al menos la contraseña del profesorado para que las entregas
         lleguen sin manipular y que solo las puedas abrir tú.
+        <p>Además, puedes restringir cuándo está disponible la ficha —fecha y hora de apertura y de
+        cierre— en el editor: Ajustes → Restricciones de acceso.</p>
       </div>
     </details>
 

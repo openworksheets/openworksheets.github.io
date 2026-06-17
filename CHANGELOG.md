@@ -9,7 +9,7 @@ Las versiones publicadas también están en la página de
 
 ---
 
-## [No publicado]
+## [1.12.0] — 2026-06-17
 
 ### Cambiado
 - **Pantalla de inicio más simple y clara**: la portada se reduce ahora a tres

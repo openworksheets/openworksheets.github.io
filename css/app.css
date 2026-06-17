@@ -207,6 +207,7 @@ small { color: var(--tinta-suave); }
   font-family: var(--cuerpo);
   font-weight: 700;
   font-size: 0.92rem;
+  line-height: 1.25;
   padding: 9px 16px;
   border-radius: var(--radio);
   border: 2px solid var(--tinta);
@@ -379,6 +380,8 @@ textarea { resize: vertical; min-height: 70px; }
   margin-top: 26px;
 }
 .home-card { display: flex; flex-direction: column; gap: 8px; }
+.home-card-top { display: flex; align-items: center; justify-content: space-between; }
+.home-icon { width: 30px; height: 30px; color: var(--rojo); opacity: 0.9; }
 .home-card .num, .card > .num {
   font-family: var(--display);
   font-weight: 900;
@@ -387,6 +390,11 @@ textarea { resize: vertical; min-height: 70px; }
   line-height: 1;
 }
 .home-card p { flex: 1; color: var(--tinta-suave); font-size: 0.95rem; }
+.home-example { display: block; text-align: center; font-size: 0.85rem; margin: 0; }
+/* Botones de las tarjetas: salmón claro (tono del subrayado de «ficha
+   autocorregible»), suficientemente claro para que el texto tenga buen contraste. */
+.home-card .btn { background: color-mix(in srgb, var(--rojo) 16%, var(--blanco)); }
+.home-card .btn:hover { background: color-mix(in srgb, var(--rojo) 24%, var(--blanco)); }
 
 .page-title { margin-top: 0; }
 
@@ -402,7 +410,7 @@ textarea { resize: vertical; min-height: 70px; }
   block-size: 0;
   overflow: hidden;
   opacity: 0;
-  transition: block-size 0.28s ease, opacity 0.28s ease, content-visibility 0.28s allow-discrete;
+  transition: block-size 0.5s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.45s ease, content-visibility 0.5s allow-discrete;
 }
 .seguridad[open]::details-content {
   block-size: auto;
@@ -426,7 +434,7 @@ textarea { resize: vertical; min-height: 70px; }
 .seguridad > summary::-webkit-details-marker { display: none; }
 .seguridad > summary::marker { content: ''; }
 .seguridad-icon { width: 18px; height: 18px; flex: none; color: var(--ambar-oscuro, #b45309); }
-.seguridad-chevron { width: 18px; height: 18px; flex: none; margin-left: auto; transition: transform 0.15s ease; }
+.seguridad-chevron { width: 18px; height: 18px; flex: none; margin-left: auto; transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1); }
 .seguridad[open] .seguridad-chevron { transform: rotate(180deg); }
 .seguridad[open] > summary {
   border-bottom-style: solid;
@@ -442,6 +450,7 @@ textarea { resize: vertical; min-height: 70px; }
 }
 .seguridad-cuerpo ul { margin: 8px 0; padding-left: 22px; }
 .seguridad-cuerpo li { margin-bottom: 5px; }
+.seguridad-cuerpo p { margin: 10px 0 0; }
 
 footer.pie {
   text-align: center;
