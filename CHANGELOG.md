@@ -9,6 +9,20 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.11.0] — 2026-06-17
+
+### Añadido
+- **Panel de corrección de clase en la web exportada autónoma**: al abrir un
+  enlace de entrega (`#e=…`) en una ficha publicada en tu propio sitio, ya no se
+  ve solo esa entrega: aparece un panel donde se van **acumulando** las entregas
+  en una tabla con **resumen** (media y aprobados) y **exportación/copia de CSV**,
+  igual que en la web oficial. Se pueden **pegar varios enlaces** (uno por línea)
+  o abrir archivos `.owsub`, y la lista se guarda por sitio. Con `#corregir` se
+  abre el panel vacío para empezar a pegar enlaces.
+  - El render del verificador y el panel de clase se han extraído a módulos
+    compartidos (`verifyview.js`, `classview.js`), usados por la página de inicio
+    y por la web exportada.
+
 ## [1.10.0] — 2026-06-17
 
 ### Añadido

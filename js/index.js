@@ -1,11 +1,12 @@
 // Página de inicio: generador de enlaces para el alumnado y
 // verificación de entregas.
 
-import { toast, copyToClipboard, decompressFromBase64url, downloadBlob, fechaHora, formatNum } from './util.js';
+import { toast, copyToClipboard, decompressFromBase64url } from './util.js';
 import { buildShortLink, parseDriveId } from './drive.js';
 import { verifyEntrega } from './entrega.js';
 import { decryptSubmission, isEncryptedSubmission } from './submissionCrypto.js';
-import { renderVerificacion, mountVerificacion, esc, effNota, effNota10, effPct, hasManualPending } from './verifyview.js';
+import { createClassPanel } from './classview.js';
+import { esc } from './verifyview.js';
 import { t, applyI18n, initLangSelector, getLang } from './i18n.js';
 
 applyI18n();
@@ -121,220 +122,14 @@ $('#btnCopiarEnlace').addEventListener('click', async () => {
 });
 
 // --- Verificar y gestionar entregas de clase ---
-// El render de la tarjeta de verificación (renderVerificacion/mountVerificacion)
-// y las funciones de nota efectiva viven en verifyview.js, compartidas con la
-// página web autónoma exportada.
+// El render de la tarjeta de verificación (verifyview.js) y el panel acumulado
+// de clase con su CSV (classview.js) son módulos compartidos con la página web
+// autónoma exportada (webrun.js).
 
-// Estado acumulado de la clase (persistido en localStorage)
-const CLASS_STORAGE_KEY = 'openworksheets:classResults';
-
-function loadClassResults() {
-  try {
-    const raw = localStorage.getItem(CLASS_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
-}
-
-let classSaveWarned = false;
-function saveClassResults() {
-  try {
-    localStorage.setItem(CLASS_STORAGE_KEY, JSON.stringify(classResults));
-    classSaveWarned = false;
-  } catch {
-    // Cuota llena (las grabaciones de voz son data-URLs grandes): la lista sigue
-    // en memoria pero ya no se persiste. Avisamos una vez para que el docente
-    // exporte el CSV antes de recargar y perder las calificaciones.
-    if (!classSaveWarned) {
-      classSaveWarned = true;
-      toast(t('toast.classSaveFailed'), 'error');
-    }
-  }
-}
-
-const classResults = loadClassResults();
-let classSort = { col: 'fecha', dir: -1 };
-
-function addToClass(data, valid) {
-  const pct = data.total > 0 ? Math.round(data.nota / data.total * 100) : 0;
-  const entry = { data, valid, pct };
-  classResults.push(entry);
-  saveClassResults();
-  renderClassTable();
-  return entry;
-}
-
-function showDetail(r) {
-  const out = $('#salidaVerificacion');
-  out.innerHTML = renderVerificacion(r);
-  out.style.display = 'block';
-  out.style.borderColor = r.valid ? 'var(--verde)' : 'var(--rojo)';
-  out.style.background = r.valid ? 'var(--verde-claro)' : 'var(--rojo-claro)';
-  if (!r.valid) {
-    out.insertAdjacentHTML('afterbegin', `<p style="color:var(--rojo);font-weight:600;margin-bottom:8px">✗ ${esc(t('verify.tampered'))}</p>`);
-  }
-
-  // Audio de las grabaciones y calificación manual; al cambiar la nota se
-  // persiste la lista de clase y se refresca la tabla.
-  mountVerificacion(out, r, { onGradeChange: () => { saveClassResults(); renderClassTable(); } });
-
-  out.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function renderClassTable() {
-  const container = $('#classTbl');
-  if (classResults.length === 0) { container.style.display = 'none'; return; }
-  container.style.display = 'block';
-
-  const { col, dir } = classSort;
-  const sorted = classResults.map((r, i) => ({ ...r, _i: i })).sort((a, b) => {
-    const get = (r) =>
-      col === 'alumno' ? r.data.alumno :
-      col === 'grupo'  ? (r.data.grupo || '') :
-      col === 'titulo' ? r.data.titulo :
-      col === 'pct'    ? effPct(r) :
-      col === 'nota10' ? effNota10(r) : r.data.fecha;
-    const va = get(a), vb = get(b);
-    return dir * (typeof va === 'string' ? va.localeCompare(vb) : va - vb);
-  });
-
-  const hasGroups    = classResults.some(r => r.data.grupo);
-  const hasManySheets = new Set(classResults.map(r => r.data.fichaId)).size > 1;
-  const n    = classResults.length;
-  const avg  = formatNum(classResults.reduce((s, r) => s + effNota10(r), 0) / n);
-  const pass = classResults.filter(r => effNota10(r) >= 5).length;
-
-  const arrow = c => c === col ? (dir > 0 ? ' ↑' : ' ↓') : ' ↕';
-  const thSort = (c, label, right = false) => `<th data-sort="${c}" class="cl-sort${right ? ' cl-num' : ''}">${esc(label)}${arrow(c)}</th>`;
-
-  const rows = sorted.map((r, rowIdx) => {
-    const d   = r.data;
-    const pct = effPct(r);
-    const cls = pct >= 70 ? 'score-high' : pct >= 50 ? 'score-mid' : 'score-low';
-    const dup = classResults.filter(cr => cr.data.alumno === d.alumno && cr.data.fichaId === d.fichaId).length > 1;
-    const badge = r.valid ? `<span class="vr-badge ok">✓</span>` : `<span class="vr-badge err">✗</span>`;
-    const pend = hasManualPending(d) ? `<span class="cl-pending" title="${esc(t('index.pendingTip'))}"> ⋯</span>` : '';
-    return `<tr class="${cls}" data-ri="${r._i}">
-      <td>${rowIdx + 1}</td>
-      <td>${esc(d.alumno)}${dup ? `<span class="dup-warn" title="${esc(t('index.classDup'))}"> ⚠</span>` : ''}</td>
-      ${hasGroups    ? `<td>${esc(d.grupo || '—')}</td>` : ''}
-      ${hasManySheets ? `<td>${esc(d.titulo)}</td>` : ''}
-      <td class="cl-num">${formatNum(effNota10(r))}${pend}</td>
-      <td class="cl-num">${pct}%</td>
-      <td class="cl-date">${esc(fechaHora(new Date(d.fecha)))}</td>
-      <td class="cl-num">${badge}</td>
-      <td class="cl-del"><button class="cl-del-btn" data-ri="${r._i}" title="${esc(t('index.delRow'))}">✕</button></td>
-    </tr>`;
-  }).join('');
-
-  const colspan = 8 + (hasGroups ? 1 : 0) + (hasManySheets ? 1 : 0);
-
-  container.innerHTML = `
-    <div class="class-toolbar">
-      <span class="class-count">${n} ${n === 1 ? esc(t('index.classCountSing')) : esc(t('index.classCountPlur'))}</span>
-      <div class="class-actions">
-        <button class="btn small" id="btnCopyCsv">${esc(t('index.btnCopyCsv'))}</button>
-        <button class="btn small" id="btnExportCsv">${esc(t('index.btnExportCsv'))}</button>
-        <button class="btn small" id="btnClearClass">${esc(t('index.btnClearClass'))}</button>
-      </div>
-    </div>
-    <div class="class-table-wrap">
-      <table class="class-table">
-        <thead><tr>
-          <th>#</th>
-          ${thSort('alumno', t('entrega.student'))}
-          ${hasGroups    ? thSort('grupo',  t('index.colGroup'))  : ''}
-          ${hasManySheets ? thSort('titulo', t('entrega.sheet'))   : ''}
-          ${thSort('nota10', t('index.colNota10'), true)}
-          ${thSort('pct',    t('index.colPct'),    true)}
-          <th>${esc(t('entrega.date'))}</th>
-          <th class="cl-num">${esc(t('index.colValid'))}</th>
-          <th></th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-        <tfoot><tr><td colspan="${colspan}" class="class-stats">
-          ${esc(t('index.classStats', { avg, pass, n }))}
-        </td></tr></tfoot>
-      </table>
-    </div>`;
-
-  container.querySelectorAll('th.cl-sort').forEach(th => {
-    th.addEventListener('click', () => {
-      const c = th.dataset.sort;
-      classSort = { col: c, dir: classSort.col === c ? -classSort.dir : 1 };
-      renderClassTable();
-    });
-  });
-
-  container.querySelectorAll('tbody tr').forEach(tr => {
-    tr.addEventListener('click', e => {
-      if (e.target.closest('.cl-del-btn')) return;
-      showDetail(classResults[Number(tr.dataset.ri)]);
-    });
-  });
-
-  container.querySelectorAll('.cl-del-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      const ri = Number(btn.dataset.ri);
-      classResults.splice(ri, 1);
-      saveClassResults();
-      renderClassTable();
-    });
-  });
-
-  $('#btnCopyCsv').addEventListener('click', copyClassCsv);
-  $('#btnExportCsv').addEventListener('click', exportClassCsv);
-  $('#btnClearClass').addEventListener('click', () => {
-    classResults.length = 0;
-    saveClassResults();
-    renderClassTable();
-    const out = $('#salidaVerificacion');
-    out.style.display = 'none';
-    out.innerHTML = '';
-  });
-}
-
-function buildClassCsv() {
-  const sep = ';';
-  // Neutraliza la inyección de fórmulas (CSV injection): un alumno podría
-  // ponerse de nombre «=HYPERLINK(...)» o «=1+1» y la fórmula se ejecutaría al
-  // abrir el docente el CSV en Excel/LibreOffice. Se antepone un apóstrofo a las
-  // celdas que empiezan por un carácter de fórmula para forzar texto literal.
-  const q = v => {
-    let s = String(v ?? '');
-    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
-    return `"${s.replace(/"/g, '""')}"`;
-  };
-  const headers = [
-    t('entrega.student'), t('index.colGroup'), t('entrega.sheet'),
-    t('entrega.date'), 'Punt.', 'Total',
-    t('index.colNota10'), t('index.colPct'),
-    t('index.colValid'), t('entrega.code')
-  ].map(q).join(sep);
-  const rows = classResults.map(r => {
-    const d = r.data;
-    return [
-      d.alumno, d.grupo || '', d.titulo,
-      fechaHora(new Date(d.fecha)),
-      effNota(r), d.total, effNota10(r), effPct(r),
-      r.valid ? '✓' : '✗', d.codigo
-    ].map(q).join(sep);
-  });
-  return [headers, ...rows].join('\n');
-}
-
-function exportClassCsv() {
-  const BOM = '﻿';
-  downloadBlob(
-    new Blob([BOM + buildClassCsv()], { type: 'text/csv;charset=utf-8' }),
-    'resultados_clase.csv'
-  );
-}
-
-async function copyClassCsv() {
-  const ok = await copyToClipboard(buildClassCsv());
-  toast(ok ? t('toast.copied') : t('toast.notCopied'), ok ? 'ok' : 'error');
-}
+const classPanel = createClassPanel({
+  tableEl: $('#classTbl'),
+  detailEl: $('#salidaVerificacion')
+});
 
 async function processEntregaData(raw) {
   const out = $('#salidaVerificacion');
@@ -360,8 +155,7 @@ async function processEntregaData(raw) {
     }
   }
   const res = await verifyEntrega(data);
-  const entry = addToClass(data, res.valid);
-  showDetail(entry);
+  classPanel.addEntrega(data, res.valid);
 }
 
 function showBadJson() {
@@ -398,7 +192,7 @@ verifySection.addEventListener('drop', async e => {
 });
 
 // Restaurar lista guardada al arrancar
-if (classResults.length) renderClassTable();
+classPanel.render();
 
 // Entrega recibida por URL (alumno compartió el enlace)
 if (window.location.hash.startsWith('#e=')) {

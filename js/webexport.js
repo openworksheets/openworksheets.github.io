@@ -30,7 +30,7 @@ const APP_FILES = [
   'js/player.js', 'js/render.js', 'js/grading.js', 'js/fieldtypes.js',
   'js/fonts.js', 'js/entrega.js', 'js/submissionCrypto.js', 'js/scormhost.js',
   'js/scorm.js', 'js/util.js', 'js/icons.js', 'js/i18n.js', 'js/markdown.js',
-  'js/zipio.js', 'js/verifyview.js', 'js/webrun.js'
+  'js/zipio.js', 'js/verifyview.js', 'js/classview.js', 'js/webrun.js'
 ];
 
 function escapeHtml(s) {
