@@ -6,9 +6,9 @@ OpenWorksheets es una aplicación web para convertir PDFs o imágenes en fichas 
 
 En el editor, los campos se agrupan en la paleta de la izquierda en cinco categorías según lo que tiene que hacer el alumno.
 
-### ✏️ Escribir
+### 💬 Responder
 
-Campos en los que el alumno teclea su respuesta.
+Campos en los que el alumno aporta su propia respuesta abierta (la escribe o la graba).
 
 | Tipo | Descripción |
 |------|-------------|

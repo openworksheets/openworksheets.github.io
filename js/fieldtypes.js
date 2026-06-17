@@ -254,7 +254,7 @@ export const FIELD_ORDER = [
 // Grupos temáticos de la paleta del editor. El nombre visible
 // se obtiene de i18n con la clave 'palette.<id>'.
 export const PALETTE_GROUPS = [
-  { id: 'write',  glyph: ICONS.pencil,         types: ['text', 'number', 'fillgaps', 'record'] },
+  { id: 'write',  glyph: ICONS.messageSquare,   types: ['text', 'number', 'fillgaps', 'record'] },
   { id: 'choose', glyph: ICONS.listChecks,      types: ['single', 'multi', 'checkbox', 'truefalse', 'select'] },
   { id: 'relate', glyph: ICONS.arrowLeftRight,  types: ['match', 'order', 'dragdrop', 'arrowmatch'] },
   { id: 'external', glyph: ICONS.package,        types: ['embed', 'scorm'] },

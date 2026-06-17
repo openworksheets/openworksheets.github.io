@@ -12,7 +12,7 @@ Las versiones publicadas también están en la página de
 ## [No publicado]
 
 ### Añadido
-- **Campo «Grabación de voz»** (grupo «Escribir» de la paleta): el alumnado
+- **Campo «Grabación de voz»** (grupo «Responder» de la paleta): el alumnado
   graba su voz con el micrófono (`MediaRecorder`, Opus mono) directamente sobre
   la ficha. Pensado para idiomas, lectura en voz alta, música o infantil.
   - **Dos modos de puntuación**: *Manual* (la pone el profesor al revisar la
@@ -35,6 +35,9 @@ Las versiones publicadas también están en la página de
     superara un tope holgado (muy por debajo de los límites de Chrome y Firefox).
     El audio **no se guarda en el autoguardado** del navegador para no agotar el
     almacenamiento local.
+  - El grupo de la paleta **«Escribir» pasa a llamarse «Responder»** (con icono
+    de bocadillo), ya que ahora agrupa también la grabación de voz además de
+    texto, número y rellenar huecos.
 - La **ficha de ejemplo** de la página de inicio se adapta ahora al **idioma
   activo**: se muestra la versión en español, catalán o inglés según el idioma
   seleccionado, con el español como *fallback* para el resto de idiomas. Se
