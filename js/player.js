@@ -15,7 +15,7 @@ function iconBtn(attrs, svgStr, label) {
 import { isDecorField } from './fieldtypes.js';
 import { renderField } from './render.js';
 import { fontStack } from './fonts.js';
-import { gradeField, expectedText } from './grading.js';
+import { gradeField, expectedText, answerText } from './grading.js';
 import { buildEntregaData, entregaFilename, entregaResumen } from './entrega.js';
 import { encryptSubmission } from './submissionCrypto.js';
 import { scormSupported, registerScormSw, provisionScormPackage, scormRunBase } from './scormhost.js';
@@ -402,16 +402,24 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     const showCorrection = settings.showCorrection !== false;
     const gradeResults = [];
     controllers.forEach(c => {
-      const res = gradeField(c.field, c.getAnswer());
+      const ans = c.getAnswer();
+      const res = gradeField(c.field, ans);
       earned += res.earned;
       c.setDisabled(true);
       const exp = expectedText(c.field);
       gradeResults.push({ c, res, exp });
+      // Texto legible de la respuesta. Se calcula para todo campo salvo la
+      // grabación de voz (que se muestra como audio). Se incluye aunque sea
+      // vacío: así el verificador muestra «—» en blanco en vez de caer al
+      // volcado crudo, que en respuestas con IDs (dragdrop, textboxes) los
+      // dejaría a la vista.
+      const ansTxt = c.field.type === 'record' ? null : answerText(c.field, ans);
       resultados.push({
         id: c.field.id,
         type: c.field.type,
         page: c.pageIndex + 1,
-        answer: c.getAnswer(),
+        answer: ans,
+        ...(ansTxt !== null ? { answerText: ansTxt } : {}),
         earned: res.earned,
         max: res.max,
         ok: res.ok
@@ -463,7 +471,8 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
       if (!showCorrection) return;
       gradeResults.forEach(({ c, res, exp }) => {
         c.mark(res, exp);
-        detalleCorreccion.push({ answer: c.getAnswer(), ok: res.ok, expected: exp });
+        const ans = c.getAnswer();
+        detalleCorreccion.push({ answer: ans, texto: answerText(c.field, ans), ok: res.ok, expected: exp });
       });
       doc.classList.add('al-show-correction');
       const hint = tarjeta.querySelector('.al-correction-hint');

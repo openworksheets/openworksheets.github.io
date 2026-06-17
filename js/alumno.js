@@ -94,7 +94,7 @@ async function unlockFicha(ficha) {
 
 function showOpener() {
   root.textContent = '';
-  const inputZip = el('input', { type: 'file', accept: '.zip', style: 'display:none' });
+  const inputZip = el('input', { type: 'file', accept: '.owpkg', style: 'display:none' });
   inputZip.addEventListener('change', async () => {
     const file = inputZip.files[0];
     if (!file) return;

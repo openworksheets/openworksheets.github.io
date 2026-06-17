@@ -253,3 +253,77 @@ export function expectedText(field) {
     default: return '';
   }
 }
+
+// Texto legible de la respuesta del alumnado, para guardarlo en la entrega y
+// mostrarlo en el verificador (que no tiene el manifiesto y, sin esto, vería
+// IDs internos o índices). Espejo de expectedText pero sobre la respuesta dada.
+// Devuelve '' para respuestas en blanco (el verificador mostrará «—»).
+export function answerText(field, answer) {
+  const cfg = field.config || {};
+  switch (field.type) {
+    case 'text':
+    case 'number':
+      return String(answer ?? '').trim();
+    case 'single':
+    case 'select':
+      return cfg.options?.[answer] ?? '';
+    case 'truefalse':
+      return answer === true ? (cfg.labels?.[0] || 'Verdadero')
+           : answer === false ? (cfg.labels?.[1] || 'Falso') : '';
+    case 'multi':
+      return (Array.isArray(answer) ? answer : []).map(i => cfg.options?.[i]).filter(Boolean).join(' · ');
+    case 'gaps':
+      return (Array.isArray(answer) ? answer : []).map(s => String(s ?? '').trim()).filter(Boolean).join(' · ');
+    case 'textboxes': {
+      const given = answer && typeof answer === 'object' ? answer : {};
+      return (cfg.boxes || []).map(b => String(given[b.id] ?? '').trim()).filter(Boolean).join(' · ');
+    }
+    case 'checkbox': {
+      const boxes = cfg.boxes || [];
+      const nums = (Array.isArray(answer) ? answer : []).map(String)
+        .map(id => boxes.findIndex(b => b.id === id) + 1)
+        .filter(n => n > 0).sort((a, b) => a - b);
+      return nums.length ? '☑ ' + nums.join(', ') : '';
+    }
+    case 'match': {
+      const pairs = cfg.pairs || [];
+      const given = Array.isArray(answer) ? answer : [];
+      return pairs.map((p, i) => {
+        const j = Number(given[i]);
+        return Number.isInteger(j) && pairs[j] ? `${p.left} → ${pairs[j].right}` : null;
+      }).filter(Boolean).join(' · ');
+    }
+    case 'order': {
+      const items = cfg.items || [];
+      return (Array.isArray(answer) ? answer : []).map(i => items[i]).filter(v => v != null).join(' → ');
+    }
+    case 'arrowmatch': {
+      const items = cfg.items || [];
+      const lbl = id => { const it = items.find(i => i.id === id); return it ? (it.label || '🖼') : id; };
+      return (Array.isArray(answer) ? answer : []).map(c => `${lbl(c.from)} → ${lbl(c.to)}`).join(' · ');
+    }
+    case 'dragdrop': {
+      const zones = cfg.zones || [];
+      const given = answer && typeof answer === 'object' ? answer : {};
+      const placed = id => { const v = given[id]; return Array.isArray(v) ? v.map(String) : (v != null && v !== '' ? [String(v)] : []); };
+      if (cfg.mode === 'crops') {
+        const n = zones.reduce((s, z) => s + placed(z.id).length, 0);
+        return n ? '🖼 ×' + n : '';
+      }
+      return zones.map((z, i) => {
+        const toks = placed(z.id);
+        return toks.length ? `${i + 1}: ${toks.join('+')}` : null;
+      }).filter(Boolean).join(' · ');
+    }
+    case 'scorm': {
+      const a = answer && typeof answer === 'object' ? answer : {};
+      if (cfg.scoreMode === 'completion') return a.status ? String(a.status) : '';
+      return (a.raw !== undefined && a.raw !== null && a.raw !== '')
+        ? String(a.raw) : (a.status ? String(a.status) : '');
+    }
+    case 'record':
+      return (typeof answer === 'string' && answer.startsWith('data:')) ? '🎙' : '';
+    default:
+      return '';
+  }
+}

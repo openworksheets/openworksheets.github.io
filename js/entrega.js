@@ -1,10 +1,13 @@
 // Generación y verificación del archivo de entrega del alumno.
 //
-// La entrega es un JSON con los datos del alumno, sus respuestas, la
+// La entrega es un JSON (con los datos del alumno, sus respuestas, la
 // puntuación y un código de verificación calculado con SHA-256 sobre el
-// contenido. El código permite detectar ediciones manuales simples,
-// pero no es una garantía criptográfica frente a un alumno con
-// conocimientos técnicos (el formato es público).
+// contenido) que se descarga con extensión propia «.owsub» (OpenWorksheets
+// Submission) para distinguirla de un JSON cualquiera. El código permite
+// detectar ediciones manuales simples, pero no es una garantía criptográfica
+// frente a un alumno con conocimientos técnicos (el formato es público). Al
+// abrir se sigue admitiendo .json antiguo: la validación real es el campo
+// `formato`, no la extensión.
 
 import { shortCode, formatNum, fechaHora, slugify } from './util.js';
 import { fieldTypeName } from './fieldtypes.js';
@@ -44,6 +47,12 @@ export async function buildEntregaData({ manifest, alumno, grupo, resultados, ea
       tipo: r.type,
       pagina: r.page,
       respuesta: r.answer,
+      // Texto legible de la respuesta (IDs/índices ya traducidos a etiquetas);
+      // lo usa el verificador, que no tiene el manifiesto. Se incluye también
+      // vacío (cadena ''): su presencia indica «mostrar tal cual o —», frente a
+      // las entregas antiguas (sin la clave), que se formatean en crudo. Solo
+      // se omite en la grabación de voz (se muestra como audio).
+      ...(r.answerText !== undefined ? { respuestaTexto: r.answerText } : {}),
       puntos: r.earned,
       maximo: r.max,
       resultado: r.ok === true ? 'correcta' : r.ok === 'partial' ? 'parcial' : r.ok === 'pending' ? 'pendiente' : r.ok === 'blank' ? 'en blanco' : 'incorrecta'
@@ -85,7 +94,7 @@ export function entregaFilename(data, meta) {
   const alumno = slugify(src.alumno || meta?.alumno || 'alumno');
   const titulo = slugify(src.titulo || meta?.titulo || 'ficha');
   const fecha = fechaHoraSlug(src.fecha || meta?.fecha || data.fecha);
-  return `entrega_${alumno}_${titulo}_${fecha}.json`;
+  return `entrega_${alumno}_${titulo}_${fecha}.owsub`;
 }
 
 // Resumen de texto para pegar en Classroom, correo, etc.
@@ -116,8 +125,10 @@ export function entregaResumen(data, { includeScore = true, detail = null } = {}
     lines.push('', t('entrega.detail') + ':');
     detail.forEach((d, i) => {
       const icon = d.ok === true ? '✓' : d.ok === 'partial' ? '½' : d.ok === 'pending' ? '⋯' : '✗';
-      const ans = Array.isArray(d.answer) ? d.answer.join(', ')
-        : (typeof d.answer === 'string' && d.answer.startsWith('data:') ? '🎙' : String(d.answer ?? ''));
+      const ans = d.texto
+        ? d.texto
+        : (Array.isArray(d.answer) ? d.answer.join(', ')
+          : (typeof d.answer === 'string' && d.answer.startsWith('data:') ? '🎙' : String(d.answer ?? '')));
       let line = `  ${i + 1}. ${ans} ${icon}`;
       if (d.ok !== true && d.expected) line += `  →  ${t('entrega.solution')}: ${d.expected}`;
       lines.push(line);

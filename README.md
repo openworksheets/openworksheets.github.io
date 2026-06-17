@@ -77,8 +77,8 @@ Todos los campos con texto comparten ajustes de **tipo de letra** (con una fuent
 ## Flujo de trabajo
 
 1. **Crear:** el profesorado sube un PDF o imagen, coloca los campos y configura las respuestas correctas y la puntuación en el editor.
-2. **Compartir:** la ficha se exporta como un archivo ZIP que contiene todo lo necesario. Se sube a Google Drive u otro alojamiento público y se comparte con el alumnado mediante un enlace generado en la propia aplicación. El alumnado no tiene acceso al archivo ZIP original, lo que protege el contenido.
-3. **Responder y entregar:** el alumnado responde desde el navegador y, al terminar, puede descargar un archivo de entrega (`.json`) o copiar un enlace directo para enviárselo al docente.
+2. **Compartir:** la ficha se exporta como un paquete `.owpkg` (OpenWorksheets Package, internamente un ZIP) que contiene todo lo necesario. Se sube a Google Drive u otro alojamiento público y se comparte con el alumnado mediante un enlace generado en la propia aplicación. El alumnado no tiene acceso al paquete original, lo que protege el contenido.
+3. **Responder y entregar:** el alumnado responde desde el navegador y, al terminar, puede descargar un archivo de entrega (`.owsub`) o copiar un enlace directo para enviárselo al docente.
 
 > **Alternativa: exportar como SCORM 1.2.** Desde *Archivo → Guardar SCORM 1.2* la ficha se empaqueta como un ZIP SCORM autónomo que se sube a **Moodle** o a cualquier LMS compatible como actividad SCORM. En este modo el LMS gestiona la nota, los intentos y el progreso: el visor le envía la puntuación (0–100), el estado (aprobado/suspenso o completado) y el tiempo de sesión según el estándar SCORM 1.2. La nota mínima para aprobar y el modo de estado se configuran en la pestaña **«SCORM»** de los ajustes de la ficha. No usa el archivo de entrega ni el enlace de entrega (los sustituye el LMS).
 
@@ -113,11 +113,11 @@ Pensado para que **solo el docente** pueda leer lo que entrega el alumnado.
 - Cuando el alumnado entrega, la aplicación genera una clave AES-GCM aleatoria, cifra la entrega con ella y, a su vez, cifra esa clave con la clave pública RSA (esquema híbrido). El alumnado puede **cifrar pero no descifrar**.
 - Solo el docente, introduciendo su contraseña, recupera la clave privada y descifra las entregas.
 
-Ventaja: aunque el archivo de entrega (`.json`) o el enlace de entrega se intercepten, su contenido permanece ilegible sin la contraseña del docente.
+Ventaja: aunque el archivo de entrega (`.owsub`) o el enlace de entrega se intercepten, su contenido permanece ilegible sin la contraseña del docente.
 
 ### Cifrado de la ficha (protección de las soluciones)
 
-Protege el contenido de la ficha —en especial las respuestas correctas, que viajan dentro del archivo— frente a quien obtenga el ZIP sin autorización.
+Protege el contenido de la ficha —en especial las respuestas correctas, que viajan dentro del archivo— frente a quien obtenga el paquete `.owpkg` sin autorización.
 
 - El contenido sensible del manifiesto (instrucciones, ajustes, páginas con soluciones, configuración de acceso…) se cifra con **AES-GCM de 256 bits**, con clave derivada de la contraseña de acceso por **PBKDF2-SHA256 (250 000 iteraciones)**. Solo quedan en claro datos no sensibles (título, idioma e identificador).
 - La contraseña de acceso cumple doble función: da acceso a la ficha y descifra su contenido.
@@ -128,7 +128,7 @@ Conviene entender bien el modelo, porque condiciona qué protege y qué no:
 
 - **Toda la seguridad recae en la contraseña.** Como no hay servidor, la clave privada cifrada y los datos cifrados viajan dentro de archivos que pueden acabar en manos de terceros. Quien obtenga uno de esos archivos puede intentar un **ataque de diccionario sin conexión**. Las 250 000 iteraciones de PBKDF2 encarecen mucho cada intento, pero **una contraseña débil sigue siendo vulnerable**. Usa contraseñas largas y únicas.
 - **No hay recuperación.** Si se pierde la contraseña, las entregas cifradas y la ficha cifrada son **irrecuperables**: no existe restablecimiento ni puerta trasera.
-- **El cifrado de la ficha no es DRM.** Protege las soluciones frente a quien **no** tiene la contraseña (por ejemplo, un ZIP filtrado públicamente). No protege frente a un alumno que **sí** recibe la contraseña de acceso, ya que esa misma contraseña descifra el manifiesto: técnicamente podría extraer las respuestas. Evita la fuga accidental del archivo, no a un usuario autorizado y malintencionado.
+- **El cifrado de la ficha no es DRM.** Protege las soluciones frente a quien **no** tiene la contraseña (por ejemplo, un paquete filtrado públicamente). No protege frente a un alumno que **sí** recibe la contraseña de acceso, ya que esa misma contraseña descifra el manifiesto: técnicamente podría extraer las respuestas. Evita la fuga accidental del archivo, no a un usuario autorizado y malintencionado.
 - **Integridad garantizada.** AES-GCM es cifrado autenticado: cualquier manipulación del texto cifrado se detecta al descifrar. Las entregas, además, incluyen verificación de integridad que avisa si un archivo ha sido alterado.
 - **Límite inherente a las aplicaciones de cliente.** Como todo se ejecuta en el navegador del alumnado, el cifrado protege los datos **en reposo** (los archivos), pero no impide que un usuario con conocimientos técnicos inspeccione o manipule su propia sesión en ejecución. Por eso OpenWorksheets es adecuado para el aula, pero **no sustituye a un sistema de examen de alta seguridad** con supervisión y backend de confianza.
 

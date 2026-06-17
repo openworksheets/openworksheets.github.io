@@ -41,7 +41,7 @@
         <a class="btn primary" href="editor.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon" style="width:16px;height:16px"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> <span data-i18n="index.heroBtn">Empezar a crear</span></a>
       </p>
       <p style="margin-top:10px;font-size:.9rem">
-        <a id="linkEjemplo" href="editor.html?ejemplo=ejemplos/ficha-de-prueba-para-openworksheets.zip" data-i18n="index.heroExample">Ver un ejemplo en el editor</a>
+        <a id="linkEjemplo" href="editor.html?ejemplo=ejemplos/ficha-de-prueba-para-openworksheets.owpkg" data-i18n="index.heroExample">Ver un ejemplo en el editor</a>
       </p>
     </section>
 
@@ -93,9 +93,9 @@
     <section id="verifySection" class="card steps-box anim-in" style="margin-top:24px">
       <span class="num">4</span>
       <h2 data-i18n="index.verifyTitle">Ver y verificar una entrega</h2>
-      <p data-i18n="index.verifyDesc">Abre el archivo .json que te ha enviado un alumno para ver su puntuación, las respuestas a cada pregunta y comprobar que el archivo no ha sido modificado.</p>
-      <button class="btn" id="btnVerificar" data-i18n="index.btnOpenEntregas">Abrir archivos de entrega (.json)</button>
-      <input type="file" id="inputEntrega" accept=".json,application/json" multiple style="display:none">
+      <p data-i18n="index.verifyDesc">Abre el archivo .owsub que te ha enviado un alumno para ver su puntuación, las respuestas a cada pregunta y comprobar que el archivo no ha sido modificado.</p>
+      <button class="btn" id="btnVerificar" data-i18n="index.btnOpenEntregas">Abrir archivos de entrega (.owsub)</button>
+      <input type="file" id="inputEntrega" accept=".owsub" multiple style="display:none">
       <p class="drop-hint" data-i18n="index.dropHint">También puedes arrastrar y soltar los archivos aquí.</p>
       <div id="classTbl" style="display:none"></div>
       <div id="salidaVerificacion" class="link-out" style="display:none"></div>

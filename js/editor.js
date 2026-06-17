@@ -3254,7 +3254,7 @@ async function exportZip() {
       exportManifest = await encryptManifestForStudent(exportManifest, exportManifest.access.password);
     }
     const blob = await exportFichaZip({ manifest: exportManifest, files: referencedFiles() });
-    downloadBlob(blob, slugify(state.manifest.title || 'ficha') + '.zip');
+    downloadBlob(blob, slugify(state.manifest.title || 'ficha') + '.owpkg');
     state.dirty = false;
     toast(t('toast.exported'), 'ok');
   } catch (e) {
@@ -3673,7 +3673,7 @@ $('#btnPegar').addEventListener('click', async () => {
 canvas.addEventListener('dragover', e => e.preventDefault());
 canvas.addEventListener('drop', e => {
   e.preventDefault();
-  const zip = Array.from(e.dataTransfer.files).find(f => /\.zip$/i.test(f.name));
+  const zip = Array.from(e.dataTransfer.files).find(f => /\.(owpkg|zip)$/i.test(f.name));
   if (zip) openZipFile(zip);
   else addFiles(e.dataTransfer.files);
 });
@@ -3781,7 +3781,7 @@ resetHistory();
     const resp = await fetch(path);
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const blob = await resp.blob();
-    await openZipFile(new File([blob], path.split('/').pop() || 'ficha.zip', { type: 'application/zip' }));
+    await openZipFile(new File([blob], path.split('/').pop() || 'ficha.owpkg', { type: 'application/zip' }));
   } catch (e) {
     console.error(e);
     toast(t('toast.exportError', { msg: e.message }), 'error');

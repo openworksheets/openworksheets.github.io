@@ -9,7 +9,7 @@ Las versiones publicadas también están en la página de
 
 ---
 
-## [No publicado]
+## [1.9.0] — 2026-06-17
 
 ### Añadido
 - **Exportación a SCORM 1.2** (menú *Archivo → Guardar SCORM 1.2*): genera un
@@ -85,14 +85,37 @@ Las versiones publicadas también están en la página de
     sesión no se reanuda entre recargas.
 
 ### Cambiado
+- **Nueva extensión `.owpkg` para los paquetes de ficha** (OpenWorksheets
+  Package): la ficha nativa se guarda ahora como `.owpkg` en lugar de `.zip`. El
+  formato interno no cambia (sigue siendo un ZIP con `manifest.json`), pero la
+  extensión propia evita confundir el paquete de la ficha con el **ZIP de
+  exportación SCORM** (que sigue siendo `.zip` porque lo exige el LMS). Al abrir
+  se aceptan **tanto `.owpkg` como `.zip`**, de modo que las fichas guardadas con
+  la extensión antigua siguen funcionando. Las fichas de ejemplo y los textos de
+  la interfaz se actualizan en consecuencia.
+- **Nueva extensión `.owsub` para el archivo de entrega del alumno**
+  (OpenWorksheets Submission): la entrega se descarga ahora como `.owsub` en
+  lugar de `.json`. Sigue siendo un JSON internamente, pero la extensión propia
+  la identifica como archivo de OpenWorksheets. El selector de **«Abrir archivos
+  de entrega»** muestra por defecto solo `.owsub`; las entregas `.json` antiguas
+  se abren con «Todos los archivos» y al arrastrar y soltar (la validación es por
+  el campo `formato`, no por la extensión).
 - **Menú «Archivo» más claro para el profesorado**: cada opción muestra ahora un
   **subtítulo** que explica para qué sirve. Se distingue mejor *guardar* de
-  *exportar*: **«Guardar ficha (ZIP)»** (antes «Guardar ZIP») es la acción
+  *exportar*: **«Guardar ficha (.owpkg)»** (antes «Guardar ZIP») es la acción
   principal —el formato propio para compartir con el alumnado y volver a editar—
   y queda separada del grupo de **exportaciones** («Exportar a PDF» y «Exportar a
-  SCORM 1.2»). «Abrir ZIP» pasa a «Abrir ficha (ZIP)».
+  SCORM 1.2»). «Abrir ZIP» pasa a «Abrir ficha (.owpkg)».
 
 ### Corregido
+- **Respuestas legibles en el verificador de entregas y en «Copiar resumen»**:
+  algunos tipos de campo mostraban identificadores internos o índices en vez de
+  la respuesta del alumnado —«Huecos en documento» y «Casillas» enseñaban IDs
+  como `tbmqfeix0yhn5ir`, y «Opción única/múltiple», «Desplegable», «Ordenar» y
+  «Verdadero/falso» mostraban números o `true`/`false`—. Ahora la entrega guarda
+  el texto legible de cada respuesta (etiquetas de las opciones, valores escritos,
+  «☑ 1, 2»…), que es lo que ve el docente. Las entregas antiguas se siguen
+  mostrando como antes.
 - Al guardar los ajustes de la ficha desde el botón ⚙️ se lanzaba una excepción
   silenciosa en consola (`cb is not a function`); no afectaba al guardado, pero
   se ha eliminado.

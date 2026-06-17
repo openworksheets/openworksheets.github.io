@@ -12,9 +12,9 @@ initLangSelector();
 
 // Ficha de ejemplo según el idioma activo (fallback: español).
 const EXAMPLE_ZIPS = {
-  es: 'ejemplos/ficha-de-prueba-para-openworksheets.zip',
-  ca: 'ejemplos/fitxa-de-prova-per-a-openworksheets.zip',
-  en: 'ejemplos/test-for-openworksheets.zip'
+  es: 'ejemplos/ficha-de-prueba-para-openworksheets.owpkg',
+  ca: 'ejemplos/fitxa-de-prova-per-a-openworksheets.owpkg',
+  en: 'ejemplos/test-for-openworksheets.owpkg'
 };
 const linkEjemplo = document.getElementById('linkEjemplo');
 if (linkEjemplo) {
@@ -188,9 +188,13 @@ function renderVerificacion(r) {
   const rows = (data.respuestas || []).map((resp, i) => {
     const isRecord = resp.tipo === 'record';
     // Celda de respuesta: el audio se inserta tras volcar el HTML (data-fid).
+    // Texto legible si la entrega lo trae (entregas nuevas, clave presente
+    // aunque vacía → «—»); si no, se formatea la respuesta cruda (entregas
+    // antiguas, sin respuestaTexto).
+    const ansText = ('respuestaTexto' in resp) ? (resp.respuestaTexto || '—') : formatAnswer(resp.respuesta);
     const ansCell = isRecord
       ? `<td class="vr-ans vr-audio-cell" data-fid="${esc(resp.id)}"></td>`
-      : `<td class="vr-ans">${esc(formatAnswer(resp.respuesta))}</td>`;
+      : `<td class="vr-ans">${esc(ansText)}</td>`;
     // Celda de puntos: editable cuando es grabación manual pendiente de nota.
     const manual = isRecord && resp.resultado === 'pendiente';
     const ptsVal = r.overrides && resp.id in r.overrides ? r.overrides[resp.id] : resp.puntos;
@@ -518,7 +522,7 @@ verifySection.addEventListener('dragleave', e => { if (!verifySection.contains(e
 verifySection.addEventListener('drop', async e => {
   e.preventDefault();
   verifySection.classList.remove('drag-over');
-  const files = [...e.dataTransfer.files].filter(f => f.name.endsWith('.json') || f.type === 'application/json');
+  const files = [...e.dataTransfer.files].filter(f => f.name.endsWith('.owsub') || f.name.endsWith('.json') || f.type === 'application/json');
   for (const file of files) {
     try { await processEntregaData(JSON.parse(await file.text())); }
     catch { showBadJson(); }

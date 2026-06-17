@@ -1,4 +1,9 @@
-// Exportación e importación de fichas en formato ZIP.
+// Exportación e importación de fichas como paquete OpenWorksheets (.owpkg).
+// El paquete es internamente un ZIP; la extensión .owpkg lo distingue del ZIP
+// SCORM que también genera el programa (que debe seguir siendo .zip para el
+// LMS). Al abrir se aceptan tanto .owpkg como .zip (compatibilidad con fichas
+// guardadas con la extensión antigua); la validación real es el campo
+// `manifest.format`, no la extensión.
 // Estructura del paquete:
 //   manifest.json          → definición completa de la ficha
 //   pages/page-N.webp|jpg  → imágenes de fondo
