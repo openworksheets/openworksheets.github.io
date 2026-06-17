@@ -357,7 +357,7 @@ textarea { resize: vertical; min-height: 70px; }
   padding: 22px 24px;
 }
 
-.hero { text-align: center; padding: 44px 16px 26px; }
+.hero { text-align: center; padding: 44px 16px 0; }
 .hero h1 {
   font-size: clamp(2.2rem, 6vw, 3.6rem);
   margin-bottom: 0.25em;
@@ -370,14 +370,14 @@ textarea { resize: vertical; min-height: 70px; }
   font-size: 1.1rem;
   color: var(--tinta-suave);
   max-width: 620px;
-  margin: 0 auto 8px;
+  margin: 0 auto;
 }
 
 .home-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 22px;
-  margin-top: 26px;
+  margin-top: 28px;
 }
 .home-card { display: flex; flex-direction: column; gap: 8px; }
 .home-card-top { display: flex; align-items: center; justify-content: space-between; }
