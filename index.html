@@ -68,11 +68,28 @@
       </div>
     </section>
 
-    <div class="aviso" data-i18n-html="index.aviso">
-      <strong>Sobre la seguridad:</strong> al funcionar sin servidor, las restricciones de acceso
-      se aplican en el navegador del alumno. Son útiles para organizar prácticas, deberes y
-      autoevaluaciones, pero no sustituyen a un sistema de examen de alta seguridad.
-    </div>
+    <details class="seguridad">
+      <summary>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="seguridad-icon"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span data-i18n="index.avisoTitle">Seguridad y privacidad</span>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="seguridad-chevron"><path d="m6 9 6 6 6-6"/></svg>
+      </summary>
+      <div class="seguridad-cuerpo" data-i18n-html="index.aviso">
+        OpenWorksheets protege la privacidad del alumnado ya que no se
+        envía ningún dato a servidores externos o terceros. Todo se realiza en el navegador del
+        alumnado y del profesorado de forma independiente y aislada.
+        Para que sea realmente seguro, protege la ficha con sus
+        <strong>dos contraseñas</strong> (se configuran en el editor):
+        <ul>
+          <li><strong>Contraseña de acceso del alumnado:</strong> cifra el contenido de la ficha
+          (páginas y respuestas correctas); sin ella nadie puede abrirla ni ver las soluciones.</li>
+          <li><strong>Contraseña del profesorado:</strong> cifra las entregas que envía el alumnado,
+          de modo que solo tú puedas leerlas y no se puedan interceptar ni modificar por el camino.</li>
+        </ul>
+        Como mínimo deberías usar la contraseña del profesorado para que las entregas lleguen sin
+        manipular y que solo las puedas abrir tú.
+      </div>
+    </details>
 
   </main>
 

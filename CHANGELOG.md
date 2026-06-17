@@ -32,6 +32,13 @@ Las versiones publicadas también están en la página de
 - **El detalle de una entrega ya no se abre solo**: al añadir entregas solo se
   actualiza la tabla de resultados. El detalle (respuestas pregunta a pregunta)
   aparece únicamente al **pulsar una fila** y se cierra con su botón **✕**.
+- **Aviso de seguridad y privacidad de la portada**: ahora es un **desplegable**
+  (candado «Seguridad y privacidad») que no ocupa espacio hasta pulsarlo. Explica
+  que **no se envía ningún dato a servidores externos ni a terceros** (todo ocurre
+  en el navegador) y describe las **dos contraseñas** —la de acceso del alumnado,
+  que cifra el contenido de la ficha, y la del profesorado, que cifra las entregas
+  para que solo el docente pueda leerlas y no se puedan interceptar ni modificar—,
+  recomendando usar al menos la del profesorado.
 
 ## [1.11.0] — 2026-06-17
 
