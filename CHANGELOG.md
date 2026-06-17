@@ -12,6 +12,21 @@ Las versiones publicadas también están en la página de
 ## [No publicado]
 
 ### Añadido
+- **Exportación a SCORM 1.2** (menú *Archivo → Guardar SCORM 1.2*): genera un
+  ZIP autónomo que se sube a Moodle o a cualquier LMS compatible como actividad
+  SCORM. El paquete incluye una copia del visor y la ficha empaquetada, con su
+  `imsmanifest.xml` e `index.html` (el SCO).
+  - **Puntuación estándar SCORM**: al corregir, el visor envía al LMS la nota en
+    escala 0–100 (`cmi.core.score.raw`), el estado (`cmi.core.lesson_status`) y
+    el tiempo de la sesión. El alumno entra directo a la actividad (sin pantalla
+    de identificación: el nombre lo aporta el LMS).
+  - **Nueva pestaña «SCORM»** en los ajustes de la ficha con dos opciones: el
+    **estado que se envía** (*aprobado/suspenso según el umbral* —por defecto— o
+    *marcar siempre «completado»*) y la **nota mínima para aprobar (%)**
+    (`masteryscore`, 50 por defecto), que decide el aprobado.
+  - Dentro del SCORM, la **nota, los intentos y el progreso los gestiona el LMS**:
+    se desactivan el cifrado de entrega, el enlace de entrega y la contraseña de
+    acceso de la ficha (innecesarios porque el resultado viaja al LMS).
 - **Campo «Grabación de voz»** (grupo «Responder» de la paleta): el alumnado
   graba su voz con el micrófono (`MediaRecorder`, Opus mono) directamente sobre
   la ficha. Pensado para idiomas, lectura en voz alta, música o infantil.
@@ -65,6 +80,11 @@ Las versiones publicadas también están en la página de
     está disponible al abrir los HTML como archivo local.
   - Limitaciones actuales: solo SCORM 1.2 (no 2004 ni secuenciamiento) y la
     sesión no se reanuda entre recargas.
+
+### Corregido
+- Al guardar los ajustes de la ficha desde el botón ⚙️ se lanzaba una excepción
+  silenciosa en consola (`cb is not a function`); no afectaba al guardado, pero
+  se ha eliminado.
 
 ## [1.8.0] — 2026-06-16
 

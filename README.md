@@ -80,6 +80,8 @@ Todos los campos con texto comparten ajustes de **tipo de letra** (con una fuent
 2. **Compartir:** la ficha se exporta como un archivo ZIP que contiene todo lo necesario. Se sube a Google Drive u otro alojamiento público y se comparte con el alumnado mediante un enlace generado en la propia aplicación. El alumnado no tiene acceso al archivo ZIP original, lo que protege el contenido.
 3. **Responder y entregar:** el alumnado responde desde el navegador y, al terminar, puede descargar un archivo de entrega (`.json`) o copiar un enlace directo para enviárselo al docente.
 
+> **Alternativa: exportar como SCORM 1.2.** Desde *Archivo → Guardar SCORM 1.2* la ficha se empaqueta como un ZIP SCORM autónomo que se sube a **Moodle** o a cualquier LMS compatible como actividad SCORM. En este modo el LMS gestiona la nota, los intentos y el progreso: el visor le envía la puntuación (0–100), el estado (aprobado/suspenso o completado) y el tiempo de sesión según el estándar SCORM 1.2. La nota mínima para aprobar y el modo de estado se configuran en la pestaña **«SCORM»** de los ajustes de la ficha. No usa el archivo de entrega ni el enlace de entrega (los sustituye el LMS).
+
 ## Entregas y verificación
 
 El docente puede abrir los archivos de entrega desde la página principal para ver la puntuación, las respuestas y comprobar automáticamente que no han sido modificados. Es posible cargar múltiples archivos a la vez o recibirlos mediante el enlace que genera el alumnado al terminar. Los resultados de toda una clase se muestran en una tabla ordenable y se pueden exportar a CSV.

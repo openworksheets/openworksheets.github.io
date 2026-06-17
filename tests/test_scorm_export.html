@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>Test SCORM export</title>
+<base href="../">
+</head>
+<body>
+<pre id="out"></pre>
+<script>
+window.onerror = (m, s, l) => { document.getElementById('out').textContent += '\nONERROR: ' + m + ' @ ' + s + ':' + l; };
+window.onunhandledrejection = e => { document.getElementById('out').textContent += '\nREJECT: ' + (e.reason && e.reason.message || e.reason); };
+</script>
+<script src="vendor/jszip.min.js"></script>
+<script type="module">
+import { newManifest } from './js/zipio.js';
+import { exportScormPackage } from './js/scormexport.js';
+import { importFichaZip } from './js/zipio.js';
+
+const out = [];
+const log = (...a) => { out.push(a.join(' ')); document.getElementById('out').textContent = out.join('\n'); };
+const check = (name, ok) => { log((ok ? 'OK  ' : 'MAL ') + name); return ok; };
+
+function makeImage() {
+  return new Promise(res => {
+    const c = document.createElement('canvas');
+    c.width = 400; c.height = 500;
+    const g = c.getContext('2d');
+    g.fillStyle = '#fff'; g.fillRect(0, 0, 400, 500);
+    c.toBlob(b => res(b), 'image/png');
+  });
+}
+
+async function main() {
+  try {
+    let ok = true;
+    const manifest = newManifest();
+    manifest.title = 'Ficha SCORM de prueba';
+    manifest.lang = 'es';
+    manifest.pages.push({
+      image: 'pages/page-1.png', w: 400, h: 500,
+      fields: [{ id: 'f1', type: 'select', rect: { x: 0.1, y: 0.1, w: 0.2, h: 0.05 }, points: 1, fontScale: 1.2, config: { options: ['a', 'b'], correct: 1 } }]
+    });
+    const files = new Map([['pages/page-1.png', await makeImage()]]);
+
+    const blob = await exportScormPackage({ manifest, files }, { statusMode: 'score', masteryScore: 50 });
+    log('paquete:', blob.size, 'bytes');
+
+    const zip = await window.JSZip.loadAsync(blob);
+    const names = Object.keys(zip.files);
+
+    ok &= check('imsmanifest.xml presente', names.includes('imsmanifest.xml'));
+    ok &= check('index.html presente', names.includes('index.html'));
+    ok &= check('ficha.zip presente', names.includes('ficha.zip'));
+    ok &= check('js/sco.js presente', names.includes('js/sco.js'));
+    ok &= check('js/player.js presente', names.includes('js/player.js'));
+    ok &= check('js/scorm-rte.js presente', names.includes('js/scorm-rte.js'));
+    ok &= check('css/app.css presente', names.includes('css/app.css'));
+
+    // El imsmanifest debe ser XML válido y declarar SCORM 1.2 + masteryscore.
+    const xml = await zip.file('imsmanifest.xml').async('string');
+    const doc = new DOMParser().parseFromString(xml, 'application/xml');
+    ok &= check('imsmanifest es XML válido', doc.getElementsByTagName('parsererror').length === 0);
+    ok &= check('schemaversion 1.2', /<schemaversion>1\.2<\/schemaversion>/.test(xml));
+    ok &= check('masteryscore 50', /<adlcp:masteryscore>50<\/adlcp:masteryscore>/.test(xml));
+    ok &= check('scormtype sco', /adlcp:scormtype="sco"/.test(xml));
+    ok &= check('href index.html', /href="index\.html"/.test(xml));
+
+    // index.html lleva la configuración SCORM inyectada.
+    const idx = await zip.file('index.html').async('string');
+    ok &= check('index.html inyecta OW_SCORM', /window\.OW_SCORM=/.test(idx));
+    ok &= check('config statusMode score', /"statusMode":"score"/.test(idx));
+
+    // La ficha empaquetada se puede volver a importar (formato válido).
+    const fichaBytes = await zip.file('ficha.zip').async('uint8array');
+    const ficha = await importFichaZip(fichaBytes);
+    ok &= check('ficha.zip reimportable', ficha.manifest.title === 'Ficha SCORM de prueba');
+    ok &= check('ficha sin cifrado de entrega', ficha.manifest.settings.encryptSubmissions === false);
+
+    // Modo «completion»: sin masteryscore.
+    const blob2 = await exportScormPackage({ manifest, files }, { statusMode: 'completion', masteryScore: 70 });
+    const zip2 = await window.JSZip.loadAsync(blob2);
+    const xml2 = await zip2.file('imsmanifest.xml').async('string');
+    ok &= check('completion sin masteryscore', !/masteryscore/.test(xml2));
+    const idx2 = await zip2.file('index.html').async('string');
+    ok &= check('config statusMode completion', /"statusMode":"completion"/.test(idx2));
+
+    log(ok ? '__TEST_OK__' : '__TEST_FAIL__');
+  } catch (e) {
+    log('__TEST_FAIL__', e.message);
+  }
+}
+main();
+</script>
+</body>
+</html>

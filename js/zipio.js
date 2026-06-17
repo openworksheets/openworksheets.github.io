@@ -93,7 +93,8 @@ export function newManifest() {
       shuffle: false,
       maxAttempts: 0,
       encryptSubmissions: true,
-      fontFamily: 'atkinson'
+      fontFamily: 'atkinson',
+      scorm: { statusMode: 'score', masteryScore: 50 }
     },
     access: {
       desde: '',

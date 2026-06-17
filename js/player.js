@@ -34,6 +34,11 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
   const settings = manifest.settings || {};
   const access = manifest.access || {};
   const preview = Boolean(opts.preview);
+  // Modo SCORM: la ficha corre dentro de un LMS. La nota se reporta vía
+  // opts.onGraded; el nombre lo da el LMS (opts.studentName), así que se omite
+  // la pantalla de identificación y la entrega cifrada/enlace de entrega.
+  const scormMode = Boolean(opts.onGraded);
+  const scormStudent = opts.studentName || '';
   const storageKey = 'workpdf:al:' + manifest.id;
 
   const urls = new Map();
@@ -169,6 +174,8 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
   function showStart() {
     rootEl.textContent = '';
     if (preview) { startActivity('Vista previa', ''); return; }
+    // En SCORM el LMS gestiona acceso e intentos: se entra directo a la actividad.
+    if (scormMode) { startActivity(scormStudent, ''); return; }
 
     const st = accessState();
     if (st === 'before') { showNotYet(); return; }
@@ -420,18 +427,24 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
       earned,
       total: totalPoints
     });
-    const entregaArchivo = await encryptSubmission(entrega, manifest.submissionCrypto);
+    // En SCORM la entrega la registra el LMS: no se cifra ni se genera archivo.
+    const entregaArchivo = scormMode ? null : await encryptSubmission(entrega, manifest.submissionCrypto);
 
     // Enlace de entrega (opción A+B): se deshabilita si la ficha tiene grabación
     // de voz o si la URL resultante supera el tope holgado. En esos casos solo
     // queda la descarga del archivo, que sí contiene el audio.
     let shareUrl = '';
-    try {
-      const encoded = await compressToBase64url(entregaArchivo);
-      const u = new URL('./index.html', window.location.href);
-      u.hash = 'e=' + encoded;
-      if (!hasRecordFields && u.href.length <= MAX_SHARE_URL) shareUrl = u.href;
-    } catch {}
+    if (!scormMode) {
+      try {
+        const encoded = await compressToBase64url(entregaArchivo);
+        const u = new URL('./index.html', window.location.href);
+        u.hash = 'e=' + encoded;
+        if (!hasRecordFields && u.href.length <= MAX_SHARE_URL) shareUrl = u.href;
+      } catch {}
+    }
+
+    // Reporta la nota al LMS (normalización a 0–100 la hace el envoltorio SCORM).
+    if (scormMode) opts.onGraded({ earned, total: totalPoints, nota10: entrega.nota10 });
 
     if (!preview) {
       datos.attempts += 1;
@@ -473,9 +486,11 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     const hasPending = gradeResults.some(g => g.res.ok === 'pending');
 
     const acciones = el('div', { class: 'acciones' });
-    acciones.appendChild(iconBtn({ class: 'btn dark', onclick: () => downloadEntrega(entregaArchivo, entrega) }, ICONS.download, t('player.downloadBtn')));
-    if (shareUrl) {
-      acciones.appendChild(iconBtn({ class: 'btn', onclick: () => copyShareUrl(shareUrl) }, ICONS.share, t('player.shareBtn')));
+    if (!scormMode) {
+      acciones.appendChild(iconBtn({ class: 'btn dark', onclick: () => downloadEntrega(entregaArchivo, entrega) }, ICONS.download, t('player.downloadBtn')));
+      if (shareUrl) {
+        acciones.appendChild(iconBtn({ class: 'btn', onclick: () => copyShareUrl(shareUrl) }, ICONS.share, t('player.shareBtn')));
+      }
     }
     const copyBtn = iconBtn({ class: 'btn', onclick: () => copyResumen(entrega, detalleCorreccion) }, ICONS.copy, t('player.copyBtn'));
     const printBtn = el('button', { class: 'btn', onclick: () => window.print() }, t('player.printBtn'));
@@ -492,9 +507,11 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
       showScore ? el('div', { class: 'detalle' }, t('player.equiv', { nota: formatNum(nota10) })) : null,
       el('div', { class: 'detalle' },
         `${datos.alumno}${datos.grupo ? ' · ' + datos.grupo : ''} · ${fechaHora(new Date(entrega.fecha))}`),
-      (() => { const p = el('p', { class: 'al-info', style: 'margin-top:12px' }); p.innerHTML = t('player.submissionInfo'); return p; })(),
+      scormMode
+        ? el('p', { class: 'al-info', style: 'margin-top:12px;color:var(--verde);font-weight:700' }, t('player.scormSent'))
+        : (() => { const p = el('p', { class: 'al-info', style: 'margin-top:12px' }); p.innerHTML = t('player.submissionInfo'); return p; })(),
       hasPending ? el('p', { class: 'al-info al-pending-hint', style: 'margin-top:8px' }, t('player.pendingReview')) : null,
-      (!preview && !shareUrl) ? el('p', { class: 'al-info', style: 'margin-top:8px' }, t('player.shareDisabled')) : null,
+      (!preview && !scormMode && !shareUrl) ? el('p', { class: 'al-info', style: 'margin-top:8px' }, t('player.shareDisabled')) : null,
       showCorrection ? el('p', { class: 'al-correction-hint al-info', style: 'margin-top:8px', hidden: canRetry }, t('player.correctionHint')) : null,
       acciones);
 

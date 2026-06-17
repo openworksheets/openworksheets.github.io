@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Test SCORM runtime</title>
+  <link rel="stylesheet" href="../css/app.css">
+</head>
+<body>
+<div id="app"></div>
+<pre id="out"></pre>
+<script type="module">
+import { mountPlayer } from '../js/player.js';
+import { ScormReporter } from '../js/scorm-rte.js';
+
+const out = [];
+const log = (...a) => { out.push(a.join(' ')); document.getElementById('out').textContent = out.join('\n'); };
+const check = (name, ok) => { log((ok ? 'OK  ' : 'MAL ') + name); return ok; };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+window.confirm = () => true;
+
+function makeImage() {
+  return new Promise(res => {
+    const c = document.createElement('canvas');
+    c.width = 400; c.height = 500;
+    c.getContext('2d').fillRect(0, 0, 0, 0);
+    c.toBlob(b => res(b), 'image/png');
+  });
+}
+
+// LMS SCORM 1.2 simulado: registra las escrituras del SCO.
+function mockLms() {
+  const data = { 'cmi.core.student_name': 'Pérez, Ana', 'cmi.core.lesson_status': 'not attempted' };
+  return {
+    LMSInitialize: () => 'true',
+    LMSFinish: () => { data._finished = true; return 'true'; },
+    LMSGetValue: k => data[k] ?? '',
+    LMSSetValue: (k, v) => { data[k] = String(v); return 'true'; },
+    LMSCommit: () => { data._commits = (data._commits || 0) + 1; return 'true'; },
+    LMSGetLastError: () => '0',
+    LMSGetErrorString: () => '',
+    LMSGetDiagnostic: () => '',
+    _data: data
+  };
+}
+
+async function testReporter() {
+  let ok = true;
+  window.API = mockLms();
+  const r = new ScormReporter();
+  ok &= check('reporter encuentra la API', r.available === true);
+  ok &= check('studentName normalizado', r.studentName() === 'Ana Pérez');
+  r.init();
+  ok &= check('init marca incomplete', window.API._data['cmi.core.lesson_status'] === 'incomplete');
+
+  // Nota por encima del umbral → passed
+  r.report({ score: 80, passed: true, statusMode: 'score' });
+  const d = window.API._data;
+  ok &= check('score.raw=80', d['cmi.core.score.raw'] === '80');
+  ok &= check('score.min=0 / max=100', d['cmi.core.score.min'] === '0' && d['cmi.core.score.max'] === '100');
+  ok &= check('lesson_status passed', d['cmi.core.lesson_status'] === 'passed');
+  ok &= check('session_time formato HHHH:MM:SS', /^\d{2,}:\d{2}:\d{2}\.\d{2}$/.test(d['cmi.core.session_time']));
+
+  // Nota por debajo del umbral → failed
+  r.report({ score: 30, passed: false, statusMode: 'score' });
+  ok &= check('lesson_status failed', window.API._data['cmi.core.lesson_status'] === 'failed');
+
+  // Modo completion → completed pase lo que pase
+  r.report({ score: 30, passed: false, statusMode: 'completion' });
+  ok &= check('lesson_status completed', window.API._data['cmi.core.lesson_status'] === 'completed');
+
+  r.finish();
+  ok &= check('finish llama LMSFinish', window.API._data._finished === true);
+  delete window.API;
+  return Boolean(ok);
+}
+
+async function testPlayerScorm() {
+  let ok = true;
+  localStorage.clear();
+  localStorage.setItem('wpf-lang', 'es');
+  const manifest = {
+    format: 'workpdf-ficha', version: 1, id: 'scormrun1', title: 'SCORM run',
+    settings: { showScore: true, showCorrection: true },
+    pages: [{ image: 'pages/page-1.png', w: 400, h: 500, fields: [
+      { id: 'f1', type: 'single', rect: { x: 0.1, y: 0.1, w: 0.3, h: 0.12 }, points: 4, fontScale: 1,
+        config: { options: ['No', 'Sí'], correct: 1 } }
+    ] }]
+  };
+  const files = new Map([['pages/page-1.png', await makeImage()]]);
+  const root = document.getElementById('app');
+
+  let graded = null;
+  mountPlayer(root, { manifest, files }, {
+    studentName: 'Ana Pérez',
+    onGraded: g => { graded = g; }
+  });
+  await sleep(100);
+
+  // En modo SCORM no debe aparecer la pantalla de identificación.
+  ok &= check('sin pantalla de identificación', !root.querySelector('form input[type="text"]'));
+  ok &= check('arranca la actividad', !!root.querySelector('.al-doc'));
+  ok &= check('cabecera con nombre del LMS', root.querySelector('.al-cabecera .quien')?.textContent.includes('Ana Pérez'));
+
+  // Responder correctamente y finalizar.
+  const si = [...root.querySelectorAll('[data-id="f1"] .wpf-choice')].find(l => l.textContent.trim() === 'Sí');
+  si.querySelector('input').click();
+  [...root.querySelectorAll('button')].find(b => b.textContent.includes('Finalizar')).click();
+  await sleep(200);
+
+  ok &= check('onGraded llamado', graded !== null);
+  ok &= check('earned=4 total=4', graded && graded.earned === 4 && graded.total === 4);
+
+  // No debe ofrecer descarga de entrega ni enlace (los gestiona el LMS).
+  const botones = [...root.querySelectorAll('.al-resultado .acciones button')].map(b => b.textContent);
+  ok &= check('sin botón de descargar entrega', !botones.some(t => /Descargar/i.test(t)));
+  ok &= check('aviso de envío a la plataforma', root.textContent.includes('enviado a la plataforma'));
+  return Boolean(ok);
+}
+
+async function main() {
+  try {
+    const a = await testReporter();
+    const b = await testPlayerScorm();
+    log(a && b ? '__TEST_OK__' : '__TEST_FAIL__');
+  } catch (e) {
+    log('__TEST_FAIL__', e.message, e.stack);
+  }
+}
+main();
+</script>
+</body>
+</html>

@@ -28,6 +28,7 @@ import { mdToHtml } from './markdown.js';
 import { expectedText } from './grading.js';
 import { pdfToPages, imageToPage, isPdf, isImage } from './pdfimport.js';
 import { exportFichaZip, importFichaZip, newManifest, usedFiles } from './zipio.js';
+import { exportScormPackage } from './scormexport.js';
 import { buildShortLink, parseDriveId } from './drive.js';
 import { mountPlayer } from './player.js';
 import { t, getLang, applyI18n, initLangSelector } from './i18n.js';
@@ -3090,6 +3091,9 @@ function openSettings(afterSave, initialTab = 'basic') {
   $('#ajAutoEntrega').checked = Boolean(acc.autoEntrega);
   $('#ajTiempo').value = String(acc.tiempoLimite || 0);
   $('#ajPassword').value = acc.password || '';
+  const scorm = state.manifest.settings.scorm || {};
+  $('#ajScormStatus').value = scorm.statusMode === 'completion' ? 'completion' : 'score';
+  $('#ajScormMastery').value = String(scorm.masteryScore != null ? scorm.masteryScore : 50);
   dlg.showModal();
 }
 
@@ -3138,10 +3142,16 @@ $('#dlgAjustes')?.addEventListener('close', () => {
     tiempoLimite: Math.max(0, parseInt($('#ajTiempo').value, 10) || 0),
     password: $('#ajPassword').value.trim()
   };
+  state.manifest.settings.scorm = {
+    statusMode: $('#ajScormStatus').value === 'completion' ? 'completion' : 'score',
+    masteryScore: Math.max(0, Math.min(100, parseInt($('#ajScormMastery').value, 10) || 0))
+  };
   markDirty();
   const cb = dlg._afterSave;
   dlg._afterSave = null;
-  if (cb) cb();
+  // Solo es una función cuando openSettings se llamó con un callback (p. ej.
+  // exportZip); al abrir con el botón ⚙️, el primer argumento es el evento.
+  if (typeof cb === 'function') cb();
 });
 
 // ---------- Compartir ----------
@@ -3247,6 +3257,32 @@ async function exportZip() {
     downloadBlob(blob, slugify(state.manifest.title || 'ficha') + '.zip');
     state.dirty = false;
     toast(t('toast.exported'), 'ok');
+  } catch (e) {
+    console.error(e);
+    toast(t('toast.exportError', { msg: e.message }), 'error');
+  }
+}
+
+// Exporta la ficha como paquete SCORM 1.2 (ZIP para Moodle u otro LMS). El
+// saneado del manifiesto (sin cifrado de entrega ni contraseña, que en SCORM
+// gestiona el LMS) lo hace exportScormPackage.
+async function exportScorm() {
+  state.manifest.title = titleInput.value.trim();
+  const problems = validate();
+  if (problems.length) {
+    const blocking = !state.manifest.pages.length;
+    const msg = t('validate.review', { problems: problems.join('\n· ') });
+    if (blocking) { window.alert(msg); return; }
+    if (!window.confirm(msg + t('validate.anyway'))) return;
+  }
+  state.manifest.lang = getLang();
+  try {
+    toast(t('toast.generatingScorm'));
+    const scorm = state.manifest.settings.scorm || { statusMode: 'score', masteryScore: 50 };
+    const blob = await exportScormPackage({ manifest: state.manifest, files: referencedFiles() }, scorm);
+    downloadBlob(blob, slugify(state.manifest.title || 'ficha') + '-scorm12.zip');
+    state.dirty = false;
+    toast(t('toast.scormExported'), 'ok');
   } catch (e) {
     console.error(e);
     toast(t('toast.exportError', { msg: e.message }), 'error');
@@ -3510,6 +3546,7 @@ fileMenuItem('#miOpenZip', () => $('#inputZip').click());
 // «Exportar a PDF» reutiliza el flujo de impresión: el diálogo del navegador
 // permite elegir «Guardar como PDF» como destino.
 fileMenuItem('#miPdf', printWorksheet);
+fileMenuItem('#miSaveScorm', exportScorm);
 fileMenuItem('#miSaveZip', exportZip);
 
 $('#inputZip').addEventListener('change', e => {
