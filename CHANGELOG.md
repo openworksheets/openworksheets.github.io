@@ -9,6 +9,16 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.9.1] — 2026-06-17
+
+### Corregido
+- **Duplicar/copiar/pegar un campo «Unir con flechas» rompía la corrección**: al
+  clonar el campo se regeneraban los IDs de los elementos pero no se actualizaban
+  las parejas correctas (`config.pairs`), que seguían apuntando a los IDs
+  antiguos. La copia daba siempre 0 puntos y marcaba todas las flechas como
+  erróneas. Afectaba a *duplicar campo*, *pegar campo copiado* y *duplicar
+  página*. Ahora las parejas se remapean a los nuevos IDs.
+
 ## [1.9.0] — 2026-06-17
 
 ### Añadido

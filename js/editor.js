@@ -1129,7 +1129,17 @@ function cloneField(field, offset = 0) {
     }
   }
   if (copy.type === 'arrowmatch') {
-    copy.config.items = (copy.config.items || []).map(i => ({ ...i, id: uid('ai') }));
+    const idMap = {};
+    copy.config.items = (copy.config.items || []).map(i => {
+      const nid = uid('ai');
+      idMap[i.id] = nid;
+      return { ...i, id: nid };
+    });
+    copy.config.pairs = (copy.config.pairs || []).map(p => ({
+      ...p,
+      from: idMap[p.from] || p.from,
+      to: idMap[p.to] || p.to
+    }));
   }
   if (copy.type === 'checkbox') {
     const idMap = {};
