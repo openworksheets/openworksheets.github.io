@@ -1638,6 +1638,9 @@ body.resizing-col { cursor: col-resize; }
   color: var(--tinta-suave);
 }
 .ed-section-body { padding-bottom: 6px; }
+.ed-size-grid { display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; align-items: center; }
+.ed-size-grid .f-label { margin: 0; }
+.ed-size-grid input { width: 100%; box-sizing: border-box; }
 
 .opt-list { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
 .opt-row { display: flex; align-items: center; gap: 6px; }

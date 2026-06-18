@@ -931,6 +931,37 @@ function setRectStyle(node, rect) {
   node.style.height = rect.h * 100 + '%';
 }
 
+// Añade al panel controles para fijar la anchura y la altura exactas (en % de
+// la página) de un rectángulo: el del propio campo o el de un subelemento
+// (casilla, hueco, zona, item). nodeId = data-id del elemento en el lienzo.
+function appendSizeSection(cont, rect, nodeId, onAfter) {
+  const section = el('div', { class: 'ed-section' });
+  section.appendChild(el('div', { class: 'ed-section-title' }, t('editor.sizeSection')));
+  const body = el('div', { class: 'ed-section-body ed-size-grid' });
+  const mk = (dim, posDim) => {
+    const inp = el('input', { type: 'number', min: '1', max: '100', step: '0.5',
+      value: (rect[dim] * 100).toFixed(1) });
+    inp.addEventListener('input', () => {
+      const v = parseFloat(inp.value.replace(',', '.'));
+      if (isNaN(v)) return;
+      rect[dim] = clamp(v / 100, 0.01, 1 - rect[posDim]);
+      const node = canvas.querySelector(`[data-id="${nodeId}"]`);
+      if (node) setRectStyle(node, rect);
+      markDirty();
+      if (onAfter) onAfter();
+    });
+    // Al salir del campo, normaliza el valor mostrado al real (tras el recorte).
+    inp.addEventListener('change', () => { inp.value = (rect[dim] * 100).toFixed(1); });
+    return inp;
+  };
+  body.appendChild(el('label', { class: 'f-label' }, t('editor.width')));
+  body.appendChild(mk('w', 'x'));
+  body.appendChild(el('label', { class: 'f-label' }, t('editor.height')));
+  body.appendChild(mk('h', 'y'));
+  section.appendChild(body);
+  cont.appendChild(section);
+}
+
 function refreshSelectionStyles() {
   canvas.querySelectorAll('.ed-field, .ed-zone, .ed-piece, .ed-amitem, .ed-cbbox, .ed-tbbox').forEach(n => n.classList.remove('selected'));
   if (!state.sel) return;
@@ -1918,6 +1949,19 @@ function renderFieldPanel(field) {
     cont.appendChild(row);
   }
 
+  // Tamaño exacto. En campos con subelementos el tamaño relevante es el del
+  // subelemento seleccionado (casilla o item), no el del campo contenedor;
+  // «Casillas» y «Huecos en documento» no tienen un tamaño de campo propio.
+  if (state.sel.kind === 'cbbox') {
+    const b = (field.config.boxes || []).find(b => b.id === state.sel.cbBoxId);
+    if (b) appendSizeSection(cont, b.rect, b.id);
+  } else if (state.sel.kind === 'amitem') {
+    const it = (field.config.items || []).find(i => i.id === state.sel.amItemId);
+    if (it && it.rect) appendSizeSection(cont, it.rect, it.id);
+  } else if (field.type !== 'checkbox' && field.type !== 'textboxes') {
+    appendSizeSection(cont, field.rect, field.id);
+  }
+
   // Acciones
   cont.appendChild(el('div', { class: 'ed-acciones' },
     iconBtn({ class: 'btn small', onclick: duplicateSelected }, ICONS.copyPlus, t('editor.duplicate')),
@@ -2080,6 +2124,7 @@ function renderZonePanel(field) {
     const addZoneBtn = el('button', { class: 'btn small add-row', type: 'button' }, t('cfg.addAnotherZone'));
     addZoneBtn.addEventListener('click', startZoneTool);
     cont.appendChild(addZoneBtn);
+    appendSizeSection(cont, zone.rect, zone.id);
     cont.appendChild(el('div', { class: 'ed-acciones' },
       iconBtn({ class: 'btn small', onclick: () => selectField(state.sel.pageIndex, field.id) }, ICONS.arrowLeft, t('editor.backToField')),
       iconBtn({ class: 'btn small danger', onclick: deleteSelected }, ICONS.trash, t('editor.deleteZone'))));
@@ -2153,6 +2198,7 @@ function renderZonePanel(field) {
   const addZoneBtn = el('button', { class: 'btn small add-row', type: 'button' }, t('cfg.addAnotherZone'));
   addZoneBtn.addEventListener('click', startZoneTool);
   cont.appendChild(addZoneBtn);
+  appendSizeSection(cont, zone.rect, zone.id);
   cont.appendChild(el('div', { class: 'ed-acciones' },
     iconBtn({ class: 'btn small', onclick: () => selectField(state.sel.pageIndex, field.id) }, ICONS.arrowLeft, t('editor.backToField')),
     iconBtn({ class: 'btn small danger', onclick: deleteSelected }, ICONS.trash, t('editor.deleteZone'))));
@@ -2184,6 +2230,7 @@ function renderTbBoxPanel(field) {
   const addBoxBtn = el('button', { class: 'btn small add-row', type: 'button' }, t('cfg.addAnotherTextbox'));
   addBoxBtn.addEventListener('click', startTbBoxTool);
   cont.appendChild(addBoxBtn);
+  appendSizeSection(cont, box.rect, box.id);
   cont.appendChild(el('div', { class: 'ed-acciones' },
     iconBtn({ class: 'btn small', onclick: () => selectField(state.sel.pageIndex, field.id) }, ICONS.arrowLeft, t('editor.backToField')),
     iconBtn({ class: 'btn small danger', onclick: deleteSelected }, ICONS.trash, t('editor.tbBoxDelete'))));
