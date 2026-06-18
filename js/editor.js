@@ -3939,6 +3939,7 @@ function openSearch() {
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
   if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'E') { e.preventDefault(); openPreview(); }
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'X') { e.preventDefault(); printWorksheet(); }
 });
 
 // ---------- Estadísticas de la ficha ----------
