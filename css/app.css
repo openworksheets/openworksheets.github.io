@@ -1492,8 +1492,14 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .lista-campos-header { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
 .lista-campos-header h3 { margin: 0; }
 .lista-campos-filter { position: relative; }
+.lista-campos-icon {
+  position: absolute; left: 7px; top: 50%; transform: translateY(-50%);
+  display: flex; align-items: center; pointer-events: none;
+  color: var(--tinta-suave);
+}
+.lista-campos-icon svg { width: 13px; height: 13px; }
 .lista-campos-input {
-  width: 100%; box-sizing: border-box; padding: 5px 28px 5px 8px;
+  width: 100%; box-sizing: border-box; padding: 5px 28px 5px 26px;
   border: 1.5px solid var(--borde); border-radius: 6px;
   font-size: 0.82rem; font-family: inherit; background: var(--blanco); color: var(--tinta);
   outline: none;
