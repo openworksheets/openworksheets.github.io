@@ -9,6 +9,34 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.15.0] — 2026-06-18
+
+### Añadido
+- **Campo «Polígono»**: forma decorativa regular con número de lados configurable
+  (3–20): triángulo, rombo, pentágono, hexágono… Comparte borde, estilo, relleno
+  con opacidad y rotación. Opción **«Mantener regular»** (conserva la forma) o
+  deformarse para llenar la caja.
+- **Tamaño exacto de los campos**: nueva sección «Tamaño» con anchura y altura en
+  porcentaje de la página (2 decimales), editable por teclado además de con el
+  ratón. En los campos con subelementos se aplica a la casilla, hueco, zona o
+  item seleccionado.
+- **Rotación en las formas de diseño** (línea/flecha, rectángulo, polígono y
+  elipse): manija para girar con el ratón y campo numérico con botones
+  −90°/+90°/0°, igual que en imagen y texto.
+
+### Cambiado
+- **«Línea» y «Flecha» se unifican** en un solo campo «Línea / Flecha» con una
+  opción de **puntas de flecha**: ninguna (línea), una o dos. Las fichas con
+  flechas anteriores se siguen viendo y se migran de forma transparente.
+- **Cambiar el idioma en el editor ya no recarga la página**: la interfaz se
+  re-traduce en caliente, conservando la ficha en curso y los cambios sin
+  guardar.
+- **La tira de miniaturas se muestra u oculta según el número de páginas** al
+  abrir una ficha (visible con más de una, oculta con una sola). El colapso
+  manual ya no se guarda entre sesiones.
+
+---
+
 ## [1.14.0] — 2026-06-18
 
 ### Añadido
