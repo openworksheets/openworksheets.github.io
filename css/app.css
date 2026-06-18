@@ -1207,6 +1207,10 @@ body.resizing-col { cursor: col-resize; }
 }
 .ed-canvas.drawing { cursor: crosshair; }
 .ed-canvas.drawing .wpf-page { cursor: crosshair; }
+/* Pan: la ficha ampliada se puede arrastrar por el fondo */
+.ed-canvas.ed-pannable:not(.drawing) { cursor: grab; }
+.ed-canvas.ed-panning, .ed-canvas.ed-panning * { cursor: grabbing !important; }
+.ed-canvas.ed-panning { user-select: none; }
 
 .ed-empty {
   max-width: 460px;

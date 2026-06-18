@@ -70,7 +70,7 @@ function clearOpenFile() { openFileHandle = null; openFileName = null; }
 // ---------- Zoom del lienzo ----------
 
 const zoomCtl = zoomControl({
-  apply: z => canvas.style.setProperty('--zoom', z),
+  apply: z => { canvas.style.setProperty('--zoom', z); requestAnimationFrame(updatePannable); },
   key: 'wpf-ed-zoom',
   titles: { in: t('zoom.in'), out: t('zoom.out'), reset: t('zoom.reset') }
 });
@@ -80,6 +80,48 @@ canvas.addEventListener('wheel', e => {
   e.preventDefault();
   zoomCtl.set(zoomCtl.get() * (e.deltaY < 0 ? 1.1 : 1 / 1.1));
 }, { passive: false });
+
+// ---------- Desplazar la ficha arrastrando (pan) ----------
+// Cuando la ficha ampliada se sale de los márgenes, se puede arrastrar el fondo
+// (área del lienzo o fondo de página) para desplazar la vista, además de las
+// barras de desplazamiento. No actúa sobre campos, controles ni con una
+// herramienta de dibujo activa.
+function updatePannable() {
+  const can = canvas.scrollWidth > canvas.clientWidth + 1 || canvas.scrollHeight > canvas.clientHeight + 1;
+  canvas.classList.toggle('ed-pannable', can);
+}
+window.addEventListener('resize', updatePannable);
+
+let panState = null;
+const PAN_IGNORE = '.ed-field, .ed-zone, .ed-piece, .ed-amitem, .ed-cbbox, .ed-tbbox, .rot-handle, .handle, button, input, select, textarea, a';
+
+canvas.addEventListener('pointerdown', e => {
+  if (e.button !== 0 || state.activeTool || state.pendingAmItem) return;
+  if (e.target.closest(PAN_IGNORE)) return;
+  if (canvas.scrollWidth <= canvas.clientWidth + 1 && canvas.scrollHeight <= canvas.clientHeight + 1) return;
+  panState = { x: e.clientX, y: e.clientY, sl: canvas.scrollLeft, st: canvas.scrollTop, moved: false, pid: e.pointerId };
+});
+canvas.addEventListener('pointermove', e => {
+  if (!panState) return;
+  const dx = e.clientX - panState.x, dy = e.clientY - panState.y;
+  if (!panState.moved && Math.hypot(dx, dy) > 4) {
+    panState.moved = true;
+    canvas.classList.add('ed-panning');
+    try { canvas.setPointerCapture(panState.pid); } catch {}
+  }
+  if (panState.moved) {
+    canvas.scrollLeft = panState.sl - dx;
+    canvas.scrollTop = panState.st - dy;
+  }
+});
+function endPan() {
+  if (!panState) return;
+  if (panState.moved) { try { canvas.releasePointerCapture(panState.pid); } catch {} }
+  canvas.classList.remove('ed-panning');
+  panState = null;
+}
+canvas.addEventListener('pointerup', endPan);
+canvas.addEventListener('pointercancel', endPan);
 
 window.addEventListener('beforeunload', e => {
   if (state.dirty) { e.preventDefault(); e.returnValue = ''; }
@@ -624,6 +666,7 @@ function renderCanvas() {
   canvas.appendChild(makeAddPageBar(null));
   refreshSelectionStyles();
   renderThumbs();
+  requestAnimationFrame(updatePannable);
 }
 
 // ---------- Tira de miniaturas de páginas ----------
