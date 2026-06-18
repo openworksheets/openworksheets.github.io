@@ -37,6 +37,7 @@ import { ICONS } from './icons.js';
 import { createSubmissionCrypto, decryptManifestForStudent, encryptManifestForStudent, isEncryptedManifest } from './submissionCrypto.js';
 import { iconBtn, colorInput } from './editor-ui.js';
 import { state, urls, fileUrl, markDirty, onDirty } from './editor-state.js';
+import { takeFile } from './filehandoff.js';
 
 applyI18n();
 initLangSelector();
@@ -3824,5 +3825,18 @@ resetHistory();
   } catch (e) {
     console.error(e);
     toast(t('toast.exportError', { msg: e.message }), 'error');
+  }
+})();
+
+// Apertura de una ficha elegida en la portada (botón «Abrir ficha»): allí no se
+// puede pasar el archivo directamente, así que llega guardado y lo recogemos.
+(async function openHandoffFile() {
+  if (!new URLSearchParams(location.search).has('abrir')) return;
+  try {
+    const file = await takeFile();
+    if (file) await openZipFile(file);
+  } catch (e) {
+    console.error(e);
+    toast(t('toast.openError'), 'error');
   }
 })();

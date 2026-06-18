@@ -9,6 +9,28 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.13.0] — 2026-06-18
+
+### Añadido
+- **Ficha de ejemplo en euskera** (`ejemplos/openworksheets-erako-adibide-fitxa.owpkg`):
+  traducción completa de la ficha de prueba con sus imágenes en euskera. Al
+  seleccionar el idioma **EU** en la portada, el enlace «Ver un ejemplo» abre ya
+  esta ficha. Cubre todos los tipos de campo del editor (respuesta corta y
+  numérica, huecos, opción única y múltiple, casillas, verdadero/falso,
+  desplegable, emparejar, ordenar, arrastrar a zonas y unir con flechas).
+- **Ficha de ejemplo en gallego** (`ejemplos/ficha-de-exemplo-para-openworksheets.owpkg`):
+  traducción completa de la ficha de prueba con sus imágenes en gallego, enlazada
+  al idioma **GL** de la portada. Cubre todos los tipos de campo del editor.
+
+### Cambiado
+- **El botón «Crear una ficha» de la portada pasa a ser «Abrir ficha»** (con icono
+  de carpeta): permite elegir un paquete `.owpkg` y abrirlo directamente en el
+  editor para seguir editándolo, sin pasar por el editor vacío. (Para empezar una
+  ficha nueva siguen estando el botón *Abrir el editor* y el menú *Archivo* del
+  editor.)
+
+---
+
 ## [1.12.0] — 2026-06-17
 
 ### Corregido

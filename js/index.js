@@ -4,6 +4,7 @@
 import { toast, copyToClipboard } from './util.js';
 import { buildShortLink, parseDriveId } from './drive.js';
 import { t, applyI18n, initLangSelector, getLang } from './i18n.js';
+import { stashFile } from './filehandoff.js';
 
 // Entrega recibida por enlace (#e=…): los enlaces que genera el alumnado apuntan
 // a index.html por compatibilidad. La corrección se hace en entregas.html, así
@@ -19,12 +20,35 @@ initLangSelector();
 const EXAMPLE_ZIPS = {
   es: 'ejemplos/ficha-de-prueba-para-openworksheets.owpkg',
   ca: 'ejemplos/fitxa-de-prova-per-a-openworksheets.owpkg',
+  gl: 'ejemplos/ficha-de-exemplo-para-openworksheets.owpkg',
+  eu: 'ejemplos/openworksheets-erako-adibide-fitxa.owpkg',
   en: 'ejemplos/test-for-openworksheets.owpkg'
 };
 const linkEjemplo = document.getElementById('linkEjemplo');
 if (linkEjemplo) {
   const zip = EXAMPLE_ZIPS[getLang()] || EXAMPLE_ZIPS.es;
   linkEjemplo.href = 'editor.html?ejemplo=' + zip;
+}
+
+// «Abrir ficha»: el usuario elige un paquete (.owpkg) en la portada y lo abrimos
+// en el editor. El selector de archivos exige un gesto del usuario que no se
+// conserva al navegar, así que guardamos la ficha elegida y la recoge el editor.
+const btnAbrirFicha = document.getElementById('btnAbrirFicha');
+const inputAbrirFicha = document.getElementById('inputAbrirFicha');
+if (btnAbrirFicha && inputAbrirFicha) {
+  btnAbrirFicha.addEventListener('click', () => inputAbrirFicha.click());
+  inputAbrirFicha.addEventListener('change', async () => {
+    const file = inputAbrirFicha.files[0];
+    inputAbrirFicha.value = '';
+    if (!file) return;
+    try {
+      await stashFile(file);
+      location.href = 'editor.html?abrir=1';
+    } catch (e) {
+      console.error(e);
+      toast(t('toast.openError'), 'error');
+    }
+  });
 }
 
 const $ = s => document.querySelector(s);
