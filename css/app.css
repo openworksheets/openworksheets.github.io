@@ -312,6 +312,14 @@ small { color: var(--tinta-suave); }
   box-shadow: 4px 4px 0 rgba(29, 44, 66, 0.18);
 }
 .topbar-submenu-wrap:hover .topbar-submenu { display: flex; }
+.topbar-submenu::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -8px;
+  width: 8px;
+  height: 100%;
+}
 
 .color-input-wrap { display: inline-flex; align-items: center; gap: 4px; }
 .color-input-wrap input[type="color"] { width: 36px; height: 28px; padding: 2px; border-radius: 4px; border: 1px solid var(--borde); cursor: pointer; }

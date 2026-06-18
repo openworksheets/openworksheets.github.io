@@ -58,9 +58,9 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
   // Firefox (~65 536) y de Chrome (~2 MB). Por encima, solo descarga de archivo.
   const MAX_SHARE_URL = 16000;
 
-  // Paquetes servidos por el Service Worker: SCORM y webs incrustadas (.zip/.elpx).
+  // Paquetes servidos por el Service Worker: SCORM y webs incrustadas (.zip/.elpx/imscp).
   const needsPkgHost = manifest.pages.some(p => p.fields.some(f =>
-    f.type === 'scorm' || (f.type === 'embed' && (f.config?.mode === 'zip' || f.config?.mode === 'elpx'))));
+    f.type === 'scorm' || (f.type === 'embed' && (f.config?.mode === 'zip' || f.config?.mode === 'elpx' || f.config?.mode === 'imscp'))));
   const pkgReady = needsPkgHost && scormSupported() ? registerScormSw() : Promise.resolve(false);
 
   const gradable = f => !isDecorField(f.type) && !f.noScore;

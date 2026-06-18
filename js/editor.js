@@ -2155,9 +2155,12 @@ function uploadImscpPackage(field) {
         if (!internal) continue;
         state.files.set(prefix + internal, await entry.async('blob'));
       }
+      const org = parsed.organizations[0];
       const cfg = field.config;
       cfg.pkg = prefix;
       cfg.entryHref = parsed.entryHref;
+      cfg.title = (org && org.title) || file.name.replace(/\.zip$/i, '');
+      cfg.toc = (org && org.items) || [];
       markDirty();
       renderCanvas();
       renderPanel();
@@ -2567,6 +2570,9 @@ const configForms = {
         ? uploadImscpPackage(field)
         : uploadWebPackage(field, cfg.mode));
       cont.appendChild(btn);
+      if (cfg.mode === 'imscp' && cfg.pkg) {
+        checkRow(cont, t('cfg.scormShowMenu'), cfg.showMenu !== false, v => { cfg.showMenu = v; renderCanvas(); });
+      }
     }
     // El SCORM/embed-paquete no usa el reconstructor de medios (no lo entiende):
     // su título/pie redibujan el lienzo.

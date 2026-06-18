@@ -320,8 +320,11 @@ export function buildMediaContent(field, fileUrl, opts = {}) {
       body = el('div', { class: 'wpf-embed-html' });
       body.innerHTML = cfg.html;
     } else if (cfg.mode === 'zip' || cfg.mode === 'elpx') {
-      // Web completa (.zip) o paquete eXeLearning (.elpx): servida por el SW.
       body = buildPackageIframe(field, opts.host, cfg.title);
+    } else if (cfg.mode === 'imscp') {
+      // IMS CP: misma vista que SCORM (menú de navegación + iframe). El runtime
+      // SCORM se inicializa pero el contenido IMS CP simplemente no lo llama.
+      return buildScormView(field, opts.host).el;
     } else if ((cfg.url || '').trim()) {
       body = el('iframe', {
         src: normalizeEmbedUrl(cfg.url),
