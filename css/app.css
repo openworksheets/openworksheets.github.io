@@ -913,9 +913,118 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 
 .ed-layout {
   display: grid;
-  grid-template-columns: 78px minmax(0, 1fr) 330px;
+  grid-template-columns: 78px var(--thumbs-w, 168px) minmax(0, 1fr) 330px;
   height: calc(100vh - 58px);
+  position: relative;
 }
+.ed-layout.thumbs-collapsed {
+  grid-template-columns: 78px 0 minmax(0, 1fr) 330px;
+}
+
+/* Tira de miniaturas de páginas (estilo presentación) */
+.ed-thumbs {
+  background: var(--papel-2);
+  border-right: 2px solid var(--tinta);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+.thumbs-collapsed .ed-thumbs { display: none; }
+.ed-thumbs-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--tinta-tenue);
+  flex-shrink: 0;
+}
+.ed-thumbs-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--tinta-suave);
+}
+.ed-thumbs-toggle, .ed-thumbs-show {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--tinta-suave);
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.ed-thumbs-toggle:hover, .ed-thumbs-show:hover { background: var(--tinta-tenue); color: var(--tinta); }
+.ed-thumbs-toggle svg, .ed-thumbs-show svg { width: 16px; height: 16px; }
+/* Botón para reabrir la tira cuando está colapsada */
+.ed-thumbs-show {
+  position: absolute;
+  top: 8px;
+  left: 86px;
+  z-index: 5;
+  width: 28px;
+  height: 28px;
+  background: var(--papel-2);
+  border: 2px solid var(--tinta);
+  box-shadow: var(--sombra-mini);
+  color: var(--tinta);
+}
+.ed-thumbs-show:hover { background: var(--blanco); }
+.ed-thumbs-list {
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ed-thumb {
+  position: relative;
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 2px;
+}
+.ed-thumb-num {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--tinta-suave);
+  min-width: 14px;
+  text-align: right;
+  padding-top: 2px;
+  flex-shrink: 0;
+}
+.ed-thumb-frame {
+  flex: 1;
+  min-width: 0;
+  border: 2px solid var(--tinta-tenue);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--blanco);
+  aspect-ratio: 1 / 1.414;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ed-thumb-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+}
+.ed-thumb:hover .ed-thumb-frame { border-color: var(--tinta-suave); }
+.ed-thumb.active .ed-thumb-frame { border-color: var(--rojo); }
+.ed-thumb.dragging { opacity: 0.4; }
+.ed-thumb.drag-over .ed-thumb-frame { border-color: var(--rojo); border-style: dashed; }
 
 /* Paleta de tipos de campo */
 .ed-palette {
@@ -2646,12 +2755,13 @@ input.wpf-gap-input {
 /* ---------- Responsive ---------- */
 
 @media (max-width: 980px) {
-  .ed-layout {
+  .ed-layout, .ed-layout.thumbs-collapsed {
     grid-template-columns: 64px minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) auto;
     height: auto;
     min-height: calc(100vh - 58px);
   }
+  .ed-thumbs, .ed-thumbs-show { display: none !important; }
   .ed-panel {
     grid-column: 1 / -1;
     border-left: none;

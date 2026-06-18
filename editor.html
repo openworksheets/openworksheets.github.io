@@ -72,6 +72,14 @@
 
   <div class="ed-layout">
     <nav class="ed-palette" id="palette" aria-label="Tipos de campo"></nav>
+    <aside class="ed-thumbs" id="thumbs" aria-label="Miniaturas de páginas">
+      <div class="ed-thumbs-head">
+        <span class="ed-thumbs-title" data-i18n="thumbs.title">Páginas</span>
+        <button class="ed-thumbs-toggle" id="btnThumbsToggle" type="button" data-i18n-title="thumbs.collapse" title="Ocultar miniaturas" aria-label="Ocultar miniaturas"></button>
+      </div>
+      <div class="ed-thumbs-list" id="thumbsList"></div>
+    </aside>
+    <button class="ed-thumbs-show" id="btnThumbsShow" type="button" data-i18n-title="thumbs.expand" title="Mostrar miniaturas" aria-label="Mostrar miniaturas" hidden></button>
     <main class="ed-canvas" id="canvas"></main>
     <aside class="ed-panel" id="panel" aria-label="Configuración del campo"></aside>
   </div>

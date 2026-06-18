@@ -607,7 +607,102 @@ function renderCanvas() {
   });
   canvas.appendChild(makeAddPageBar(null));
   refreshSelectionStyles();
+  renderThumbs();
 }
+
+// ---------- Tira de miniaturas de páginas ----------
+
+const thumbsList = $('#thumbsList');
+let thumbDragFrom = null;
+
+// Reordena una página de un índice a otro (usado por el arrastre de miniaturas).
+function reorderPage(from, to) {
+  if (from === to || from < 0 || to < 0 ||
+      from >= state.manifest.pages.length || to >= state.manifest.pages.length) return;
+  const [pg] = state.manifest.pages.splice(from, 1);
+  state.manifest.pages.splice(to, 0, pg);
+  state.sel = null;
+  markDirty();
+  renderCanvas();
+  renderPanel();
+}
+
+function renderThumbs() {
+  thumbsList.textContent = '';
+  state.manifest.pages.forEach((page, pi) => {
+    const frame = el('div', { class: 'ed-thumb-frame' },
+      el('img', { src: fileUrl(page.image), alt: '', draggable: 'false' }));
+    const thumb = el('div', {
+      class: 'ed-thumb', draggable: 'true', dataset: { page: pi },
+      title: t('editor.pageN', { n: pi + 1, total: state.manifest.pages.length })
+    }, el('span', { class: 'ed-thumb-num' }, String(pi + 1)), frame);
+
+    thumb.addEventListener('click', () => {
+      canvas.querySelector(`.wpf-page[data-page="${pi}"]`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    // Arrastrar para reordenar
+    thumb.addEventListener('dragstart', e => {
+      thumbDragFrom = pi;
+      thumb.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    thumb.addEventListener('dragend', () => {
+      thumbDragFrom = null;
+      thumbsList.querySelectorAll('.ed-thumb').forEach(t => t.classList.remove('dragging', 'drag-over'));
+    });
+    thumb.addEventListener('dragover', e => {
+      if (thumbDragFrom === null) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+    thumb.addEventListener('dragenter', () => {
+      if (thumbDragFrom !== null && thumbDragFrom !== pi) thumb.classList.add('drag-over');
+    });
+    thumb.addEventListener('dragleave', () => thumb.classList.remove('drag-over'));
+    thumb.addEventListener('drop', e => {
+      e.preventDefault();
+      if (thumbDragFrom !== null) reorderPage(thumbDragFrom, pi);
+    });
+
+    thumbsList.appendChild(thumb);
+  });
+  highlightActiveThumb();
+}
+
+// Marca la miniatura de la página más visible en el lienzo.
+function highlightActiveThumb() {
+  const idx = currentPageIndex();
+  thumbsList.querySelectorAll('.ed-thumb').forEach(thumb => {
+    thumb.classList.toggle('active', parseInt(thumb.dataset.page, 10) === idx);
+  });
+}
+
+// Colapso de la tira, persistente en localStorage.
+const edLayout = $('.ed-layout');
+const btnThumbsToggle = $('#btnThumbsToggle');
+const btnThumbsShow = $('#btnThumbsShow');
+btnThumbsToggle.innerHTML = ICONS.chevronLeft;
+btnThumbsShow.innerHTML = ICONS.chevronRight;
+
+function setThumbsCollapsed(collapsed) {
+  edLayout.classList.toggle('thumbs-collapsed', collapsed);
+  btnThumbsShow.hidden = !collapsed;
+  try { localStorage.setItem('wpf-ed-thumbs', collapsed ? '1' : '0'); } catch {}
+}
+btnThumbsToggle.addEventListener('click', () => setThumbsCollapsed(true));
+btnThumbsShow.addEventListener('click', () => setThumbsCollapsed(false));
+setThumbsCollapsed(localStorage.getItem('wpf-ed-thumbs') === '1');
+
+// Resaltar la miniatura activa al desplazar el lienzo.
+canvas.addEventListener('scroll', () => {
+  if (renderThumbs._raf) return;
+  renderThumbs._raf = requestAnimationFrame(() => {
+    renderThumbs._raf = null;
+    highlightActiveThumb();
+  });
+}, { passive: true });
 
 function setRectStyle(node, rect) {
   node.style.left = rect.x * 100 + '%';
