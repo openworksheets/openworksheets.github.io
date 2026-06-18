@@ -334,11 +334,9 @@ function makeAddPageBar(insertAt) {
     pdfBtn, zipBtn, addBtn);
 }
 
-function deletePage(pi) {
+// Elimina la página y su imagen de fondo, sin pedir confirmación.
+function removePage(pi) {
   const page = state.manifest.pages[pi];
-  const n = page.fields.length;
-  const fields = n ? t('editor.confirmDeleteFields', { n }) : '';
-  if (!window.confirm(t('editor.confirmDelete', { n: pi + 1, fields }))) return;
   state.files.delete(page.image);
   if (urls.has(page.image)) { URL.revokeObjectURL(urls.get(page.image)); urls.delete(page.image); }
   state.manifest.pages.splice(pi, 1);
@@ -346,6 +344,14 @@ function deletePage(pi) {
   markDirty();
   renderCanvas();
   renderPanel();
+}
+
+function deletePage(pi) {
+  const page = state.manifest.pages[pi];
+  const n = page.fields.length;
+  const fields = n ? t('editor.confirmDeleteFields', { n }) : '';
+  if (!window.confirm(t('editor.confirmDelete', { n: pi + 1, fields }))) return;
+  removePage(pi);
 }
 
 function duplicatePage(pi) {
@@ -642,6 +648,12 @@ function renderThumbs() {
         ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
+    // Menú contextual (clic derecho): copiar, cortar, pegar, duplicar, borrar.
+    thumb.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      showPageCtxMenu(e.clientX, e.clientY, pi);
+    });
+
     // Arrastrar para reordenar
     thumb.addEventListener('dragstart', e => {
       thumbDragFrom = pi;
@@ -741,6 +753,162 @@ setupGutter($('#gutterPanel'), e => {
   const w = Math.max(260, Math.min(620, right - e.clientX));
   edLayout.style.setProperty('--panel-w', w + 'px');
 });
+
+// ---------- Copiar / cortar / pegar / duplicar páginas ----------
+// Las páginas se serializan al portapapeles del sistema (con sus imágenes en
+// base64) para poder pegarlas en otra ventana de OpenWorksheets. Marca de
+// formato OWS_PAGE_TAG. Como respaldo (p. ej. si el navegador bloquea la
+// lectura del portapapeles) se guarda también una copia interna.
+const OWS_PAGE_TAG = 'ows-page-v1';
+let internalPageClip = null;
+
+function blobToDataUrl(blob) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = () => rej(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+async function dataUrlToBlob(dataUrl) {
+  return (await fetch(dataUrl)).blob();
+}
+
+// Rutas de todos los archivos (state.files) que usa una página.
+function collectPageFiles(page) {
+  const paths = new Set();
+  if (page.image) paths.add(page.image);
+  for (const f of page.fields || []) {
+    const c = f.config || {};
+    if (c.src) paths.add(c.src);
+    if (Array.isArray(c.pieces)) c.pieces.forEach(p => p.src && paths.add(p.src));
+    if (Array.isArray(c.items)) c.items.forEach(it => it.src && paths.add(it.src));
+    if (c.pkg) for (const path of state.files.keys()) {
+      if (path.startsWith(c.pkg)) paths.add(path);
+    }
+  }
+  return paths;
+}
+
+// Serializa la página y sus archivos a una cadena JSON (para el portapapeles).
+async function serializePage(page) {
+  const files = {};
+  for (const path of collectPageFiles(page)) {
+    const blob = state.files.get(path);
+    if (blob) files[path] = await blobToDataUrl(blob);
+  }
+  return JSON.stringify({ tag: OWS_PAGE_TAG, page, files });
+}
+
+// Inserta una página (objeto serializado) en insertAt, recreando sus archivos
+// con rutas nuevas para no colisionar ni compartir con páginas existentes.
+async function insertPageFromData(data, insertAt) {
+  // 1) Restaurar los blobs con sus rutas originales (si faltan en esta sesión).
+  for (const [path, dataUrl] of Object.entries(data.files || {})) {
+    if (!state.files.has(path)) state.files.set(path, await dataUrlToBlob(dataUrl));
+  }
+  const src = data.page;
+  // 2) Imagen de fondo: copia con ruta nueva.
+  const ext = (src.image || '').split('.').pop() || 'png';
+  const newImage = `pages/page-${state.pageSeq++}.${ext}`;
+  if (state.files.has(src.image)) state.files.set(newImage, state.files.get(src.image));
+  // 3) Clonar la página (cloneField regenera ids y recopia recortes).
+  const newPage = {
+    ...JSON.parse(JSON.stringify(src)),
+    image: newImage,
+    fields: (src.fields || []).map(f => cloneField(f))
+  };
+  // 4) Re-empaquetar paquetes (SCORM/zip/…) con prefijo nuevo.
+  for (const f of newPage.fields) {
+    const c = f.config || {};
+    if (!c.pkg) continue;
+    const inside = [...state.files.keys()].filter(p => p.startsWith(c.pkg));
+    if (!inside.length) continue;
+    const base = c.pkg.split('/')[0];
+    const newPre = base + '/' + uid('pkg') + '/';
+    inside.forEach(path => state.files.set(newPre + path.slice(c.pkg.length), state.files.get(path)));
+    c.pkg = newPre;
+  }
+  state.manifest.pages.splice(insertAt, 0, newPage);
+  state.sel = { kind: 'page', pageIndex: insertAt };
+  markDirty();
+  renderCanvas();
+  renderPanel();
+}
+
+async function copyPage(pi, { cut = false } = {}) {
+  const page = state.manifest.pages[pi];
+  try {
+    const json = await serializePage(page);
+    internalPageClip = json;
+    try { await navigator.clipboard.writeText(json); } catch {}
+    if (cut) removePage(pi);
+    toast(t(cut ? 'toast.pageCut' : 'toast.pageCopied'), 'ok');
+  } catch {
+    toast(t('toast.pageCopyError'), 'error');
+  }
+}
+
+async function pastePageAt(insertAt) {
+  let json = null;
+  try { json = await navigator.clipboard.readText(); } catch {}
+  // Si el portapapeles del sistema no trae una página válida, usar la copia interna.
+  let data = null;
+  for (const candidate of [json, internalPageClip]) {
+    if (!candidate) continue;
+    try {
+      const parsed = JSON.parse(candidate);
+      if (parsed && parsed.tag === OWS_PAGE_TAG) { data = parsed; break; }
+    } catch {}
+  }
+  if (!data) { toast(t('toast.pasteEmpty'), 'error'); return; }
+  try {
+    await insertPageFromData(data, Math.max(0, Math.min(insertAt, state.manifest.pages.length)));
+    toast(t('toast.pagePasted'), 'ok');
+  } catch {
+    toast(t('toast.pasteError'), 'error');
+  }
+}
+
+// ---------- Menú contextual de miniaturas ----------
+let pageCtxMenu = null;
+
+function closePageCtxMenu() {
+  if (pageCtxMenu) { pageCtxMenu.remove(); pageCtxMenu = null; }
+  document.removeEventListener('mousedown', onCtxOutside, true);
+  document.removeEventListener('keydown', onCtxKey, true);
+  window.removeEventListener('blur', closePageCtxMenu);
+}
+function onCtxKey(e) { if (e.key === 'Escape') closePageCtxMenu(); }
+// Cierra al pulsar fuera del menú (los clics dentro los gestiona cada opción).
+function onCtxOutside(e) {
+  if (pageCtxMenu && !pageCtxMenu.contains(e.target)) closePageCtxMenu();
+}
+
+function showPageCtxMenu(x, y, pi) {
+  closePageCtxMenu();
+  const menu = el('div', { class: 'ctx-menu' });
+  const add = (label, fn, opts = {}) => {
+    const b = el('button', { class: 'ctx-item' + (opts.danger ? ' danger' : ''), type: 'button' }, label);
+    b.addEventListener('click', () => { closePageCtxMenu(); fn(); });
+    menu.appendChild(b);
+  };
+  add(t('ctx.copy'), () => copyPage(pi));
+  add(t('ctx.cut'), () => copyPage(pi, { cut: true }));
+  add(t('ctx.paste'), () => pastePageAt(pi + 1));
+  add(t('ctx.duplicate'), () => duplicatePage(pi));
+  menu.appendChild(el('div', { class: 'ctx-sep' }));
+  add(t('ctx.delete'), () => deletePage(pi), { danger: true });
+
+  document.body.appendChild(menu);
+  pageCtxMenu = menu;
+  const r = menu.getBoundingClientRect();
+  menu.style.left = Math.min(x, window.innerWidth - r.width - 8) + 'px';
+  menu.style.top = Math.min(y, window.innerHeight - r.height - 8) + 'px';
+  document.addEventListener('mousedown', onCtxOutside, true);
+  document.addEventListener('keydown', onCtxKey, true);
+  window.addEventListener('blur', closePageCtxMenu);
+}
 
 function setRectStyle(node, rect) {
   node.style.left = rect.x * 100 + '%';

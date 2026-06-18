@@ -1050,6 +1050,39 @@ body.resizing-col { cursor: col-resize; }
 .ed-thumb.dragging { opacity: 0.4; }
 .ed-thumb.drag-over .ed-thumb-frame { border-color: var(--rojo); border-style: dashed; }
 
+/* Menú contextual (clic derecho sobre una miniatura) */
+.ctx-menu {
+  position: fixed;
+  z-index: 200;
+  min-width: 168px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  background: var(--blanco);
+  color: var(--tinta);
+  border: 2px solid var(--tinta);
+  border-radius: 10px;
+  box-shadow: 4px 4px 0 rgba(29, 44, 66, 0.18);
+}
+.ctx-item {
+  display: block;
+  width: 100%;
+  padding: 7px 12px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--tinta);
+  font-family: var(--cuerpo);
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+.ctx-item:hover, .ctx-item:focus-visible { background: var(--ambar-claro); outline: none; }
+.ctx-item.danger { color: var(--rojo); }
+.ctx-item.danger:hover { background: var(--rojo-claro); }
+.ctx-sep { height: 1px; margin: 5px 8px; background: var(--tinta-tenue); }
+
 /* Paleta de tipos de campo */
 .ed-palette {
   background: var(--papel-2);
