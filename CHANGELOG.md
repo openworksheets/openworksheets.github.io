@@ -29,6 +29,12 @@ Las versiones publicadas también están en la página de
   insertar web/HTML y SCORM): su título y pie de texto se pueden alinear a la
   izquierda, al centro o a la derecha. Estos textos siguen vacíos por defecto.
 
+### Cambiado
+- En **respuesta corta** y **respuesta numérica**, al marcar «No contar para la
+  puntuación» se ocultan los ajustes que solo sirven para corregir (respuestas
+  aceptadas, tolerancia e ignorar mayúsculas/tildes/espacios), ya que no aplican
+  cuando el campo no puntúa.
+
 ### Corregido
 - El icono de **«Exportar a SCORM 1.2»** del menú *Archivo* ahora coincide con el
   del campo SCORM de la paleta (mismo icono de paquete), por consistencia.

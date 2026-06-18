@@ -1539,6 +1539,13 @@ function renderFieldPanel(field) {
     noScoreCb.addEventListener('change', () => {
       field.noScore = noScoreCb.checked;
       ptsRow.style.display = field.noScore ? 'none' : '';
+      // Los ajustes que solo sirven para corregir (respuestas aceptadas,
+      // tolerancia, ignorar mayúsculas/tildes/espacios…) no tienen sentido si el
+      // campo no puntúa: se ocultan mientras «No contar para la puntuación» esté
+      // marcado. Los marca cada formBuilder con la clase `cfg-scoring-only`.
+      cont.querySelectorAll('.cfg-scoring-only').forEach(elm => {
+        elm.style.display = field.noScore ? 'none' : '';
+      });
       refreshChip(field);
       refreshFieldList();
       markDirty();
@@ -2546,7 +2553,10 @@ const configForms = {
 
   text(cont, field) {
     const cfg = field.config;
-    optionListEditor(cont, {
+    // Todo lo de respuestas y corrección se oculta si el campo no puntúa.
+    const wrap = el('div', { class: 'cfg-scoring-only' });
+    if (field.noScore) wrap.style.display = 'none';
+    optionListEditor(wrap, {
       label: t('cfg.answers'),
       items: () => cfg.answers,
       render: (row, item, i) => row.appendChild(textCell(item, v => { cfg.answers[i] = v; }, t('cfg.answerPlaceholder'))),
@@ -2554,18 +2564,23 @@ const configForms = {
       remove: i => cfg.answers.splice(i, 1),
       addLabel: t('cfg.addAnswer')
     });
-    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.correction')));
-    textNormOptions(cont, cfg);
+    wrap.appendChild(el('label', { class: 'f-label' }, t('cfg.correction')));
+    textNormOptions(wrap, cfg);
+    cont.appendChild(wrap);
   },
 
   number(cont, field) {
     const cfg = field.config;
-    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.correctAnswer')));
-    cont.appendChild(textCell(String(cfg.answer ?? ''), v => { cfg.answer = v; }, 'Ej.: 3,14'));
-    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.tolerance')));
-    cont.appendChild(textCell(String(cfg.tolerance ?? 0), v => { cfg.tolerance = v; }, '0'));
-    cont.appendChild(el('p', { style: 'font-size:.82rem;color:var(--tinta-suave)' },
+    // Respuesta correcta, tolerancia y nota: solo aplican si el campo puntúa.
+    const wrap = el('div', { class: 'cfg-scoring-only' });
+    if (field.noScore) wrap.style.display = 'none';
+    wrap.appendChild(el('label', { class: 'f-label' }, t('cfg.correctAnswer')));
+    wrap.appendChild(textCell(String(cfg.answer ?? ''), v => { cfg.answer = v; }, 'Ej.: 3,14'));
+    wrap.appendChild(el('label', { class: 'f-label' }, t('cfg.tolerance')));
+    wrap.appendChild(textCell(String(cfg.tolerance ?? 0), v => { cfg.tolerance = v; }, '0'));
+    wrap.appendChild(el('p', { style: 'font-size:.82rem;color:var(--tinta-suave)' },
       t('cfg.numHint')));
+    cont.appendChild(wrap);
   },
 
   single(cont, field) {
