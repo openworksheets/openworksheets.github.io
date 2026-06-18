@@ -598,8 +598,8 @@ function renderCanvas() {
     const head = el('div', { class: 'ed-pagehead' },
       el('span', {}, t('editor.pageN', { n: pi + 1, total: state.manifest.pages.length })),
       el('span', { class: 'spacer' }),
-      iconBtn({ class: 'btn small ghost', title: t('editor.moveUp'), onclick: () => movePage(pi, -1) }, ICONS.chevronUp),
-      iconBtn({ class: 'btn small ghost', title: t('editor.moveDown'), onclick: () => movePage(pi, 1) }, ICONS.chevronDown2),
+      iconBtn({ class: 'btn small ghost', title: t('editor.moveUp'), onclick: () => movePage(pi, -1), disabled: pi === 0 }, ICONS.chevronUp),
+      iconBtn({ class: 'btn small ghost', title: t('editor.moveDown'), onclick: () => movePage(pi, 1), disabled: pi === state.manifest.pages.length - 1 }, ICONS.chevronDown2),
       iconBtn({ class: 'btn small ghost danger', title: t('editor.deletePage'), onclick: () => deletePage(pi) }, ICONS.trash));
 
     canvas.appendChild(el('div', { class: 'ed-pagebox' }, head, pageEl));
