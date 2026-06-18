@@ -1068,7 +1068,9 @@ body.resizing-col { cursor: col-resize; }
   box-shadow: 4px 4px 0 rgba(29, 44, 66, 0.18);
 }
 .ctx-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   width: 100%;
   padding: 7px 12px;
   border: none;
@@ -1083,6 +1085,10 @@ body.resizing-col { cursor: col-resize; }
 .ctx-item:hover, .ctx-item:focus-visible { background: var(--ambar-claro); outline: none; }
 .ctx-item.danger { color: var(--rojo); }
 .ctx-item.danger:hover { background: var(--rojo-claro); }
+.ctx-item:disabled { opacity: 0.4; cursor: default; }
+.ctx-item:disabled:hover { background: transparent; }
+.ctx-icon { display: inline-flex; flex-shrink: 0; }
+.ctx-icon svg { width: 16px; height: 16px; }
 .ctx-sep { height: 1px; margin: 5px 8px; background: var(--tinta-tenue); }
 
 /* Paleta de tipos de campo */

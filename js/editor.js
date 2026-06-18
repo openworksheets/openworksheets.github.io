@@ -841,13 +841,16 @@ function onCtxOutside(e) {
   if (ctxMenuEl && !ctxMenuEl.contains(e.target)) closeCtxMenu();
 }
 
-// items: array de { label, fn, danger, disabled } o 'sep' para un separador.
+// items: array de { icon, label, fn, danger, disabled } o 'sep' para un separador.
 function showCtxMenu(x, y, items) {
   closeCtxMenu();
   const menu = el('div', { class: 'ctx-menu' });
   for (const item of items) {
     if (item === 'sep') { menu.appendChild(el('div', { class: 'ctx-sep' })); continue; }
-    const b = el('button', { class: 'ctx-item' + (item.danger ? ' danger' : ''), type: 'button' }, item.label);
+    const ic = el('span', { class: 'ctx-icon', 'aria-hidden': 'true' });
+    ic.innerHTML = item.icon || '';
+    const b = el('button', { class: 'ctx-item' + (item.danger ? ' danger' : ''), type: 'button' },
+      ic, el('span', {}, item.label));
     if (item.disabled) b.disabled = true;
     else b.addEventListener('click', () => { closeCtxMenu(); item.fn(); });
     menu.appendChild(b);
@@ -864,12 +867,13 @@ function showCtxMenu(x, y, items) {
 
 function showPageCtxMenu(x, y, pi) {
   showCtxMenu(x, y, [
-    { label: t('ctx.copy'), fn: () => copyPage(pi) },
-    { label: t('ctx.cut'), fn: () => copyPage(pi, { cut: true }) },
-    { label: t('ctx.paste'), fn: () => pastePageAt(pi + 1) },
-    { label: t('ctx.duplicate'), fn: () => duplicatePage(pi) },
+    { icon: ICONS.copy, label: t('ctx.copy'), fn: () => copyPage(pi) },
+    { icon: ICONS.scissors, label: t('ctx.cut'), fn: () => copyPage(pi, { cut: true }) },
+    { icon: ICONS.clipboard, label: t('ctx.paste'), fn: () => pastePageAt(pi + 1) },
+    { icon: ICONS.copyPlus, label: t('ctx.duplicate'), fn: () => duplicatePage(pi) },
     'sep',
-    { label: t('ctx.delete'), fn: () => deletePage(pi), danger: true }
+    { icon: ICONS.settings, label: t('menu.settings'), fn: () => openSettings() },
+    { icon: ICONS.trash, label: t('ctx.delete'), fn: () => deletePage(pi), danger: true }
   ]);
 }
 
@@ -884,16 +888,18 @@ canvas.addEventListener('contextmenu', e => {
   if (fieldEl) {
     selectField(pi, fieldEl.dataset.id);
     showCtxMenu(e.clientX, e.clientY, [
-      { label: t('editor.copy'), fn: copySelected },
-      { label: t('editor.cut'), fn: () => { copySelected(); deleteSelected(); } },
-      { label: t('editor.duplicate'), fn: duplicateSelected },
-      { label: t('editor.paste'), fn: () => pasteField(pi), disabled: !state.copiedField },
+      { icon: ICONS.copy, label: t('editor.copy'), fn: copySelected },
+      { icon: ICONS.scissors, label: t('editor.cut'), fn: () => { copySelected(); deleteSelected(); } },
+      { icon: ICONS.copyPlus, label: t('editor.duplicate'), fn: duplicateSelected },
+      { icon: ICONS.clipboard, label: t('editor.paste'), fn: () => pasteField(pi), disabled: !state.copiedField },
       'sep',
-      { label: t('editor.delete'), fn: deleteSelected, danger: true }
+      { icon: ICONS.settings, label: t('menu.settings'), fn: () => openSettings() },
+      { icon: ICONS.trash, label: t('editor.delete'), fn: deleteSelected, danger: true }
     ]);
   } else {
     showCtxMenu(e.clientX, e.clientY, [
-      { label: t('editor.paste'), fn: () => pasteField(pi), disabled: !state.copiedField }
+      { icon: ICONS.clipboard, label: t('editor.paste'), fn: () => pasteField(pi), disabled: !state.copiedField },
+      { icon: ICONS.settings, label: t('menu.settings'), fn: () => openSettings() }
     ]);
   }
 });
