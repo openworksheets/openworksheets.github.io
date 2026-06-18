@@ -770,8 +770,17 @@ function blobToDataUrl(blob) {
     r.readAsDataURL(blob);
   });
 }
-async function dataUrlToBlob(dataUrl) {
-  return (await fetch(dataUrl)).blob();
+// Decodifica una data URL a Blob sin usar fetch (evita límites de tamaño y
+// posibles bloqueos por CSP de las data: URLs grandes).
+function dataUrlToBlob(dataUrl) {
+  const comma = dataUrl.indexOf(',');
+  const head = dataUrl.slice(0, comma);
+  const body = dataUrl.slice(comma + 1);
+  const mime = (head.match(/:(.*?);/) || [])[1] || 'application/octet-stream';
+  const bin = atob(body);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: mime });
 }
 
 // Rutas de todos los archivos (state.files) que usa una página.
@@ -836,11 +845,18 @@ async function insertPageFromData(data, insertAt) {
   renderPanel();
 }
 
+// Clave compartida entre todas las ventanas de OWS del mismo origen.
+const OWS_PAGE_CLIP_KEY = 'ows-page-clip';
+
 async function copyPage(pi, { cut = false } = {}) {
   const page = state.manifest.pages[pi];
   try {
     const json = await serializePage(page);
     internalPageClip = json;
+    // localStorage es la vía fiable entre ventanas del mismo origen (sin los
+    // límites de tamaño ni permisos del portapapeles del sistema).
+    try { localStorage.setItem(OWS_PAGE_CLIP_KEY, json); } catch {}
+    // El portapapeles del sistema permite además pegar en otra instalación/dominio.
     try { await navigator.clipboard.writeText(json); } catch {}
     if (cut) removePage(pi);
     toast(t(cut ? 'toast.pageCut' : 'toast.pageCopied'), 'ok');
@@ -850,11 +866,13 @@ async function copyPage(pi, { cut = false } = {}) {
 }
 
 async function pastePageAt(insertAt) {
-  let json = null;
-  try { json = await navigator.clipboard.readText(); } catch {}
-  // Si el portapapeles del sistema no trae una página válida, usar la copia interna.
+  const candidates = [];
+  try { candidates.push(localStorage.getItem(OWS_PAGE_CLIP_KEY)); } catch {}
+  candidates.push(internalPageClip);
+  try { candidates.push(await navigator.clipboard.readText()); } catch {}
+
   let data = null;
-  for (const candidate of [json, internalPageClip]) {
+  for (const candidate of candidates) {
     if (!candidate) continue;
     try {
       const parsed = JSON.parse(candidate);
