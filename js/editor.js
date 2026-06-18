@@ -826,45 +826,77 @@ function pastePageAt(insertAt) {
   toast(t('toast.pagePasted'), 'ok');
 }
 
-// ---------- Menú contextual de miniaturas ----------
-let pageCtxMenu = null;
+// ---------- Menú contextual genérico ----------
+let ctxMenuEl = null;
 
-function closePageCtxMenu() {
-  if (pageCtxMenu) { pageCtxMenu.remove(); pageCtxMenu = null; }
+function closeCtxMenu() {
+  if (ctxMenuEl) { ctxMenuEl.remove(); ctxMenuEl = null; }
   document.removeEventListener('mousedown', onCtxOutside, true);
   document.removeEventListener('keydown', onCtxKey, true);
-  window.removeEventListener('blur', closePageCtxMenu);
+  window.removeEventListener('blur', closeCtxMenu);
 }
-function onCtxKey(e) { if (e.key === 'Escape') closePageCtxMenu(); }
+function onCtxKey(e) { if (e.key === 'Escape') closeCtxMenu(); }
 // Cierra al pulsar fuera del menú (los clics dentro los gestiona cada opción).
 function onCtxOutside(e) {
-  if (pageCtxMenu && !pageCtxMenu.contains(e.target)) closePageCtxMenu();
+  if (ctxMenuEl && !ctxMenuEl.contains(e.target)) closeCtxMenu();
 }
 
-function showPageCtxMenu(x, y, pi) {
-  closePageCtxMenu();
+// items: array de { label, fn, danger, disabled } o 'sep' para un separador.
+function showCtxMenu(x, y, items) {
+  closeCtxMenu();
   const menu = el('div', { class: 'ctx-menu' });
-  const add = (label, fn, opts = {}) => {
-    const b = el('button', { class: 'ctx-item' + (opts.danger ? ' danger' : ''), type: 'button' }, label);
-    b.addEventListener('click', () => { closePageCtxMenu(); fn(); });
+  for (const item of items) {
+    if (item === 'sep') { menu.appendChild(el('div', { class: 'ctx-sep' })); continue; }
+    const b = el('button', { class: 'ctx-item' + (item.danger ? ' danger' : ''), type: 'button' }, item.label);
+    if (item.disabled) b.disabled = true;
+    else b.addEventListener('click', () => { closeCtxMenu(); item.fn(); });
     menu.appendChild(b);
-  };
-  add(t('ctx.copy'), () => copyPage(pi));
-  add(t('ctx.cut'), () => copyPage(pi, { cut: true }));
-  add(t('ctx.paste'), () => pastePageAt(pi + 1));
-  add(t('ctx.duplicate'), () => duplicatePage(pi));
-  menu.appendChild(el('div', { class: 'ctx-sep' }));
-  add(t('ctx.delete'), () => deletePage(pi), { danger: true });
-
+  }
   document.body.appendChild(menu);
-  pageCtxMenu = menu;
+  ctxMenuEl = menu;
   const r = menu.getBoundingClientRect();
   menu.style.left = Math.min(x, window.innerWidth - r.width - 8) + 'px';
   menu.style.top = Math.min(y, window.innerHeight - r.height - 8) + 'px';
   document.addEventListener('mousedown', onCtxOutside, true);
   document.addEventListener('keydown', onCtxKey, true);
-  window.addEventListener('blur', closePageCtxMenu);
+  window.addEventListener('blur', closeCtxMenu);
 }
+
+function showPageCtxMenu(x, y, pi) {
+  showCtxMenu(x, y, [
+    { label: t('ctx.copy'), fn: () => copyPage(pi) },
+    { label: t('ctx.cut'), fn: () => copyPage(pi, { cut: true }) },
+    { label: t('ctx.paste'), fn: () => pastePageAt(pi + 1) },
+    { label: t('ctx.duplicate'), fn: () => duplicatePage(pi) },
+    'sep',
+    { label: t('ctx.delete'), fn: () => deletePage(pi), danger: true }
+  ]);
+}
+
+// Menú contextual del lienzo: sobre un campo (copiar/cortar/duplicar/pegar/
+// eliminar) o sobre el fondo de la página (pegar campo).
+canvas.addEventListener('contextmenu', e => {
+  const pageEl = e.target.closest?.('.wpf-page');
+  if (!pageEl) return; // fuera de una página: menú nativo del navegador
+  const pi = parseInt(pageEl.dataset.page, 10);
+  const fieldEl = e.target.closest?.('.ed-field');
+  e.preventDefault();
+  if (fieldEl) {
+    selectField(pi, fieldEl.dataset.id);
+    showCtxMenu(e.clientX, e.clientY, [
+      { label: t('editor.copy'), fn: copySelected },
+      { label: t('editor.cut'), fn: () => { copySelected(); deleteSelected(); } },
+      { label: t('editor.duplicate'), fn: duplicateSelected },
+      { label: t('editor.paste'), fn: () => pasteField(pi), disabled: !state.copiedField },
+      'sep',
+      { label: t('editor.delete'), fn: deleteSelected, danger: true }
+    ]);
+  } else {
+    showCtxMenu(e.clientX, e.clientY, [
+      { label: t('editor.paste'), fn: () => pasteField(pi), disabled: !state.copiedField }
+    ]);
+  }
+});
 
 function setRectStyle(node, rect) {
   node.style.left = rect.x * 100 + '%';
@@ -897,6 +929,7 @@ function pageContentSize(pageEl) {
 // Mover y redimensionar un rectángulo (campo o zona).
 function attachBoxInteraction(box, pageEl, rect, { onSelect, isSelected, onChange }) {
   box.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return; // solo botón izquierdo (el derecho abre el menú contextual)
     if (state.activeTool || state.pendingAmItem) return; // en modo dibujo, la página gestiona el evento
     e.stopPropagation();
     e.preventDefault();
@@ -966,6 +999,7 @@ function attachRotateHandle(rotHandle, box, field) {
 // Dibujar un campo nuevo (o una zona) sobre la página.
 function attachDrawInteraction(pageEl, pi) {
   pageEl.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return; // solo botón izquierdo (el derecho abre el menú contextual)
     // «Rellenar huecos» aún no es una herramienta de dibujo: hay que elegir el
     // modo en el panel. No hace nada al pulsar sobre la página.
     if (state.activeTool === 'fillgaps') return;
