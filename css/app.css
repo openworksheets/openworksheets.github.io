@@ -242,7 +242,14 @@ small { color: var(--tinta-suave); }
 
 /* ---------- Menú «Archivo» del topbar ---------- */
 .topbar-menu { position: relative; display: inline-flex; }
-#btnArchivo, #btnUtilidades { gap: 5px; font-weight: 400; }
+#btnArchivo, #btnUtilidades {
+  gap: 5px; font-weight: 400;
+  border-color: transparent; background: transparent;
+  box-shadow: none; color: var(--papel);
+  padding: 5px 10px; border-radius: 6px;
+}
+#btnArchivo:hover, #btnUtilidades:hover { background: rgba(247,242,231,0.15); transform: none; box-shadow: none; }
+#btnArchivo[aria-expanded='true'], #btnUtilidades[aria-expanded='true'] { background: rgba(247,242,231,0.2); transform: none; box-shadow: none; }
 .topbar-menu .menu-caret { width: 14px; height: 14px; flex-shrink: 0; opacity: 0.75; }
 .topbar-menu button[aria-expanded='true'] .menu-caret { transform: rotate(180deg); }
 .topbar-menu-list {
