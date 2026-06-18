@@ -473,7 +473,7 @@ function renderCanvas() {
       } else if (isShapeField(field.type)) {
         box.appendChild(buildShapeSvg(field));
       }
-      if (field.type === 'image' || field.type === 'label' || field.type === 'cover') {
+      if (field.type === 'image' || field.type === 'label' || field.type === 'cover' || isShapeField(field.type)) {
         const rotHandle = el('span', { class: 'rot-handle', title: t('editor.rotate') });
         box.appendChild(rotHandle);
         if (field.rotate) box.style.transform = `rotate(${field.rotate}deg)`;
@@ -1933,8 +1933,8 @@ function renderFieldPanel(field) {
   const formBuilder = configForms[field.type];
   if (formBuilder) formBuilder(cont, field);
 
-  // Rotación (image, label y cover)
-  if (field.type === 'image' || field.type === 'label' || field.type === 'cover') {
+  // Rotación: image, label, cover y las formas de diseño (no vídeo ni audio).
+  if (field.type === 'image' || field.type === 'label' || field.type === 'cover' || isShapeField(field.type)) {
     const rotInp = el('input', { type: 'number', class: 'rot-input', step: '1', value: String(field.rotate || 0) });
     const applyRot = (deg, fromInput = false) => {
       field.rotate = deg;
@@ -2762,23 +2762,6 @@ const configForms = {
       refreshShapePrev(field);
     });
     cont.appendChild(fillRow);
-
-    // Rotación
-    const rotVal = parseFloat(cfg.rotation) || 0;
-    const rotRange = el('input', { type: 'range', min: '0', max: '360', step: '1', value: String(rotVal) });
-    const rotNum = el('input', { type: 'number', min: '0', max: '360', step: '1', value: String(rotVal), style: 'width:60px' });
-    const applyRot = v => {
-      v = ((parseFloat(v) || 0) % 360 + 360) % 360;
-      cfg.rotation = v;
-      rotRange.value = v;
-      rotNum.value = v;
-      refreshShapePrev(field);
-      markDirty();
-    };
-    rotRange.addEventListener('input', () => applyRot(rotRange.value));
-    rotNum.addEventListener('input', () => applyRot(rotNum.value));
-    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.polygonRotation')));
-    cont.appendChild(el('div', { class: 'rot-row' }, rotRange, rotNum, el('span', {}, '°')));
 
     // Mantener la forma regular (si no, se deforma para llenar la caja)
     checkRow(cont, t('cfg.polygonRegular'), cfg.regular !== false, v => {

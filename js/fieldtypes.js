@@ -252,7 +252,7 @@ export const FIELD_TYPES = {
     glyph: ICONS.pentagon,
     decor: true,
     defRect: { w: 0.18, h: 0.18 },
-    defaults: () => ({ sides: 5, color: '#1d2c42', width: 2, style: 'solid', noStroke: false, fill: '', fillOpacity: 1, rotation: 0, regular: true })
+    defaults: () => ({ sides: 5, color: '#1d2c42', width: 2, style: 'solid', noStroke: false, fill: '', fillOpacity: 1, regular: true })
   }
 };
 

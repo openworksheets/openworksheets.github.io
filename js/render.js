@@ -191,10 +191,9 @@ export function buildShapeSvg(field) {
     // forma (escala uniforme + meet); si no, se deforma para llenar la caja.
     const sides = Math.max(3, Math.min(20, parseInt(cfg.sides, 10) || 5));
     const regular = cfg.regular !== false;
-    const rot = (parseFloat(cfg.rotation) || 0) * Math.PI / 180;
     const raw = [];
     for (let i = 0; i < sides; i++) {
-      const a = -Math.PI / 2 + rot + i * 2 * Math.PI / sides;
+      const a = -Math.PI / 2 + i * 2 * Math.PI / sides;
       raw.push([Math.cos(a), Math.sin(a)]);
     }
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
