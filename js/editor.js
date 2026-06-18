@@ -402,7 +402,7 @@ function renderCanvas() {
   }
 
   const btnPrevia = iconBtn(
-    { id: 'btnPrevia', class: 'btn small ed-preview-btn', type: 'button', title: t('preview.tip') + ' (Ctrl+Shift+P)', onclick: openPreview },
+    { id: 'btnPrevia', class: 'btn small ed-preview-btn', type: 'button', title: t('preview.tip') + ' (Ctrl+Shift+E)', onclick: openPreview },
     ICONS.eye, t('nav.preview'));
   canvas.appendChild(el('div', { class: 'ed-zoom-wrap' }, btnPrevia, zoomCtl.el));
 
@@ -3938,7 +3938,7 @@ function openSearch() {
 
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
-  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'P') { e.preventDefault(); openPreview(); }
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'E') { e.preventDefault(); openPreview(); }
 });
 
 // ---------- Estadísticas de la ficha ----------
