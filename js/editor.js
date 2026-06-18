@@ -55,6 +55,7 @@ initLangSelector({ reload: false, onChange: () => {
 
 const $ = s => document.querySelector(s);
 const canvas = $('#canvas');
+const canvasWrap = $('#canvasWrap');
 const panel = $('#panel');
 const palette = $('#palette');
 const titleInput = $('#titulo');
@@ -81,6 +82,18 @@ canvas.addEventListener('wheel', e => {
   e.preventDefault();
   zoomCtl.set(zoomCtl.get() * (e.deltaY < 0 ? 1.1 : 1 / 1.1));
 }, { passive: false });
+
+// Controles de vista previa y zoom: viven en el contenedor del lienzo (no en el
+// área que hace scroll), como una capa fija en la esquina superior derecha, para
+// que no se desplacen con la ficha. Se crean una sola vez.
+const btnPrevia = iconBtn(
+  { id: 'btnPrevia', class: 'btn small ed-preview-btn', type: 'button', title: t('preview.tip') + ' (Ctrl+Shift+E)', onclick: openPreview },
+  ICONS.eye, t('nav.preview'));
+// Como el botón ya no se recrea en cada render, su etiqueta se re-traduce con
+// applyI18n al cambiar de idioma.
+btnPrevia.querySelector('span')?.setAttribute('data-i18n', 'nav.preview');
+const zoomWrap = el('div', { class: 'ed-zoom-wrap' }, btnPrevia, zoomCtl.el);
+canvasWrap.appendChild(zoomWrap);
 
 // ---------- Desplazar la ficha arrastrando (pan) ----------
 // Cuando la ficha ampliada se sale de los márgenes, se puede arrastrar el fondo
@@ -443,6 +456,7 @@ function renderCanvas() {
   // Fuente global de la ficha: se hereda en los campos (y en la previa del label).
   canvas.style.setProperty('--ficha-font', fontStack(state.manifest.settings.fontFamily));
   if (!state.manifest.pages.length) {
+    zoomWrap.style.display = 'none'; // sin páginas no hay nada que previsualizar ni ampliar
     canvas.appendChild(el('div', { class: 'ed-empty card anim-in' },
       el('h2', {}, t('editor.emptyTitle')),
       el('p', {}, t('editor.emptyDesc')),
@@ -460,10 +474,7 @@ function renderCanvas() {
     return;
   }
 
-  const btnPrevia = iconBtn(
-    { id: 'btnPrevia', class: 'btn small ed-preview-btn', type: 'button', title: t('preview.tip') + ' (Ctrl+Shift+E)', onclick: openPreview },
-    ICONS.eye, t('nav.preview'));
-  canvas.appendChild(el('div', { class: 'ed-zoom-wrap' }, btnPrevia, zoomCtl.el));
+  zoomWrap.style.display = '';
 
   state.manifest.pages.forEach((page, pi) => {
     const pageEl = el('div', { class: 'wpf-page', dataset: { page: pi } },
