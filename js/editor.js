@@ -188,7 +188,8 @@ async function addFiles(fileList, insertAt) {
     }
   }
   markDirty();
-  if (insertAt == null) { zoomCtl.set(1); autoThumbs(); } // al abrir un PDF/imágenes: zoom 100 % y tira según nº de páginas
+  if (insertAt == null) zoomCtl.set(1); // al abrir un PDF/imágenes: zoom 100 %
+  autoThumbs(); // mostrar la tira si se ha pasado de una a varias páginas
   renderCanvas();
   renderPanel();
 }
@@ -226,7 +227,7 @@ function addBlankPage(insertAt) {
     const page = { image: path, w: W, h: H, fields: [], bgColor: '#ffffff' };
     if (insertAt != null) state.manifest.pages.splice(insertAt, 0, page);
     else state.manifest.pages.push(page);
-    markDirty(); renderCanvas(); renderPanel();
+    markDirty(); autoThumbs(); renderCanvas(); renderPanel();
   }, 'image/png');
 }
 
@@ -349,6 +350,7 @@ function removePage(pi) {
   state.manifest.pages.splice(pi, 1);
   state.sel = null;
   markDirty();
+  autoThumbs(); // ocultar la tira si solo queda una página
   renderCanvas();
   renderPanel();
 }
@@ -375,6 +377,7 @@ function duplicatePage(pi) {
   state.manifest.pages.splice(pi + 1, 0, newPage);
   state.sel = { kind: 'page', pageIndex: pi + 1 };
   markDirty();
+  autoThumbs(); // mostrar la tira si se ha pasado de una a varias páginas
   renderCanvas();
   renderPanel();
 }
@@ -706,17 +709,22 @@ btnThumbsToggle.innerHTML = ICONS.chevronLeft;
 btnThumbsShow.innerHTML = ICONS.chevronRight;
 
 // El colapso de la tira no se guarda: lo que el usuario cambie a mano dura solo
-// hasta que abra otra ficha. Al abrir/cargar una ficha se decide según el número
-// de páginas (autoThumbs): visible con más de una, oculta con una sola.
+// dentro de la sesión. La tira se ajusta sola al número de páginas: se muestra
+// al pasar de una a varias y se oculta al volver a una sola. Mientras no se cruce
+// ese umbral, se respeta el colapso manual (salvo `force`, al abrir una ficha).
+let prevPageCount = state.manifest.pages.length;
 function setThumbsCollapsed(collapsed) {
   edLayout.classList.toggle('thumbs-collapsed', collapsed);
 }
-function autoThumbs() {
-  setThumbsCollapsed(state.manifest.pages.length <= 1);
+function autoThumbs({ force = false } = {}) {
+  const n = state.manifest.pages.length;
+  const crossed = (prevPageCount <= 1) !== (n <= 1);
+  if (force || crossed) setThumbsCollapsed(n <= 1);
+  prevPageCount = n;
 }
 btnThumbsToggle.addEventListener('click', () => setThumbsCollapsed(true));
 btnThumbsShow.addEventListener('click', () => setThumbsCollapsed(false));
-autoThumbs();
+autoThumbs({ force: true });
 
 // Resaltar la miniatura activa al desplazar el lienzo.
 canvas.addEventListener('scroll', () => {
@@ -832,6 +840,7 @@ function pastePageAt(insertAt) {
   state.manifest.pages.splice(at, 0, newPage);
   state.sel = { kind: 'page', pageIndex: at };
   markDirty();
+  autoThumbs(); // mostrar la tira si se ha pasado de una a varias páginas
   renderCanvas();
   renderPanel();
   toast(t('toast.pagePasted'), 'ok');
@@ -4045,7 +4054,7 @@ async function openZipFile(file, handle = null) {
     titleInput.value = state.manifest.title || '';
     state.dirty = false;
     zoomCtl.set(1); // al abrir una ficha, zoom al 100 %
-    autoThumbs(); // mostrar la tira si la ficha tiene más de una página
+    autoThumbs({ force: true }); // mostrar la tira si la ficha tiene más de una página
     renderCanvas();
     renderPanel();
     refreshPaletteState();
@@ -4095,6 +4104,7 @@ async function mergeZipFile(file, insertAt) {
     else state.manifest.pages.push(...newPages);
     migrateArrowFields(state.manifest);
     markDirty();
+    autoThumbs(); // mostrar la tira si se ha pasado de una a varias páginas
     renderCanvas();
     renderPanel();
     toast(t('toast.fichaLoaded', { title: ficha.manifest.title || file.name }), 'ok');
