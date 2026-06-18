@@ -913,14 +913,32 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 
 .ed-layout {
   display: grid;
-  grid-template-columns: 78px var(--thumbs-w, 168px) minmax(0, 1fr) 330px;
+  grid-template-columns: 78px var(--thumbs-w, 168px) 6px minmax(0, 1fr) 6px var(--panel-w, 330px);
   height: calc(100vh - 58px);
   position: relative;
   transition: grid-template-columns 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .ed-layout.thumbs-collapsed {
-  grid-template-columns: 78px 0 minmax(0, 1fr) 330px;
+  grid-template-columns: 78px 0 0 minmax(0, 1fr) 6px var(--panel-w, 330px);
 }
+/* Durante el arrastre del divisor se anula la transición para que siga al ratón */
+.ed-layout.resizing { transition: none; user-select: none; }
+
+/* Divisores arrastrables entre columnas (no persistentes) */
+.ed-gutter {
+  background: transparent;
+  cursor: col-resize;
+  position: relative;
+  z-index: 6;
+}
+.ed-gutter::before {
+  content: '';
+  position: absolute;
+  inset: 0 -3px;
+}
+.ed-gutter:hover, .ed-gutter.active { background: var(--rojo); }
+.thumbs-collapsed #gutterThumbs { pointer-events: none; }
+body.resizing-col { cursor: col-resize; }
 
 /* Tira de miniaturas de páginas (estilo presentación) */
 .ed-thumbs {
@@ -2767,7 +2785,7 @@ input.wpf-gap-input {
     height: auto;
     min-height: calc(100vh - 58px);
   }
-  .ed-thumbs, .ed-thumbs-show { display: none !important; }
+  .ed-thumbs, .ed-thumbs-show, .ed-gutter { display: none !important; }
   .ed-panel {
     grid-column: 1 / -1;
     border-left: none;

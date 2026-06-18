@@ -703,6 +703,44 @@ canvas.addEventListener('scroll', () => {
   });
 }, { passive: true });
 
+// ---------- Divisores de columnas (anchura ajustable, no persistente) ----------
+// Arrastrar los divisores cambia --thumbs-w (tira) y --panel-w (panel de
+// configuración). No se guarda: cada sesión empieza con los anchos por defecto.
+const thumbsAside = $('#thumbs');
+
+function setupGutter(gutter, onMove) {
+  gutter.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    gutter.setPointerCapture(e.pointerId);
+    gutter.classList.add('active');
+    edLayout.classList.add('resizing');
+    document.body.classList.add('resizing-col');
+    const move = ev => onMove(ev);
+    const up = () => {
+      gutter.releasePointerCapture(e.pointerId);
+      gutter.classList.remove('active');
+      edLayout.classList.remove('resizing');
+      document.body.classList.remove('resizing-col');
+      gutter.removeEventListener('pointermove', move);
+      gutter.removeEventListener('pointerup', up);
+    };
+    gutter.addEventListener('pointermove', move);
+    gutter.addEventListener('pointerup', up);
+  });
+}
+
+setupGutter($('#gutterThumbs'), e => {
+  const left = thumbsAside.getBoundingClientRect().left;
+  const w = Math.max(110, Math.min(420, e.clientX - left));
+  edLayout.style.setProperty('--thumbs-w', w + 'px');
+});
+
+setupGutter($('#gutterPanel'), e => {
+  const right = edLayout.getBoundingClientRect().right;
+  const w = Math.max(260, Math.min(620, right - e.clientX));
+  edLayout.style.setProperty('--panel-w', w + 'px');
+});
+
 function setRectStyle(node, rect) {
   node.style.left = rect.x * 100 + '%';
   node.style.top = rect.y * 100 + '%';
