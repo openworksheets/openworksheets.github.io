@@ -3880,17 +3880,57 @@ function openStats() {
     table.appendChild(tr);
   };
 
-  addSection(t('stats.pages'));
-  addRow(t('stats.pages'), state.manifest.pages.length);
-  addSection(t('stats.fields'));
-  addRow(t('stats.fields'), allFields.length);
-  addRow(t('stats.withScore'), withScore.length);
-  addRow(t('stats.noScore'), noScore.length);
-  addSection(t('stats.byType'));
-  Object.entries(counts).sort((a, b) => b[1] - a[1]).forEach(([name, n]) => addRow(name, n));
+  const rows = [];
+  const pushSection = label => rows.push({ section: label });
+  const pushRow = (label, value) => rows.push({ label, value: String(value) });
+
+  pushSection(t('stats.pages'));
+  pushRow(t('stats.pages'), state.manifest.pages.length);
+  pushSection(t('stats.fields'));
+  pushRow(t('stats.fields'), allFields.length);
+  pushRow(t('stats.withScore'), withScore.length);
+  pushRow(t('stats.noScore'), noScore.length);
+  pushSection(t('stats.byType'));
+  Object.entries(counts).sort((a, b) => b[1] - a[1]).forEach(([name, n]) => pushRow(name, n));
+
+  rows.forEach(r => r.section ? addSection(r.section) : addRow(r.label, r.value));
+
+  function statsAsText() {
+    const title = state.manifest.title || t('dlg.stats.title');
+    return [title, '', ...rows.map(r => r.section ? `\n${r.section}` : `${r.label}\t${r.value}`)].join('\n');
+  }
+
+  function printStats() {
+    const title = state.manifest.title || t('dlg.stats.title');
+    const tableHtml = table.outerHTML;
+    const w = window.open('', '_blank', 'width=520,height=600');
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title} — ${t('dlg.stats.title')}</title>
+<style>body{font-family:system-ui,sans-serif;padding:32px;max-width:480px;margin:0 auto}
+h1{font-size:1.1rem;margin:0 0 20px}
+table{width:100%;border-collapse:collapse;font-size:0.9rem}
+td{padding:5px 8px}td:last-child{text-align:right;font-weight:600}
+tr:nth-child(even) td{background:#f4f4f4}
+.stats-section td{font-weight:700;font-size:0.78rem;text-transform:uppercase;letter-spacing:.04em;color:#666;padding:14px 8px 4px}
+@media print{body{padding:16px}}</style></head>
+<body><h1>${title} — ${t('dlg.stats.title')}</h1>${tableHtml}<script>window.onload=()=>window.print()<\/script></body></html>`);
+    w.document.close();
+  }
 
   body.innerHTML = '';
   body.appendChild(table);
+
+  // Botones de acción
+  const actions = el('div', { class: 'stats-actions' });
+  const copyBtn = iconBtn({ class: 'btn small', type: 'button' }, ICONS.copy, t('stats.copy'));
+  copyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(statsAsText()).then(() => toast(t('stats.copied'), 'ok'));
+  });
+  const printBtn = iconBtn({ class: 'btn small', type: 'button' }, ICONS.printer, t('stats.print'));
+  printBtn.addEventListener('click', printStats);
+  actions.appendChild(copyBtn);
+  actions.appendChild(printBtn);
+  body.appendChild(actions);
+
   dlg.showModal();
 }
 

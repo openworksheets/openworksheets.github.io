@@ -352,6 +352,7 @@ small { color: var(--tinta-suave); }
 .stats-table td:last-child { text-align: right; font-weight: 600; }
 .stats-table tr:nth-child(even) td { background: var(--tinta-tenue); }
 .stats-section { font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--tinta-suave); padding: 12px 8px 4px; }
+.stats-actions { display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end; }
 
 .color-input-wrap { display: inline-flex; align-items: center; gap: 4px; }
 .color-input-wrap input[type="color"] { width: 36px; height: 28px; padding: 2px; border-radius: 4px; border: 1px solid var(--borde); cursor: pointer; }
