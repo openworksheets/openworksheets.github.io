@@ -1439,7 +1439,7 @@ const STRINGS = {
     'menu.exportPdf': 'Exporta a PDF',
     'menu.exportPdfSub': 'Còpia imprimible, no editable ni interactiva',
     'menu.saveZip': 'Desa la fitxa (.owpkg)',
-    'menu.saveZipSub': 'Per compartir amb l'alumnat i tornar a editar',
+    'menu.saveZipSub': 'Per compartir amb l\'alumnat i tornar a editar',
     'menu.settings': 'Ajustos de la fitxa',
     'menu.saveScorm': 'Exporta a SCORM 1.2',
     'menu.saveScormSub': 'Per lliurar i qualificar en plataformes compatibles amb SCORM (Moodle, etc.)',
