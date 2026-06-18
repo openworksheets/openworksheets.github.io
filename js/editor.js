@@ -881,7 +881,17 @@ function showPageCtxMenu(x, y, pi) {
 // eliminar) o sobre el fondo de la página (pegar campo).
 canvas.addEventListener('contextmenu', e => {
   const pageEl = e.target.closest?.('.wpf-page');
-  if (!pageEl) return; // fuera de una página: menú nativo del navegador
+  if (!pageEl) {
+    // Área del lienzo a los lados de las páginas: acciones globales del documento.
+    e.preventDefault();
+    showCtxMenu(e.clientX, e.clientY, [
+      { icon: ICONS.clipboard, label: t('ctx.paste'), fn: () => pastePageAt(state.manifest.pages.length), disabled: !internalPageClip },
+      { icon: ICONS.filePlus, label: t('editor.addBlank'), fn: () => addBlankPage() },
+      'sep',
+      { icon: ICONS.settings, label: t('menu.settings'), fn: () => openSettings() }
+    ]);
+    return;
+  }
   const pi = parseInt(pageEl.dataset.page, 10);
   const fieldEl = e.target.closest?.('.ed-field');
   e.preventDefault();
