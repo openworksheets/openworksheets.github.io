@@ -3696,6 +3696,7 @@ fileMenuItem('#miSaveScorm', exportScorm);
 fileMenuItem('#miSaveImscp', exportImscp);
 fileMenuItem('#miSaveWeb', exportWeb);
 fileMenuItem('#miSaveZip', exportZip);
+fileMenuItem('#miAjustes', openSettings);
 
 $('#inputZip').addEventListener('change', e => {
   const file = e.target.files[0];
