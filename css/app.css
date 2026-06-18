@@ -245,7 +245,7 @@ small { color: var(--tinta-suave); }
 #btnArchivo, #btnUtilidades {
   gap: 5px; font-weight: 400;
   border-color: transparent; background: transparent;
-  box-shadow: none; color: var(--papel);
+  box-shadow: none; color: inherit;
   padding: 5px 10px; border-radius: 6px;
 }
 #btnArchivo:hover, #btnUtilidades:hover { background: rgba(247,242,231,0.15); transform: none; box-shadow: none; }
