@@ -1505,7 +1505,13 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   outline: none;
 }
 .lista-campos-input:focus { border-color: var(--tinta); }
-.lista-campos-input::-webkit-search-cancel-button { cursor: pointer; }
+.lista-campos-input::-webkit-search-cancel-button { display: none; }
+.lista-campos-clear {
+  position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
+  border: none; background: none; cursor: pointer; padding: 2px 5px;
+  font-size: 0.75rem; color: var(--tinta-suave); line-height: 1; border-radius: 4px;
+}
+.lista-campos-clear:hover { background: var(--tinta-tenue); color: var(--tinta); }
 .lista-campos .item {
   display: flex;
   align-items: center;

@@ -3102,13 +3102,25 @@ function renderFieldList() {
   filterWrap.appendChild(filterIcon);
   const filterInput = el('input', {
     type: 'search', class: 'lista-campos-input',
-    placeholder: t('dlg.search.placeholder'), value: _fieldListQuery
+    placeholder: t('dlg.search.placeholder'), value: _fieldListQuery,
+    autocomplete: 'off', spellcheck: 'false'
+  });
+  const clearBtn = el('button', { class: 'lista-campos-clear', type: 'button', 'aria-label': 'Borrar búsqueda', hidden: '' }, '✕');
+  clearBtn.addEventListener('click', () => {
+    filterInput.value = '';
+    _fieldListQuery = '';
+    clearBtn.hidden = true;
+    filterInput.focus();
+    renderItems();
   });
   filterInput.addEventListener('input', () => {
     _fieldListQuery = filterInput.value;
+    clearBtn.hidden = !filterInput.value;
     renderItems();
   });
+  if (_fieldListQuery) clearBtn.hidden = false;
   filterWrap.appendChild(filterInput);
+  filterWrap.appendChild(clearBtn);
   header.appendChild(filterWrap);
   box.appendChild(header);
 
