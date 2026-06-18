@@ -38,6 +38,13 @@
         </div>
       </div>
     </div>
+    <div class="topbar-menu" id="menuUtilidades">
+      <button class="btn small" id="btnUtilidades" type="button" aria-haspopup="true" aria-expanded="false" data-i18n-title="menu.utilities" title="Utilidades"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> <span data-i18n="menu.utilities">Utilidades</span> <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="menu-caret"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="topbar-menu-list" role="menu" aria-labelledby="btnUtilidades" hidden>
+        <button class="topbar-menu-item" id="miBuscar" type="button" role="menuitem"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span class="mi-text"><span class="mi-title" data-i18n="menu.search">Buscar campo…</span><span class="mi-sub">Ctrl+K</span></span></button>
+        <button class="topbar-menu-item" id="miEstadisticas" type="button" role="menuitem"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg><span class="mi-text"><span class="mi-title" data-i18n="menu.stats">Estadísticas de la ficha</span></span></button>
+      </div>
+    </div>
     <span class="topbar-sep" aria-hidden="true"></span>
     <button class="btn small" id="btnDeshacer" data-i18n-title="editor.undo" title="Deshacer (Ctrl+Z)" aria-label="Deshacer" disabled><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H9"/></svg></button>
     <button class="btn small" id="btnRehacer" data-i18n-title="editor.redo" title="Rehacer (Ctrl+Y)" aria-label="Rehacer" disabled><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
@@ -178,6 +185,30 @@
     </div>
     <div class="dlg-buttons">
       <form method="dialog"><button class="btn" value="cancel" data-i18n="dlg.close">Cerrar</button></form>
+    </div>
+  </dialog>
+
+  <dialog id="dlgBuscar" class="dlg-buscar">
+    <div class="dlg-header">
+      <h2 data-i18n="dlg.search.title">Buscar campo</h2>
+      <form method="dialog"><button class="btn-close" aria-label="Cerrar">&#x2715;</button></form>
+    </div>
+    <div class="dlg-body">
+      <input type="search" id="buscarInput" class="buscar-input" data-i18n-placeholder="dlg.search.placeholder" placeholder="Escribe para buscar…" autocomplete="off" spellcheck="false">
+      <div id="buscarResultados" class="buscar-resultados" role="listbox"></div>
+    </div>
+  </dialog>
+
+  <dialog id="dlgEstadisticas" class="dlg-estadisticas">
+    <div class="dlg-header">
+      <h2 data-i18n="dlg.stats.title">Estadísticas de la ficha</h2>
+      <form method="dialog"><button class="btn-close" aria-label="Cerrar">&#x2715;</button></form>
+    </div>
+    <div class="dlg-body">
+      <div id="estadisticasBody"></div>
+    </div>
+    <div class="dlg-buttons">
+      <form method="dialog"><button class="btn" data-i18n="dlg.close">Cerrar</button></form>
     </div>
   </dialog>
 

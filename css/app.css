@@ -321,6 +321,38 @@ small { color: var(--tinta-suave); }
   height: 100%;
 }
 
+/* Diálogo de búsqueda */
+.dlg-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 12px; }
+.dlg-header h2 { margin: 0; font-size: 1.1rem; }
+.btn-close { border: none; background: none; cursor: pointer; font-size: 1.1rem; color: var(--tinta-suave); padding: 2px 6px; border-radius: 6px; line-height: 1; }
+.btn-close:hover { background: var(--tinta-tenue); color: var(--tinta); }
+.dlg-buscar { max-width: 520px; padding: 20px 22px; }
+.buscar-input {
+  width: 100%; box-sizing: border-box; padding: 9px 12px;
+  border: 2px solid var(--tinta); border-radius: 8px;
+  font-size: 1rem; font-family: inherit; background: var(--blanco); color: var(--tinta);
+  outline: none;
+}
+.buscar-input:focus { border-color: var(--acento, #1d2c42); }
+.buscar-resultados { margin-top: 10px; max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.buscar-resultado {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 9px 12px; border-radius: 8px; cursor: pointer;
+  border: none; background: none; text-align: left; color: var(--tinta);
+  font-family: inherit; font-size: 0.9rem;
+}
+.buscar-resultado:hover, .buscar-resultado:focus { background: var(--tinta-tenue); outline: none; }
+.buscar-resultado-meta { font-size: 0.75rem; color: var(--tinta-suave); }
+.buscar-resultado-texto { font-size: 0.85rem; color: var(--tinta-suave); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.buscar-vacio { padding: 16px 12px; text-align: center; color: var(--tinta-suave); font-size: 0.9rem; }
+/* Diálogo de estadísticas */
+.dlg-estadisticas { max-width: 480px; }
+.stats-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.stats-table td { padding: 5px 8px; }
+.stats-table td:last-child { text-align: right; font-weight: 600; }
+.stats-table tr:nth-child(even) td { background: var(--tinta-tenue); }
+.stats-section { font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--tinta-suave); padding: 12px 8px 4px; }
+
 .color-input-wrap { display: inline-flex; align-items: center; gap: 4px; }
 .color-input-wrap input[type="color"] { width: 36px; height: 28px; padding: 2px; border-radius: 4px; border: 1px solid var(--borde); cursor: pointer; }
 .color-input-wrap .btn svg { width: 14px; height: 14px; }

@@ -3700,6 +3700,150 @@ fileMenuItem('#miSaveWeb', exportWeb);
 fileMenuItem('#miSaveZip', exportZip);
 fileMenuItem('#miAjustes', openSettings);
 
+// ---------- Menú Utilidades ----------
+
+const menuUtilidades = $('#menuUtilidades');
+const btnUtilidades = $('#btnUtilidades');
+const menuUtilidadesList = menuUtilidades.querySelector('.topbar-menu-list');
+
+function closeUtilMenu() {
+  if (menuUtilidadesList.hidden) return;
+  menuUtilidadesList.hidden = true;
+  btnUtilidades.setAttribute('aria-expanded', 'false');
+  document.removeEventListener('click', onDocClickUtilMenu, true);
+  document.removeEventListener('keydown', onKeyUtilMenu, true);
+}
+function openUtilMenu() {
+  menuUtilidadesList.hidden = false;
+  btnUtilidades.setAttribute('aria-expanded', 'true');
+  document.addEventListener('click', onDocClickUtilMenu, true);
+  document.addEventListener('keydown', onKeyUtilMenu, true);
+}
+function onDocClickUtilMenu(e) {
+  if (!menuUtilidades.contains(e.target)) closeUtilMenu();
+}
+function onKeyUtilMenu(e) {
+  if (e.key === 'Escape') { closeUtilMenu(); btnUtilidades.focus(); }
+}
+btnUtilidades.addEventListener('click', () => {
+  menuUtilidadesList.hidden ? openUtilMenu() : closeUtilMenu();
+});
+const utilMenuItem = (id, fn) => $(id).addEventListener('click', () => { closeUtilMenu(); fn(); });
+
+// ---------- Búsqueda de campos ----------
+
+function normalizeStr(s) {
+  return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+
+function fieldSearchText(field) {
+  const cfg = field.config || {};
+  const parts = [];
+  if (cfg.text) parts.push(cfg.text);
+  if (cfg.answers) parts.push(...cfg.answers);
+  if (cfg.options) parts.push(...cfg.options);
+  if (cfg.pairs) cfg.pairs.forEach(p => { parts.push(p.left, p.right); });
+  if (cfg.items) parts.push(...(Array.isArray(cfg.items) ? cfg.items.map(it => typeof it === 'string' ? it : it.label || '') : []));
+  if (cfg.title) parts.push(cfg.title);
+  if (cfg.caption) parts.push(cfg.caption);
+  if (cfg.question) parts.push(cfg.question);
+  return parts.filter(Boolean).join(' ');
+}
+
+function openSearch() {
+  const dlg = $('#dlgBuscar');
+  const input = $('#buscarInput');
+  const results = $('#buscarResultados');
+
+  function renderResults(query) {
+    results.innerHTML = '';
+    const q = normalizeStr(query);
+    if (!q) return;
+    const hits = [];
+    state.manifest.pages.forEach((page, pi) => {
+      (page.fields || []).forEach(field => {
+        const typeName = fieldTypeName(field.type);
+        const rawText = fieldSearchText(field);
+        if (normalizeStr(typeName).includes(q) || normalizeStr(rawText).includes(q)) {
+          hits.push({ pi, field, typeName, rawText });
+        }
+      });
+    });
+    if (!hits.length) {
+      results.appendChild(el('div', { class: 'buscar-vacio' }, t('dlg.search.empty')));
+      return;
+    }
+    hits.forEach(({ pi, field, typeName, rawText }) => {
+      const btn = el('button', { class: 'buscar-resultado', role: 'option', type: 'button' },
+        el('span', { class: 'buscar-resultado-meta' }, `${t('stats.pages').replace(/s$/, '')} ${pi + 1} · ${typeName}`),
+        el('span', { class: 'buscar-resultado-texto' }, rawText.slice(0, 120) || '—')
+      );
+      btn.addEventListener('click', () => {
+        dlg.close();
+        selectField(pi, field.id);
+        const pageEl = canvas.querySelector(`.wpf-page[data-page="${pi}"]`);
+        if (pageEl) pageEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+      results.appendChild(btn);
+    });
+  }
+
+  input.value = '';
+  results.innerHTML = '';
+  dlg.showModal();
+  input.focus();
+  dlg._abortCtrl = new AbortController();
+  input.addEventListener('input', () => renderResults(input.value), { signal: dlg._abortCtrl.signal });
+  dlg.addEventListener('close', () => dlg._abortCtrl?.abort(), { once: true });
+}
+
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
+});
+
+// ---------- Estadísticas de la ficha ----------
+
+function openStats() {
+  const dlg = $('#dlgEstadisticas');
+  const body = $('#estadisticasBody');
+
+  const allFields = state.manifest.pages.flatMap(p => p.fields || []);
+  const withScore = allFields.filter(f => !FIELD_TYPES[f.type]?.decor && !f.noScore);
+  const noScore = allFields.filter(f => FIELD_TYPES[f.type]?.decor || f.noScore);
+
+  const counts = {};
+  allFields.forEach(f => {
+    const name = fieldTypeName(f.type);
+    counts[name] = (counts[name] || 0) + 1;
+  });
+
+  const table = el('table', { class: 'stats-table' });
+  const addRow = (label, value) => {
+    const tr = el('tr', {}, el('td', {}, label), el('td', {}, String(value)));
+    table.appendChild(tr);
+  };
+  const addSection = label => {
+    const tr = el('tr', {}, el('td', { class: 'stats-section', colspan: '2' }, label));
+    table.appendChild(tr);
+  };
+
+  addSection(t('stats.pages'));
+  addRow(t('stats.pages'), state.manifest.pages.length);
+  addSection(t('stats.fields'));
+  addRow(t('stats.fields'), allFields.length);
+  addRow(t('stats.withScore'), withScore.length);
+  addRow(t('stats.noScore'), noScore.length);
+  addSection(t('stats.byType'));
+  Object.entries(counts).sort((a, b) => b[1] - a[1]).forEach(([name, n]) => addRow(name, n));
+
+  body.innerHTML = '';
+  body.appendChild(table);
+  dlg.showModal();
+}
+
+utilMenuItem('#miBuscar', openSearch);
+utilMenuItem('#miEstadisticas', openStats);
+
 $('#inputZip').addEventListener('change', e => {
   const file = e.target.files[0];
   e.target.value = '';
