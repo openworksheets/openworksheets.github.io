@@ -202,6 +202,29 @@ export function zoomControl({ apply, key, titles = {}, min = 0.5, max = 3 }) {
   out.addEventListener('click', () => set(z / 1.2));
   inn.addEventListener('click', () => set(z * 1.2));
   pct.addEventListener('click', () => set(1));
+  // Clic derecho sobre el porcentaje: escribir el valor a mano.
+  pct.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    const inp = el('input', { class: 'zoom-pct-input', type: 'text', value: String(Math.round(z * 100)) });
+    pct.replaceWith(inp);
+    inp.focus();
+    inp.select();
+    let done = false;
+    const finish = applyVal => {
+      if (done) return;
+      done = true;
+      if (applyVal) {
+        const v = parseFloat(inp.value.replace(',', '.'));
+        if (!isNaN(v)) set(v / 100);
+      }
+      inp.replaceWith(pct);
+    };
+    inp.addEventListener('keydown', ev => {
+      if (ev.key === 'Enter') finish(true);
+      else if (ev.key === 'Escape') finish(false);
+    });
+    inp.addEventListener('blur', () => finish(true));
+  });
   set(z);
   return { el: el('div', { class: 'zoom-ctrl' }, out, pct, inn), set, get: () => z };
 }

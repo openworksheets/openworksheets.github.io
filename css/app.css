@@ -1288,6 +1288,19 @@ body.resizing-col { cursor: col-resize; }
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
+.zoom-pct-input {
+  width: 48px;
+  border: none;
+  background: var(--azul-claro);
+  color: var(--tinta);
+  font-family: var(--cuerpo);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+  border-radius: 6px;
+  padding: 2px 4px;
+  outline: none;
+}
 .ed-pagehead {
   display: flex;
   align-items: center;
