@@ -41,7 +41,14 @@ import { state, urls, fileUrl, markDirty, onDirty } from './editor-state.js';
 import { takeFile } from './filehandoff.js';
 
 applyI18n();
-initLangSelector();
+// En el editor no recargamos al cambiar de idioma (se perderían los cambios sin
+// guardar): re-traducimos la interfaz en caliente conservando la ficha en curso.
+initLangSelector({ reload: false, onChange: () => {
+  applyI18n();
+  renderPalette();
+  renderCanvas();
+  renderPanel();
+} });
 
 // ---------- Referencias al DOM ----------
 // (el estado mutable vive en editor-state.js)

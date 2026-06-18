@@ -3640,9 +3640,16 @@ export function applyI18n() {
   });
 }
 
-export function initLangSelector() {
+// Por defecto, cambiar de idioma recarga la página (la forma simple de
+// re-traducir todo). Cuando se pasa `{ reload: false, onChange }` —p. ej. en el
+// editor, donde recargar perdería los cambios sin guardar— no se recarga: se
+// guarda el idioma y se delega en `onChange` el refresco de la interfaz.
+export function initLangSelector({ reload = true, onChange } = {}) {
   const sel = document.getElementById('selLang');
   if (!sel) return;
   sel.value = getLang();
-  sel.addEventListener('change', () => setLang(sel.value));
+  sel.addEventListener('change', () => {
+    setLang(sel.value, { reload });
+    if (!reload && typeof onChange === 'function') onChange();
+  });
 }
