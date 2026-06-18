@@ -52,6 +52,14 @@ const panel = $('#panel');
 const palette = $('#palette');
 const titleInput = $('#titulo');
 
+// ---------- Archivo abierto ----------
+// fileHandle: FileSystemFileHandle (Chrome/Edge) o null
+// fileName:   nombre original del .owpkg abierto, para proponerlo al guardar
+let openFileHandle = null;
+let openFileName = null;
+
+function clearOpenFile() { openFileHandle = null; openFileName = null; }
+
 // ---------- Zoom del lienzo ----------
 
 const zoomCtl = zoomControl({
@@ -3422,7 +3430,27 @@ async function exportZip() {
     toast(t('toast.generating'));
     const clean = referencedFiles();
     const blob = await exportFichaZip({ manifest: exportManifest, files: clean });
-    downloadBlob(blob, slugify(state.manifest.title || 'ficha') + '.owpkg');
+
+    if (openFileHandle) {
+      // Chrome/Edge: sobreescribe el mismo archivo directamente
+      try {
+        const writable = await openFileHandle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        state.files = clean;
+        state.dirty = false;
+        toast(t('toast.exported'), 'ok');
+        return;
+      } catch (e) {
+        if (e.name === 'AbortError') return;
+        // Si falla (permisos revocados, etc.) caemos al guardado normal
+        openFileHandle = null;
+      }
+    }
+
+    // Firefox / nueva ficha: propone nombre original o título normalizado
+    const name = openFileName || (slugify(state.manifest.title || 'ficha') + '.owpkg');
+    downloadBlob(blob, name);
     state.files = clean;
     state.dirty = false;
     toast(t('toast.exported'), 'ok');
@@ -3490,7 +3518,7 @@ async function exportScorm() {
   }
 }
 
-async function openZipFile(file) {
+async function openZipFile(file, handle = null) {
   try {
     const ficha = await importFichaZip(file);
     if (isEncryptedManifest(ficha.manifest)) {
@@ -3498,6 +3526,8 @@ async function openZipFile(file) {
       if (!password) return;
       ficha.manifest = await decryptManifestForStudent(ficha.manifest, password, { keepPassword: true });
     }
+    openFileHandle = handle || null;
+    openFileName = file.name || null;
     state.manifest = ficha.manifest;
     state.files = ficha.files;
     state.submissionCryptoPassword = '';
@@ -3700,6 +3730,7 @@ const fileMenuItem = (id, fn) => $(id).addEventListener('click', () => { closeFi
 // El menú «Archivo» reemplaza la ficha del editor (abrir o empezar de cero); para
 // añadir páginas a la ficha actual están los botones entre páginas.
 function resetWorksheet() {
+  clearOpenFile();
   urls.forEach(u => URL.revokeObjectURL(u));
   urls.clear();
   state.manifest = newManifest();
@@ -3743,7 +3774,23 @@ fileMenuItem('#miAddPdf', () => {
   input.addEventListener('change', handler);
   input.click();
 });
-fileMenuItem('#miOpenZip', () => $('#inputZip').click());
+fileMenuItem('#miOpenZip', async () => {
+  if (window.showOpenFilePicker) {
+    try {
+      const [handle] = await window.showOpenFilePicker({
+        types: [{ description: 'OpenWorksheets', accept: { 'application/zip': ['.owpkg', '.zip'] } }],
+        multiple: false
+      });
+      if (!confirmDiscardCurrent()) return;
+      const file = await handle.getFile();
+      await openZipFile(file, handle);
+    } catch (e) {
+      if (e.name !== 'AbortError') console.error(e);
+    }
+  } else {
+    $('#inputZip').click();
+  }
+});
 // «Exportar a PDF» reutiliza el flujo de impresión: el diálogo del navegador
 // permite elegir «Guardar como PDF» como destino.
 fileMenuItem('#miPdf', printWorksheet);
