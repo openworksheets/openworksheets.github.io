@@ -939,19 +939,19 @@ function appendSizeSection(cont, rect, nodeId, onAfter) {
   section.appendChild(el('div', { class: 'ed-section-title' }, t('editor.sizeSection')));
   const body = el('div', { class: 'ed-section-body ed-size-grid' });
   const mk = (dim, posDim) => {
-    const inp = el('input', { type: 'number', min: '1', max: '100', step: '0.5',
-      value: (rect[dim] * 100).toFixed(1) });
+    const inp = el('input', { type: 'number', min: '0.1', max: '100', step: '0.01',
+      value: (rect[dim] * 100).toFixed(2) });
     inp.addEventListener('input', () => {
       const v = parseFloat(inp.value.replace(',', '.'));
       if (isNaN(v)) return;
-      rect[dim] = clamp(v / 100, 0.01, 1 - rect[posDim]);
+      rect[dim] = clamp(v / 100, 0.001, 1 - rect[posDim]);
       const node = canvas.querySelector(`[data-id="${nodeId}"]`);
       if (node) setRectStyle(node, rect);
       markDirty();
       if (onAfter) onAfter();
     });
     // Al salir del campo, normaliza el valor mostrado al real (tras el recorte).
-    inp.addEventListener('change', () => { inp.value = (rect[dim] * 100).toFixed(1); });
+    inp.addEventListener('change', () => { inp.value = (rect[dim] * 100).toFixed(2); });
     return inp;
   };
   body.appendChild(el('label', { class: 'f-label' }, t('editor.width')));
