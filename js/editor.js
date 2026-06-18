@@ -639,7 +639,7 @@ function renderThumbs() {
     const frame = el('div', { class: 'ed-thumb-frame' },
       el('img', { src: fileUrl(page.image), alt: '', draggable: 'false' }));
     const thumb = el('div', {
-      class: 'ed-thumb', draggable: 'true', dataset: { page: pi },
+      class: 'ed-thumb', draggable: 'true', tabindex: '0', dataset: { page: pi },
       title: t('editor.pageN', { n: pi + 1, total: state.manifest.pages.length })
     }, el('span', { class: 'ed-thumb-num' }, String(pi + 1)), frame);
 
@@ -1473,6 +1473,19 @@ function pasteField(pi) {
 document.addEventListener('keydown', e => {
   const inForm = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || '');
   if (inForm) return;
+
+  // Si el foco está en una miniatura de la tira, los atajos actúan sobre páginas.
+  const thumbEl = document.activeElement?.closest?.('.ed-thumb');
+  if (thumbEl) {
+    const pi = parseInt(thumbEl.dataset.page, 10);
+    const mod = e.ctrlKey || e.metaKey;
+    if (mod && e.key.toLowerCase() === 'c') { e.preventDefault(); copyPage(pi); }
+    else if (mod && e.key.toLowerCase() === 'x') { e.preventDefault(); copyPage(pi, { cut: true }); }
+    else if (mod && e.key.toLowerCase() === 'v') { e.preventDefault(); pastePageAt(pi + 1); }
+    else if (mod && e.key.toLowerCase() === 'd') { e.preventDefault(); duplicatePage(pi); }
+    else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); deletePage(pi); }
+    return;
+  }
 
   // Copiar y pegar: funcionan con cualquier tipo de selección (campo o página).
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {

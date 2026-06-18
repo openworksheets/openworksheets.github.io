@@ -1046,6 +1046,8 @@ body.resizing-col { cursor: col-resize; }
   pointer-events: none;
 }
 .ed-thumb:hover .ed-thumb-frame { border-color: var(--tinta-suave); }
+.ed-thumb:focus { outline: none; }
+.ed-thumb:focus-visible .ed-thumb-frame { border-color: var(--rojo); box-shadow: 0 0 0 2px var(--rojo); }
 .ed-thumb.active .ed-thumb-frame { border-color: var(--rojo); }
 .ed-thumb.dragging { opacity: 0.4; }
 .ed-thumb.drag-over .ed-thumb-frame { border-color: var(--rojo); border-style: dashed; }
