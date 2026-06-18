@@ -930,7 +930,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   overflow: hidden;
   min-width: 0;
 }
-.thumbs-collapsed .ed-thumbs { display: none; }
+.thumbs-collapsed .ed-thumbs { border-right: none; }
 .ed-thumbs-head {
   display: flex;
   align-items: center;
