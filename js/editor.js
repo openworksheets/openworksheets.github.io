@@ -3423,35 +3423,73 @@ async function prepareExportManifest(retry) {
   return exportManifest;
 }
 
+async function buildOwpkgBlob() {
+  const exportManifest = await prepareExportManifest(exportZip);
+  if (!exportManifest) return null;
+  toast(t('toast.generating'));
+  const clean = referencedFiles();
+  const blob = await exportFichaZip({ manifest: exportManifest, files: clean });
+  state.files = clean;
+  return blob;
+}
+
 async function exportZip() {
   try {
-    const exportManifest = await prepareExportManifest(exportZip);
-    if (!exportManifest) return;
-    toast(t('toast.generating'));
-    const clean = referencedFiles();
-    const blob = await exportFichaZip({ manifest: exportManifest, files: clean });
+    const blob = await buildOwpkgBlob();
+    if (!blob) return;
 
     if (openFileHandle) {
-      // Chrome/Edge: sobreescribe el mismo archivo directamente
       try {
         const writable = await openFileHandle.createWritable();
         await writable.write(blob);
         await writable.close();
-        state.files = clean;
         state.dirty = false;
         toast(t('toast.exported'), 'ok');
         return;
       } catch (e) {
         if (e.name === 'AbortError') return;
-        // Si falla (permisos revocados, etc.) caemos al guardado normal
         openFileHandle = null;
       }
     }
 
-    // Firefox / nueva ficha: propone nombre original o título normalizado
     const name = openFileName || (slugify(state.manifest.title || 'ficha') + '.owpkg');
     downloadBlob(blob, name);
-    state.files = clean;
+    state.dirty = false;
+    toast(t('toast.exported'), 'ok');
+  } catch (e) {
+    console.error(e);
+    toast(t('toast.exportError', { msg: e.message }), 'error');
+  }
+}
+
+async function exportZipAs() {
+  try {
+    const blob = await buildOwpkgBlob();
+    if (!blob) return;
+
+    const suggestedName = openFileName || (slugify(state.manifest.title || 'ficha') + '.owpkg');
+
+    if (window.showSaveFilePicker) {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName,
+          types: [{ description: 'OpenWorksheets', accept: { 'application/zip': ['.owpkg'] } }]
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        openFileHandle = handle;
+        openFileName = handle.name;
+        state.dirty = false;
+        toast(t('toast.exported'), 'ok');
+        return;
+      } catch (e) {
+        if (e.name === 'AbortError') return;
+        // Si falla caemos a la descarga
+      }
+    }
+
+    downloadBlob(blob, suggestedName);
     state.dirty = false;
     toast(t('toast.exported'), 'ok');
   } catch (e) {
@@ -3798,6 +3836,7 @@ fileMenuItem('#miSaveScorm', exportScorm);
 fileMenuItem('#miSaveImscp', exportImscp);
 fileMenuItem('#miSaveWeb', exportWeb);
 fileMenuItem('#miSaveZip', exportZip);
+fileMenuItem('#miSaveZipAs', exportZipAs);
 fileMenuItem('#miAjustes', openSettings);
 
 // ---------- Menú Utilidades ----------
