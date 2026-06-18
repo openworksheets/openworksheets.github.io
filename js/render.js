@@ -185,17 +185,37 @@ export function buildShapeSvg(field) {
     else stroke(node);
     svg.appendChild(node);
   } else if (field.type === 'polygon') {
-    // Polígono regular de N lados, inscrito en un viewBox cuadrado. `regular`
-    // mantiene la forma (meet); si no, se deforma para llenar la caja (none).
+    // Polígono regular de N lados. Se calculan los vértices en un círculo y luego
+    // se ajustan a la caja del viewBox para que toquen los bordes (en lugar de
+    // quedar inscritos en el círculo, que dejaba huecos). `regular` mantiene la
+    // forma (escala uniforme + meet); si no, se deforma para llenar la caja.
     const sides = Math.max(3, Math.min(20, parseInt(cfg.sides, 10) || 5));
     const regular = cfg.regular !== false;
     const rot = (parseFloat(cfg.rotation) || 0) * Math.PI / 180;
-    const cx = 50, cy = 50, r = 48;
-    const pts = [];
+    const raw = [];
     for (let i = 0; i < sides; i++) {
       const a = -Math.PI / 2 + rot + i * 2 * Math.PI / sides;
-      pts.push((cx + r * Math.cos(a)).toFixed(2) + ',' + (cy + r * Math.sin(a)).toFixed(2));
+      raw.push([Math.cos(a), Math.sin(a)]);
     }
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const [x, y] of raw) {
+      if (x < minX) minX = x; if (x > maxX) maxX = x;
+      if (y < minY) minY = y; if (y > maxY) maxY = y;
+    }
+    const pad = 3, avail = 100 - 2 * pad;
+    const bw = maxX - minX || 1, bh = maxY - minY || 1;
+    let sx, sy, ox, oy;
+    if (regular) {
+      const s = Math.min(avail / bw, avail / bh); // escala uniforme: conserva la forma
+      sx = sy = s;
+      ox = (100 - s * bw) / 2 - s * minX;
+      oy = (100 - s * bh) / 2 - s * minY;
+    } else {
+      sx = avail / bw; sy = avail / bh; // estira en cada eje hasta llenar la caja
+      ox = pad - sx * minX;
+      oy = pad - sy * minY;
+    }
+    const pts = raw.map(([x, y]) => (ox + sx * x).toFixed(2) + ',' + (oy + sy * y).toFixed(2));
     svg.setAttribute('viewBox', '0 0 100 100');
     svg.setAttribute('preserveAspectRatio', regular ? 'xMidYMid meet' : 'none');
     const node = document.createElementNS(NS, 'polygon');
