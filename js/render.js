@@ -185,22 +185,27 @@ export function buildShapeSvg(field) {
     else stroke(node);
     svg.appendChild(node);
   } else {
-    // line y arrow: extremos según la dirección dentro de la caja
+    // Línea / Flecha: extremos según la dirección dentro de la caja, con puntas
+    // de flecha opcionales. `heads`: 'none' | 'end' | 'both'. El tipo heredado
+    // `arrow` se traduce a puntas (one/both según `double`).
     const dirs = {
       h:  ['0%', '50%', '100%', '50%'],
       v:  ['50%', '0%', '50%', '100%'],
       d1: ['0%', '0%', '100%', '100%'],
       d2: ['0%', '100%', '100%', '0%']
     };
+    const heads = field.type === 'arrow'
+      ? (cfg.double ? 'both' : 'end')
+      : (cfg.heads || 'none');
     let [x1, y1, x2, y2] = dirs[cfg.dir] || dirs.h;
-    if (field.type === 'arrow' && cfg.invert) [x1, y1, x2, y2] = [x2, y2, x1, y1];
+    if (cfg.invert && heads === 'end') [x1, y1, x2, y2] = [x2, y2, x1, y1];
     const ln = document.createElementNS(NS, 'line');
     ln.setAttribute('x1', x1);
     ln.setAttribute('y1', y1);
     ln.setAttribute('x2', x2);
     ln.setAttribute('y2', y2);
     stroke(ln);
-    if (field.type === 'arrow') {
+    if (heads !== 'none') {
       // id único: editor y vista previa pueden convivir en el mismo documento
       const mid = 'wpfah-' + Math.random().toString(36).slice(2, 9);
       const marker = document.createElementNS(NS, 'marker');
@@ -219,7 +224,7 @@ export function buildShapeSvg(field) {
       defs.appendChild(marker);
       svg.appendChild(defs);
       ln.setAttribute('marker-end', `url(#${mid})`);
-      if (cfg.double) ln.setAttribute('marker-start', `url(#${mid})`);
+      if (heads === 'both') ln.setAttribute('marker-start', `url(#${mid})`);
     }
     svg.appendChild(ln);
   }

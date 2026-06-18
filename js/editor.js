@@ -2621,25 +2621,38 @@ function mediaFrameConfig(cont, field, rebuild = rebuildCanvasMedia) {
 const configForms = {
 
   line(cont, field) {
+    const cfg = field.config;
     shapeStrokeConfig(cont, field);
-    selectRow(cont, t('cfg.lineDir'), field.config.dir || 'h', [
+    selectRow(cont, t('cfg.lineDir'), cfg.dir || 'h', [
       ['h', t('cfg.dirH')],
       ['v', t('cfg.dirV')],
       ['d1', t('cfg.dirD1')],
       ['d2', t('cfg.dirD2')]
-    ], v => { field.config.dir = v; refreshShapePrev(field); });
+    ], v => { cfg.dir = v; refreshShapePrev(field); });
+    // Puntas de flecha: ninguna (línea), una o dos.
+    const invertRow = el('div', {});
+    selectRow(cont, t('cfg.lineHeads'), cfg.heads || 'none', [
+      ['none', t('cfg.headsNone')],
+      ['end', t('cfg.headsEnd')],
+      ['both', t('cfg.headsBoth')]
+    ], v => {
+      cfg.heads = v;
+      invertRow.style.display = v === 'end' ? '' : 'none';
+      refreshShapePrev(field);
+    });
+    // Invertir el sentido: solo tiene efecto con una sola punta.
+    checkRow(invertRow, t('cfg.arrowInvert'), Boolean(cfg.invert), v => {
+      cfg.invert = v;
+      refreshShapePrev(field);
+    });
+    if ((cfg.heads || 'none') !== 'end') invertRow.style.display = 'none';
+    cont.appendChild(invertRow);
   },
 
+  // Tipo heredado: se configura como una línea (los campos antiguos se migran a
+  // `line` al cargar, pero por seguridad se reutiliza el mismo formulario).
   arrow(cont, field) {
     configForms.line(cont, field);
-    checkRow(cont, t('cfg.arrowInvert'), Boolean(field.config.invert), v => {
-      field.config.invert = v;
-      refreshShapePrev(field);
-    });
-    checkRow(cont, t('cfg.arrowDouble'), Boolean(field.config.double), v => {
-      field.config.double = v;
-      refreshShapePrev(field);
-    });
   },
 
   rect(cont, field) {
@@ -3937,6 +3950,21 @@ async function exportScorm() {
   }
 }
 
+// Migra los campos «Flecha» (tipo heredado) al tipo unificado «Línea / Flecha»
+// (line) con puntas: una punta, o dos si tenía `double`. Transparente: el campo
+// se ve y comporta igual; al guardar queda ya como `line`.
+function migrateArrowFields(manifest) {
+  for (const page of manifest.pages || []) {
+    for (const f of page.fields || []) {
+      if (f.type !== 'arrow') continue;
+      f.type = 'line';
+      const c = f.config || (f.config = {});
+      c.heads = c.double ? 'both' : 'end';
+      delete c.double;
+    }
+  }
+}
+
 async function openZipFile(file, handle = null) {
   try {
     const ficha = await importFichaZip(file);
@@ -3948,6 +3976,7 @@ async function openZipFile(file, handle = null) {
     openFileHandle = handle || null;
     openFileName = file.name || null;
     state.manifest = ficha.manifest;
+    migrateArrowFields(state.manifest);
     state.files = ficha.files;
     state.submissionCryptoPassword = '';
     urls.forEach(u => URL.revokeObjectURL(u));
@@ -4010,6 +4039,7 @@ async function mergeZipFile(file, insertAt) {
     }));
     if (insertAt != null) state.manifest.pages.splice(insertAt, 0, ...newPages);
     else state.manifest.pages.push(...newPages);
+    migrateArrowFields(state.manifest);
     markDirty();
     renderCanvas();
     renderPanel();

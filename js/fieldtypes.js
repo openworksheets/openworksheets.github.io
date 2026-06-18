@@ -214,13 +214,17 @@ export const FIELD_TYPES = {
     defaults: () => ({ mode: '', url: '', html: '', pkg: '', entryHref: '', title: '', caption: '', align: 'left', frameColor: '#1d2c42', frameWidth: 0 })
   },
   // Formas de dibujo: para componer fichas desde una hoja en blanco.
+  // Línea / Flecha: la misma forma, con puntas de flecha opcionales (heads:
+  // 'none' = línea, 'end' = una punta, 'both' = dos puntas).
   line: {
-    name: 'Línea',
+    name: 'Línea / Flecha',
     glyph: ICONS.minus,
     decor: true,
     defRect: { w: 0.25, h: 0.02 },
-    defaults: () => ({ color: '#1d2c42', width: 2, style: 'solid', dir: 'h' })
+    defaults: () => ({ color: '#1d2c42', width: 2, style: 'solid', dir: 'h', heads: 'none', invert: false })
   },
+  // Tipo heredado: las fichas antiguas con «Flecha» se siguen renderizando, pero
+  // ya no se crea desde la paleta (se migra a `line` con puntas al cargar).
   arrow: {
     name: 'Flecha',
     glyph: ICONS.arrowRight,
@@ -248,7 +252,7 @@ export const FIELD_ORDER = [
   'text', 'number', 'single', 'truefalse', 'multi', 'checkbox',
   'select', 'gaps', 'textboxes', 'match', 'order', 'dragdrop', 'arrowmatch',
   'record', 'embed', 'scorm',
-  'label', 'cover', 'image', 'video', 'audio', 'line', 'arrow', 'rect', 'ellipse'
+  'label', 'cover', 'image', 'video', 'audio', 'line', 'rect', 'ellipse'
 ];
 
 // Grupos temáticos de la paleta del editor. El nombre visible
@@ -258,7 +262,7 @@ export const PALETTE_GROUPS = [
   { id: 'choose', glyph: ICONS.listChecks,      types: ['single', 'multi', 'checkbox', 'truefalse', 'select'] },
   { id: 'relate', glyph: ICONS.arrowLeftRight,  types: ['match', 'order', 'dragdrop', 'arrowmatch'] },
   { id: 'external', glyph: ICONS.package,        types: ['embed', 'scorm'] },
-  { id: 'design', glyph: ICONS.shapes,          types: ['label', 'image', 'video', 'audio', 'cover', 'line', 'arrow', 'rect', 'ellipse'] }
+  { id: 'design', glyph: ICONS.shapes,          types: ['label', 'image', 'video', 'audio', 'cover', 'line', 'rect', 'ellipse'] }
 ];
 
 export function isDecorField(type) {
