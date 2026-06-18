@@ -755,33 +755,10 @@ setupGutter($('#gutterPanel'), e => {
 });
 
 // ---------- Copiar / cortar / pegar / duplicar páginas ----------
-// Las páginas se serializan al portapapeles del sistema (con sus imágenes en
-// base64) para poder pegarlas en otra ventana de OpenWorksheets. Marca de
-// formato OWS_PAGE_TAG. Como respaldo (p. ej. si el navegador bloquea la
-// lectura del portapapeles) se guarda también una copia interna.
-const OWS_PAGE_TAG = 'ows-page-v1';
-let internalPageClip = null;
-
-function blobToDataUrl(blob) {
-  return new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload = () => res(r.result);
-    r.onerror = () => rej(r.error);
-    r.readAsDataURL(blob);
-  });
-}
-// Decodifica una data URL a Blob sin usar fetch (evita límites de tamaño y
-// posibles bloqueos por CSP de las data: URLs grandes).
-function dataUrlToBlob(dataUrl) {
-  const comma = dataUrl.indexOf(',');
-  const head = dataUrl.slice(0, comma);
-  const body = dataUrl.slice(comma + 1);
-  const mime = (head.match(/:(.*?);/) || [])[1] || 'application/octet-stream';
-  const bin = atob(body);
-  const arr = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-  return new Blob([arr], { type: mime });
-}
+// El portapapeles de páginas es interno a esta pestaña: se guarda una copia del
+// objeto de la página y de sus blobs (para que sobreviva aunque se corte la
+// página original). No se comparte entre pestañas ni ventanas.
+let internalPageClip = null; // { page, files: Map<ruta, Blob> }
 
 // Rutas de todos los archivos (state.files) que usa una página.
 function collectPageFiles(page) {
@@ -799,35 +776,37 @@ function collectPageFiles(page) {
   return paths;
 }
 
-// Serializa la página y sus archivos a una cadena JSON (para el portapapeles).
-async function serializePage(page) {
-  const files = {};
+function copyPage(pi, { cut = false } = {}) {
+  const page = state.manifest.pages[pi];
+  const files = new Map();
   for (const path of collectPageFiles(page)) {
     const blob = state.files.get(path);
-    if (blob) files[path] = await blobToDataUrl(blob);
+    if (blob) files.set(path, blob);
   }
-  return JSON.stringify({ tag: OWS_PAGE_TAG, page, files });
+  internalPageClip = { page: JSON.parse(JSON.stringify(page)), files };
+  if (cut) removePage(pi);
+  toast(t(cut ? 'toast.pageCut' : 'toast.pageCopied'), 'ok');
 }
 
-// Inserta una página (objeto serializado) en insertAt, recreando sus archivos
-// con rutas nuevas para no colisionar ni compartir con páginas existentes.
-async function insertPageFromData(data, insertAt) {
-  // 1) Restaurar los blobs con sus rutas originales (si faltan en esta sesión).
-  for (const [path, dataUrl] of Object.entries(data.files || {})) {
-    if (!state.files.has(path)) state.files.set(path, await dataUrlToBlob(dataUrl));
+function pastePageAt(insertAt) {
+  if (!internalPageClip) { toast(t('toast.pasteEmpty'), 'error'); return; }
+  const { page: src, files } = internalPageClip;
+  // Restaurar los blobs que falten (p. ej. si la página se cortó y se borró su
+  // imagen de fondo de state.files).
+  for (const [path, blob] of files) {
+    if (!state.files.has(path)) state.files.set(path, blob);
   }
-  const src = data.page;
-  // 2) Imagen de fondo: copia con ruta nueva.
+  // Imagen de fondo: copia con ruta nueva.
   const ext = (src.image || '').split('.').pop() || 'png';
   const newImage = `pages/page-${state.pageSeq++}.${ext}`;
   if (state.files.has(src.image)) state.files.set(newImage, state.files.get(src.image));
-  // 3) Clonar la página (cloneField regenera ids y recopia recortes).
+  // Clonar la página (cloneField regenera ids y recopia recortes).
   const newPage = {
     ...JSON.parse(JSON.stringify(src)),
     image: newImage,
     fields: (src.fields || []).map(f => cloneField(f))
   };
-  // 4) Re-empaquetar paquetes (SCORM/zip/…) con prefijo nuevo.
+  // Re-empaquetar paquetes (SCORM/zip/…) con prefijo nuevo.
   for (const f of newPage.fields) {
     const c = f.config || {};
     if (!c.pkg) continue;
@@ -838,54 +817,13 @@ async function insertPageFromData(data, insertAt) {
     inside.forEach(path => state.files.set(newPre + path.slice(c.pkg.length), state.files.get(path)));
     c.pkg = newPre;
   }
-  state.manifest.pages.splice(insertAt, 0, newPage);
-  state.sel = { kind: 'page', pageIndex: insertAt };
+  const at = Math.max(0, Math.min(insertAt, state.manifest.pages.length));
+  state.manifest.pages.splice(at, 0, newPage);
+  state.sel = { kind: 'page', pageIndex: at };
   markDirty();
   renderCanvas();
   renderPanel();
-}
-
-// Clave compartida entre todas las ventanas de OWS del mismo origen.
-const OWS_PAGE_CLIP_KEY = 'ows-page-clip';
-
-async function copyPage(pi, { cut = false } = {}) {
-  const page = state.manifest.pages[pi];
-  try {
-    const json = await serializePage(page);
-    internalPageClip = json;
-    // localStorage es la vía fiable entre ventanas del mismo origen (sin los
-    // límites de tamaño ni permisos del portapapeles del sistema).
-    try { localStorage.setItem(OWS_PAGE_CLIP_KEY, json); } catch {}
-    // El portapapeles del sistema permite además pegar en otra instalación/dominio.
-    try { await navigator.clipboard.writeText(json); } catch {}
-    if (cut) removePage(pi);
-    toast(t(cut ? 'toast.pageCut' : 'toast.pageCopied'), 'ok');
-  } catch {
-    toast(t('toast.pageCopyError'), 'error');
-  }
-}
-
-async function pastePageAt(insertAt) {
-  const candidates = [];
-  try { candidates.push(localStorage.getItem(OWS_PAGE_CLIP_KEY)); } catch {}
-  candidates.push(internalPageClip);
-  try { candidates.push(await navigator.clipboard.readText()); } catch {}
-
-  let data = null;
-  for (const candidate of candidates) {
-    if (!candidate) continue;
-    try {
-      const parsed = JSON.parse(candidate);
-      if (parsed && parsed.tag === OWS_PAGE_TAG) { data = parsed; break; }
-    } catch {}
-  }
-  if (!data) { toast(t('toast.pasteEmpty'), 'error'); return; }
-  try {
-    await insertPageFromData(data, Math.max(0, Math.min(insertAt, state.manifest.pages.length)));
-    toast(t('toast.pagePasted'), 'ok');
-  } catch {
-    toast(t('toast.pasteError'), 'error');
-  }
+  toast(t('toast.pagePasted'), 'ok');
 }
 
 // ---------- Menú contextual de miniaturas ----------
