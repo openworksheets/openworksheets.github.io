@@ -692,7 +692,8 @@ function setThumbsCollapsed(collapsed) {
 }
 btnThumbsToggle.addEventListener('click', () => setThumbsCollapsed(true));
 btnThumbsShow.addEventListener('click', () => setThumbsCollapsed(false));
-setThumbsCollapsed(localStorage.getItem('wpf-ed-thumbs') === '1');
+// Por defecto colapsada (solo expandida si el usuario lo guardó así).
+setThumbsCollapsed(localStorage.getItem('wpf-ed-thumbs') !== '0');
 
 // Resaltar la miniatura activa al desplazar el lienzo.
 canvas.addEventListener('scroll', () => {
