@@ -688,7 +688,6 @@ btnThumbsShow.innerHTML = ICONS.chevronRight;
 
 function setThumbsCollapsed(collapsed) {
   edLayout.classList.toggle('thumbs-collapsed', collapsed);
-  btnThumbsShow.hidden = !collapsed;
   try { localStorage.setItem('wpf-ed-thumbs', collapsed ? '1' : '0'); } catch {}
 }
 btnThumbsToggle.addEventListener('click', () => setThumbsCollapsed(true));

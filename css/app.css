@@ -916,6 +916,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   grid-template-columns: 78px var(--thumbs-w, 168px) minmax(0, 1fr) 330px;
   height: calc(100vh - 58px);
   position: relative;
+  transition: grid-template-columns 0.28s ease;
 }
 .ed-layout.thumbs-collapsed {
   grid-template-columns: 78px 0 minmax(0, 1fr) 330px;
@@ -963,7 +964,8 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 }
 .ed-thumbs-toggle:hover, .ed-thumbs-show:hover { background: var(--tinta-tenue); color: var(--tinta); }
 .ed-thumbs-toggle svg, .ed-thumbs-show svg { width: 16px; height: 16px; }
-/* Botón para reabrir la tira cuando está colapsada */
+/* Botón para reabrir la tira cuando está colapsada: oculto por defecto,
+   aparece con un fundido solo cuando la tira está minimizada. */
 .ed-thumbs-show {
   position: absolute;
   top: 8px;
@@ -975,7 +977,11 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   border: 2px solid var(--tinta);
   box-shadow: var(--sombra-mini);
   color: var(--tinta);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s ease;
 }
+.thumbs-collapsed .ed-thumbs-show { opacity: 1; pointer-events: auto; }
 .ed-thumbs-show:hover { background: var(--blanco); }
 .ed-thumbs-list {
   overflow-y: auto;
