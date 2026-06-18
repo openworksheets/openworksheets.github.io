@@ -916,7 +916,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   grid-template-columns: 78px var(--thumbs-w, 168px) minmax(0, 1fr) 330px;
   height: calc(100vh - 58px);
   position: relative;
-  transition: grid-template-columns 0.28s ease;
+  transition: grid-template-columns 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .ed-layout.thumbs-collapsed {
   grid-template-columns: 78px 0 minmax(0, 1fr) 330px;
@@ -979,7 +979,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   color: var(--tinta);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.28s ease;
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .thumbs-collapsed .ed-thumbs-show { opacity: 1; pointer-events: auto; }
 .ed-thumbs-show:hover { background: var(--blanco); }
