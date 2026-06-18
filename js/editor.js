@@ -899,7 +899,10 @@ canvas.addEventListener('contextmenu', e => {
   } else {
     showCtxMenu(e.clientX, e.clientY, [
       { icon: ICONS.clipboard, label: t('editor.paste'), fn: () => pasteField(pi), disabled: !state.copiedField },
-      { icon: ICONS.settings, label: t('menu.settings'), fn: () => openSettings() }
+      'sep',
+      { icon: ICONS.copyPlus, label: t('ctx.duplicate'), fn: () => duplicatePage(pi) },
+      { icon: ICONS.settings, label: t('menu.settings'), fn: () => openSettings() },
+      { icon: ICONS.trash, label: t('ctx.delete'), fn: () => deletePage(pi), danger: true }
     ]);
   }
 });
