@@ -3083,29 +3083,67 @@ function zoneDisplayName(zone, index) {
   return txt || t('cfg.zoneN', { n: index + 1 });
 }
 
-// Lista de todos los campos de la ficha.
+// Lista de todos los campos de la ficha con filtro de búsqueda.
+let _fieldListQuery = '';
+
 function renderFieldList() {
-  if (!state.manifest.pages.some(p => p.fields.length)) return;
-  const box = el('div', { class: 'lista-campos' }, el('h3', {}, t('editor.fieldsTitle')));
-  state.manifest.pages.forEach((page, pi) => {
-    page.fields.forEach(field => {
-      const decor = Boolean(FIELD_TYPES[field.type]?.decor);
-      const resumen = field.type === 'label'
-        ? (field.config.text || fieldTypeName(field.type))
-        : (expectedText(field) || fieldTypeName(field.type));
-      const fieldGlyph = el('span', { class: 'g' });
-      fieldGlyph.innerHTML = FIELD_TYPES[field.type]?.glyph || '?';
-      const item = el('div', { class: 'item' + (state.sel?.kind === 'field' && state.sel.fieldId === field.id ? ' state.sel' : '') },
-        fieldGlyph,
-        el('span', { class: 'resumen' }, `P${pi + 1} · ${resumen}`),
-        decor ? null : el('span', { class: 'pts' }, field.noScore ? '—' : field.points + ' pt'));
-      item.addEventListener('click', () => {
-        selectField(pi, field.id);
-        canvas.querySelector(`[data-id="${field.id}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-      });
-      box.appendChild(item);
-    });
+  const allFields = state.manifest.pages.flatMap(p => p.fields || []);
+  if (!allFields.length) return;
+
+  const box = el('div', { class: 'lista-campos' });
+
+  // Cabecera con título y barra de filtro
+  const header = el('div', { class: 'lista-campos-header' });
+  header.appendChild(el('h3', {}, t('editor.fieldsTitle')));
+
+  const filterWrap = el('div', { class: 'lista-campos-filter' });
+  const filterInput = el('input', {
+    type: 'search', class: 'lista-campos-input',
+    placeholder: t('dlg.search.placeholder'), value: _fieldListQuery
   });
+  filterInput.addEventListener('input', () => {
+    _fieldListQuery = filterInput.value;
+    renderItems();
+  });
+  filterWrap.appendChild(filterInput);
+  header.appendChild(filterWrap);
+  box.appendChild(header);
+
+  const listEl = el('div', { class: 'lista-campos-items' });
+  box.appendChild(listEl);
+
+  function renderItems() {
+    listEl.innerHTML = '';
+    const q = normalizeStr(_fieldListQuery);
+    let shown = 0;
+    state.manifest.pages.forEach((page, pi) => {
+      page.fields.forEach(field => {
+        const decor = Boolean(FIELD_TYPES[field.type]?.decor);
+        const resumen = field.type === 'label'
+          ? (field.config.text || fieldTypeName(field.type))
+          : (expectedText(field) || fieldTypeName(field.type));
+        if (q && !normalizeStr(fieldTypeName(field.type)).includes(q) && !normalizeStr(resumen).includes(q)) return;
+        shown++;
+        const fieldGlyph = el('span', { class: 'g' });
+        fieldGlyph.innerHTML = FIELD_TYPES[field.type]?.glyph || '?';
+        const isSel = state.sel?.kind === 'field' && state.sel.fieldId === field.id;
+        const item = el('div', { class: 'item' + (isSel ? ' sel' : '') },
+          fieldGlyph,
+          el('span', { class: 'resumen' }, `P${pi + 1} · ${resumen}`),
+          decor ? null : el('span', { class: 'pts' }, field.noScore ? '—' : field.points + ' pt'));
+        item.addEventListener('click', () => {
+          selectField(pi, field.id);
+          canvas.querySelector(`[data-id="${field.id}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        });
+        listEl.appendChild(item);
+      });
+    });
+    if (q && !shown) {
+      listEl.appendChild(el('div', { class: 'buscar-vacio' }, t('dlg.search.empty')));
+    }
+  }
+
+  renderItems();
   panel.appendChild(box);
 }
 
