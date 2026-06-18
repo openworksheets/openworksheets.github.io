@@ -9,6 +9,25 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.16.0] — 2026-06-18
+
+### Añadido
+- **Desplazar la ficha ampliada arrastrando el fondo** con el ratón (pan),
+  además de las barras de desplazamiento. El cursor cambia a «mano» cuando hay
+  zona oculta y no interfiere con la edición de campos.
+- **Escribir el porcentaje de zoom a mano**: clic derecho sobre el indicador de
+  zoom lo convierte en un campo editable (Enter aplica, Escape cancela).
+
+### Cambiado
+- **El zoom del editor llega hasta el 500 %** (antes 300 %); el tooltip recuerda
+  que también se cambia con **Ctrl + rueda del ratón**.
+- **Los controles de vista previa y zoom permanecen fijos** en la esquina
+  superior derecha al desplazar la ficha en cualquier dirección.
+- **La tira de miniaturas se muestra u oculta al añadir o borrar páginas**, al
+  pasar de una sola página a varias y viceversa.
+
+---
+
 ## [1.15.0] — 2026-06-18
 
 ### Añadido
