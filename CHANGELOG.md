@@ -9,6 +9,59 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.14.0] — 2026-06-18
+
+### Añadido
+- **Tira de miniaturas de páginas** (estilo presentación), a la izquierda del
+  lienzo: muestra todas las páginas en miniatura. Permite **navegar** (clic en
+  una miniatura desplaza el lienzo a esa página), **reordenar** las páginas
+  arrastrando y soltando, **minimizar/ocultar** la tira (estado recordado entre
+  sesiones; arranca colapsada) y **redimensionar** tanto la tira como el panel
+  de configuración arrastrando sus divisores.
+- **Menús contextuales (clic derecho)** en toda la zona de edición:
+  - Sobre una **miniatura**: copiar, cortar, pegar, duplicar, eliminar página y
+    ajustes de la ficha.
+  - Sobre un **campo**: copiar, cortar, duplicar, pegar, eliminar y ajustes.
+  - Sobre el **fondo de una página**: pegar campo, duplicar página, eliminar
+    página y ajustes.
+  - En el **área del lienzo** junto a las páginas: pegar página, nueva hoja en
+    blanco y ajustes.
+- **Atajos de teclado para páginas**: con una miniatura enfocada, Ctrl+C, Ctrl+X,
+  Ctrl+V, Ctrl+D y Supr copian, cortan, pegan, duplican y borran páginas.
+- **Menú «Utilidades»** en la barra superior con:
+  - **Buscar campo** (Ctrl+K): búsqueda insensible a mayúsculas y acentos sobre
+    todos los campos de la ficha.
+  - **Estadísticas de la ficha**: número de páginas, campos por tipo y campos con
+    o sin corrección automática, con botones para copiar e imprimir/PDF.
+  - **Vista previa** (Ctrl+Shift+E).
+- **Filtro de búsqueda** en la lista «Campos de la ficha» del panel, con lupa y
+  botón para limpiar.
+- **Exportación a IMS Content Package 1.1.4** desde el menú «Exportar como…», e
+  **importación de paquetes IMS CP** como modo del campo «Insertar (Web/HTML)»,
+  con menú de navegación a partir del manifiesto.
+- **Submenú «Exportar como…»** en el menú Archivo, que agrupa las exportaciones
+  (PDF, SCORM 1.2, IMS CP y web ZIP).
+- **«Ajustes de la ficha»** accesible también desde el menú Archivo.
+- **Guardar conservando el nombre y la carpeta de origen**: al abrir una ficha en
+  navegadores compatibles (Chrome/Edge), «Guardar ficha» reescribe el mismo
+  archivo; en el resto propone su nombre original. Nueva opción **«Guardar ficha
+  como…»** para elegir nombre y ubicación.
+- **Atajo Ctrl+Shift+X** para imprimir/exportar a PDF.
+
+### Cambiado
+- Los botones **«Archivo»** y **«Utilidades»** tienen aspecto de barra de menú
+  (planos, con flecha desplegable).
+- Al **guardar** la ficha se descartan automáticamente los archivos huérfanos
+  (paquetes o medios de campos eliminados).
+- Las flechas de **mover página** se desactivan en los extremos (la primera no
+  puede subir, la última no puede bajar).
+
+### Corregido
+- El submenú «Exportar como…» ya no se cierra al desplazar el ratón hacia él.
+- Visibilidad de los botones «Archivo» y «Utilidades» en modo oscuro.
+
+---
+
 ## [1.13.0] — 2026-06-18
 
 ### Añadido
