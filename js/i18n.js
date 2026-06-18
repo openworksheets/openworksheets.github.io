@@ -474,8 +474,8 @@ const STRINGS = {
     'toast.webNoIndex': 'El paquete no contiene ningún index.html (ni .html de inicio).',
     'toast.webLoaded': 'Contenido web cargado.',
     'toast.webError': 'No se pudo leer el paquete (¿es un .zip/.elpx válido?).',
-    'zoom.in': 'Acercar',
-    'zoom.out': 'Alejar',
+    'zoom.in': 'Acercar (Ctrl + rueda)',
+    'zoom.out': 'Alejar (Ctrl + rueda)',
     'zoom.reset': 'Volver al tamaño original (100%)',
 
     // Editor — diálogo ajustes
@@ -1412,8 +1412,8 @@ const STRINGS = {
     'toast.webNoIndex': 'The package has no index.html (nor a start .html).',
     'toast.webLoaded': 'Web content loaded.',
     'toast.webError': 'Could not read the package (is it a valid .zip/.elpx?).',
-    'zoom.in': 'Zoom in',
-    'zoom.out': 'Zoom out',
+    'zoom.in': 'Zoom in (Ctrl + wheel)',
+    'zoom.out': 'Zoom out (Ctrl + wheel)',
     'zoom.reset': 'Back to original size (100%)',
     'toast.imgInserted': 'Image inserted. Move and resize it as needed.',
 
@@ -2131,8 +2131,8 @@ const STRINGS = {
     'toast.webNoIndex': 'El paquet no conté cap index.html (ni cap .html d\'inici).',
     'toast.webLoaded': 'Contingut web carregat.',
     'toast.webError': 'No s\'ha pogut llegir el paquet (és un .zip/.elpx vàlid?).',
-    'zoom.in': 'Apropar',
-    'zoom.out': 'Allunyar',
+    'zoom.in': 'Apropar (Ctrl + roda)',
+    'zoom.out': 'Allunyar (Ctrl + roda)',
     'zoom.reset': 'Tornar a la mida original (100%)',
     'toast.imgInserted': 'Imatge inserida. Mou-la i redimensiona-la al teu gust.',
 
@@ -2850,8 +2850,8 @@ const STRINGS = {
     'toast.webNoIndex': 'O paquete non contén ningún index.html (nin .html de inicio).',
     'toast.webLoaded': 'Contido web cargado.',
     'toast.webError': 'Non se puido ler o paquete (é un .zip/.elpx válido?).',
-    'zoom.in': 'Achegar',
-    'zoom.out': 'Afastar',
+    'zoom.in': 'Achegar (Ctrl + roda)',
+    'zoom.out': 'Afastar (Ctrl + roda)',
     'zoom.reset': 'Volver ao tamaño orixinal (100%)',
     'toast.imgInserted': 'Imaxe inserida. Móvea e redimensiónaa ao teu gusto.',
 
@@ -3569,8 +3569,8 @@ const STRINGS = {
     'toast.webNoIndex': 'Paketeak ez du index.html-rik (ezta hasierako .html-rik ere).',
     'toast.webLoaded': 'Web edukia kargatu da.',
     'toast.webError': 'Ezin izan da paketea irakurri (baliozko .zip/.elpx da?).',
-    'zoom.in': 'Handiagotu',
-    'zoom.out': 'Txikiagotu',
+    'zoom.in': 'Handiagotu (Ctrl + gurpila)',
+    'zoom.out': 'Txikiagotu (Ctrl + gurpila)',
     'zoom.reset': 'Jatorrizko tamainara itzuli (%100)',
     'toast.imgInserted': 'Irudia txertatu da. Mugitu eta tamainatu nahi duzun moduan.',
 
