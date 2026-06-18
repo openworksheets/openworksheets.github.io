@@ -245,6 +245,14 @@ export const FIELD_TYPES = {
     decor: true,
     defRect: { w: 0.2, h: 0.12 },
     defaults: () => ({ color: '#1d2c42', width: 2, style: 'solid', noStroke: false, fill: '', fillOpacity: 1, circle: false })
+  },
+  // Polígono regular de N lados (3 = triángulo, 4 = rombo, 5 = pentágono…).
+  polygon: {
+    name: 'Polígono',
+    glyph: ICONS.pentagon,
+    decor: true,
+    defRect: { w: 0.18, h: 0.18 },
+    defaults: () => ({ sides: 5, color: '#1d2c42', width: 2, style: 'solid', noStroke: false, fill: '', fillOpacity: 1, rotation: 0, regular: true })
   }
 };
 
@@ -252,7 +260,7 @@ export const FIELD_ORDER = [
   'text', 'number', 'single', 'truefalse', 'multi', 'checkbox',
   'select', 'gaps', 'textboxes', 'match', 'order', 'dragdrop', 'arrowmatch',
   'record', 'embed', 'scorm',
-  'label', 'cover', 'image', 'video', 'audio', 'line', 'rect', 'ellipse'
+  'label', 'cover', 'image', 'video', 'audio', 'line', 'rect', 'polygon', 'ellipse'
 ];
 
 // Grupos temáticos de la paleta del editor. El nombre visible
@@ -262,14 +270,14 @@ export const PALETTE_GROUPS = [
   { id: 'choose', glyph: ICONS.listChecks,      types: ['single', 'multi', 'checkbox', 'truefalse', 'select'] },
   { id: 'relate', glyph: ICONS.arrowLeftRight,  types: ['match', 'order', 'dragdrop', 'arrowmatch'] },
   { id: 'external', glyph: ICONS.package,        types: ['embed', 'scorm'] },
-  { id: 'design', glyph: ICONS.shapes,          types: ['label', 'image', 'video', 'audio', 'cover', 'line', 'rect', 'ellipse'] }
+  { id: 'design', glyph: ICONS.shapes,          types: ['label', 'image', 'video', 'audio', 'cover', 'line', 'rect', 'polygon', 'ellipse'] }
 ];
 
 export function isDecorField(type) {
   return Boolean(FIELD_TYPES[type]?.decor);
 }
 
-const SHAPE_TYPES = new Set(['line', 'arrow', 'rect', 'ellipse']);
+const SHAPE_TYPES = new Set(['line', 'arrow', 'rect', 'polygon', 'ellipse']);
 
 export function isShapeField(type) {
   return SHAPE_TYPES.has(type);

@@ -2717,6 +2717,77 @@ const configForms = {
     });
   },
 
+  polygon(cont, field) {
+    const cfg = field.config;
+
+    // Número de lados
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.polygonSides')));
+    const sidesVal = Math.max(3, Math.min(20, parseInt(cfg.sides, 10) || 5));
+    const sidesRange = el('input', { type: 'range', min: '3', max: '20', step: '1', value: String(sidesVal) });
+    const sidesNum = el('input', { type: 'number', min: '3', max: '20', step: '1', value: String(sidesVal), style: 'width:60px' });
+    const applySides = v => {
+      v = Math.max(3, Math.min(20, parseInt(v, 10) || 3));
+      cfg.sides = v;
+      sidesRange.value = v;
+      sidesNum.value = v;
+      refreshShapePrev(field);
+      markDirty();
+    };
+    sidesRange.addEventListener('input', () => applySides(sidesRange.value));
+    sidesNum.addEventListener('input', () => applySides(sidesNum.value));
+    cont.appendChild(el('div', { class: 'rot-row' }, sidesRange, sidesNum));
+
+    // Borde (opcional)
+    const strokeBox = el('div', {});
+    checkRow(cont, t('cfg.shapeStroke'), !cfg.noStroke, v => {
+      cfg.noStroke = !v;
+      strokeBox.style.display = v ? '' : 'none';
+      refreshShapePrev(field);
+    });
+    shapeStrokeConfig(strokeBox, field);
+    if (cfg.noStroke) strokeBox.style.display = 'none';
+    cont.appendChild(strokeBox);
+
+    // Relleno (opcional), con color y opacidad
+    const { inp: fillColor, wrap: fillColorWrap } = colorInput(cfg.fill || '#f8e3a1', v => { cfg.fill = v; refreshShapePrev(field); markDirty(); });
+    const fillOp = el('input', { type: 'range', min: '0', max: '1', step: '0.05', value: String(cfg.fillOpacity ?? 1) });
+    fillOp.addEventListener('input', () => { cfg.fillOpacity = parseFloat(fillOp.value); refreshShapePrev(field); markDirty(); });
+    const fillRow = el('div', {},
+      el('label', { class: 'f-label' }, t('cfg.fillColor')), fillColorWrap,
+      el('label', { class: 'f-label' }, t('cfg.fillOpacity')), fillOp);
+    if (!cfg.fill) fillRow.style.display = 'none';
+    checkRow(cont, t('cfg.shapeFill'), Boolean(cfg.fill), v => {
+      cfg.fill = v ? fillColor.value : '';
+      fillRow.style.display = v ? '' : 'none';
+      refreshShapePrev(field);
+    });
+    cont.appendChild(fillRow);
+
+    // Rotación
+    const rotVal = parseFloat(cfg.rotation) || 0;
+    const rotRange = el('input', { type: 'range', min: '0', max: '360', step: '1', value: String(rotVal) });
+    const rotNum = el('input', { type: 'number', min: '0', max: '360', step: '1', value: String(rotVal), style: 'width:60px' });
+    const applyRot = v => {
+      v = ((parseFloat(v) || 0) % 360 + 360) % 360;
+      cfg.rotation = v;
+      rotRange.value = v;
+      rotNum.value = v;
+      refreshShapePrev(field);
+      markDirty();
+    };
+    rotRange.addEventListener('input', () => applyRot(rotRange.value));
+    rotNum.addEventListener('input', () => applyRot(rotNum.value));
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.polygonRotation')));
+    cont.appendChild(el('div', { class: 'rot-row' }, rotRange, rotNum, el('span', {}, '°')));
+
+    // Mantener la forma regular (si no, se deforma para llenar la caja)
+    checkRow(cont, t('cfg.polygonRegular'), cfg.regular !== false, v => {
+      cfg.regular = v;
+      refreshShapePrev(field);
+      markDirty();
+    });
+  },
+
   label(cont, field) {
     const cfg = field.config;
     const prev = () => canvas.querySelector(`.ed-field[data-id="${field.id}"] .ed-label-prev`);

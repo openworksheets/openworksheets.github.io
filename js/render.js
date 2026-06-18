@@ -184,6 +184,28 @@ export function buildShapeSvg(field) {
     if (cfg.noStroke) node.setAttribute('stroke', 'none');
     else stroke(node);
     svg.appendChild(node);
+  } else if (field.type === 'polygon') {
+    // Polígono regular de N lados, inscrito en un viewBox cuadrado. `regular`
+    // mantiene la forma (meet); si no, se deforma para llenar la caja (none).
+    const sides = Math.max(3, Math.min(20, parseInt(cfg.sides, 10) || 5));
+    const regular = cfg.regular !== false;
+    const rot = (parseFloat(cfg.rotation) || 0) * Math.PI / 180;
+    const cx = 50, cy = 50, r = 48;
+    const pts = [];
+    for (let i = 0; i < sides; i++) {
+      const a = -Math.PI / 2 + rot + i * 2 * Math.PI / sides;
+      pts.push((cx + r * Math.cos(a)).toFixed(2) + ',' + (cy + r * Math.sin(a)).toFixed(2));
+    }
+    svg.setAttribute('viewBox', '0 0 100 100');
+    svg.setAttribute('preserveAspectRatio', regular ? 'xMidYMid meet' : 'none');
+    const node = document.createElementNS(NS, 'polygon');
+    node.setAttribute('points', pts.join(' '));
+    node.setAttribute('vector-effect', 'non-scaling-stroke'); // grosor uniforme
+    node.setAttribute('fill', cfg.fill || 'none');
+    if (cfg.fill) node.setAttribute('fill-opacity', String(cfg.fillOpacity ?? 1));
+    if (cfg.noStroke) node.setAttribute('stroke', 'none');
+    else stroke(node);
+    svg.appendChild(node);
   } else {
     // Línea / Flecha: extremos según la dirección dentro de la caja, con puntas
     // de flecha opcionales. `heads`: 'none' | 'end' | 'both'. El tipo heredado
@@ -680,6 +702,7 @@ const renderers = {
   line: shapeRenderer,
   arrow: shapeRenderer,
   rect: shapeRenderer,
+  polygon: shapeRenderer,
   ellipse: shapeRenderer,
 
   text(field, root, ctx) {

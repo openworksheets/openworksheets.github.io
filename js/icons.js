@@ -64,6 +64,7 @@ export const ICONS = {
   arrowRight: icon('<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>'),
   rectH:     icon('<rect width="20" height="12" x="2" y="6" rx="2"/>'),
   circle:    icon('<circle cx="12" cy="12" r="10"/>'),
+  pentagon:  icon('<path d="M10.83 2.38a2 2 0 0 1 2.34 0l8 5.74a2 2 0 0 1 .73 2.25l-3.04 9.26a2 2 0 0 1-1.9 1.37H6.24a2 2 0 0 1-1.9-1.37L1.3 10.37a2 2 0 0 1 .73-2.25z"/>'),
   // Deshacer / rehacer
   undo:      icon('<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H9"/>'),
   redo:      icon('<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>'),
