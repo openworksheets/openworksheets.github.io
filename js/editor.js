@@ -188,7 +188,7 @@ async function addFiles(fileList, insertAt) {
     }
   }
   markDirty();
-  if (insertAt == null) zoomCtl.set(1); // al abrir/añadir un PDF o imágenes, zoom al 100 %
+  if (insertAt == null) { zoomCtl.set(1); autoThumbs(); } // al abrir un PDF/imágenes: zoom 100 % y tira según nº de páginas
   renderCanvas();
   renderPanel();
 }
@@ -705,14 +705,18 @@ const btnThumbsShow = $('#btnThumbsShow');
 btnThumbsToggle.innerHTML = ICONS.chevronLeft;
 btnThumbsShow.innerHTML = ICONS.chevronRight;
 
+// El colapso de la tira no se guarda: lo que el usuario cambie a mano dura solo
+// hasta que abra otra ficha. Al abrir/cargar una ficha se decide según el número
+// de páginas (autoThumbs): visible con más de una, oculta con una sola.
 function setThumbsCollapsed(collapsed) {
   edLayout.classList.toggle('thumbs-collapsed', collapsed);
-  try { localStorage.setItem('wpf-ed-thumbs', collapsed ? '1' : '0'); } catch {}
+}
+function autoThumbs() {
+  setThumbsCollapsed(state.manifest.pages.length <= 1);
 }
 btnThumbsToggle.addEventListener('click', () => setThumbsCollapsed(true));
 btnThumbsShow.addEventListener('click', () => setThumbsCollapsed(false));
-// Por defecto colapsada (solo expandida si el usuario lo guardó así).
-setThumbsCollapsed(localStorage.getItem('wpf-ed-thumbs') !== '0');
+autoThumbs();
 
 // Resaltar la miniatura activa al desplazar el lienzo.
 canvas.addEventListener('scroll', () => {
@@ -3958,6 +3962,7 @@ async function openZipFile(file, handle = null) {
     titleInput.value = state.manifest.title || '';
     state.dirty = false;
     zoomCtl.set(1); // al abrir una ficha, zoom al 100 %
+    autoThumbs(); // mostrar la tira si la ficha tiene más de una página
     renderCanvas();
     renderPanel();
     refreshPaletteState();
