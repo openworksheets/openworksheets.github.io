@@ -72,6 +72,7 @@ function clearOpenFile() { openFileHandle = null; openFileName = null; }
 const zoomCtl = zoomControl({
   apply: z => { canvas.style.setProperty('--zoom', z); requestAnimationFrame(updatePannable); },
   key: 'wpf-ed-zoom',
+  max: 5,
   titles: { in: t('zoom.in'), out: t('zoom.out'), reset: t('zoom.reset') }
 });
 
