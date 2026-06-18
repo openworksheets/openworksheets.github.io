@@ -410,7 +410,7 @@ function renderCanvas() {
       if (field.type === 'label') {
         const lp = el('div', {
           class: 'ed-label-prev',
-          style: `color:${field.config.color || 'inherit'};font-weight:${field.config.bold ? '700' : '400'}`
+          style: `color:${field.config.color || 'inherit'};font-weight:${field.config.bold ? '700' : '400'};text-align:${field.config.align || 'left'}`
         });
         lp.innerHTML = mdToHtml(field.config.text || '');
         box.appendChild(lp);
@@ -1926,6 +1926,12 @@ function mediaTitleCaption(cont, field, rebuild = rebuildCanvasMedia) {
   ca.addEventListener('input', () => { cfg.caption = ca.value; markDirty(); });
   ca.addEventListener('change', () => rebuild(field));
   cont.appendChild(ca);
+  // Alineación del título y el pie: izquierda, centro o derecha.
+  selectRow(cont, t('cfg.labelAlign'), cfg.align || 'left', [
+    ['left', t('cfg.alignLeft')],
+    ['center', t('cfg.alignCenter')],
+    ['right', t('cfg.alignRight')]
+  ], v => { cfg.align = v; rebuild(field); });
   // El título y el pie son texto: comparten los controles de texto (tamaño,
   // tipo de letra y color) de los campos con texto.
   const fsVal = field.fontScale || 1;
@@ -2299,6 +2305,17 @@ const configForms = {
       markDirty();
     });
     cont.appendChild(labelColorWrap);
+    // Alineación del texto: izquierda, centro, derecha o justificado.
+    selectRow(cont, t('cfg.labelAlign'), cfg.align || 'left', [
+      ['left', t('cfg.alignLeft')],
+      ['center', t('cfg.alignCenter')],
+      ['right', t('cfg.alignRight')],
+      ['justify', t('cfg.alignJustify')]
+    ], v => {
+      cfg.align = v;
+      const p = prev();
+      if (p) p.style.textAlign = v;
+    });
     // Tamaño de texto (antes en el acordeón de diseño)
     const fsVal = field.fontScale || 1;
     const fsRange = el('input', { type: 'range', min: '0.6', max: '5', step: '0.1', value: String(fsVal) });

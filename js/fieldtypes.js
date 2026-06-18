@@ -145,7 +145,7 @@ export const FIELD_TYPES = {
       scoreMode: 'scorm',  // 'scorm' = usa score.raw ; 'completion' = aprobado/suspendido
       showMenu: true,      // mostrar el menú de navegación lateral del paquete
       toc: [],             // árbol de navegación cacheado del imsmanifest
-      title: '', caption: '', frameColor: '#1d2c42', frameWidth: 0
+      title: '', caption: '', align: 'left', frameColor: '#1d2c42', frameWidth: 0
     })
   },
   // Grabación de voz: el alumno graba audio con el micrófono. No es
@@ -167,7 +167,7 @@ export const FIELD_TYPES = {
     glyph: ICONS.pencil,
     decor: true,
     defRect: { w: 0.3, h: 0.05 },
-    defaults: () => ({ text: 'Texto', color: '#1d2c42', bold: false })
+    defaults: () => ({ text: 'Texto', color: '#1d2c42', bold: false, align: 'left' })
   },
   cover: {
     name: 'Tapar zona',
@@ -190,14 +190,14 @@ export const FIELD_TYPES = {
     glyph: ICONS.film,
     decor: true,
     defRect: { w: 0.5, h: 0.32 },
-    defaults: () => ({ provider: 'url', url: '', src: '', controls: true, autoplay: false, muted: false, loop: false, title: '', caption: '' })
+    defaults: () => ({ provider: 'url', url: '', src: '', controls: true, autoplay: false, muted: false, loop: false, title: '', caption: '', align: 'left' })
   },
   audio: {
     name: 'Audio',
     glyph: ICONS.volume,
     decor: true,
     defRect: { w: 0.5, h: 0.08 },
-    defaults: () => ({ provider: 'file', url: '', src: '', controls: true, autoplay: false, loop: false, title: '', caption: '' })
+    defaults: () => ({ provider: 'file', url: '', src: '', controls: true, autoplay: false, loop: false, title: '', caption: '', align: 'left' })
   },
   // Inserción de contenido externo. El modo se elige al configurar el campo:
   //   'url'  → se incrusta una URL en un iframe
@@ -211,7 +211,7 @@ export const FIELD_TYPES = {
     glyph: ICONS.code,
     decor: true,
     defRect: { w: 0.5, h: 0.3 },
-    defaults: () => ({ mode: '', url: '', html: '', pkg: '', entryHref: '', title: '', caption: '', frameColor: '#1d2c42', frameWidth: 0 })
+    defaults: () => ({ mode: '', url: '', html: '', pkg: '', entryHref: '', title: '', caption: '', align: 'left', frameColor: '#1d2c42', frameWidth: 0 })
   },
   // Formas de dibujo: para componer fichas desde una hoja en blanco.
   line: {

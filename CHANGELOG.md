@@ -21,6 +21,17 @@ Las versiones publicadas también están en la página de
 - **Ficha de ejemplo en gallego** (`ejemplos/ficha-de-exemplo-para-openworksheets.owpkg`):
   traducción completa de la ficha de prueba con sus imágenes en gallego, enlazada
   al idioma **GL** de la portada. Cubre todos los tipos de campo del editor.
+- **Alineación del campo «Texto»**: el elemento de texto libre permite ahora
+  alinear el contenido a la izquierda, al centro, a la derecha o justificado,
+  desde su panel de configuración. Se refleja en el editor, el visor y las
+  exportaciones a web y SCORM.
+- **Alineación del título y el pie en los campos multimedia** (vídeo, audio,
+  insertar web/HTML y SCORM): su título y pie de texto se pueden alinear a la
+  izquierda, al centro o a la derecha. Estos textos siguen vacíos por defecto.
+
+### Corregido
+- El icono de **«Exportar a SCORM 1.2»** del menú *Archivo* ahora coincide con el
+  del campo SCORM de la paleta (mismo icono de paquete), por consistencia.
 
 ### Cambiado
 - **El botón «Crear una ficha» de la portada pasa a ser «Abrir ficha»** (con icono

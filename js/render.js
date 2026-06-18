@@ -278,9 +278,10 @@ function mediaFigure(field, bodyEl, extraClass) {
   fig.style.setProperty('--media-frame-width', frameWidth + 'px');
   fig.style.setProperty('--media-frame-color', cfg.frameColor || '#1d2c42');
   if (frameWidth > 0) fig.classList.add('has-frame');
-  if (cfg.title) fig.appendChild(el('div', { class: 'wpf-media-title' }, cfg.title));
+  const textAlign = cfg.align || 'left';
+  if (cfg.title) fig.appendChild(el('div', { class: 'wpf-media-title', style: `text-align:${textAlign}` }, cfg.title));
   fig.appendChild(el('div', { class: 'wpf-media-body' + (frameWidth > 0 ? ' has-frame' : '') }, bodyEl));
-  if (cfg.caption) fig.appendChild(el('div', { class: 'wpf-media-caption' }, cfg.caption));
+  if (cfg.caption) fig.appendChild(el('div', { class: 'wpf-media-caption', style: `text-align:${textAlign}` }, cfg.caption));
   return fig;
 }
 
@@ -444,7 +445,7 @@ const renderers = {
     const cfg = field.config || {};
     const div = el('div', {
       class: 'wpf-label-text',
-      style: `color:${cfg.color || 'inherit'};font-weight:${cfg.bold ? '700' : '400'}`
+      style: `color:${cfg.color || 'inherit'};font-weight:${cfg.bold ? '700' : '400'};text-align:${cfg.align || 'left'}`
     });
     div.innerHTML = mdToHtml(cfg.text || '');
     root.appendChild(div);
