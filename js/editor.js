@@ -3367,8 +3367,10 @@ async function exportZip() {
     const exportManifest = await prepareExportManifest(exportZip);
     if (!exportManifest) return;
     toast(t('toast.generating'));
-    const blob = await exportFichaZip({ manifest: exportManifest, files: referencedFiles() });
+    const clean = referencedFiles();
+    const blob = await exportFichaZip({ manifest: exportManifest, files: clean });
     downloadBlob(blob, slugify(state.manifest.title || 'ficha') + '.owpkg');
+    state.files = clean;
     state.dirty = false;
     toast(t('toast.exported'), 'ok');
   } catch (e) {
