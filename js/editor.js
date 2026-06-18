@@ -30,6 +30,7 @@ import { pdfToPages, imageToPage, isPdf, isImage } from './pdfimport.js';
 import { exportFichaZip, importFichaZip, newManifest, usedFiles } from './zipio.js';
 import { exportScormPackage } from './scormexport.js';
 import { exportWebPackage } from './webexport.js';
+import { exportImscpPackage } from './imscpexport.js';
 import { buildShortLink, parseDriveId } from './drive.js';
 import { mountPlayer } from './player.js';
 import { t, getLang, applyI18n, initLangSelector } from './i18n.js';
@@ -1499,7 +1500,7 @@ function renderFieldPanel(field) {
   // tipo de contenido (URL, HTML, web en ZIP o paquete eXeLearning .elpx).
   if (field.type === 'embed') {
     const cfg = field.config;
-    const MODES = ['url', 'html', 'zip', 'elpx'];
+    const MODES = ['url', 'html', 'zip', 'elpx', 'imscp'];
     if (!MODES.includes(cfg.mode)) {
       cont.appendChild(el('p', { class: 'cfg-hint' }, t('cfg.embedChooseIntro')));
       const pick = m => { cfg.mode = m; markDirty(); renderPanel(); renderCanvas(); };
@@ -1507,7 +1508,8 @@ function renderFieldPanel(field) {
         modeChoiceCard(t('cfg.embedUrlTitle'), t('cfg.embedUrlDesc'), () => pick('url')),
         modeChoiceCard(t('cfg.embedHtmlTitle'), t('cfg.embedHtmlDesc'), () => pick('html')),
         modeChoiceCard(t('cfg.embedZipTitle'), t('cfg.embedZipDesc'), () => pick('zip')),
-        modeChoiceCard(t('cfg.embedElpxTitle'), t('cfg.embedElpxDesc'), () => pick('elpx'))));
+        modeChoiceCard(t('cfg.embedElpxTitle'), t('cfg.embedElpxDesc'), () => pick('elpx')),
+        modeChoiceCard(t('cfg.embedImscpTitle'), t('cfg.embedImscpDesc'), () => pick('imscp'))));
       cont.appendChild(el('div', { class: 'ed-acciones' },
         iconBtn({ class: 'btn small danger', onclick: deleteSelected }, ICONS.trash, t('editor.delete'))));
       panel.appendChild(cont);
@@ -2122,6 +2124,51 @@ function uploadWebPackage(field, kind) {
   inp.click();
 }
 
+// Carga un paquete IMS CP (.zip con imsmanifest.xml) en el campo «Insertar».
+// Usa el manifest para localizar el punto de entrada; el resto se sirve igual
+// que un embed ZIP normal.
+function uploadImscpPackage(field) {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.zip,application/zip';
+  inp.addEventListener('change', async () => {
+    const file = inp.files[0];
+    if (!file) return;
+    try {
+      const zip = await window.JSZip.loadAsync(file);
+      let mEntry = zip.file('imsmanifest.xml');
+      if (!mEntry) { const arr = zip.file(/imsmanifest\.xml$/i); mEntry = arr && arr[0]; }
+      if (!mEntry) { toast(t('toast.scormNoManifest'), 'error'); return; }
+      const parsed = parseImsManifest(await mEntry.async('string'));
+      if (!parsed.entryHref) { toast(t('toast.scormNoEntry'), 'error'); return; }
+
+      const rootDir = mEntry.name.slice(0, mEntry.name.length - 'imsmanifest.xml'.length);
+      const entries = [];
+      zip.forEach((path, e) => { if (!e.dir) entries.push({ path, entry: e }); });
+
+      clearPackageFiles(field.config.pkg);
+      resetEditorPkgCache();
+      const prefix = 'embed/' + uid() + '/';
+      for (const { path, entry } of entries) {
+        if (rootDir && !path.startsWith(rootDir)) continue;
+        const internal = rootDir ? path.slice(rootDir.length) : path;
+        if (!internal) continue;
+        state.files.set(prefix + internal, await entry.async('blob'));
+      }
+      const cfg = field.config;
+      cfg.pkg = prefix;
+      cfg.entryHref = parsed.entryHref;
+      markDirty();
+      renderCanvas();
+      renderPanel();
+      toast(t('toast.imscpLoaded'), 'ok');
+    } catch {
+      toast(t('toast.webError'), 'error');
+    }
+  });
+  inp.click();
+}
+
 // Sustituye la vista previa SVG de una forma tras cambiar su configuración.
 function refreshShapePrev(field) {
   const old = canvas.querySelector(`.ed-field[data-id="${field.id}"] .wpf-shape`);
@@ -2478,7 +2525,8 @@ const configForms = {
     // Tipo elegido + botón para volver a elegir (re-abre el selector inicial).
     const modeName = {
       url: t('cfg.embedUrlTitle'), html: t('cfg.embedHtmlTitle'),
-      zip: t('cfg.embedZipTitle'), elpx: t('cfg.embedElpxTitle')
+      zip: t('cfg.embedZipTitle'), elpx: t('cfg.embedElpxTitle'),
+      imscp: t('cfg.embedImscpTitle')
     }[cfg.mode] || '';
     cont.appendChild(el('div', { class: 'ed-acciones', style: 'margin-bottom:8px' },
       iconBtn({ class: 'btn small ghost', type: 'button',
@@ -2501,24 +2549,30 @@ const configForms = {
       cont.appendChild(ta);
       cont.appendChild(el('p', { class: 'settings-warning' },
         el('small', {}, t('cfg.embedHtmlWarning'))));
-    } else if (cfg.mode === 'zip' || cfg.mode === 'elpx') {
+    } else if (cfg.mode === 'zip' || cfg.mode === 'elpx' || cfg.mode === 'imscp') {
       if (cfg.pkg && cfg.entryHref) {
         cont.appendChild(el('p', { class: 'cfg-hint', style: 'margin:4px 0' }, '✓ ' + cfg.entryHref));
       } else {
-        cont.appendChild(el('p', { class: 'cfg-hint' },
-          cfg.mode === 'elpx' ? t('cfg.embedElpxIntro') : t('cfg.embedZipIntro')));
+        const introKey = cfg.mode === 'elpx' ? 'cfg.embedElpxIntro'
+          : cfg.mode === 'imscp' ? 'cfg.embedImscpIntro' : 'cfg.embedZipIntro';
+        cont.appendChild(el('p', { class: 'cfg-hint' }, t(introKey)));
       }
       const label = cfg.mode === 'elpx'
         ? (cfg.pkg ? t('cfg.embedReplaceElpx') : t('cfg.embedUploadElpx'))
-        : (cfg.pkg ? t('cfg.embedReplaceZip') : t('cfg.embedUploadZip'));
+        : cfg.mode === 'imscp'
+          ? (cfg.pkg ? t('cfg.embedReplaceImscp') : t('cfg.embedUploadImscp'))
+          : (cfg.pkg ? t('cfg.embedReplaceZip') : t('cfg.embedUploadZip'));
       const btn = iconBtn({ class: 'btn small media-upload-btn', type: 'button' }, ICONS.folderOpen, label);
-      btn.addEventListener('click', () => uploadWebPackage(field, cfg.mode));
+      btn.addEventListener('click', () => cfg.mode === 'imscp'
+        ? uploadImscpPackage(field)
+        : uploadWebPackage(field, cfg.mode));
       cont.appendChild(btn);
     }
     // El SCORM/embed-paquete no usa el reconstructor de medios (no lo entiende):
     // su título/pie redibujan el lienzo.
-    mediaFrameConfig(cont, field, cfg.mode === 'zip' || cfg.mode === 'elpx' ? (() => renderCanvas()) : rebuildCanvasMedia);
-    if (cfg.mode === 'zip' || cfg.mode === 'elpx') mediaTitleCaption(cont, field, () => renderCanvas());
+    const isPkg = cfg.mode === 'zip' || cfg.mode === 'elpx' || cfg.mode === 'imscp';
+    mediaFrameConfig(cont, field, isPkg ? (() => renderCanvas()) : rebuildCanvasMedia);
+    if (isPkg) mediaTitleCaption(cont, field, () => renderCanvas());
     else mediaTitleCaption(cont, field);
   },
 
@@ -3334,6 +3388,21 @@ async function exportWeb() {
   }
 }
 
+async function exportImscp() {
+  try {
+    const exportManifest = await prepareExportManifest(exportImscp);
+    if (!exportManifest) return;
+    toast(t('toast.generatingImscp'));
+    const blob = await exportImscpPackage({ manifest: exportManifest, files: referencedFiles() });
+    downloadBlob(blob, slugify(state.manifest.title || 'ficha') + '-imscp.zip');
+    state.dirty = false;
+    toast(t('toast.imscpExported'), 'ok');
+  } catch (e) {
+    console.error(e);
+    toast(t('toast.exportError', { msg: e.message }), 'error');
+  }
+}
+
 // Exporta la ficha como paquete SCORM 1.2 (ZIP para Moodle u otro LMS). El
 // saneado del manifiesto (sin cifrado de entrega ni contraseña, que en SCORM
 // gestiona el LMS) lo hace exportScormPackage.
@@ -3618,6 +3687,7 @@ fileMenuItem('#miOpenZip', () => $('#inputZip').click());
 // permite elegir «Guardar como PDF» como destino.
 fileMenuItem('#miPdf', printWorksheet);
 fileMenuItem('#miSaveScorm', exportScorm);
+fileMenuItem('#miSaveImscp', exportImscp);
 fileMenuItem('#miSaveWeb', exportWeb);
 fileMenuItem('#miSaveZip', exportZip);
 
