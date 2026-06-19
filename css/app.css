@@ -1465,6 +1465,7 @@ body.resizing-col { cursor: col-resize; }
 .ed-field.selected .rot-handle { display: flex; }
 .rot-row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
 .rot-row input[type=number] { width: 78px; }
+.page-size-info { font-variant-numeric: tabular-nums; }
 
 .ed-zone {
   position: absolute;

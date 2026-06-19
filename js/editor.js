@@ -270,6 +270,33 @@ function detectSizePreset(w, h) {
   return p ? p.key : 'free';
 }
 
+// El tamaño de página se guarda en píxeles, pero se muestra/edita en la unidad
+// que elija el usuario. Opción A: conversión con un DPI de referencia fijo, el
+// de las páginas en blanco (A4 = 1600 px de ancho = 210 mm, ~193 dpi). Las
+// medidas en unidades físicas son, por tanto, aproximadas.
+const PX_PER_MM = 1600 / 210;
+const SIZE_UNITS = {
+  px: { perPx: 1,                     step: '10',   dec: 0 },
+  mm: { perPx: 1 / PX_PER_MM,         step: '1',    dec: 0 },
+  cm: { perPx: 1 / (PX_PER_MM * 10),  step: '0.1',  dec: 1 },
+  in: { perPx: 1 / (PX_PER_MM * 25.4), step: '0.05', dec: 2 },
+};
+const SIZE_UNIT_KEY = 'ows.pageSizeUnit';
+
+function sizeUnit() {
+  const u = localStorage.getItem(SIZE_UNIT_KEY);
+  return SIZE_UNITS[u] ? u : 'cm';
+}
+function pxToUnit(px, unit) {
+  const u = SIZE_UNITS[unit] || SIZE_UNITS.px;
+  const v = px * u.perPx;
+  return unit === 'px' ? Math.round(v) : Number(v.toFixed(u.dec));
+}
+function unitToPx(val, unit) {
+  const u = SIZE_UNITS[unit] || SIZE_UNITS.px;
+  return Math.round((parseFloat(val) || 0) / u.perPx);
+}
+
 function addBlankPage(insertAt) {
   const W = 1600, H = 2263; // A4 a ~192 dpi (igual que páginas PDF)
   const cv = document.createElement('canvas');
@@ -1843,7 +1870,23 @@ function renderPagePanel(pi) {
     cont.appendChild(el('div', { class: 'rot-row' }, imgOp, imgOpNum, el('span', {}, '%')));
   }
 
-  // Tamaño de la página: solo páginas en blanco (se rehornean al cambiarlo).
+  // ----- Tamaño de la página -----
+  // Se guarda en píxeles, pero se muestra/edita en la unidad elegida. Editable
+  // solo en páginas en blanco; en las importadas es solo informativo (no se
+  // puede redimensionar sin deformar el escaneo).
+  const unit = sizeUnit();
+  cont.appendChild(el('label', { class: 'f-label' }, t('editor.pageSize')));
+  const unitSel = el('select', {});
+  ['cm', 'mm', 'in', 'px'].forEach(u => {
+    const opt = el('option', { value: u }, u);
+    if (u === unit) opt.selected = true;
+    unitSel.appendChild(opt);
+  });
+  unitSel.addEventListener('change', () => {
+    localStorage.setItem(SIZE_UNIT_KEY, unitSel.value);
+    renderPanel();
+  });
+
   if (isBlankPage(page)) {
     const sizes = [
       { key: 'a4p',  w: 1600, h: 2263, label: t('editor.pageSizeA4p') },
@@ -1853,7 +1896,6 @@ function renderPagePanel(pi) {
       { key: 'free', w: null,  h: null, label: t('editor.pageSizeFree') },
     ];
     const curKey = detectSizePreset(page.w, page.h);
-    cont.appendChild(el('label', { class: 'f-label' }, t('editor.pageSize')));
     const sizeSel = el('select', {});
     sizes.forEach(s => {
       const opt = el('option', { value: s.key }, s.label);
@@ -1862,33 +1904,33 @@ function renderPagePanel(pi) {
     });
     cont.appendChild(sizeSel);
 
-    const freeRow = el('div', {});
-    freeRow.style.display = curKey === 'free' ? '' : 'none';
-    const wIn = el('input', { type: 'number', min: '400', max: '5000', step: '10', value: String(page.w) });
-    const hIn = el('input', { type: 'number', min: '400', max: '5000', step: '10', value: String(page.h) });
-    freeRow.appendChild(el('label', { class: 'f-label' }, t('editor.pageSizeW')));
-    freeRow.appendChild(wIn);
-    freeRow.appendChild(el('label', { class: 'f-label' }, t('editor.pageSizeH')));
-    freeRow.appendChild(hIn);
-    cont.appendChild(freeRow);
-
+    const step = SIZE_UNITS[unit].step;
+    const wIn = el('input', { type: 'number', min: '0', step, value: String(pxToUnit(page.w, unit)) });
+    const hIn = el('input', { type: 'number', min: '0', step, value: String(pxToUnit(page.h, unit)) });
     const applyFreeSize = () => {
-      const w = parseInt(wIn.value) || page.w;
-      const h = parseInt(hIn.value) || page.h;
+      const w = Math.max(400, Math.min(5000, unitToPx(wIn.value, unit) || page.w));
+      const h = Math.max(400, Math.min(5000, unitToPx(hIn.value, unit) || page.h));
       if (w !== page.w || h !== page.h) resizePage(pi, w, h);
     };
     wIn.addEventListener('change', applyFreeSize);
     hIn.addEventListener('change', applyFreeSize);
 
+    cont.appendChild(el('div', { class: 'rot-row' },
+      el('label', { class: 'f-label' }, t('editor.pageSizeW')), wIn,
+      el('label', { class: 'f-label' }, t('editor.pageSizeH')), hIn,
+      el('label', { class: 'f-label' }, t('editor.pageSizeUnit')), unitSel));
+
     sizeSel.addEventListener('change', () => {
       const chosen = sizes.find(s => s.key === sizeSel.value);
-      if (chosen.key === 'free') {
-        freeRow.style.display = '';
-      } else {
-        freeRow.style.display = 'none';
-        if (chosen.w !== page.w || chosen.h !== page.h) resizePage(pi, chosen.w, chosen.h);
+      if (chosen.key !== 'free' && (chosen.w !== page.w || chosen.h !== page.h)) {
+        resizePage(pi, chosen.w, chosen.h);
       }
     });
+  } else {
+    const dims = `${pxToUnit(page.w, unit)} × ${pxToUnit(page.h, unit)} ${unit}`;
+    cont.appendChild(el('div', { class: 'rot-row' },
+      el('span', { class: 'page-size-info' }, dims),
+      el('label', { class: 'f-label' }, t('editor.pageSizeUnit')), unitSel));
   }
   const dupBtn = iconBtn({ class: 'btn small', type: 'button' }, ICONS.copyPlus, t('editor.duplicatePage'));
   dupBtn.addEventListener('click', () => duplicatePage(pi));

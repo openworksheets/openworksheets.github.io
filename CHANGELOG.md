@@ -9,6 +9,20 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.16.3] — 2026-06-19
+
+### Añadido
+- **Tamaño de página en distintas unidades**: en las propiedades de página se
+  puede elegir la unidad (cm, mm, pulgadas o px) para ver y editar el ancho y el
+  alto. La preferencia se recuerda. En las páginas importadas el tamaño se
+  muestra como información (no se redimensionan para no deformar el escaneo).
+
+### Notas
+- La conversión a unidades físicas es aproximada: internamente el tamaño se
+  guarda en píxeles a una resolución de referencia (A4 = 1600 px ≈ 193 dpi).
+
+---
+
 ## [1.16.2] — 2026-06-19
 
 ### Añadido
