@@ -14,7 +14,7 @@ Campos en los que el alumno aporta su propia respuesta abierta (la escribe o la 
 |------|-------------|
 | **Respuesta corta** | El alumno escribe texto libre. Admite varias respuestas correctas alternativas y opciones de normalización (tildes, mayúsculas, espacios). |
 | **Respuesta numérica** | El alumno introduce un número. Acepta coma o punto como separador decimal y permite definir una tolerancia de error. |
-| **Tabla editable** | El alumno rellena una tabla. Cada celda puede tener varias respuestas válidas alternativas y algunas celdas pueden marcarse como **ejemplo visible**: se muestran ya resueltas al alumnado y no cuentan para puntuar. |
+| **Tabla editable** | El alumno rellena una tabla. Cada celda puede ser de **texto** o **número** (con tolerancia ±), tener varias respuestas válidas alternativas y marcarse como **ejemplo visible** (se muestra ya resuelta y no puntúa). Una celda puede **convertirse en desplegable**: sus respuestas se ofrecen como opciones y se marca cuál es la correcta. Las respuestas pueden **pegarse desde una hoja de cálculo** (Calc, Sheets, Excel o CSV) y la corrección puede hacerse celda a celda o por **filas/columnas completas** (útil para clasificar). |
 | **Rellenar huecos** | El alumno rellena palabras o frases que faltan. Dos modos: *escribir un texto con huecos* (marcados con corchetes en el enunciado) o *marcar huecos sobre el documento* (dibujando un cuadro sobre cada hueco que ya existe en el PDF o imagen). Admite varias respuestas válidas por hueco y puntuación proporcional. |
 | **Grabación de voz** | El alumno graba su voz con el micrófono. No se autocorrige: se valora *manualmente* (el docente pone la nota al revisar la entrega) o por *participación* (grabar algo otorga los puntos completos). El audio viaja dentro de la entrega; por su tamaño, su presencia deshabilita la entrega por enlace (queda solo la descarga de archivo). Duración máxima configurable. |
 
@@ -66,7 +66,7 @@ Elementos decorativos o informativos que no se corrigen ni cuentan en la puntuac
 
 | Tipo | Descripción |
 |------|-------------|
-| **Texto** | Bloque de texto fijo (títulos, instrucciones, notas) con edición **Markdown**: negrita, cursiva, títulos, listas y enlaces, con conmutador entre edición y vista. |
+| **Texto** | Bloque de texto fijo (títulos, instrucciones, notas) con edición **Markdown**: negrita, cursiva, títulos, listas y enlaces, con conmutador entre edición y vista. Admite **fórmulas LaTeX** (ver abajo). |
 | **Imagen** | Imagen decorativa o explicativa superpuesta al documento. |
 | **Vídeo** | Vídeo de YouTube/Vimeo (incrustado), enlace directo o archivo subido, con título y pie opcionales. |
 | **Audio** | Audio desde archivo subido o enlace, con título y pie opcionales. |

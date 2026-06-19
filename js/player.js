@@ -14,6 +14,7 @@ function iconBtn(attrs, svgStr, label) {
 }
 import { isDecorField } from './fieldtypes.js';
 import { renderField } from './render.js';
+import { typesetMath } from './mathrender.js';
 import { fontStack } from './fonts.js';
 import { gradeField, expectedText, answerText } from './grading.js';
 import { buildEntregaData, entregaFilename, entregaResumen } from './entrega.js';
@@ -338,6 +339,10 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
       btnFin);
     rootEl.appendChild(doc);
     rootEl.appendChild(barra);
+
+    // Renderizar fórmulas LaTeX (\(…\), \[…\]) en todo el documento del alumno:
+    // título, instrucciones, textos, opciones, encabezados y celdas de tabla, etc.
+    typesetMath(doc);
 
     // Restaurar respuestas guardadas
     if (!preview && state?.answers) {

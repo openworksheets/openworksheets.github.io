@@ -16,7 +16,28 @@ function inline(s) {
     .replace(/`([^`]+)`/g, '<code>$1</code>');
 }
 
+// Aísla las fórmulas LaTeX (\( … \) y \[ … \]) antes de aplicar Markdown, para
+// que el formateo en línea (negrita, cursiva, código) no estropee el contenido
+// matemático (p. ej. un _ o un * dentro de la fórmula). Se reinsertan, ya
+// escapadas, al final, para que MathJax encuentre los delimitadores intactos.
+// El centinela usa caracteres Unicode de uso privado (\uE000…\uE001), que no
+// aparecen en el texto del usuario ni los tocan las reglas de Markdown.
+function protectMath(src) {
+  const math = [];
+  const text = String(src || '').replace(/\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\)/g, m => {
+    math.push(m);
+    return '\uE000' + (math.length - 1) + '\uE001';
+  });
+  return { text, math };
+}
+
 export function mdToHtml(src) {
+  const { text, math } = protectMath(src);
+  const html = mdToHtmlInner(text);
+  return html.replace(/\uE000(\d+)\uE001/g, (_, i) => escapeHtml(math[Number(i)] ?? ''));
+}
+
+function mdToHtmlInner(src) {
   const lines = String(src || '').replace(/\r\n?/g, '\n').split('\n');
   const out = [];
   let listType = null;

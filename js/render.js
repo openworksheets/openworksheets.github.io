@@ -10,8 +10,8 @@
 //   - shuffle: si la ficha baraja las opciones de single/multi/select.
 //     (match, order y dragdrop se barajan siempre: su orden delataría la solución).
 
-import { el, shuffled, shuffledIndices, normalizeText } from './util.js';
-import { parseGaps, normalizeTableConfig } from './fieldtypes.js';
+import { el, shuffled, shuffledIndices, normalizeText, parseDecimal } from './util.js';
+import { parseGaps, normalizeTableConfig, tableCellMatches, tableCellOptions } from './fieldtypes.js';
 import { fontStack } from './fonts.js';
 import { mdToHtml } from './markdown.js';
 import { Scorm12Runtime } from './scorm.js';
@@ -113,6 +113,139 @@ function emptyRenderer() {
   };
 }
 
+function buildRichSelect({ options, ariaLabel, className = '', placeholder = '' }) {
+  const root = el('div', {
+    class: `${className} wpf-richselect`.trim(),
+    role: 'combobox',
+    'aria-haspopup': 'listbox',
+    'aria-expanded': 'false'
+  });
+  const btn = el('button', {
+    type: 'button',
+    class: 'wpf-richselect-btn',
+    'aria-label': ariaLabel
+  });
+  const valueBox = el('span', { class: 'wpf-richselect-value is-placeholder' }, placeholder || '\u00A0');
+  const arrow = el('span', { class: 'wpf-richselect-arrow', 'aria-hidden': 'true' });
+  const menu = el('div', { class: 'wpf-richselect-menu', role: 'listbox' });
+  let value = '';
+  let disabled = false;
+  let open = false;
+  const optionBtns = [];
+
+  function closeMenu() {
+    if (!open) return;
+    open = false;
+    root.classList.remove('is-open');
+    root.setAttribute('aria-expanded', 'false');
+  }
+
+  function openMenu() {
+    if (disabled || open) return;
+    open = true;
+    root.classList.add('is-open');
+    root.setAttribute('aria-expanded', 'true');
+  }
+
+  function renderValue(labelNode) {
+    valueBox.replaceChildren();
+    if (!labelNode) {
+      valueBox.classList.add('is-placeholder');
+      valueBox.textContent = placeholder || '\u00A0';
+      return;
+    }
+    valueBox.classList.remove('is-placeholder');
+    valueBox.appendChild(labelNode.cloneNode(true));
+  }
+
+  function setValue(next, emit = false) {
+    value = next ?? '';
+    let selectedLabel = null;
+    optionBtns.forEach(opt => {
+      const on = opt.dataset.value === value;
+      opt.classList.toggle('is-selected', on);
+      opt.setAttribute('aria-selected', on ? 'true' : 'false');
+      if (on) selectedLabel = opt.querySelector('.wpf-richselect-option-label');
+    });
+    renderValue(selectedLabel);
+    if (emit) root.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  options.forEach(opt => {
+    const label = el('span', { class: 'wpf-richselect-option-label' }, opt.label);
+    const item = el('button', {
+      type: 'button',
+      class: 'wpf-richselect-option',
+      role: 'option',
+      dataset: { value: opt.value },
+      'aria-selected': 'false'
+    }, label);
+    item.addEventListener('click', () => {
+      if (disabled) return;
+      setValue(opt.value, true);
+      closeMenu();
+      btn.focus();
+    });
+    item.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeMenu();
+        btn.focus();
+      }
+    });
+    optionBtns.push(item);
+    menu.appendChild(item);
+  });
+
+  btn.append(valueBox, arrow);
+  btn.addEventListener('click', () => {
+    if (disabled) return;
+    if (open) closeMenu();
+    else openMenu();
+  });
+  btn.addEventListener('keydown', e => {
+    if (disabled) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      openMenu();
+      const current = optionBtns.findIndex(opt => opt.dataset.value === value);
+      const target = current >= 0 ? current : 0;
+      optionBtns[target]?.focus();
+    } else if (e.key === 'Escape') {
+      closeMenu();
+    }
+  });
+
+  document.addEventListener('pointerdown', e => {
+    if (!root.contains(e.target)) closeMenu();
+  });
+  root.addEventListener('focusout', () => {
+    requestAnimationFrame(() => {
+      if (!root.contains(document.activeElement)) closeMenu();
+    });
+  });
+
+  Object.defineProperty(root, 'value', {
+    get: () => value,
+    set: next => { setValue(String(next ?? '')); }
+  });
+  Object.defineProperty(root, 'disabled', {
+    get: () => disabled,
+    set: next => {
+      disabled = Boolean(next);
+      root.classList.toggle('disabled', disabled);
+      btn.disabled = disabled;
+      btn.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+      optionBtns.forEach(opt => { opt.disabled = disabled; });
+      if (disabled) closeMenu();
+    }
+  });
+
+  root.append(btn, menu);
+  setValue('');
+  return root;
+}
+
 function buildTable(field, ctx) {
   const cfg = normalizeTableConfig(field.config);
   const table = el('table', { class: 'wpf-table-grid' });
@@ -135,13 +268,28 @@ function buildTable(field, ctx) {
         tr.appendChild(el('td', { class: 'is-example' }, el('div', { class: 'wpf-table-example' }, cell)));
         return;
       }
-      const input = el('input', {
-        class: 'wpf-input wpf-table-input',
-        type: 'text',
-        autocomplete: 'off',
-        'aria-label': t('render.tableCellAria', { r: r + 1, c: c + 1 })
-      });
-      input.addEventListener('input', () => notify(ctx));
+      const type = cfg.cellTypes?.[r]?.[c] || 'text';
+      const aria = t('render.tableCellAria', { r: r + 1, c: c + 1 });
+      let input;
+      if (cfg.cellSelect?.[r]?.[c]) {
+        const baseOpts = tableCellOptions(cfg, r, c);
+        const opts = ctx.shuffle ? shuffled(baseOpts, ctx.rng) : baseOpts;
+        input = buildRichSelect({
+          options: opts.map(o => ({ value: o, label: o })),
+          ariaLabel: aria,
+          className: 'wpf-input wpf-table-input wpf-table-select'
+        });
+        input.addEventListener('change', () => notify(ctx));
+      } else {
+        input = el('input', {
+          class: 'wpf-input wpf-table-input',
+          type: 'text',
+          inputmode: type === 'number' ? 'decimal' : undefined,
+          autocomplete: 'off',
+          'aria-label': aria
+        });
+        input.addEventListener('input', () => notify(ctx));
+      }
       const td = el('td', {}, input);
       tr.appendChild(td);
       inputs.push({ r, c, input });
@@ -983,10 +1131,11 @@ const renderers = {
   select(field, root, ctx) {
     const options = field.config.options || [];
     const order = ctx.shuffle ? shuffled(options.map((_, i) => i), ctx.rng) : options.map((_, i) => i);
-    const sel = el('select', { class: 'wpf-select', 'aria-label': t('render.selectAria') },
-      el('option', { value: '' }, '—'));
-    order.forEach(origIdx => {
-      sel.appendChild(el('option', { value: String(origIdx) }, options[origIdx]));
+    const sel = buildRichSelect({
+      options: order.map(origIdx => ({ value: String(origIdx), label: options[origIdx] })),
+      ariaLabel: t('render.selectAria'),
+      className: 'wpf-richselect-standalone',
+      placeholder: '—'
     });
     sel.addEventListener('change', () => notify(ctx));
     root.appendChild(sel);
@@ -1014,14 +1163,13 @@ const renderers = {
       isAnswered: () => inputs.some(({ input }) => input.value.trim() !== ''),
       setDisabled: b => inputs.forEach(({ input }) => { input.disabled = b; }),
       markDetail() {
-        const norm = s => normalizeText(s, cfg);
+        const helpers = { normalizeText, parseDecimal };
         inputs.forEach(({ r, c, input }) => {
-          const expected = (cfg.cellAnswers?.[r]?.[c] || []).filter(a => String(a ?? '').trim());
           input.classList.remove('tb-ok', 'tb-ko');
           if (cfg.examples?.[r]?.[c]) return;
-          if (!expected.length) return;
-          const val = input.value.trim();
-          input.classList.add(val && expected.some(exp => norm(val) === norm(exp)) ? 'tb-ok' : 'tb-ko');
+          const res = tableCellMatches(cfg, r, c, input.value, helpers);
+          if (res === null) return; // celda sin respuesta esperada
+          input.classList.add(res === true ? 'tb-ok' : 'tb-ko');
         });
       }
     };

@@ -25,6 +25,7 @@ import { FONT_OPTIONS, DEFAULT_FONT, fontStack } from './fonts.js';
 import { buildShapeSvg, CHECKBOX_SVG, buildMediaContent, buildScormView } from './render.js';
 import { scormSupported, registerScormSw, provisionScormPackage, releaseScormPackage, scormRunBase } from './scormhost.js';
 import { mdToHtml } from './markdown.js';
+import { typesetMath } from './mathrender.js';
 import { expectedText } from './grading.js';
 import { pdfToPages, imageToPage, isPdf, isImage } from './pdfimport.js';
 import { exportFichaZip, importFichaZip, newManifest, usedFiles } from './zipio.js';
@@ -775,6 +776,8 @@ function renderCanvas({ preserveScroll = false } = {}) {
   renderThumbs();
   requestAnimationFrame(updatePannable);
   restoreScroll();
+  // Renderizar las fórmulas LaTeX de la previa en el lienzo del editor.
+  typesetMath(canvas);
 }
 
 // ---------- Tira de miniaturas de páginas ----------
@@ -2592,6 +2595,414 @@ function refreshTablePrev(field) {
   if (old) old.replaceWith(buildEditorTablePreview(field));
 }
 
+// Convierte texto copiado de una hoja de cálculo en una matriz de celdas.
+// Delimitador: tabulador (Calc/Sheets/Excel) y, si no hay, «;» o «,» (CSV).
+function parseSpreadsheetGrid(text) {
+  const lines = String(text || '').replace(/\r\n?/g, '\n').split('\n');
+  while (lines.length && lines[lines.length - 1].trim() === '') lines.pop();
+  if (!lines.length) return [];
+  const sample = lines.join('\n');
+  const delim = sample.includes('\t') ? '\t' : (sample.includes(';') ? ';' : ',');
+  return lines.map(line => line.split(delim).map(s => s.trim()));
+}
+
+// Borra una fila de la tabla (todas sus matrices por celda y el encabezado).
+function deleteTableRow(field, r) {
+  const cfg = field.config;
+  if (cfg.rows <= 1) return;
+  ['cells', 'cellAnswers', 'examples', 'cellTypes', 'cellTolerance', 'cellOptions'].forEach(k => {
+    if (Array.isArray(cfg[k])) cfg[k].splice(r, 1);
+  });
+  if (Array.isArray(cfg.rowHeaders)) cfg.rowHeaders.splice(r, 1);
+  cfg.rows -= 1;
+}
+
+// Borra una columna de la tabla (esa posición en cada fila y su encabezado).
+function deleteTableCol(field, c) {
+  const cfg = field.config;
+  if (cfg.cols <= 1) return;
+  ['cells', 'cellAnswers', 'examples', 'cellTypes', 'cellTolerance', 'cellOptions'].forEach(k => {
+    if (Array.isArray(cfg[k])) cfg[k].forEach(row => Array.isArray(row) && row.splice(c, 1));
+  });
+  if (Array.isArray(cfg.colHeaders)) cfg.colHeaders.splice(c, 1);
+  cfg.cols -= 1;
+}
+
+// Vacía el contenido de la tabla (respuestas, encabezados, ejemplos, tipos y
+// opciones) conservando el tamaño y los ajustes de corrección.
+function clearTable(field) {
+  const cfg = field.config;
+  cfg.rowHeaders = cfg.rowHeaders.map(() => '');
+  cfg.colHeaders = cfg.colHeaders.map(() => '');
+  cfg.cellAnswers = cfg.cellAnswers.map(row => row.map(() => ['']));
+  cfg.cells = cfg.cells.map(row => row.map(() => ''));
+  cfg.examples = cfg.examples.map(row => row.map(() => false));
+  cfg.cellTypes = cfg.cellTypes.map(row => row.map(() => 'text'));
+  cfg.cellTolerance = cfg.cellTolerance.map(row => row.map(() => 0));
+  cfg.cellOptions = cfg.cellOptions.map(row => row.map(() => []));
+}
+
+// Importa en la tabla el texto de una hoja de cálculo (reemplazo total),
+// ajustando filas/columnas dentro de los límites. Si los encabezados de columna
+// o de fila están activados, la primera fila y/o la primera columna pegadas se
+// usan como encabezados. Devuelve true si había datos que importar.
+function importSpreadsheetIntoTable(field, text, repaint) {
+  const grid = parseSpreadsheetGrid(text);
+  if (!grid.length) return false;
+  const cur = field.config;
+  const useColH = Boolean(cur.showColHeaders);
+  const useRowH = Boolean(cur.showRowHeaders);
+
+  const data = grid.map(r => r.slice());
+  let colHeaders = null;
+  if (useColH) colHeaders = data.shift() || [];
+  let rowHeaders = null;
+  if (useRowH) {
+    rowHeaders = data.map(r => r.shift() ?? '');
+    if (colHeaders) colHeaders.shift(); // descartar la esquina
+  }
+
+  const rows = Math.max(1, Math.min(12, data.length || 1));
+  const cols = Math.max(1, Math.min(8, Math.max(
+    data.length ? Math.max(...data.map(r => r.length)) : 0,
+    colHeaders ? colHeaders.length : 0,
+    1
+  )));
+  const cellAnswers = Array.from({ length: rows }, (_, r) =>
+    Array.from({ length: cols }, (_, c) => [String(data[r]?.[c] ?? '')]));
+
+  // Reemplazo total: se construye una config nueva conservando solo los
+  // ajustes de estructura y corrección, no el contenido anterior.
+  const fresh = normalizeTableConfig({
+    rows, cols,
+    showColHeaders: useColH,
+    showRowHeaders: useRowH,
+    colHeaders: colHeaders || [],
+    rowHeaders: rowHeaders || [],
+    cellAnswers,
+    correctMode: cur.correctMode,
+    ignoreCase: cur.ignoreCase,
+    ignoreAccents: cur.ignoreAccents,
+    collapseSpaces: cur.collapseSpaces
+  });
+  Object.assign(field.config, fresh);
+  refreshTablePrev(field);
+  markDirty();
+  repaint();
+  return true;
+}
+
+// Herramienta «pegar desde hoja de cálculo» en un solo paso: un botón lee el
+// portapapeles (Calc/Sheets/Excel o CSV) e importa directamente. Si el navegador
+// no permite leer el portapapeles, se muestra un cuadro de texto de reserva para
+// pegar a mano y un botón de importar.
+function appendTablePasteTool(cont, field, repaint = renderPanel) {
+  const tools = el('div', { class: 'cfg-table-paste' });
+  const btn = el('button', { class: 'btn small', type: 'button' }, '📋 ' + t('cfg.tablePaste'));
+
+  // Reserva: cuadro de texto + botón, oculto salvo que el portapapeles falle.
+  const fallback = el('div', { class: 'cfg-table-paste-fallback', hidden: true });
+  fallback.appendChild(el('p', { class: 'cfg-hint' }, t('cfg.tablePasteHint')));
+  const ta = el('textarea', { rows: '4', placeholder: t('cfg.tablePastePlaceholder') });
+  fallback.appendChild(ta);
+  const applyBtn = el('button', { class: 'btn small', type: 'button' }, t('cfg.tablePasteApply'));
+  applyBtn.addEventListener('click', () => {
+    if (importSpreadsheetIntoTable(field, ta.value, repaint)) {
+      ta.value = '';
+      toast(t('toast.tablePasteOk'));
+    } else {
+      toast(t('toast.tablePasteEmpty'), 'error');
+    }
+  });
+  fallback.appendChild(applyBtn);
+
+  btn.addEventListener('click', async () => {
+    let text = '';
+    try {
+      text = await navigator.clipboard.readText();
+    } catch {
+      // El navegador no permite leer el portapapeles: mostrar la reserva.
+      fallback.hidden = false;
+      ta.focus();
+      toast(t('toast.tablePasteManual'), 'error');
+      return;
+    }
+    if (importSpreadsheetIntoTable(field, text, repaint)) {
+      toast(t('toast.tablePasteOk'));
+    } else {
+      fallback.hidden = false;
+      ta.focus();
+      toast(t('toast.tablePasteEmpty'), 'error');
+    }
+  });
+
+  tools.appendChild(btn);
+  tools.appendChild(fallback);
+  cont.appendChild(tools);
+}
+
+// Construye el editor completo de una «Tabla editable» (tamaño, encabezados,
+// rejilla de respuestas por celda, borrar/vaciar, pegar y corrección) dentro de
+// `cont`. `repaint` se llama tras los cambios estructurales para repintar el
+// contenedor donde vive el editor: en el panel lateral es renderPanel; en el
+// diálogo a pantalla completa, una función que rehace el cuerpo del diálogo.
+function buildTableConfig(cont, field, repaint = renderPanel) {
+  const cfg = normalizeTableConfig(field.config);
+  Object.assign(field.config, cfg);
+  const syncTableCell = (r, c) => {
+    field.config.cells[r][c] = field.config.cellAnswers[r][c]?.[0] ?? '';
+    refreshTablePrev(field);
+  };
+  const applyCfg = patch => {
+    Object.assign(field.config, normalizeTableConfig({ ...field.config, ...patch }));
+    refreshTablePrev(field);
+    markDirty();
+  };
+  const appendHeaderList = (label, items, onInput) => {
+    cont.appendChild(el('label', { class: 'f-label' }, label));
+    const list = el('div', { class: 'opt-list' });
+    items.forEach((item, i) => {
+      const row = el('div', { class: 'opt-row' });
+      row.appendChild(textCell(item, v => onInput(i, v), t('cfg.tableHeaderPlaceholder', { n: i + 1 })));
+      list.appendChild(row);
+    });
+    cont.appendChild(list);
+  };
+
+  const dims = el('div', { class: 'ed-size-grid' });
+  const rowsInp = el('input', { type: 'number', min: '1', max: '12', step: '1', value: String(cfg.rows) });
+  const colsInp = el('input', { type: 'number', min: '1', max: '8', step: '1', value: String(cfg.cols) });
+  rowsInp.addEventListener('change', () => { applyCfg({ rows: rowsInp.value }); repaint(); });
+  colsInp.addEventListener('change', () => { applyCfg({ cols: colsInp.value }); repaint(); });
+  dims.appendChild(el('label', { class: 'f-label' }, t('cfg.tableRows')));
+  dims.appendChild(rowsInp);
+  dims.appendChild(el('label', { class: 'f-label' }, t('cfg.tableCols')));
+  dims.appendChild(colsInp);
+  cont.appendChild(dims);
+
+  checkRow(cont, t('cfg.tableShowColHeaders'), cfg.showColHeaders, v => {
+    applyCfg({ showColHeaders: v });
+    repaint();
+  });
+  checkRow(cont, t('cfg.tableShowRowHeaders'), cfg.showRowHeaders, v => {
+    applyCfg({ showRowHeaders: v });
+    repaint();
+  });
+
+  if (field.config.showColHeaders) appendHeaderList(t('cfg.tableColHeaders'), field.config.colHeaders, (i, v) => {
+    field.config.colHeaders[i] = v;
+    refreshTablePrev(field);
+  });
+
+  if (field.config.showRowHeaders) appendHeaderList(t('cfg.tableRowHeaders'), field.config.rowHeaders, (i, v) => {
+    field.config.rowHeaders[i] = v;
+    refreshTablePrev(field);
+  });
+
+  // La estructura de la tabla (rejilla, pegar, vaciar) está siempre visible,
+  // incluso si el campo no cuenta para la puntuación: solo las opciones de
+  // puntuación/corrección de más abajo se ocultan (clase cfg-scoring-only).
+  const wrap = el('div', {});
+  wrap.appendChild(el('label', { class: 'f-label' }, t('cfg.answers')));
+  // Pegar desde una hoja de cálculo (un solo paso), sobre la tabla. Reemplaza
+  // por completo el contenido; si hay encabezados activados, también se rellenan.
+  appendTablePasteTool(wrap, field, repaint);
+  const grid = el('div', { class: 'cfg-table-grid-wrap' });
+  const tbl = el('table', { class: 'cfg-table-grid' });
+  // Re-normaliza la config tras borrar filas/columnas y repinta panel/diálogo y lienzo.
+  const reflowTable = () => {
+    Object.assign(field.config, normalizeTableConfig(field.config));
+    refreshTablePrev(field);
+    markDirty();
+    repaint();
+  };
+  if (field.config.showColHeaders) {
+    const thead = el('thead', {});
+    const tr = el('tr', {});
+    if (field.config.showRowHeaders) tr.appendChild(el('th', { class: 'corner' }, ''));
+    field.config.colHeaders.forEach((txt, i) => tr.appendChild(el('th', {}, txt || `C${i + 1}`)));
+    tr.appendChild(el('th', { class: 'cfg-table-delhead' }, '')); // columna de borrar fila
+    thead.appendChild(tr);
+    tbl.appendChild(thead);
+  }
+  // Reconstruye el editor de una celda (tipo + respuestas/tolerancia + ejemplo +
+  // desplegable). Se vuelve a llamar al cambiar el tipo o el modo desplegable,
+  // para mostrar los controles propios de cada uno.
+  const buildCellEditor = (td, r, c) => {
+    td.textContent = '';
+    const type = field.config.cellTypes[r][c] || 'text';
+    const isSelect = Boolean(field.config.cellSelect[r][c]);
+    const cellWrap = el('div', { class: 'cfg-table-cell' });
+
+    const typeSel = el('select', { class: 'cfg-table-celltype' },
+      el('option', { value: 'text' }, t('cfg.tableCellTypeText')),
+      el('option', { value: 'number' }, t('cfg.tableCellTypeNumber')));
+    typeSel.value = type;
+    typeSel.addEventListener('change', () => {
+      field.config.cellTypes[r][c] = typeSel.value;
+      markDirty();
+      buildCellEditor(td, r, c);
+      refreshTablePrev(field);
+    });
+    cellWrap.appendChild(typeSel);
+
+    // Lista de respuestas. En modo desplegable, cada respuesta es una opción y
+    // un radio marca cuál es la correcta; si no, todas son alternativas válidas.
+    cellWrap.appendChild(el('label', { class: 'f-label f-label-sm' },
+      isSelect ? t('cfg.tableSelectOptions') : t('cfg.answers')));
+    const radioName = `cellcorrect-${field.id}-${r}-${c}`;
+    optionListEditor(cellWrap, {
+      items: () => field.config.cellAnswers[r][c],
+      render: (rowWrap, item, i) => {
+        if (isSelect) {
+          const radio = el('input', { type: 'radio', name: radioName, title: t('cfg.tableCorrectOption') });
+          radio.checked = (field.config.cellCorrect[r][c] ?? 0) === i;
+          radio.addEventListener('change', () => { field.config.cellCorrect[r][c] = i; markDirty(); refreshTablePrev(field); });
+          rowWrap.appendChild(radio);
+        }
+        rowWrap.appendChild(textCell(item, v => {
+          field.config.cellAnswers[r][c][i] = v;
+          syncTableCell(r, c);
+        }, isSelect ? t('cfg.tableOptionPlaceholder', { n: i + 1 })
+          : (i === 0 ? t('cfg.tableCellPlaceholder', { r: r + 1, c: c + 1 }) : t('cfg.answerPlaceholder'))));
+      },
+      add: () => field.config.cellAnswers[r][c].push(''),
+      remove: i => {
+        field.config.cellAnswers[r][c].splice(i, 1);
+        if (!field.config.cellAnswers[r][c].length) field.config.cellAnswers[r][c].push('');
+        // Reajustar el índice de la opción correcta tras eliminar una fila.
+        const cur = field.config.cellCorrect[r][c] ?? 0;
+        if (cur >= field.config.cellAnswers[r][c].length) field.config.cellCorrect[r][c] = 0;
+        else if (i < cur) field.config.cellCorrect[r][c] = cur - 1;
+        syncTableCell(r, c);
+        buildCellEditor(td, r, c);
+      },
+      addLabel: isSelect ? t('cfg.tableAddOption') : t('cfg.addAnswer')
+    });
+
+    if (type === 'number' && !isSelect) {
+      cellWrap.appendChild(el('label', { class: 'f-label f-label-sm' }, t('cfg.tolerance')));
+      cellWrap.appendChild(textCell(
+        String(field.config.cellTolerance[r][c] ?? 0),
+        v => { field.config.cellTolerance[r][c] = v; },
+        '0'
+      ));
+    }
+
+    // Casilla: convertir esta celda en desplegable.
+    const selToggle = el('label', { class: 'cfg-table-example-toggle' });
+    const selInput = el('input', { type: 'checkbox' });
+    selInput.checked = isSelect;
+    selInput.addEventListener('change', () => {
+      field.config.cellSelect[r][c] = selInput.checked;
+      if (selInput.checked) field.config.cellCorrect[r][c] = field.config.cellCorrect[r][c] ?? 0;
+      buildCellEditor(td, r, c);
+      refreshTablePrev(field);
+      markDirty();
+    });
+    selToggle.appendChild(selInput);
+    selToggle.appendChild(el('span', {}, t('cfg.tableMakeSelect')));
+    cellWrap.appendChild(selToggle);
+
+    const exToggle = el('label', { class: 'cfg-table-example-toggle' });
+    const exInput = el('input', { type: 'checkbox' });
+    exInput.checked = Boolean(field.config.examples?.[r]?.[c]);
+    exInput.addEventListener('change', () => {
+      field.config.examples[r][c] = exInput.checked;
+      td.classList.toggle('is-example', exInput.checked);
+      refreshTablePrev(field);
+      markDirty();
+    });
+    exToggle.appendChild(exInput);
+    exToggle.appendChild(el('span', {}, t('cfg.tableExampleCell')));
+    cellWrap.appendChild(exToggle);
+    td.appendChild(cellWrap);
+  };
+
+  const delBtn = (title, disabled, onClick) => {
+    const b = el('button', { class: 'cfg-table-del', type: 'button', title }, '✕');
+    if (disabled) b.disabled = true;
+    else b.addEventListener('click', onClick);
+    return b;
+  };
+
+  const tbody = el('tbody', {});
+  field.config.cells.forEach((row, r) => {
+    const tr = el('tr', {});
+    if (field.config.showRowHeaders) tr.appendChild(el(field.config.showColHeaders ? 'th' : 'td', { class: 'rowhead' }, field.config.rowHeaders[r] || `F${r + 1}`));
+    row.forEach((cell, c) => {
+      const td = el('td', {});
+      if (field.config.examples?.[r]?.[c]) td.classList.add('is-example');
+      buildCellEditor(td, r, c);
+      tr.appendChild(td);
+    });
+    // Borrar esta fila (✕ al lado).
+    tr.appendChild(el('td', { class: 'cfg-table-delcell' },
+      delBtn(t('cfg.tableDeleteRow'), field.config.rows <= 1, () => { deleteTableRow(field, r); reflowTable(); })));
+    tbody.appendChild(tr);
+  });
+  // Fila de controles para borrar columnas (✕ debajo de cada columna).
+  const ctrlRow = el('tr', { class: 'cfg-table-colctrl' });
+  if (field.config.showRowHeaders) ctrlRow.appendChild(el('td', {}, ''));
+  field.config.colHeaders.forEach((_, c) => {
+    ctrlRow.appendChild(el('td', {},
+      delBtn(t('cfg.tableDeleteCol'), field.config.cols <= 1, () => { deleteTableCol(field, c); reflowTable(); })));
+  });
+  ctrlRow.appendChild(el('td', {}, ''));
+  tbody.appendChild(ctrlRow);
+  tbl.appendChild(tbody);
+  grid.appendChild(tbl);
+  wrap.appendChild(grid);
+
+  // Vaciar la tabla (respuestas, encabezados, ejemplos y opciones) para empezar
+  // de cero, conservando el tamaño y los ajustes de corrección.
+  const clearBtn = el('button', { class: 'btn small cfg-table-clear', type: 'button' }, t('cfg.tableClear'));
+  clearBtn.addEventListener('click', () => { clearTable(field); reflowTable(); });
+  wrap.appendChild(clearBtn);
+  cont.appendChild(wrap);
+
+  // Opciones de puntuación y corrección: solo tienen sentido si el campo cuenta
+  // para la nota, así que se ocultan al marcar «No contar para puntuación».
+  const scoring = el('div', { class: 'cfg-scoring-only' });
+  if (field.noScore) scoring.style.display = 'none';
+  selectRow(scoring, t('cfg.tableCorrectMode'), field.config.correctMode || 'cell', [
+    ['cell', t('cfg.tableCorrectModeCell')],
+    ['row', t('cfg.tableCorrectModeRow')],
+    ['col', t('cfg.tableCorrectModeCol')]
+  ], v => { field.config.correctMode = v; });
+
+  scoring.appendChild(el('label', { class: 'f-label' }, t('cfg.correction')));
+  textNormOptions(scoring, field.config);
+  cont.appendChild(scoring);
+}
+
+// Abre la «Tabla editable» en un diálogo a pantalla completa con el mismo editor
+// que el panel lateral, para trabajar con comodidad en tablas grandes. Al
+// cerrar, repinta el panel lateral y la vista previa del lienzo.
+function openTableEditorDialog(field) {
+  const dlg = el('dialog', { class: 'ed-table-dialog' });
+  const x = el('button', { class: 'dlg-x', type: 'button', 'aria-label': t('cfg.tableEditorClose') }, '✕');
+  x.addEventListener('click', () => dlg.close());
+  const body = el('div', { class: 'ed-table-dialog-body' });
+  const repaint = () => { body.textContent = ''; buildTableConfig(body, field, repaint); };
+  repaint();
+  const footer = el('div', { class: 'dlg-buttons' });
+  const done = el('button', { class: 'btn primary', type: 'button' }, t('cfg.tableEditorClose'));
+  done.addEventListener('click', () => dlg.close());
+  footer.appendChild(done);
+  dlg.appendChild(x);
+  dlg.appendChild(el('h3', { class: 'ed-table-dialog-title' }, t('cfg.tableEditorTitle')));
+  dlg.appendChild(body);
+  dlg.appendChild(footer);
+  document.body.appendChild(dlg);
+  dlg.addEventListener('close', () => {
+    dlg.remove();
+    refreshTablePrev(field);
+    renderPanel();
+  });
+  dlg.showModal();
+}
+
 // Controles de tamaño de texto + tipo de letra, comunes a los campos con texto,
 // a los medios (título/pie) y al texto decorativo. Aplican en vivo sobre el campo.
 function appendTextSizeFont(cont, field) {
@@ -3094,7 +3505,7 @@ const configForms = {
     const cfg = field.config;
     const prev = () => canvas.querySelector(`.ed-field[data-id="${field.id}"] .ed-label-prev`);
     cont.appendChild(el('label', { class: 'f-label' }, t('cfg.labelText')));
-    const syncPrev = () => { const p = prev(); if (p) p.innerHTML = mdToHtml(cfg.text || ''); };
+    const syncPrev = () => { const p = prev(); if (p) { p.innerHTML = mdToHtml(cfg.text || ''); typesetMath(p); } };
     const ta = el('textarea', { class: 'md-textarea', rows: '4' });
     ta.value = cfg.text || '';
     ta.addEventListener('input', () => { cfg.text = ta.value; syncPrev(); markDirty(); });
@@ -3119,7 +3530,7 @@ const configForms = {
     const toggle = el('button', { class: 'btn small ghost md-toggle', type: 'button' }, t('md.preview'));
     toggle.addEventListener('click', () => {
       showingPreview = !showingPreview;
-      if (showingPreview) preview.innerHTML = mdToHtml(cfg.text || '');
+      if (showingPreview) { preview.innerHTML = mdToHtml(cfg.text || ''); typesetMath(preview); }
       preview.hidden = !showingPreview;
       ta.hidden = showingPreview;
       bBtn.disabled = iBtn.disabled = showingPreview;
@@ -3517,116 +3928,12 @@ const configForms = {
   },
 
   table(cont, field) {
-    const cfg = normalizeTableConfig(field.config);
-    Object.assign(field.config, cfg);
-    const syncTableCell = (r, c) => {
-      field.config.cells[r][c] = field.config.cellAnswers[r][c]?.[0] ?? '';
-      refreshTablePrev(field);
-    };
-    const applyCfg = patch => {
-      Object.assign(field.config, normalizeTableConfig({ ...field.config, ...patch }));
-      refreshTablePrev(field);
-      markDirty();
-    };
-    const appendHeaderList = (label, items, onInput) => {
-      cont.appendChild(el('label', { class: 'f-label' }, label));
-      const list = el('div', { class: 'opt-list' });
-      items.forEach((item, i) => {
-        const row = el('div', { class: 'opt-row' });
-        row.appendChild(textCell(item, v => onInput(i, v), t('cfg.tableHeaderPlaceholder', { n: i + 1 })));
-        list.appendChild(row);
-      });
-      cont.appendChild(list);
-    };
-
-    const dims = el('div', { class: 'ed-size-grid' });
-    const rowsInp = el('input', { type: 'number', min: '1', max: '12', step: '1', value: String(cfg.rows) });
-    const colsInp = el('input', { type: 'number', min: '1', max: '8', step: '1', value: String(cfg.cols) });
-    rowsInp.addEventListener('change', () => { applyCfg({ rows: rowsInp.value }); renderPanel(); });
-    colsInp.addEventListener('change', () => { applyCfg({ cols: colsInp.value }); renderPanel(); });
-    dims.appendChild(el('label', { class: 'f-label' }, t('cfg.tableRows')));
-    dims.appendChild(rowsInp);
-    dims.appendChild(el('label', { class: 'f-label' }, t('cfg.tableCols')));
-    dims.appendChild(colsInp);
-    cont.appendChild(dims);
-
-    checkRow(cont, t('cfg.tableShowColHeaders'), cfg.showColHeaders, v => {
-      applyCfg({ showColHeaders: v });
-      renderPanel();
-    });
-    checkRow(cont, t('cfg.tableShowRowHeaders'), cfg.showRowHeaders, v => {
-      applyCfg({ showRowHeaders: v });
-      renderPanel();
-    });
-
-    if (field.config.showColHeaders) appendHeaderList(t('cfg.tableColHeaders'), field.config.colHeaders, (i, v) => {
-      field.config.colHeaders[i] = v;
-      refreshTablePrev(field);
-    });
-
-    if (field.config.showRowHeaders) appendHeaderList(t('cfg.tableRowHeaders'), field.config.rowHeaders, (i, v) => {
-      field.config.rowHeaders[i] = v;
-      refreshTablePrev(field);
-    });
-
-    const wrap = el('div', { class: 'cfg-scoring-only' });
-    if (field.noScore) wrap.style.display = 'none';
-    wrap.appendChild(el('label', { class: 'f-label' }, t('cfg.answers')));
-    const grid = el('div', { class: 'cfg-table-grid-wrap' });
-    const tbl = el('table', { class: 'cfg-table-grid' });
-    if (field.config.showColHeaders) {
-      const thead = el('thead', {});
-      const tr = el('tr', {});
-      if (field.config.showRowHeaders) tr.appendChild(el('th', { class: 'corner' }, ''));
-      field.config.colHeaders.forEach((txt, i) => tr.appendChild(el('th', {}, txt || `C${i + 1}`)));
-      thead.appendChild(tr);
-      tbl.appendChild(thead);
-    }
-    const tbody = el('tbody', {});
-    field.config.cells.forEach((row, r) => {
-      const tr = el('tr', {});
-      if (field.config.showRowHeaders) tr.appendChild(el(field.config.showColHeaders ? 'th' : 'td', { class: 'rowhead' }, field.config.rowHeaders[r] || `F${r + 1}`));
-      row.forEach((cell, c) => {
-        const td = el('td', {});
-        if (field.config.examples?.[r]?.[c]) td.classList.add('is-example');
-        const cellWrap = el('div', { class: 'cfg-table-cell' });
-        optionListEditor(cellWrap, {
-          items: () => field.config.cellAnswers[r][c],
-          render: (rowWrap, item, i) => rowWrap.appendChild(textCell(item, v => {
-            field.config.cellAnswers[r][c][i] = v;
-            syncTableCell(r, c);
-          }, i === 0 ? t('cfg.tableCellPlaceholder', { r: r + 1, c: c + 1 }) : t('cfg.answerPlaceholder'))),
-          add: () => field.config.cellAnswers[r][c].push(''),
-          remove: i => {
-            field.config.cellAnswers[r][c].splice(i, 1);
-            if (!field.config.cellAnswers[r][c].length) field.config.cellAnswers[r][c].push('');
-            syncTableCell(r, c);
-          },
-          addLabel: t('cfg.addAnswer')
-        });
-        const exToggle = el('label', { class: 'cfg-table-example-toggle' });
-        const exInput = el('input', { type: 'checkbox' });
-        exInput.checked = Boolean(field.config.examples?.[r]?.[c]);
-        exInput.addEventListener('change', () => {
-          field.config.examples[r][c] = exInput.checked;
-          td.classList.toggle('is-example', exInput.checked);
-          refreshTablePrev(field);
-          markDirty();
-        });
-        exToggle.appendChild(exInput);
-        exToggle.appendChild(el('span', {}, t('cfg.tableExampleCell')));
-        cellWrap.appendChild(exToggle);
-        td.appendChild(cellWrap);
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
-    });
-    tbl.appendChild(tbody);
-    grid.appendChild(tbl);
-    wrap.appendChild(grid);
-    wrap.appendChild(el('label', { class: 'f-label' }, t('cfg.correction')));
-    textNormOptions(wrap, field.config);
-    cont.appendChild(wrap);
+    // Botón para abrir el mismo editor a pantalla completa (cómodo en tablas
+    // grandes que no caben en el panel lateral).
+    const expand = el('button', { class: 'btn small cfg-table-expand', type: 'button' }, '⤢ ' + t('cfg.tableExpand'));
+    expand.addEventListener('click', () => openTableEditorDialog(field));
+    cont.appendChild(expand);
+    buildTableConfig(cont, field, renderPanel);
   },
 
   gaps(cont, field) {

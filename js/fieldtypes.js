@@ -18,6 +18,16 @@ function normalizeTableAnswerList(value) {
   return out.length ? out : [''];
 }
 
+// Tipos de celda admitidos en «Tabla editable»: 'text' acepta texto libre y
+// 'number' corrige por valor con tolerancia. Una celda de cualquier tipo puede
+// además marcarse como desplegable (cellSelect): entonces sus varias respuestas
+// se ofrecen como opciones y el alumnado elige una; la correcta es cellCorrect.
+export const TABLE_CELL_TYPES = ['text', 'number'];
+
+function normTableCellType(v) {
+  return TABLE_CELL_TYPES.includes(v) ? v : 'text';
+}
+
 export function normalizeTableConfig(cfg = {}) {
   const rows = normTableSize(cfg.rows, 1, 12, 3);
   const cols = normTableSize(cfg.cols, 1, 8, 3);
@@ -34,6 +44,25 @@ export function normalizeTableConfig(cfg = {}) {
   const examples = Array.from({ length: rows }, (_, r) =>
     Array.from({ length: cols }, (_, c) => Boolean(cfg.examples?.[r]?.[c]))
   );
+  const cellTypes = Array.from({ length: rows }, (_, r) =>
+    Array.from({ length: cols }, (_, c) => normTableCellType(cfg.cellTypes?.[r]?.[c]))
+  );
+  const cellTolerance = Array.from({ length: rows }, (_, r) =>
+    Array.from({ length: cols }, (_, c) => {
+      const n = parseFloat(String(cfg.cellTolerance?.[r]?.[c] ?? '').replace(',', '.'));
+      return Number.isFinite(n) && n > 0 ? n : 0;
+    })
+  );
+  const cellSelect = Array.from({ length: rows }, (_, r) =>
+    Array.from({ length: cols }, (_, c) => Boolean(cfg.cellSelect?.[r]?.[c]))
+  );
+  const cellCorrect = Array.from({ length: rows }, (_, r) =>
+    Array.from({ length: cols }, (_, c) => {
+      const n = parseInt(cfg.cellCorrect?.[r]?.[c], 10);
+      return Number.isInteger(n) && n >= 0 ? n : 0;
+    })
+  );
+  const correctMode = ['cell', 'row', 'col'].includes(cfg.correctMode) ? cfg.correctMode : 'cell';
   return {
     rows,
     cols,
@@ -42,12 +71,62 @@ export function normalizeTableConfig(cfg = {}) {
     cells,
     cellAnswers,
     examples,
+    cellTypes,
+    cellTolerance,
+    cellSelect,
+    cellCorrect,
+    correctMode,
     showRowHeaders: Boolean(cfg.showRowHeaders),
     showColHeaders: Boolean(cfg.showColHeaders),
     ignoreCase: cfg.ignoreCase !== false,
     ignoreAccents: cfg.ignoreAccents !== false,
     collapseSpaces: cfg.collapseSpaces !== false
   };
+}
+
+// Comprueba si una respuesta es correcta para una celda concreta, según su
+// tipo (texto/número/desplegable) y las opciones de normalización de la tabla.
+// Compartido por la corrección (grading) y el realce visual del modo alumno.
+// `normalizeText` y `parseDecimal` se inyectan para no acoplar este módulo
+// con util.js (que importa íconos, etc.).
+export function tableCellMatches(cfg, r, c, value, { normalizeText, parseDecimal }) {
+  const accepted = (cfg.cellAnswers?.[r]?.[c] || []).filter(a => String(a ?? '').trim());
+  if (!accepted.length) return null; // celda sin respuesta esperada: no se corrige
+  const given = String(value ?? '');
+  if (!given.trim()) return false;
+  const norm = s => normalizeText(s, cfg);
+  // Desplegable: solo la opción marcada como correcta puntúa.
+  if (cfg.cellSelect?.[r]?.[c]) {
+    const correctVal = tableCellCorrectValue(cfg, r, c);
+    return Boolean(correctVal) && norm(given) === norm(correctVal);
+  }
+  const type = cfg.cellTypes?.[r]?.[c] || 'text';
+  if (type === 'number') {
+    const v = parseDecimal(given);
+    if (isNaN(v)) return false;
+    const tol = Math.abs(parseDecimal(cfg.cellTolerance?.[r]?.[c])) || 0;
+    return accepted.some(a => {
+      const target = parseDecimal(a);
+      return !isNaN(target) && Math.abs(v - target) <= tol + 1e-9;
+    });
+  }
+  return accepted.some(a => norm(given) === norm(a));
+}
+
+// Opciones visibles de una celda desplegable (sus respuestas no vacías).
+export function tableCellOptions(cfg, r, c) {
+  return (cfg.cellAnswers?.[r]?.[c] || []).map(a => String(a ?? '')).filter(a => a.trim());
+}
+
+// Valor de la opción correcta de una celda desplegable. Usa el índice
+// cellCorrect dentro de la lista de respuestas; si apunta a una celda vacía,
+// cae en la primera respuesta no vacía.
+export function tableCellCorrectValue(cfg, r, c) {
+  const answers = (cfg.cellAnswers?.[r]?.[c] || []).map(a => String(a ?? ''));
+  const idx = cfg.cellCorrect?.[r]?.[c] ?? 0;
+  const picked = String(answers[idx] ?? '').trim();
+  if (picked) return answers[idx];
+  return answers.find(a => a.trim()) || '';
 }
 
 export const FIELD_TYPES = {

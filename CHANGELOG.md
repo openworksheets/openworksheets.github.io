@@ -9,6 +9,46 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.18.0] — 2026-06-19
+
+### Añadido
+- **Fórmulas LaTeX en todos los campos de texto**: cualquier texto de la ficha
+  (título, instrucciones, campo «Texto», opciones, encabezados y celdas de tabla,
+  etc.) renderiza fórmulas escritas con `\(…\)` (en línea) y `\[…\]` (en bloque):
+  fracciones, matrices, integrales, flechas, química (`\ce{…}`) y demás. Usa
+  MathJax con salida SVG, que se carga solo cuando hay fórmulas y funciona sin
+  conexión, también en los paquetes SCORM y en la exportación a web.
+- **Tipos de celda en «Tabla editable»**: cada celda puede ser de **texto** o de
+  **número** (se corrige por valor, admite coma o punto decimal). Convierte la
+  tabla en un mini-formulario didáctico, útil para biología, matemáticas,
+  idiomas, economía, física o tecnología.
+- **Celdas desplegables**: junto a «Ejemplo visible», una casilla **«Convertir en
+  desplegable»** ofrece al alumnado las varias respuestas de la celda como
+  opciones de un desplegable, y un selector marca cuál es la correcta (el resto
+  son distractores). Si la ficha tiene activado «barajar opciones», el orden se
+  mezcla.
+- **Tolerancia numérica por celda**: en las celdas de tipo número se puede fijar
+  un margen de acierto (±), igual que en «Respuesta numérica». Muy práctico en
+  matemáticas y ciencias.
+- **Pegar desde una hoja de cálculo (en un solo paso)**: un botón sobre la tabla
+  lee el portapapeles e importa directamente el contenido copiado de Calc, Sheets
+  o Excel (separado por tabuladores) o de un CSV (`;` o `,`), ajustando el tamaño
+  de la tabla. El contenido pegado **reemplaza por completo** el de la tabla y, si
+  están activados los encabezados de columna y/o de fila, la primera fila y/o la
+  primera columna pegadas se usan como encabezados. Si el navegador no permite
+  leer el portapapeles, aparece un cuadro de reserva para pegar a mano.
+- **Borrar filas y columnas y vaciar la tabla**: en la configuración, cada fila
+  y cada columna tienen un botón ✕ para eliminarla, y un botón **«Vaciar tabla»**
+  borra todo el contenido para empezar de cero conservando el tamaño.
+- **Editar la tabla a pantalla completa**: botón **«Editar a pantalla completa»**
+  que abre el mismo editor de la tabla en un diálogo que aprovecha todo el ancho
+  y alto de la ventana, con columnas más anchas y desplazamiento horizontal,
+  para trabajar con comodidad en tablas grandes que no caben en el panel lateral.
+- **Corrección por filas o por columnas**: además de la corrección celda a celda
+  (por defecto), la tabla puede puntuar por **filas completas** o **columnas
+  completas** —la fila o columna solo suma si todas sus celdas son correctas—,
+  útil para ejercicios de clasificación.
+
 ## [1.17.3] — 2026-06-19
 
 ### Añadido

@@ -23,6 +23,7 @@ import { exportFichaZip } from './zipio.js';
 const APP_FILES = [
   'css/app.css',
   'vendor/jszip.min.js',
+  'vendor/mathjax-tex-svg.js',
   'fonts/opendyslexic-400.woff2',
   'fonts/opendyslexic-700.woff2',
   'favicon.svg',
@@ -30,6 +31,7 @@ const APP_FILES = [
   'js/player.js', 'js/render.js', 'js/grading.js', 'js/fieldtypes.js',
   'js/fonts.js', 'js/entrega.js', 'js/submissionCrypto.js', 'js/scormhost.js',
   'js/scorm.js', 'js/util.js', 'js/icons.js', 'js/i18n.js', 'js/markdown.js',
+  'js/mathrender.js',
   'js/zipio.js', 'js/verifyview.js', 'js/classview.js', 'js/webrun.js',
   // Página de corrección del docente: es la misma «Ver y verificar entregas» del
   // programa principal. webrun.js redirige aquí los enlaces de entrega (#e=…).

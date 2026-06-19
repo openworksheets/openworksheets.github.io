@@ -11,7 +11,7 @@
 //   dragdrop → { zoneId: token | null }
 
 import { normalizeText, parseDecimal } from './util.js';
-import { parseGaps, normalizeTableConfig } from './fieldtypes.js';
+import { parseGaps, normalizeTableConfig, tableCellMatches } from './fieldtypes.js';
 import { scormRatio } from './scorm.js';
 
 export function gradeField(field, answer) {
@@ -83,22 +83,38 @@ const graders = {
 
   table(cfg, answer) {
     const table = normalizeTableConfig(cfg);
+    const given = Array.isArray(answer) ? answer : [];
+    const helpers = { normalizeText, parseDecimal };
+    // Celdas corregibles: tienen respuesta esperada y no son ejemplo.
     const expected = [];
     table.cellAnswers.forEach((row, r) => row.forEach((answers, c) => {
       if (table.examples?.[r]?.[c]) return;
-      const accepted = answers.filter(a => String(a ?? '').trim());
-      if (accepted.length) expected.push({ r, c, accepted });
+      if (answers.some(a => String(a ?? '').trim())) expected.push({ r, c });
     }));
     if (!expected.length) return { ratio: 0, blank: true };
-    const given = Array.isArray(answer) ? answer : [];
     const allBlank = expected.every(({ r, c }) => !String(given?.[r]?.[c] ?? '').trim());
     if (allBlank) return { ratio: 0, blank: true };
-    const norm = s => normalizeText(s, table);
+
+    const isOk = (r, c) => tableCellMatches(table, r, c, given?.[r]?.[c], helpers) === true;
+
+    // Corrección por filas/columnas: cada fila/columna con celdas corregibles
+    // cuenta como una unidad y solo suma si todas sus celdas son correctas
+    // (útil para clasificar: la fila entera está bien o no cuenta).
+    if (table.correctMode === 'row' || table.correctMode === 'col') {
+      const groups = new Map(); // clave de grupo → lista de celdas
+      expected.forEach(({ r, c }) => {
+        const key = table.correctMode === 'row' ? r : c;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push({ r, c });
+      });
+      let hits = 0;
+      groups.forEach(cells => { if (cells.every(({ r, c }) => isOk(r, c))) hits++; });
+      return { ratio: hits / groups.size };
+    }
+
+    // Corrección por celda (por defecto): cada celda corregible suma por separado.
     let hits = 0;
-    expected.forEach(({ r, c, accepted }) => {
-      const v = String(given?.[r]?.[c] ?? '');
-      if (v.trim() && accepted.some(ans => norm(v) === norm(ans))) hits++;
-    });
+    expected.forEach(({ r, c }) => { if (isOk(r, c)) hits++; });
     return { ratio: hits / expected.length };
   },
 
@@ -256,7 +272,10 @@ export function expectedText(field) {
         .flatMap((row, r) => row.map((answers, c) => {
           if (table.examples?.[r]?.[c]) return '';
           const accepted = answers.filter(a => a.trim());
-          return accepted.length ? `${r + 1}.${c + 1}: ${accepted.join(' / ')}` : '';
+          if (!accepted.length) return '';
+          const tol = table.cellTypes?.[r]?.[c] === 'number' && table.cellTolerance?.[r]?.[c] > 0
+            ? ` (±${table.cellTolerance[r][c]})` : '';
+          return `${r + 1}.${c + 1}: ${accepted.join(' / ')}${tol}`;
         }
         ))
         .filter(Boolean)

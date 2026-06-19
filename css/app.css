@@ -1829,6 +1829,51 @@ body.resizing-col { cursor: col-resize; }
   font-size: 0.74rem;
   color: var(--tinta-suave);
 }
+.cfg-table-cell .f-label-sm {
+  font-size: 0.72rem;
+  margin: 2px 0 0;
+  color: var(--tinta-suave);
+}
+.cfg-table-celltype { width: 100%; margin: 0; font-size: 0.8rem; }
+.cfg-table-del {
+  border: none;
+  background: none;
+  color: var(--rojo);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+.cfg-table-del:hover:not(:disabled) { background: color-mix(in srgb, var(--rojo) 14%, transparent); }
+.cfg-table-del:disabled { color: var(--tinta-tenue); cursor: default; }
+.cfg-table-grid td.cfg-table-delcell { border: none; background: none; padding: 0 2px; text-align: center; vertical-align: middle; width: 1.6em; }
+.cfg-table-grid th.cfg-table-delhead { border: none; background: none; width: 1.6em; }
+.cfg-table-colctrl td { border: none; background: none; padding: 2px; text-align: center; }
+.cfg-table-clear { margin-top: 8px; }
+.cfg-table-expand { width: 100%; margin-bottom: 10px; }
+
+/* Diálogo de edición de tabla a pantalla completa */
+.ed-table-dialog {
+  width: calc(100vw - 40px);
+  max-width: calc(100vw - 40px);
+  max-height: calc(100vh - 40px);
+  padding: 18px 22px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.ed-table-dialog-title { margin: 0 28px 12px 0; }
+.ed-table-dialog-body { overflow: auto; flex: 1; min-height: 0; }
+/* En el diálogo las columnas tienen ancho cómodo y la rejilla se desplaza
+   horizontalmente si hay muchas, en vez de comprimirse. */
+.ed-table-dialog .cfg-table-grid { table-layout: auto; width: auto; min-width: 100%; }
+.ed-table-dialog .cfg-table-cell { min-width: 200px; }
+.ed-table-dialog .cfg-table-grid-wrap { max-height: none; }
+.cfg-table-paste { margin: 4px 0 8px; }
+.cfg-table-paste > .btn { width: 100%; }
+.cfg-table-paste-fallback textarea { width: 100%; margin-top: 6px; font-family: monospace; font-size: 0.82rem; }
+.cfg-table-paste-fallback .btn { margin-top: 6px; }
 .opt-row { display: flex; align-items: center; gap: 6px; }
 .opt-row input[type='text'] { flex: 1; }
 .opt-row .marca { width: auto; }
@@ -1986,9 +2031,110 @@ body.resizing-col { cursor: col-resize; }
   box-shadow: var(--sombra-mini);
 }
 .wpf-table-input { min-height: 2em; height: 100%; box-shadow: none; border-width: 1.5px; }
+.wpf-table-select { width: 100%; background: #fff; }
+.wpf-richselect {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  padding: 0;
+  overflow: visible;
+}
+.wpf-richselect-standalone {
+  width: 100%;
+  border: 0.13em solid var(--tinta);
+  border-radius: 0.35em;
+  background-color: var(--field-bg, rgb(255, 253, 248));
+  color: var(--field-fg, var(--tinta));
+  box-shadow: var(--sombra-mini);
+  font-size: 0.92em;
+}
+.wpf-richselect-btn {
+  width: 100%;
+  min-height: inherit;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  padding: 0.12em 1.55em 0.12em 0.45em;
+  cursor: pointer;
+}
+.wpf-richselect-btn:disabled { cursor: default; }
+.wpf-richselect-value {
+  display: block;
+  min-height: 1.2em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wpf-richselect-value.is-placeholder { opacity: 0.55; }
+.wpf-richselect-arrow {
+  position: absolute;
+  right: 0.45em;
+  top: 50%;
+  width: 0.7em;
+  height: 0.7em;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+.wpf-richselect-arrow::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 100%;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%231d2c42' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    no-repeat center / contain;
+}
+.wpf-richselect-menu {
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  top: calc(100% + 0.18em);
+  z-index: 15;
+  display: grid;
+  gap: 0.12em;
+  padding: 0.2em;
+  border: 1.5px solid var(--tinta);
+  border-radius: 0.45em;
+  background: var(--field-bg, rgb(255, 253, 248));
+  box-shadow: var(--sombra);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.wpf-richselect.is-open .wpf-richselect-menu {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.wpf-richselect-option {
+  width: 100%;
+  border: 0;
+  border-radius: 0.28em;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  padding: 0.18em 0.35em;
+  cursor: pointer;
+}
+.wpf-richselect-option:hover,
+.wpf-richselect-option:focus-visible,
+.wpf-richselect-option.is-selected {
+  background: color-mix(in srgb, var(--azul-claro) 35%, #fff);
+  outline: none;
+}
+.wpf-richselect-option-label {
+  display: block;
+  min-height: 1.2em;
+}
 .wpf-field-text .wpf-input, .wpf-field-number .wpf-input { position: absolute; inset: 0; height: auto; }
 .wpf-input:focus, .wpf-select:focus, .wpf-gap-input:focus {
   outline: none;
+  border-color: var(--rojo);
+}
+.wpf-richselect:focus-within {
   border-color: var(--rojo);
 }
 .wpf-table-wrap {
@@ -2545,6 +2691,8 @@ input.wpf-gap-input {
 }
 .wpf-tbbox.tb-ok { border-color: var(--verde); background: var(--verde-claro); }
 .wpf-tbbox.tb-ko { border-color: var(--rojo); background: var(--rojo-claro); }
+.wpf-richselect.tb-ok { border-color: var(--verde); background: var(--verde-claro); }
+.wpf-richselect.tb-ko { border-color: var(--rojo); background: var(--rojo-claro); }
 /* Solución mostrada bajo un hueco incorrecto al corregir */
 .wpf-tb-exp {
   position: absolute;
