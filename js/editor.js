@@ -4673,6 +4673,34 @@ $('#btnGenerarEnlace')?.addEventListener('click', async () => {
   $('#compEnlace').textContent = link;
   const tryBtn = $('#btnProbarEnlace');
   if (tryBtn) tryBtn.href = link;
+
+  // Generar código QR para proyección en clase
+  const qrContainer = $('#compQrContainer');
+  if (qrContainer && typeof qrcode === 'function') {
+    qrContainer.innerHTML = '';
+    const qr = qrcode(0, 'M');
+    qr.addData(link);
+    qr.make();
+
+    const qrImg = el('div', { class: 'share-qr-img', title: t('dlg.share.qrZoomHint') });
+    qrImg.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 4, scalable: true });
+
+    const qrHint = el('div', { class: 'share-qr-hint' }, t('dlg.share.qrZoomHint'));
+
+    qrContainer.appendChild(qrImg);
+    qrContainer.appendChild(qrHint);
+
+    const openZoom = () => {
+      const zoomContent = $('#qrZoomContent');
+      if (zoomContent) {
+        zoomContent.innerHTML = qr.createSvgTag({ cellSize: 8, margin: 4, scalable: true });
+      }
+      $('#dlgQrZoom')?.showModal();
+    };
+    qrImg.addEventListener('click', openZoom);
+    qrHint.addEventListener('click', openZoom);
+  }
+
   $('#compSalida').style.display = 'block';
   const ok = await copyToClipboard(link);
   if (ok) toast(t('toast.linkCopied'), 'ok');

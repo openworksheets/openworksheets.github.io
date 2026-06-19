@@ -561,6 +561,8 @@ const STRINGS = {
     'dlg.share.generateBtn': 'Generar enlace para el alumnado',
     'dlg.share.copyLink': 'Copiar enlace',
     'dlg.share.tryLink': 'Probar (opcional)',
+    'dlg.share.qrZoomHint': 'Haz clic para ampliar y proyectar en clase',
+    'dlg.share.qrZoomTitle': 'Proyectar código QR para la clase',
 
     // Editor — restricciones de acceso
     'dlg.access.section': 'Restricciones de acceso',
@@ -1216,6 +1218,8 @@ const STRINGS = {
     'dlg.share.generateBtn': 'Generate student link',
     'dlg.share.copyLink': 'Copy link',
     'dlg.share.tryLink': 'Preview (optional)',
+    'dlg.share.qrZoomHint': 'Click to enlarge and project in class',
+    'dlg.share.qrZoomTitle': 'Project QR Code for class',
 
     'dlg.access.section': 'Access restrictions',
     'dlg.access.desde': 'Available from (optional)',
@@ -1991,6 +1995,8 @@ const STRINGS = {
     'dlg.share.generateBtn': 'Generar enllaç per a l\'alumnat',
     'dlg.share.copyLink': 'Copiar enllaç',
     'dlg.share.tryLink': 'Provar (opcional)',
+    'dlg.share.qrZoomHint': 'Fes clic per ampliar i projectar a classe',
+    'dlg.share.qrZoomTitle': 'Projectar codi QR per a la classe',
 
     'dlg.access.section': 'Restriccions d\'accés',
     'dlg.access.desde': 'Disponible des de (opcional)',
@@ -2766,6 +2772,8 @@ const STRINGS = {
     'dlg.share.generateBtn': 'Xerar enlace para o alumnado',
     'dlg.share.copyLink': 'Copiar enlace',
     'dlg.share.tryLink': 'Probar (opcional)',
+    'dlg.share.qrZoomHint': 'Fai clic para ampliar e proxectar en clase',
+    'dlg.share.qrZoomTitle': 'Proxectar código QR para a clase',
 
     'dlg.access.section': 'Restricións de acceso',
     'dlg.access.desde': 'Dispoñible desde (opcional)',
@@ -3541,6 +3549,8 @@ const STRINGS = {
     'dlg.share.generateBtn': 'Ikasleentzako esteka sortu',
     'dlg.share.copyLink': 'Esteka kopiatu',
     'dlg.share.tryLink': 'Probatu (aukerakoa)',
+    'dlg.share.qrZoomHint': 'Egin klik gelan handitzeko eta proiektatzeko',
+    'dlg.share.qrZoomTitle': 'QR kodea klaserako proiektatu',
 
     'dlg.access.section': 'Sarbide-murrizketak',
     'dlg.access.desde': 'Noiztik erabilgarri (aukerakoa)',
