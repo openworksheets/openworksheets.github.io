@@ -1755,8 +1755,40 @@ body.resizing-col { cursor: col-resize; }
   /* Hueco a la izquierda para el botón flotante de plegar el panel (en su borde
      interior, simétrico al de las miniaturas). */
   padding-left: 30px;
+  /* Cabecera fija: el botón «fx» de fórmulas sigue visible al hacer scroll. */
+  position: sticky;
+  top: 0;
+  margin-top: 0;
+  padding-top: 2px;
+  background: var(--blanco);
+  z-index: 3;
 }
 .ed-panel h3 .spacer { flex: 1; }
+/* Botón «fx» para insertar fórmulas: solo visible cuando el foco está en un
+   campo que admite LaTeX (el panel lleva entonces la clase has-latex-focus). */
+.cfg-formula-btn {
+  display: none;
+  height: 22px;
+  padding: 0 9px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--tinta-tenue);
+  border-radius: 11px;
+  background: transparent;
+  color: var(--tinta-suave);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1;
+  cursor: pointer;
+}
+.ed-panel.has-latex-focus .cfg-formula-btn { display: inline-flex; }
+.cfg-formula-btn:hover {
+  border-color: var(--rojo);
+  color: var(--rojo);
+  background: var(--rojo-claro);
+}
 .field-help-btn {
   width: 22px;
   height: 22px;

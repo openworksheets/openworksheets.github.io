@@ -66,6 +66,121 @@ const titleInput = $('#titulo');
 const EDITOR_ZOOM_KEY = 'wpf-ed-zoom';
 const THUMBS_WIDTH_KEY = 'ows.editorThumbsWidth';
 const PANEL_WIDTH_KEY = 'ows.editorPanelWidth';
+
+// ---------- Insertar fórmulas LaTeX con EdiCuaTeX ----------
+// Botón «fx» en la cabecera del panel que abre EdiCuaTeX
+// (https://edicuatex.github.io) e inserta la fórmula en el campo de texto
+// enfocado. Solo aparece cuando el campo enfocado admite LaTeX (marcado con
+// data-latex="1") y la ficha no lo tiene desactivado en Ajustes.
+const EDICUATEX_URL = 'https://edicuatex.github.io/';
+const EDICUATEX_ORIGIN = 'https://edicuatex.github.io';
+const EDICUATEX_FORCE_DELIMITER = 'parentheses';
+let lastLatexField = null;       // último input/textarea con LaTeX enfocado en el panel
+let pendingFormulaTarget = null; // destino de la fórmula que se está editando
+let pendingFormulaWindow = null; // popup de EdiCuaTeX abierta para la edición actual
+let pendingFormulaShouldPreserveDelimiters = false;
+let formulaListenerReady = false;
+
+function isLatexField(elm) {
+  return Boolean(elm && elm.dataset && elm.dataset.latex === '1' && !elm.disabled && !elm.readOnly);
+}
+
+// El botón se muestra salvo que la ficha lo desactive en Ajustes.
+function formulaButtonEnabled() {
+  return state.manifest?.settings?.showFormulaButton !== false;
+}
+
+function insertAtCursor(field, text) {
+  const v = field.value ?? '';
+  const start = typeof field.selectionStart === 'number' ? field.selectionStart : v.length;
+  const end = typeof field.selectionEnd === 'number' ? field.selectionEnd : v.length;
+  field.value = v.slice(0, start) + text + v.slice(end);
+  const pos = start + text.length;
+  try { field.focus(); field.setSelectionRange(pos, pos); } catch { /* algunos inputs no admiten setSelectionRange */ }
+  field.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function wrapFormulaForWorksheet(rawLatex = '', delimiter = EDICUATEX_FORCE_DELIMITER) {
+  const latex = String(rawLatex || '').trim();
+  if (!latex) return '';
+  switch (delimiter) {
+    case 'brackets': return `\\[${latex}\\]`;
+    case 'double_dollar': return `$$\n${latex}\n$$`;
+    case 'single_dollar': return `$${latex}$`;
+    case 'none': return latex;
+    case 'parentheses':
+    default: return `\\(${latex}\\)`;
+  }
+}
+
+function selectionHasLatexDelimiters(text = '') {
+  const trimmed = String(text || '').trim();
+  if (!trimmed) return false;
+  return /^\\\(([\s\S]+)\\\)$/.test(trimmed)
+    || /^\\\[([\s\S]+)\\\]$/.test(trimmed)
+    || /^\$\$([\s\S]+)\$\$$/.test(trimmed)
+    || /^\$([\s\S]+)\$$/.test(trimmed);
+}
+
+function getSelectedText(field) {
+  if (!field || typeof field.selectionStart !== 'number' || typeof field.selectionEnd !== 'number') return '';
+  if (field.selectionStart === field.selectionEnd) return '';
+  return String(field.value ?? '').slice(field.selectionStart, field.selectionEnd);
+}
+
+function ensureFormulaListener() {
+  if (formulaListenerReady) return;
+  formulaListenerReady = true;
+  window.addEventListener('message', e => {
+    if (e.origin !== EDICUATEX_ORIGIN) return;
+    const d = e.data;
+    if (!d || d.type !== 'edicuatex:result') return;
+    const tex = pendingFormulaShouldPreserveDelimiters && d.wrapped
+      ? d.wrapped
+      : wrapFormulaForWorksheet(d.latex, EDICUATEX_FORCE_DELIMITER);
+    const target = pendingFormulaTarget;
+    if (tex && target && document.contains(target)) insertAtCursor(target, tex);
+    try { pendingFormulaWindow?.close(); } catch { /* noop */ }
+    pendingFormulaWindow = null;
+    pendingFormulaShouldPreserveDelimiters = false;
+  });
+}
+
+function openFormulaEditor() {
+  if (!formulaButtonEnabled()) return;
+  // El botón conserva el foco del input (mousedown preventDefault), así que
+  // activeElement sigue siendo el campo; lastLatexField es la red de seguridad.
+  const target = isLatexField(document.activeElement) ? document.activeElement : lastLatexField;
+  if (!isLatexField(target)) { toast(t('toast.formulaNoField'), 'error'); return; }
+  const selectedText = getSelectedText(target);
+  pendingFormulaTarget = target;
+  pendingFormulaShouldPreserveDelimiters = selectionHasLatexDelimiters(selectedText);
+  ensureFormulaListener();
+  const params = new URLSearchParams({
+    pm: '1',
+    origin: location.origin
+  });
+  if (selectedText.trim()) params.set('sel', selectedText);
+  const url = EDICUATEX_URL + '?' + params.toString();
+  const win = window.open(url, 'edicuatex', 'width=1100,height=820');
+  pendingFormulaWindow = win || null;
+  if (!win) toast(t('toast.formulaPopupBlocked'), 'error');
+}
+
+// Mostrar/ocultar el botón según el campo enfocado: cuando el foco está en un
+// campo con LaTeX, el panel lleva la clase `has-latex-focus` (el CSS muestra el
+// botón). El botón no roba el foco, así que clicarlo no dispara focusout.
+panel.addEventListener('focusin', e => {
+  if (isLatexField(e.target)) {
+    lastLatexField = e.target;
+    if (formulaButtonEnabled()) panel.classList.add('has-latex-focus');
+  }
+});
+panel.addEventListener('focusout', e => {
+  const to = e.relatedTarget;
+  if (isLatexField(to) || to?.classList?.contains('cfg-formula-btn')) return;
+  panel.classList.remove('has-latex-focus');
+});
 const SIZE_UNIT_KEY = 'ows.pageSizeUnit';
 const PERSISTENT_PREF_KEYS = [EDITOR_ZOOM_KEY, THUMBS_WIDTH_KEY, PANEL_WIDTH_KEY, SIZE_UNIT_KEY, 'wpf-lang', 'wpf-tema'];
 const DEFAULT_THUMBS_W = 168;
@@ -2082,22 +2197,36 @@ function renderFieldPanel(field) {
   const head = el('h3', {},
     el('span', { class: 'tipo-chip' }, fieldTypeName(field.type)),
     t('editor.fieldConfig'));
+  head.appendChild(el('span', { class: 'spacer' }));
+  // Botón «fx» para insertar fórmulas LaTeX en el campo de texto enfocado.
+  // Vive siempre en la cabecera (que es sticky) pero el CSS solo lo muestra
+  // cuando el panel tiene el foco en un campo con LaTeX (has-latex-focus).
+  if (formulaButtonEnabled()) {
+    const fxBtn = el('button', {
+      class: 'cfg-formula-btn', type: 'button',
+      title: t('cfg.insertFormula') + ' (Ctrl+Shift+F)', 'aria-label': t('cfg.insertFormula')
+    }, 'fx');
+    fxBtn.addEventListener('mousedown', ev => ev.preventDefault()); // no robar el foco del campo
+    fxBtn.addEventListener('click', openFormulaEditor);
+    head.appendChild(fxBtn);
+  }
+  let helpBox = null;
   if (fieldDesc) {
     const helpBtn = el('button', { class: 'field-help-btn', type: 'button', 'aria-expanded': 'false' }, '?');
-    const helpBox = el('p', { class: 'field-help-text', hidden: '' }, fieldDesc);
+    helpBox = el('p', { class: 'field-help-text', hidden: '' }, fieldDesc);
     helpBtn.addEventListener('click', () => {
       const showing = helpBox.hidden;
       helpBox.hidden = !showing;
       helpBtn.setAttribute('aria-expanded', showing ? 'true' : 'false');
       helpBtn.classList.toggle('is-open', showing);
     });
-    head.appendChild(el('span', { class: 'spacer' }));
     head.appendChild(helpBtn);
-    cont.appendChild(head);
-    cont.appendChild(helpBox);
-  } else {
-    cont.appendChild(head);
   }
+  cont.appendChild(head);
+  if (helpBox) cont.appendChild(helpBox);
+  // Al reconstruir el panel se pierde el estado de foco; ocultar el botón hasta
+  // que el usuario vuelva a enfocar un campo con LaTeX.
+  panel.classList.remove('has-latex-focus');
 
   // "Arrastrar a zonas": antes de mostrar las opciones, el usuario elige el
   // medio (escribir etiquetas o recortar del PDF). Hasta entonces no se muestra
@@ -2531,8 +2660,11 @@ function optionListEditor(cont, {
   return paint;
 }
 
-function textCell(value, onInput, placeholder = '') {
+// `latex`: marca el campo como apto para insertar fórmulas (lo usa el botón
+// «fx»). Por defecto sí; se desactiva en los campos puramente numéricos.
+function textCell(value, onInput, placeholder = '', { latex = true } = {}) {
   const inp = el('input', { type: 'text', value, placeholder });
+  if (latex) inp.dataset.latex = '1';
   inp.addEventListener('input', () => { onInput(inp.value); markDirty(); });
   return inp;
 }
@@ -2885,7 +3017,7 @@ function buildTableConfig(cont, field, repaint = renderPanel) {
       cellWrap.appendChild(textCell(
         String(field.config.cellTolerance[r][c] ?? 0),
         v => { field.config.cellTolerance[r][c] = v; },
-        '0'
+        '0', { latex: false }
       ));
     }
 
@@ -3506,7 +3638,7 @@ const configForms = {
     const prev = () => canvas.querySelector(`.ed-field[data-id="${field.id}"] .ed-label-prev`);
     cont.appendChild(el('label', { class: 'f-label' }, t('cfg.labelText')));
     const syncPrev = () => { const p = prev(); if (p) { p.innerHTML = mdToHtml(cfg.text || ''); typesetMath(p); } };
-    const ta = el('textarea', { class: 'md-textarea', rows: '4' });
+    const ta = el('textarea', { class: 'md-textarea', rows: '4', 'data-latex': '1' });
     ta.value = cfg.text || '';
     ta.addEventListener('input', () => { cfg.text = ta.value; syncPrev(); markDirty(); });
     const preview = el('div', { class: 'md-preview', hidden: true });
@@ -3781,9 +3913,9 @@ const configForms = {
     const wrap = el('div', { class: 'cfg-scoring-only' });
     if (field.noScore) wrap.style.display = 'none';
     wrap.appendChild(el('label', { class: 'f-label' }, t('cfg.correctAnswer')));
-    wrap.appendChild(textCell(String(cfg.answer ?? ''), v => { cfg.answer = v; }, 'Ej.: 3,14'));
+    wrap.appendChild(textCell(String(cfg.answer ?? ''), v => { cfg.answer = v; }, 'Ej.: 3,14', { latex: false }));
     wrap.appendChild(el('label', { class: 'f-label' }, t('cfg.tolerance')));
-    wrap.appendChild(textCell(String(cfg.tolerance ?? 0), v => { cfg.tolerance = v; }, '0'));
+    wrap.appendChild(textCell(String(cfg.tolerance ?? 0), v => { cfg.tolerance = v; }, '0', { latex: false }));
     wrap.appendChild(el('p', { style: 'font-size:.82rem;color:var(--tinta-suave)' },
       t('cfg.numHint')));
     cont.appendChild(wrap);
@@ -3939,7 +4071,7 @@ const configForms = {
   gaps(cont, field) {
     const cfg = field.config;
     cont.appendChild(el('label', { class: 'f-label' }, t('cfg.gapsText')));
-    const ta = el('textarea', { rows: '4' });
+    const ta = el('textarea', { rows: '4', 'data-latex': '1' });
     ta.value = cfg.text || '';
     const info = el('p', { style: 'font-size:.82rem;color:var(--tinta-suave)' });
     function updateInfo() {
@@ -4441,6 +4573,7 @@ function openSettings(afterSave, initialTab = 'basic') {
   $('#ajNota').checked = state.manifest.settings.showScore !== false;
   $('#ajCorreccion').checked = state.manifest.settings.showCorrection !== false;
   $('#ajBarajar').checked = Boolean(state.manifest.settings.shuffle);
+  $('#ajFormulaBtn').checked = state.manifest.settings.showFormulaButton !== false;
   $('#ajIntentos').value = String(state.manifest.settings.maxAttempts || 0);
   $('#ajCifrarEntregas').checked = state.manifest.settings.encryptSubmissions !== false;
   $('#ajCryptoPassword').value = state.submissionCryptoPassword;
@@ -4490,6 +4623,7 @@ $('#dlgAjustes')?.addEventListener('close', () => {
   state.manifest.settings.showScore = $('#ajNota').checked;
   state.manifest.settings.showCorrection = $('#ajCorreccion').checked;
   state.manifest.settings.shuffle = $('#ajBarajar').checked;
+  state.manifest.settings.showFormulaButton = $('#ajFormulaBtn').checked;
   state.manifest.settings.maxAttempts = Math.max(0, parseInt($('#ajIntentos').value, 10) || 0);
   state.manifest.settings.fontFamily = $('#ajFont').value;
   canvas.style.setProperty('--ficha-font', fontStack(state.manifest.settings.fontFamily));
@@ -4508,6 +4642,7 @@ $('#dlgAjustes')?.addEventListener('close', () => {
     masteryScore: Math.max(0, Math.min(100, parseInt($('#ajScormMastery').value, 10) || 0))
   };
   markDirty();
+  renderPanel(); // reflejar cambios que afectan al panel (p. ej. el botón de fórmulas)
   const cb = dlg._afterSave;
   dlg._afterSave = null;
   // Solo es una función cuando openSettings se llamó con un callback (p. ej.
@@ -5159,6 +5294,10 @@ document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
   if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'E') { e.preventDefault(); openPreview(); }
   if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'X') { e.preventDefault(); printWorksheet(); }
+  // Insertar fórmula en el campo de texto enfocado (si admite LaTeX).
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'F' || e.key === 'f')) {
+    if (formulaButtonEnabled() && isLatexField(document.activeElement)) { e.preventDefault(); openFormulaEditor(); }
+  }
 });
 
 // ---------- Estadísticas de la ficha ----------
