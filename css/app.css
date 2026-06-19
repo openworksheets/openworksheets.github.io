@@ -1457,10 +1457,19 @@ body.resizing-col { cursor: col-resize; }
 .ed-field.ed-field-label.selected .chip, .ed-field.ed-field-cover.selected .chip, .ed-field.ed-field-image.selected .chip, .ed-field.ed-media-field.selected .chip { opacity: 1; }
 /* El medio real se ve en el lienzo, pero deja pasar el ratón para mover/redimensionar. */
 .ed-field.ed-media-field { overflow: hidden; font-size: calc(1.6cqw * var(--fs, 1)); }
+/* La manija de redimensionado vive ligeramente fuera del borde del campo
+   (bottom/right negativos). En medios reales y en el placeholder de SCORM el
+   contenido puede ir recortado, pero al seleccionar el campo no debemos cortar
+   esa manija. El recorte visual del medio lo siguen haciendo sus wrappers
+   internos (.wpf-media-body / .ed-scorm-prev.has-frame). */
+.ed-field.ed-media-field.selected,
+.ed-field.ed-scorm-field.selected { overflow: visible; }
 .ed-field.ed-media-field .wpf-media { pointer-events: none; }
 /* El chip mantiene su tamaño fijo aunque el campo escale el texto del título/pie. */
 .ed-field.ed-media-field > .chip { font-size: 0.62rem; }
 .ed-field .chip {
+  position: relative;
+  z-index: 2;
   font-size: 0.62em;
   font-weight: 700;
   /* La etiqueta del campo (lo único que se ve en el lienzo de muchos tipos)
@@ -1490,6 +1499,7 @@ body.resizing-col { cursor: col-resize; }
   position: absolute;
   right: -7px;
   bottom: -7px;
+  z-index: 3;
   width: 14px;
   height: 14px;
   border: 2px solid #fff;
@@ -1503,6 +1513,7 @@ body.resizing-col { cursor: col-resize; }
   position: absolute;
   top: -30px;
   left: 50%;
+  z-index: 3;
   transform: translateX(-50%);
   width: 20px;
   height: 20px;
@@ -3012,6 +3023,7 @@ input.wpf-gap-input {
 /* Editor: placeholder cuando aún no hay paquete cargado */
 .ed-scorm-prev {
   position: absolute; inset: 0; display: flex; flex-direction: column;
+  z-index: 1;
   align-items: center; justify-content: center; gap: 6px;
   background: var(--fondo-suave, #f4f6f9); color: var(--tinta-suave);
   border: 1px dashed var(--tinta-tenue); pointer-events: none; padding: 8px;

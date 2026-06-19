@@ -2832,6 +2832,21 @@ function selectRow(cont, label, value, options, onChange) {
   cont.appendChild(s);
 }
 
+function strokeWidthRow(cont, value, { min = 0, max = 14, step = 1, unit = 'px' } = {}, onChange) {
+  const widthVal = Math.max(min, Math.min(max, parseFloat(value) || 0));
+  const widthRange = el('input', { type: 'range', min: String(min), max: String(max), step: String(step), value: String(widthVal) });
+  const widthNum = el('input', { type: 'number', min: String(min), max: String(max), step: String(step), value: String(widthVal), style: 'width:84px' });
+  const applyWidth = v => {
+    v = Math.max(min, Math.min(max, parseFloat(v) || 0));
+    widthRange.value = v;
+    widthNum.value = v;
+    onChange(v);
+  };
+  widthRange.addEventListener('input', () => applyWidth(widthRange.value));
+  widthNum.addEventListener('input', () => applyWidth(widthNum.value));
+  cont.appendChild(el('div', { class: 'rot-row' }, widthRange, widthNum, el('span', {}, unit)));
+}
+
 // Color, grosor y estilo de trazo, comunes a las cuatro formas.
 function shapeStrokeConfig(cont, field) {
   const cfg = field.config;
@@ -2839,9 +2854,11 @@ function shapeStrokeConfig(cont, field) {
   const { inp: color, wrap: colorWrap } = colorInput(cfg.color || '#1d2c42', v => { cfg.color = v; refreshShapePrev(field); markDirty(); });
   cont.appendChild(colorWrap);
   cont.appendChild(el('label', { class: 'f-label' }, t('cfg.strokeWidth')));
-  const w = el('input', { type: 'range', min: '1', max: '14', step: '1', value: String(cfg.width || 2) });
-  w.addEventListener('input', () => { cfg.width = parseFloat(w.value); refreshShapePrev(field); markDirty(); });
-  cont.appendChild(w);
+  strokeWidthRow(cont, cfg.width || 2, { min: 1, max: 14, step: 1, unit: 'px' }, v => {
+    cfg.width = v;
+    refreshShapePrev(field);
+    markDirty();
+  });
   selectRow(cont, t('cfg.strokeStyle'), cfg.style || 'solid', [
     ['solid', t('cfg.styleSolid')],
     ['dashed', t('cfg.styleDashed')],
@@ -2859,20 +2876,43 @@ function mediaFrameConfig(cont, field, rebuild = rebuildCanvasMedia) {
   });
   cont.appendChild(colorWrap);
   cont.appendChild(el('label', { class: 'f-label' }, t('cfg.strokeWidth')));
-  const widthVal = Math.max(0, parseFloat(cfg.frameWidth) || 0);
-  const widthRange = el('input', { type: 'range', min: '0', max: '14', step: '1', value: String(widthVal) });
-  const widthNum = el('input', { type: 'number', min: '0', max: '14', step: '1', value: String(widthVal), style: 'width:84px' });
-  const applyWidth = v => {
-    v = Math.max(0, Math.min(14, parseFloat(v) || 0));
+  strokeWidthRow(cont, cfg.frameWidth || 0, { min: 0, max: 14, step: 1, unit: 'px' }, v => {
     cfg.frameWidth = v;
-    widthRange.value = v;
-    widthNum.value = v;
     rebuild(field);
     markDirty();
-  };
-  widthRange.addEventListener('input', () => applyWidth(widthRange.value));
-  widthNum.addEventListener('input', () => applyWidth(widthNum.value));
-  cont.appendChild(el('div', { class: 'rot-row' }, widthRange, widthNum, el('span', {}, 'px')));
+  });
+}
+
+function shapeFillConfig(cont, field) {
+  const cfg = field.config;
+  const { wrap: fillRow, colorInp: fillColor } = colorOpacityRow({
+    colorLabel: t('cfg.fillColor'),
+    opacityLabel: t('cfg.fillOpacity'),
+    color: cfg.fill || '#f8e3a1',
+    opacity: cfg.fillOpacity ?? 1,
+    onColor: v => { cfg.fill = v; refreshShapePrev(field); markDirty(); },
+    onOpacity: v => { cfg.fillOpacity = v; refreshShapePrev(field); markDirty(); }
+  });
+  if (!cfg.fill) fillRow.style.display = 'none';
+  checkRow(cont, t('cfg.shapeFill'), Boolean(cfg.fill), v => {
+    cfg.fill = v ? fillColor.value : '';
+    fillRow.style.display = v ? '' : 'none';
+    refreshShapePrev(field);
+  });
+  cont.appendChild(fillRow);
+}
+
+function shapeStrokeToggleConfig(cont, field) {
+  const cfg = field.config;
+  const strokeBox = el('div', {});
+  checkRow(cont, t('cfg.shapeStroke'), !cfg.noStroke, v => {
+    cfg.noStroke = !v;
+    strokeBox.style.display = v ? '' : 'none';
+    refreshShapePrev(field);
+  });
+  shapeStrokeConfig(strokeBox, field);
+  if (cfg.noStroke) strokeBox.style.display = 'none';
+  cont.appendChild(strokeBox);
 }
 
 const configForms = {
@@ -2916,32 +2956,10 @@ const configForms = {
     const cfg = field.config;
 
     // Borde (opcional)
-    const strokeBox = el('div', {});
-    checkRow(cont, t('cfg.shapeStroke'), !cfg.noStroke, v => {
-      cfg.noStroke = !v;
-      strokeBox.style.display = v ? '' : 'none';
-      refreshShapePrev(field);
-    });
-    shapeStrokeConfig(strokeBox, field);
-    if (cfg.noStroke) strokeBox.style.display = 'none';
-    cont.appendChild(strokeBox);
+    shapeStrokeToggleConfig(cont, field);
 
     // Relleno (opcional), con color y opacidad
-    const { wrap: fillRow, colorInp: fillColor } = colorOpacityRow({
-      colorLabel: t('cfg.fillColor'),
-      opacityLabel: t('cfg.fillOpacity'),
-      color: cfg.fill || '#f8e3a1',
-      opacity: cfg.fillOpacity ?? 1,
-      onColor: v => { cfg.fill = v; refreshShapePrev(field); markDirty(); },
-      onOpacity: v => { cfg.fillOpacity = v; refreshShapePrev(field); markDirty(); }
-    });
-    if (!cfg.fill) fillRow.style.display = 'none';
-    checkRow(cont, t('cfg.shapeFill'), Boolean(cfg.fill), v => {
-      cfg.fill = v ? fillColor.value : '';
-      fillRow.style.display = v ? '' : 'none';
-      refreshShapePrev(field);
-    });
-    cont.appendChild(fillRow);
+    shapeFillConfig(cont, field);
 
     // Esquinas redondeadas
     const brVal = parseFloat(cfg.borderRadius) || 0;
@@ -2968,7 +2986,8 @@ const configForms = {
   },
 
   ellipse(cont, field) {
-    configForms.rect(cont, field);
+    shapeStrokeToggleConfig(cont, field);
+    shapeFillConfig(cont, field);
     checkRow(cont, t('cfg.forceCircle'), Boolean(field.config.circle), v => {
       field.config.circle = v;
       refreshShapePrev(field);
@@ -2997,32 +3016,10 @@ const configForms = {
     cont.appendChild(el('div', { class: 'rot-row' }, sidesRange, sidesNum));
 
     // Borde (opcional)
-    const strokeBox = el('div', {});
-    checkRow(cont, t('cfg.shapeStroke'), !cfg.noStroke, v => {
-      cfg.noStroke = !v;
-      strokeBox.style.display = v ? '' : 'none';
-      refreshShapePrev(field);
-    });
-    shapeStrokeConfig(strokeBox, field);
-    if (cfg.noStroke) strokeBox.style.display = 'none';
-    cont.appendChild(strokeBox);
+    shapeStrokeToggleConfig(cont, field);
 
     // Relleno (opcional), con color y opacidad
-    const { wrap: fillRow, colorInp: fillColor } = colorOpacityRow({
-      colorLabel: t('cfg.fillColor'),
-      opacityLabel: t('cfg.fillOpacity'),
-      color: cfg.fill || '#f8e3a1',
-      opacity: cfg.fillOpacity ?? 1,
-      onColor: v => { cfg.fill = v; refreshShapePrev(field); markDirty(); },
-      onOpacity: v => { cfg.fillOpacity = v; refreshShapePrev(field); markDirty(); }
-    });
-    if (!cfg.fill) fillRow.style.display = 'none';
-    checkRow(cont, t('cfg.shapeFill'), Boolean(cfg.fill), v => {
-      cfg.fill = v ? fillColor.value : '';
-      fillRow.style.display = v ? '' : 'none';
-      refreshShapePrev(field);
-    });
-    cont.appendChild(fillRow);
+    shapeFillConfig(cont, field);
 
     // Mantener la forma regular (si no, se deforma para llenar la caja)
     checkRow(cont, t('cfg.polygonRegular'), cfg.regular !== false, v => {
