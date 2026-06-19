@@ -283,8 +283,15 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     };
 
     manifest.pages.forEach((page, pi) => {
-      const pageEl = el('div', { class: 'wpf-page' },
-        el('img', { class: 'fondo', src: fileUrl(page.image), alt: 'Página ' + (pi + 1) }));
+      const pageEl = el('div', {
+        class: 'wpf-page',
+        style: page.bgColor ? `background-color:${page.bgColor}` : ''
+      }, el('img', {
+        class: 'fondo',
+        src: fileUrl(page.image),
+        alt: 'Página ' + (pi + 1),
+        style: `opacity:${page.imageOpacity ?? 1}`
+      }));
       page.fields.forEach(field => {
         const ctl = renderField(field, pageEl, ctx);
         if (!gradable(field)) return; // decorativos o noScore: se muestran pero no puntúan

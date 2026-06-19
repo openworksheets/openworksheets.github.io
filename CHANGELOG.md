@@ -9,6 +9,18 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.16.2] — 2026-06-19
+
+### Añadido
+- **Opacidad de la imagen de fondo de la página**: en la configuración de página,
+  un control deslizante (con casilla en %) permite atenuar la imagen importada
+  (PDF/imagen) para usarla como marca de agua y resaltar los campos de encima.
+- **Color de fondo de página para todas las páginas**: el selector de color, que
+  antes solo aparecía en las páginas en blanco, ahora está disponible también en
+  las páginas importadas. Es el color que asoma al transparentar la imagen.
+
+---
+
 ## [1.16.1] — 2026-06-19
 
 ### Añadido

@@ -280,16 +280,33 @@ function addBlankPage(insertAt) {
   cv.toBlob(blob => {
     const path = `pages/page-${state.pageSeq++}.png`;
     state.files.set(path, blob);
-    const page = { image: path, w: W, h: H, fields: [], bgColor: '#ffffff' };
+    const page = { image: path, w: W, h: H, fields: [], bgColor: '#ffffff', blank: true };
     if (insertAt != null) state.manifest.pages.splice(insertAt, 0, page);
     else state.manifest.pages.push(page);
     markDirty(); autoThumbs(); renderCanvas(); renderPanel();
   }, 'image/png');
 }
 
+// Una página «en blanco» tiene su color de fondo horneado en la propia imagen
+// (rectángulo sólido) y se puede recolorear/redimensionar repintándola. Las
+// páginas importadas (PDF/imagen) no: su imagen es el escaneo real.
+function isBlankPage(page) { return !!(page && page.blank); }
+
+// Color de fondo de página: capa CSS bajo la imagen (todas las páginas). En las
+// páginas en blanco, además, se repinta la imagen sólida para mantenerlas igual.
+function setPageBg(pi, color) {
+  const page = state.manifest.pages[pi];
+  if (!page) return;
+  page.bgColor = color;
+  const pageEl = canvas.querySelector(`.wpf-page[data-page="${pi}"]`);
+  if (pageEl) pageEl.style.backgroundColor = color;
+  if (isBlankPage(page)) recolorBlankPage(pi, color);
+  markDirty();
+}
+
 function recolorBlankPage(pi, color) {
   const page = state.manifest.pages[pi];
-  if (!page?.bgColor) return;
+  if (!isBlankPage(page)) return;
   const W = page.w, H = page.h;
   const cv = document.createElement('canvas');
   cv.width = W; cv.height = H;
@@ -308,7 +325,7 @@ function recolorBlankPage(pi, color) {
 
 function resizePage(pi, w, h) {
   const page = state.manifest.pages[pi];
-  if (!page?.bgColor) return;
+  if (!isBlankPage(page)) return;
   const cv = document.createElement('canvas');
   cv.width = w; cv.height = h;
   const ctx2d = cv.getContext('2d');
@@ -477,8 +494,17 @@ function renderCanvas() {
   zoomWrap.style.display = '';
 
   state.manifest.pages.forEach((page, pi) => {
-    const pageEl = el('div', { class: 'wpf-page', dataset: { page: pi } },
-      el('img', { class: 'fondo', src: fileUrl(page.image), alt: t('editor.pageN', { n: pi + 1, total: state.manifest.pages.length }), draggable: 'false' }));
+    const pageEl = el('div', {
+      class: 'wpf-page',
+      dataset: { page: pi },
+      style: page.bgColor ? `background-color:${page.bgColor}` : ''
+    }, el('img', {
+      class: 'fondo',
+      src: fileUrl(page.image),
+      alt: t('editor.pageN', { n: pi + 1, total: state.manifest.pages.length }),
+      draggable: 'false',
+      style: `opacity:${page.imageOpacity ?? 1}`
+    }));
 
     page.fields.forEach(field => {
       const decor = Boolean(FIELD_TYPES[field.type]?.decor);
@@ -702,8 +728,10 @@ function reorderPage(from, to) {
 function renderThumbs() {
   thumbsList.textContent = '';
   state.manifest.pages.forEach((page, pi) => {
-    const frame = el('div', { class: 'ed-thumb-frame' },
-      el('img', { src: fileUrl(page.image), alt: '', draggable: 'false' }));
+    const frame = el('div', {
+      class: 'ed-thumb-frame',
+      style: page.bgColor ? `background-color:${page.bgColor}` : ''
+    }, el('img', { src: fileUrl(page.image), alt: '', draggable: 'false', style: `opacity:${page.imageOpacity ?? 1}` }));
     const thumb = el('div', {
       class: 'ed-thumb', draggable: 'true', tabindex: '0', dataset: { page: pi },
       title: t('editor.pageN', { n: pi + 1, total: state.manifest.pages.length })
@@ -1788,11 +1816,35 @@ function renderPagePanel(pi) {
   cont.appendChild(el('h3', {},
     el('span', { class: 'tipo-chip' }, t('editor.pageChip')),
     t('editor.pageN', { n: pi + 1, total: state.manifest.pages.length })));
-  if (page.bgColor !== undefined) {
-    cont.appendChild(el('label', { class: 'f-label' }, t('editor.pageBgColor')));
-    const { wrap: colorPickWrap } = colorInput(page.bgColor, v => recolorBlankPage(pi, v));
-    cont.appendChild(colorPickWrap);
+  // Color de fondo de página: capa bajo la imagen, disponible en todas las
+  // páginas (se ve al transparentar la imagen de fondo).
+  cont.appendChild(el('label', { class: 'f-label' }, t('editor.pageBgColor')));
+  const { wrap: colorPickWrap } = colorInput(page.bgColor || '#ffffff', v => setPageBg(pi, v));
+  cont.appendChild(colorPickWrap);
 
+  // Opacidad de la imagen de fondo: solo para páginas importadas (en las páginas
+  // en blanco la «imagen» es el propio color, así que no aporta nada).
+  if (!isBlankPage(page)) {
+    const opVal = Math.round((page.imageOpacity ?? 1) * 100);
+    const imgOp = el('input', { type: 'range', min: '0', max: '100', step: '1', value: String(opVal) });
+    const imgOpNum = el('input', { type: 'number', min: '0', max: '100', step: '1', value: String(opVal) });
+    const syncImgOp = val => {
+      const v = Math.max(0, Math.min(100, parseInt(val, 10) || 0));
+      page.imageOpacity = v / 100;
+      imgOp.value = v;
+      imgOpNum.value = v;
+      const imgEl = canvas.querySelector(`.wpf-page[data-page="${pi}"] img.fondo`);
+      if (imgEl) imgEl.style.opacity = String(page.imageOpacity);
+      markDirty();
+    };
+    imgOp.addEventListener('input', () => syncImgOp(imgOp.value));
+    imgOpNum.addEventListener('input', () => syncImgOp(imgOpNum.value));
+    cont.appendChild(el('label', { class: 'f-label' }, t('editor.pageImageOpacity')));
+    cont.appendChild(el('div', { class: 'rot-row' }, imgOp, imgOpNum, el('span', {}, '%')));
+  }
+
+  // Tamaño de la página: solo páginas en blanco (se rehornean al cambiarlo).
+  if (isBlankPage(page)) {
     const sizes = [
       { key: 'a4p',  w: 1600, h: 2263, label: t('editor.pageSizeA4p') },
       { key: 'a4l',  w: 2263, h: 1600, label: t('editor.pageSizeA4l') },
@@ -4133,6 +4185,8 @@ async function openZipFile(file, handle = null) {
     openFileName = file.name || null;
     state.manifest = ficha.manifest;
     migrateArrowFields(state.manifest);
+    // Fichas antiguas: las páginas en blanco se reconocían por tener bgColor.
+    state.manifest.pages.forEach(p => { if (p.blank === undefined) p.blank = (p.bgColor !== undefined); });
     state.files = ficha.files;
     state.submissionCryptoPassword = '';
     urls.forEach(u => URL.revokeObjectURL(u));
