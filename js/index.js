@@ -5,6 +5,7 @@ import { toast, copyToClipboard } from './util.js';
 import { buildShortLink, parseDriveId } from './drive.js';
 import { t, applyI18n, initLangSelector, getLang } from './i18n.js';
 import { stashFile } from './filehandoff.js';
+import { typesetMath } from './mathrender.js';
 
 // Entrega recibida por enlace (#e=…): los enlaces que genera el alumnado apuntan
 // a index.html por compatibilidad. La corrección se hace en entregas.html, así
@@ -15,6 +16,7 @@ if (window.location.hash.startsWith('#e=')) {
 
 applyI18n();
 initLangSelector();
+typesetMath(document.body);
 
 // Ficha de ejemplo según el idioma activo (fallback: español).
 const EXAMPLE_ZIPS = {

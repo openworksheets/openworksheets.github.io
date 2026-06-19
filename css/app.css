@@ -427,7 +427,7 @@ textarea { resize: vertical; min-height: 70px; }
   padding: 22px 24px;
 }
 
-.hero { text-align: center; padding: 44px 16px 0; }
+.hero { text-align: center; padding: 10px 16px 0; }
 .hero h1 {
   font-size: clamp(2.2rem, 6vw, 3.6rem);
   margin-bottom: 0.25em;
@@ -465,6 +465,55 @@ textarea { resize: vertical; min-height: 70px; }
    autocorregible»), suficientemente claro para que el texto tenga buen contraste. */
 .home-card .btn { background: color-mix(in srgb, var(--rojo) 16%, var(--blanco)); }
 .home-card .btn:hover { background: color-mix(in srgb, var(--rojo) 24%, var(--blanco)); }
+
+/* Banner de Fórmulas LaTeX */
+.home-feature-banner {
+  margin-top: 28px;
+  background: var(--blanco);
+  border: 2px solid var(--tinta);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.home-feature-banner .banner-icon {
+  background: var(--azul-claro);
+  color: var(--tinta);
+  padding: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.home-feature-banner .math-icon {
+  width: 32px;
+  height: 32px;
+}
+.home-feature-banner .banner-content {
+  flex: 1;
+}
+.home-feature-banner h3 {
+  margin: 0 0 6px 0;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+.home-feature-banner p {
+  margin: 0;
+  color: var(--tinta-suave);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+@media (max-width: 600px) {
+  .home-feature-banner {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+}
 
 .page-title { margin-top: 0; }
 
