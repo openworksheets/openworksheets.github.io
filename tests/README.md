@@ -42,6 +42,10 @@ pantalla y termina con `__TEST_OK__` o `__TEST_FAIL__`.
   «Rellenar huecos» de la paleta; comprueba que pregunta el modo antes de
   dibujar y que crea un campo «gaps» o «textboxes» según la elección
   (`node tests/run_fillgaps_editor.js`, con el servidor en el puerto 8765).
+- `run_dirty_editor.js` — script de puppeteer aparte: comprueba el control de
+  cambios sin guardar del editor; una ficha nueva en blanco no debe pedir
+  confirmacion al reemplazarse, pero si despues de anadir un campo
+  (`node tests/run_dirty_editor.js`, con el servidor en el puerto 8765).
 - `run_zoom.js` — script de puppeteer aparte: zoom de página en el editor
   (botones, Ctrl+rueda) y en el visor del alumno, y transición del acordeón
   de la paleta (`node tests/run_zoom.js`, con el servidor en el puerto 8765).
