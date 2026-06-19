@@ -335,6 +335,7 @@ const STRINGS = {
     'cfg.alignJustify': 'Justificado',
     'cfg.labelBold': 'Negrita',
     'cfg.coverColor': 'Color del rectángulo',
+    'cfg.coverOpacity': 'Opacidad',
     'cfg.coverHint': 'Tapa lo que haya debajo. Útil para ocultar respuestas o partes del documento que no quieres mostrar.',
     'cfg.changeImage': 'Cambiar imagen',
     'cfg.imageHint': 'La imagen no cuenta en la corrección. Mueve y redimensiona el rectángulo para colocarla.',
@@ -1077,6 +1078,7 @@ const STRINGS = {
     'cfg.alignJustify': 'Justified',
     'cfg.labelBold': 'Bold',
     'cfg.coverColor': 'Rectangle color',
+    'cfg.coverOpacity': 'Opacity',
     'cfg.coverHint': 'Covers whatever is underneath. Useful for hiding answers or parts of the document you do not want to show.',
 
     'dlg.settings.title': 'Worksheet settings',
@@ -1796,6 +1798,7 @@ const STRINGS = {
     'cfg.alignJustify': 'Justificat',
     'cfg.labelBold': 'Negreta',
     'cfg.coverColor': 'Color del rectangle',
+    'cfg.coverOpacity': 'Opacitat',
     'cfg.coverHint': 'Tapa el que hi hagi a sota. Útil per ocultar respostes o parts del document que no vols mostrar.',
 
     'dlg.settings.title': 'Ajustos de la fitxa',
@@ -2515,6 +2518,7 @@ const STRINGS = {
     'cfg.alignJustify': 'Xustificado',
     'cfg.labelBold': 'Grosa',
     'cfg.coverColor': 'Cor do rectángulo',
+    'cfg.coverOpacity': 'Opacidade',
     'cfg.coverHint': 'Tapa o que haxa debaixo. Útil para ocultar respostas ou partes do documento que non queres mostrar.',
 
     'dlg.settings.title': 'Axustes da ficha',
@@ -3234,6 +3238,7 @@ const STRINGS = {
     'cfg.alignJustify': 'Justifikatua',
     'cfg.labelBold': 'Lodia',
     'cfg.coverColor': 'Laukizuzenaren kolorea',
+    'cfg.coverOpacity': 'Opakutasuna',
     'cfg.coverHint': 'Azpian dagoena estaltzen du. Erakutsi nahi ez dituzun erantzunak edo dokumentu-zatiak ezkutatzeko erabilgarria.',
 
     'dlg.settings.title': 'Fitxaren ezarpenak',

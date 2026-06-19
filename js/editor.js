@@ -495,6 +495,7 @@ function renderCanvas() {
         box.appendChild(lp);
       } else if (field.type === 'cover') {
         box.style.background = field.config.color || '#ffffff';
+        box.style.opacity = String(field.config.opacity ?? 1);
       } else if (field.type === 'image' && field.config?.src && state.files.has(field.config.src)) {
         box.appendChild(el('img', { src: fileUrl(field.config.src), class: 'ed-img-prev', alt: '' }));
       } else if (field.type === 'video' || field.type === 'audio' || field.type === 'embed') {
@@ -2735,11 +2736,22 @@ const configForms = {
 
     // Relleno (opcional), con color y opacidad
     const { inp: fillColor, wrap: fillColorWrap } = colorInput(cfg.fill || '#f8e3a1', v => { cfg.fill = v; refreshShapePrev(field); markDirty(); });
-    const fillOp = el('input', { type: 'range', min: '0', max: '1', step: '0.05', value: String(cfg.fillOpacity ?? 1) });
-    fillOp.addEventListener('input', () => { cfg.fillOpacity = parseFloat(fillOp.value); refreshShapePrev(field); markDirty(); });
+    const fillOp = el('input', { type: 'range', min: '0', max: '100', step: '1', value: String(Math.round((cfg.fillOpacity ?? 1) * 100)) });
+    const fillOpNum = el('input', { type: 'number', min: '0', max: '100', step: '1', value: String(Math.round((cfg.fillOpacity ?? 1) * 100)) });
+    const syncFillOp = val => {
+      const v = Math.max(0, Math.min(100, parseInt(val, 10) || 0));
+      cfg.fillOpacity = v / 100;
+      fillOp.value = v;
+      fillOpNum.value = v;
+      refreshShapePrev(field);
+      markDirty();
+    };
+    fillOp.addEventListener('input', () => syncFillOp(fillOp.value));
+    fillOpNum.addEventListener('input', () => syncFillOp(fillOpNum.value));
     const fillRow = el('div', {},
       el('label', { class: 'f-label' }, t('cfg.fillColor')), fillColorWrap,
-      el('label', { class: 'f-label' }, t('cfg.fillOpacity')), fillOp);
+      el('label', { class: 'f-label' }, t('cfg.fillOpacity')),
+      el('div', { class: 'rot-row' }, fillOp, fillOpNum, el('span', {}, '%')));
     if (!cfg.fill) fillRow.style.display = 'none';
     checkRow(cont, t('cfg.shapeFill'), Boolean(cfg.fill), v => {
       cfg.fill = v ? fillColor.value : '';
@@ -2814,11 +2826,22 @@ const configForms = {
 
     // Relleno (opcional), con color y opacidad
     const { inp: fillColor, wrap: fillColorWrap } = colorInput(cfg.fill || '#f8e3a1', v => { cfg.fill = v; refreshShapePrev(field); markDirty(); });
-    const fillOp = el('input', { type: 'range', min: '0', max: '1', step: '0.05', value: String(cfg.fillOpacity ?? 1) });
-    fillOp.addEventListener('input', () => { cfg.fillOpacity = parseFloat(fillOp.value); refreshShapePrev(field); markDirty(); });
+    const fillOp = el('input', { type: 'range', min: '0', max: '100', step: '1', value: String(Math.round((cfg.fillOpacity ?? 1) * 100)) });
+    const fillOpNum = el('input', { type: 'number', min: '0', max: '100', step: '1', value: String(Math.round((cfg.fillOpacity ?? 1) * 100)) });
+    const syncFillOp = val => {
+      const v = Math.max(0, Math.min(100, parseInt(val, 10) || 0));
+      cfg.fillOpacity = v / 100;
+      fillOp.value = v;
+      fillOpNum.value = v;
+      refreshShapePrev(field);
+      markDirty();
+    };
+    fillOp.addEventListener('input', () => syncFillOp(fillOp.value));
+    fillOpNum.addEventListener('input', () => syncFillOp(fillOpNum.value));
     const fillRow = el('div', {},
       el('label', { class: 'f-label' }, t('cfg.fillColor')), fillColorWrap,
-      el('label', { class: 'f-label' }, t('cfg.fillOpacity')), fillOp);
+      el('label', { class: 'f-label' }, t('cfg.fillOpacity')),
+      el('div', { class: 'rot-row' }, fillOp, fillOpNum, el('span', {}, '%')));
     if (!cfg.fill) fillRow.style.display = 'none';
     checkRow(cont, t('cfg.shapeFill'), Boolean(cfg.fill), v => {
       cfg.fill = v ? fillColor.value : '';
@@ -2934,6 +2957,21 @@ const configForms = {
       markDirty();
     });
     cont.appendChild(coverColorWrap);
+    const coverOp = el('input', { type: 'range', min: '0', max: '100', step: '1', value: String(Math.round((cfg.opacity ?? 1) * 100)) });
+    const coverOpNum = el('input', { type: 'number', min: '0', max: '100', step: '1', value: String(Math.round((cfg.opacity ?? 1) * 100)) });
+    const syncCoverOp = val => {
+      const v = Math.max(0, Math.min(100, parseInt(val, 10) || 0));
+      cfg.opacity = v / 100;
+      coverOp.value = v;
+      coverOpNum.value = v;
+      const box = canvas.querySelector(`.ed-field[data-id="${field.id}"]`);
+      if (box) box.style.opacity = String(cfg.opacity);
+      markDirty();
+    };
+    coverOp.addEventListener('input', () => syncCoverOp(coverOp.value));
+    coverOpNum.addEventListener('input', () => syncCoverOp(coverOpNum.value));
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.coverOpacity')));
+    cont.appendChild(el('div', { class: 'rot-row' }, coverOp, coverOpNum, el('span', {}, '%')));
     cont.appendChild(el('p', { style: 'font-size:.85rem;color:var(--tinta-suave);margin-top:8px' },
       t('cfg.coverHint')));
   },

@@ -505,7 +505,7 @@ const renderers = {
     const cfg = field.config || {};
     root.appendChild(el('div', {
       class: 'wpf-cover-fill',
-      style: `background:${cfg.color || '#ffffff'}`
+      style: `background:${cfg.color || '#ffffff'};opacity:${cfg.opacity ?? 1}`
     }));
     return emptyRenderer();
   },

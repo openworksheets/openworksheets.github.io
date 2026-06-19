@@ -9,6 +9,20 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.16.1] — 2026-06-19
+
+### Añadido
+- **Opacidad para el campo «Tapar zona»**: un control deslizante permite hacer
+  el rectángulo semitransparente, de modo que se intuya lo que hay debajo en
+  lugar de ocultarlo por completo.
+
+### Cambiado
+- **Los controles de opacidad se pueden escribir como porcentaje**: junto al
+  deslizante (tapar zona, relleno de formas y fondo del campo) hay ahora una
+  casilla numérica con el valor en % para introducirlo con precisión.
+
+---
+
 ## [1.16.0] — 2026-06-18
 
 ### Añadido

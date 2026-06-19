@@ -174,7 +174,7 @@ export const FIELD_TYPES = {
     glyph: ICONS.coverZone,
     decor: true,
     defRect: { w: 0.25, h: 0.07 },
-    defaults: () => ({ color: '#ffffff' })
+    defaults: () => ({ color: '#ffffff', opacity: 1 })
   },
   image: {
     name: 'Imagen',
