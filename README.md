@@ -77,6 +77,17 @@ Elementos decorativos o informativos que no se corrigen ni cuentan en la puntuac
 
 Todos los campos con texto comparten ajustes de **tipo de letra** (con una fuente global de la ficha y posibilidad de cambiarla por campo, incluida OpenDyslexic), tamaño y color. Cada campo permite fijar su **tamaño exacto** (anchura y altura en %) además de ajustarlo con el ratón, y las formas, la imagen y el texto admiten **rotación**. El editor incluye una **tira de miniaturas** para navegar y reordenar páginas, **menús contextuales** (clic derecho) para copiar, cortar, pegar, duplicar y borrar campos y páginas, **deshacer/rehacer** (Ctrl+Z / Ctrl+Y) y **zoom** hasta el 500 % (Ctrl+rueda) con desplazamiento arrastrando la ficha.
 
+### 🧮 Fórmulas matemáticas y química (LaTeX)
+
+Cualquier texto de la ficha admite **fórmulas LaTeX**, que se renderizan automáticamente al mostrarse al alumnado: el título y las instrucciones, el campo **Texto**, las opciones de respuesta, los encabezados y las celdas de la **Tabla editable**, etc.
+
+- **En línea:** escribe la fórmula entre `\(` y `\)` — por ejemplo, `\(\frac{1}{2}\)` o `\(E = mc^2\)`.
+- **En bloque (centrada):** entre `\[` y `\]` — por ejemplo, `\[\int_0^1 x^2\,dx\]`.
+
+Funciona con todo el repertorio habitual: fracciones, raíces, sumatorios e integrales, **matrices**, flechas, símbolos, etc., y con **química** mediante `mhchem` (`\(\ce{H2O}\)`, `\(\ce{2H2 + O2 -> 2H2O}\)`).
+
+El renderizado usa MathJax con salida SVG: se carga solo cuando la ficha contiene fórmulas y **funciona sin conexión**, también dentro de los paquetes SCORM, IMS CP y de la exportación a web.
+
 ## Flujo de trabajo
 
 1. **Crear:** el profesorado sube un PDF o imagen, o empieza con una hoja en blanco, coloca los campos y configura las respuestas correctas y la puntuación en el editor.
@@ -154,7 +165,15 @@ La interfaz está disponible en español, inglés, català, galego y euskera.
 
 ## Tecnología
 
-Funciona sin servidor, sin cuentas y sin instalaciones. Es una aplicación web estática en JavaScript vanilla, compatible con cualquier navegador moderno.
+Funciona sin servidor, sin cuentas y sin instalaciones. Es una aplicación web estática en JavaScript vanilla (módulos ES, sin framework ni paso de compilación), compatible con cualquier navegador moderno.
+
+Las únicas dependencias son bibliotecas locales que viajan con la aplicación, por lo que todo funciona **sin conexión** (también en los paquetes SCORM, IMS CP y de exportación a web):
+
+- **[pdf.js](https://mozilla.github.io/pdf.js/)** — convierte cada página del PDF en imagen al importar.
+- **[JSZip](https://stuk.github.io/jszip/)** — lee y escribe los paquetes `.owpkg`, `.owsub` y los ZIP de exportación.
+- **[MathJax](https://www.mathjax.org/)** (componente *tex-svg*) — renderiza las fórmulas LaTeX y químicas a SVG; se carga solo cuando la ficha contiene fórmulas.
+
+El cifrado usa la **Web Crypto API** del navegador (sin biblioteca externa).
 
 ### Enlaces cortos (backend compartido)
 

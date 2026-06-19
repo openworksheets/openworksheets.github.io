@@ -18,6 +18,14 @@ applyI18n();
 initLangSelector();
 typesetMath(document.body);
 
+// Acordeón «Seguridad y privacidad»: al abrirlo, llevar su título a la vista.
+// Si no, el contenido desplegado puede quedar por debajo del borde inferior de
+// la página y obligar a hacer scroll a mano.
+const seguridad = document.querySelector('details.seguridad');
+seguridad?.addEventListener('toggle', () => {
+  if (seguridad.open) seguridad.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
 // Ficha de ejemplo según el idioma activo (fallback: español).
 const EXAMPLE_ZIPS = {
   es: 'ejemplos/ficha-de-prueba-para-openworksheets.owpkg',

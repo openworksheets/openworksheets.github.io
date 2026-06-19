@@ -417,7 +417,7 @@ textarea { resize: vertical; min-height: 70px; }
 
 /* ---------- Tarjetas y página ---------- */
 
-.page-wrap { max-width: 1080px; margin: 0 auto; padding: 28px 20px 60px; }
+.page-wrap { max-width: 1080px; margin: 0 auto; padding: 28px 20px 20px; }
 
 .card {
   background: var(--blanco);

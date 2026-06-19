@@ -18,6 +18,8 @@ Las versiones publicadas también están en la página de
   fracciones, matrices, integrales, flechas, química (`\ce{…}`) y demás. Usa
   MathJax con salida SVG, que se carga solo cuando hay fórmulas y funciona sin
   conexión, también en los paquetes SCORM y en la exportación a web.
+- **Aviso en la página inicial** que destaca el soporte de fórmulas matemáticas
+  y químicas, con ejemplos renderizados.
 - **Tipos de celda en «Tabla editable»**: cada celda puede ser de **texto** o de
   **número** (se corrige por valor, admite coma o punto decimal). Convierte la
   tabla en un mini-formulario didáctico, útil para biología, matemáticas,
@@ -48,6 +50,11 @@ Las versiones publicadas también están en la página de
   (por defecto), la tabla puede puntuar por **filas completas** o **columnas
   completas** —la fila o columna solo suma si todas sus celdas son correctas—,
   útil para ejercicios de clasificación.
+
+### Corregido
+- En la página inicial, al desplegar **«Seguridad y privacidad»** su contenido
+  podía quedar por debajo del borde inferior; ahora el título se lleva a la vista
+  al abrirlo. Reducido también el espacio sobrante entre ese bloque y el pie.
 
 ## [1.17.3] — 2026-06-19
 
