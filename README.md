@@ -88,6 +88,31 @@ Funciona con todo el repertorio habitual: fracciones, raíces, sumatorios e inte
 
 El renderizado usa MathJax con salida SVG: se carga solo cuando la ficha contiene fórmulas y **funciona sin conexión**, también dentro de los paquetes SCORM, IMS CP y de la exportación a web.
 
+#### Asistente de fórmulas (EdiCuaTeX)
+
+Para facilitar la escritura de fórmulas matemáticas o químicas sin necesidad de conocer la sintaxis de LaTeX, el editor integra la herramienta de edición visual **EdiCuaTeX**:
+
+1. **Botón `fx`:** Cuando enfocas cualquier campo de texto que admita LaTeX en el panel lateral (como enunciados, textos de ayuda, opciones de respuesta, etc.), aparecerá el botón **`fx`** en la cabecera del panel (o pulsando el atajo `Ctrl+Shift+F`).
+2. **Edición visual:** Al hacer clic en él, se abrirá un editor visual en ventana emergente de [EdiCuaTeX](https://edicuatex.github.io/). Si tenías texto seleccionado en el campo, se cargará automáticamente para que puedas editarlo.
+3. **Inserción automática:** Una vez diseñada la fórmula, al pulsar el botón de inserción en EdiCuaTeX, esta se pegará automáticamente en tu campo de texto del editor de OpenWorksheets envuelta en los delimitadores de línea estándar `\(` y `\)`.
+
+### 📊 Tablas editables
+
+El tipo de campo **Tabla editable** permite crear rejillas estructuradas de entrada de datos (hasta un máximo de **12 filas y 8 columnas**) para que el alumnado las complete.
+
+#### Características y configuración avanzada:
+- **Tipos de celda individuales:** Cada celda de la tabla se puede configurar de forma independiente con los siguientes tipos:
+  - **Texto:** Para respuestas alfanuméricas. Permite múltiples alternativas correctas y normalizaciones (tildes, mayúsculas, etc.).
+  - **Número:** Para respuestas numéricas, con posibilidad de definir una **tolerancia de error** (p. ej. `±0.1`).
+  - **Desplegable:** Convierte la celda en una lista de opciones. Las respuestas correctas alternativas se muestran como las opciones del desplegable y se marca cuál es la solución activa.
+- **Celdas de ejemplo:** Cualquier celda se puede marcar como *Ejemplo*. Se mostrará rellena con la solución al alumno, no será editable y no contará para la puntuación.
+- **Modos de corrección:** Desde los ajustes del panel, la corrección de la tabla se puede configurar en tres modalidades:
+  - **Celda a celda:** Cada respuesta correcta suma puntos de forma independiente.
+  - **Por filas completas:** Toda la fila debe ser correcta para puntuar (ideal para clasificaciones o relacionar conceptos en una misma línea).
+  - **Por columnas completas:** Toda la columna debe completarse correctamente para puntuar.
+- **Importación desde Hojas de Cálculo:** Puedes copiar datos directamente desde Excel, Google Sheets, Calc o un archivo CSV y pegarlos en el botón de importación de la tabla para rellenar automáticamente la estructura y los contenidos.
+- **Editor a pantalla completa:** Para tablas grandes, puedes abrir el editor de tablas en pantalla completa mediante el botón correspondiente del panel lateral para trabajar con mayor comodidad.
+
 ## Flujo de trabajo
 
 1. **Crear:** el profesorado sube un PDF o imagen, o empieza con una hoja en blanco, coloca los campos y configura las respuestas correctas y la puntuación en el editor.
