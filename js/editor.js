@@ -2764,14 +2764,14 @@ function deleteTableCol(field, c) {
 // opciones) conservando el tamaño y los ajustes de corrección.
 function clearTable(field) {
   const cfg = field.config;
-  cfg.rowHeaders = cfg.rowHeaders.map(() => '');
-  cfg.colHeaders = cfg.colHeaders.map(() => '');
-  cfg.cellAnswers = cfg.cellAnswers.map(row => row.map(() => ['']));
-  cfg.cells = cfg.cells.map(row => row.map(() => ''));
-  cfg.examples = cfg.examples.map(row => row.map(() => false));
-  cfg.cellTypes = cfg.cellTypes.map(row => row.map(() => 'text'));
-  cfg.cellTolerance = cfg.cellTolerance.map(row => row.map(() => 0));
-  cfg.cellOptions = cfg.cellOptions.map(row => row.map(() => []));
+  if (Array.isArray(cfg.rowHeaders)) cfg.rowHeaders = cfg.rowHeaders.map(() => '');
+  if (Array.isArray(cfg.colHeaders)) cfg.colHeaders.map(() => '');
+  if (Array.isArray(cfg.cellAnswers)) cfg.cellAnswers = cfg.cellAnswers.map(row => row.map(() => ['']));
+  if (Array.isArray(cfg.cells)) cfg.cells = cfg.cells.map(row => row.map(() => ''));
+  if (Array.isArray(cfg.examples)) cfg.examples = cfg.examples.map(row => row.map(() => false));
+  if (Array.isArray(cfg.cellTypes)) cfg.cellTypes = cfg.cellTypes.map(row => row.map(() => 'text'));
+  if (Array.isArray(cfg.cellTolerance)) cfg.cellTolerance = cfg.cellTolerance.map(row => row.map(() => 0));
+  if (Array.isArray(cfg.cellOptions)) cfg.cellOptions = cfg.cellOptions.map(row => row.map(() => []));
 }
 
 // Importa en la tabla el texto de una hoja de cálculo (reemplazo total),
