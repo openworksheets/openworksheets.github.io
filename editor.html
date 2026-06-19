@@ -99,6 +99,7 @@
       <h2 data-i18n="dlg.settings.title">Ajustes de la ficha</h2>
       <div class="settings-tabs" role="tablist">
         <button type="button" class="settings-tab is-active" role="tab" aria-selected="true" aria-controls="ajPanelBasic" data-tab="basic" data-i18n="dlg.tab.data">Datos</button>
+        <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="ajPanelEditorPrefs" data-tab="editorPrefs" data-i18n="dlg.tab.editorPrefs">Preferencias del editor</button>
         <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="ajPanelCorrection" data-tab="correction" data-i18n="dlg.tab.correctionPrivacy">Corrección y privacidad</button>
         <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="ajPanelAccess" data-tab="access" data-i18n="dlg.access.section">Restricciones de acceso</button>
         <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="ajPanelScorm" data-tab="scorm" data-i18n="dlg.tab.scorm">SCORM</button>
@@ -114,6 +115,8 @@
           <label class="f-label" for="ajFont" data-i18n="dlg.settings.font">Tipo de letra de la ficha</label>
           <select id="ajFont" class="font-select"></select>
           <p><small data-i18n="dlg.settings.fontHint">Se aplica a todos los campos con texto. Cada campo puede usar otra fuente desde su sección «Diseño».</small></p>
+        </section>
+        <section class="settings-panel" id="ajPanelEditorPrefs" role="tabpanel" data-panel="editorPrefs" hidden>
           <h3 class="settings-subhead" data-i18n="dlg.settings.editorPrefs">Preferencias del editor</h3>
           <label class="check-row"><input type="checkbox" id="ajFormulaBtn"> <span data-i18n="dlg.settings.formulaBtn">Mostrar el botón para insertar fórmulas (LaTeX)</span></label>
           <p><small data-i18n="dlg.settings.resetPrefsHint">Restablece las preferencias persistentes de OpenWorksheets, como idioma, tema, zoom, unidad de tamaño y anchura de los paneles laterales.</small></p>
