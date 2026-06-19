@@ -49,9 +49,41 @@ const puppeteer = require('puppeteer-core');
   const titulo = await page.$eval('#titulo', n => n.value);
   check('título escribible', titulo.includes('Prueba'));
 
+  await page.evaluate(() => {
+    localStorage.setItem('ows.editorThumbsWidth', '210');
+    localStorage.setItem('ows.editorPanelWidth', '390');
+  });
+  check('persisten los anchos laterales', true);
+  await page.reload({ waitUntil: 'networkidle0' });
+  const persistedAfterReload = await page.evaluate(() => ({
+    thumbs: getComputedStyle(document.querySelector('.ed-layout')).getPropertyValue('--thumbs-w').trim(),
+    panel: getComputedStyle(document.querySelector('.ed-layout')).getPropertyValue('--panel-w').trim()
+  }));
+  check('se restauran al recargar', persistedAfterReload.thumbs === '210px' && persistedAfterReload.panel === '390px');
+
+  await page.click('#btnAjustes');
+  await new Promise(r => setTimeout(r, 150));
+  await page.click('#ajResetPrefs');
+  await new Promise(r => setTimeout(r, 250));
+  const resetPrefs = await page.evaluate(() => ({
+    thumbs: localStorage.getItem('ows.editorThumbsWidth'),
+    panel: localStorage.getItem('ows.editorPanelWidth'),
+    zoom: localStorage.getItem('wpf-ed-zoom'),
+    unit: localStorage.getItem('ows.pageSizeUnit')
+  }));
+  check('restablecer limpia preferencias persistentes', !resetPrefs.thumbs && !resetPrefs.panel && !resetPrefs.zoom && !resetPrefs.unit);
+  await page.keyboard.press('Escape');
+  await page.evaluate(() => {
+    const btns = [...document.querySelectorAll('.ed-empty button')];
+    btns[btns.length - 1].click();
+  });
+  await new Promise(r => setTimeout(r, 300));
+  await page.click('.ed-group[data-group="write"]');
+  await new Promise(r => setTimeout(r, 150));
+
   // Dibujar un campo (createField + selección de estado)
   await page.evaluate(() => {
-    (document.querySelector('.ed-tool[data-type="shorttext"]') || document.querySelector('.ed-tool')).click();
+    (document.querySelector('.ed-tool[data-type="text"]') || document.querySelector('.ed-tool')).click();
   });
   const pg = await page.$('.wpf-page');
   if (pg) {

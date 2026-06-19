@@ -1449,6 +1449,37 @@ body.resizing-col { cursor: col-resize; }
   color: var(--field-fg, var(--tinta));
   font-family: var(--field-font, var(--ficha-font, var(--cuerpo)));
 }
+.ed-table-prev {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  padding: 0.18em;
+}
+.ed-table-prev-grid {
+  width: 100%;
+  height: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.58em;
+  background: rgba(255, 253, 248, 0.92);
+}
+.ed-table-prev-grid th,
+.ed-table-prev-grid td {
+  border: 1px solid rgba(29, 44, 66, 0.28);
+  padding: 0.14em 0.18em;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ed-table-prev-grid th { background: rgba(83, 119, 173, 0.15); font-weight: 700; }
+.ed-table-prev-grid .corner,
+.ed-table-prev-grid .rowhead { background: rgba(239, 231, 213, 0.82); }
+.ed-table-prev-grid td.is-example {
+  background: rgba(196, 230, 201, 0.75);
+  font-weight: 700;
+}
 .ed-field.ed-field-label .chip,
 .ed-field.ed-field-cover .chip,
 .ed-field.ed-field-image .chip,
@@ -1753,6 +1784,51 @@ body.resizing-col { cursor: col-resize; }
 .co-opacity input[type="number"] { width: 72px; flex: none; box-sizing: border-box; }
 
 .opt-list { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.cfg-table-grid-wrap { overflow: auto; margin-top: 6px; }
+.cfg-table-grid {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.88rem;
+}
+.cfg-table-grid th,
+.cfg-table-grid td {
+  border: 1px solid var(--tinta-tenue);
+  padding: 4px;
+  vertical-align: middle;
+}
+.cfg-table-grid th { background: var(--azul-claro); }
+.cfg-table-grid td input,
+.cfg-table-grid th input { margin: 0; }
+.cfg-table-grid td.is-example { background: color-mix(in srgb, var(--verde-claro) 55%, #fff); }
+.cfg-table-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cfg-table-cell .opt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cfg-table-cell .opt-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.cfg-table-cell .opt-row input[type="text"] {
+  min-width: 0;
+}
+.cfg-table-cell .add-row {
+  align-self: flex-start;
+}
+.cfg-table-example-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  color: var(--tinta-suave);
+}
 .opt-row { display: flex; align-items: center; gap: 6px; }
 .opt-row input[type='text'] { flex: 1; }
 .opt-row .marca { width: auto; }
@@ -1909,10 +1985,54 @@ body.resizing-col { cursor: col-resize; }
   color: var(--field-fg, var(--tinta));
   box-shadow: var(--sombra-mini);
 }
+.wpf-table-input { min-height: 2em; height: 100%; box-shadow: none; border-width: 1.5px; }
 .wpf-field-text .wpf-input, .wpf-field-number .wpf-input { position: absolute; inset: 0; height: auto; }
 .wpf-input:focus, .wpf-select:focus, .wpf-gap-input:focus {
   outline: none;
   border-color: var(--rojo);
+}
+.wpf-table-wrap {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background: var(--field-bg, rgb(255, 253, 248));
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  box-shadow: var(--sombra-mini);
+}
+.wpf-table-grid {
+  width: 100%;
+  height: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.88em;
+}
+.wpf-table-grid th,
+.wpf-table-grid td {
+  border: 1px solid var(--tinta-tenue);
+  padding: 0.18em;
+  vertical-align: middle;
+}
+.wpf-table-grid th {
+  background: color-mix(in srgb, var(--azul-claro) 55%, #fff);
+  font-weight: 700;
+  text-align: center;
+}
+.wpf-table-grid .corner,
+.wpf-table-grid .rowhead {
+  background: color-mix(in srgb, var(--papel-2) 55%, #fff);
+}
+.wpf-table-grid td.is-example {
+  background: color-mix(in srgb, var(--verde-claro) 60%, #fff);
+}
+.wpf-table-example {
+  min-height: 2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.24em 0.35em;
+  font-weight: 700;
+  color: var(--verde-oscuro, #255b2e);
 }
 
 .wpf-select {
@@ -2411,6 +2531,8 @@ input.wpf-gap-input {
 .wpf-tb-hostfield { background: transparent !important; border: none !important; pointer-events: none; }
 .wpf-field-textboxes > .wpf-badge,
 .wpf-field-textboxes > .wpf-expected { display: none; }
+.wpf-field-table > .wpf-badge,
+.wpf-field-table > .wpf-expected { display: none; }
 
 .wpf-tbbox {
   position: absolute;

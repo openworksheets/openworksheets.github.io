@@ -9,6 +9,22 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.17.3] — 2026-06-19
+
+### Añadido
+- **Tabla editable con celdas de ejemplo**: el profesorado puede marcar algunas
+  celdas para que se muestren ya resueltas al alumnado como ejemplo. Esas
+  celdas no se pueden editar y no cuentan en la puntuación.
+- **Varias respuestas válidas por celda en «Tabla editable»**, con el mismo
+  esquema que en «Respuesta corta»: una respuesta principal y alternativas, más
+  las opciones de normalización (ignorar tildes, mayúsculas y espacios).
+
+### Documentación
+- El README aclara que **se pueden crear fichas desde una hoja en blanco**, sin
+  necesidad de cargar antes un PDF o una imagen.
+- Añadida explicación de cuándo conviene usar **alternativas de respuesta** y
+  cuándo basta con las opciones de normalización.
+
 ## [1.17.2] — 2026-06-19
 
 ### Añadido

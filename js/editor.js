@@ -19,7 +19,7 @@
 // Estado mutable y helpers de UI viven fuera: editor-state.js y editor-ui.js.
 
 import { el, uid, clamp, toast, downloadBlob, slugify, copyToClipboard, zoomControl } from './util.js';
-import { FIELD_TYPES, PALETTE_GROUPS, fieldTypeName, gapCount, isShapeField } from './fieldtypes.js';
+import { FIELD_TYPES, PALETTE_GROUPS, fieldTypeName, gapCount, isShapeField, normalizeTableConfig } from './fieldtypes.js';
 import { parseImsManifest } from './scorm.js';
 import { FONT_OPTIONS, DEFAULT_FONT, fontStack } from './fonts.js';
 import { buildShapeSvg, CHECKBOX_SVG, buildMediaContent, buildScormView } from './render.js';
@@ -33,7 +33,7 @@ import { exportWebPackage } from './webexport.js';
 import { exportImscpPackage } from './imscpexport.js';
 import { buildShortLink, parseDriveId } from './drive.js';
 import { mountPlayer } from './player.js';
-import { t, getLang, applyI18n, initLangSelector } from './i18n.js';
+import { t, getLang, setLang, applyI18n, initLangSelector } from './i18n.js';
 import { ICONS } from './icons.js';
 import { createSubmissionCrypto, decryptManifestForStudent, encryptManifestForStudent, isEncryptedManifest } from './submissionCrypto.js';
 import { iconBtn, colorInput } from './editor-ui.js';
@@ -41,13 +41,16 @@ import { state, urls, fileUrl, markDirty, onDirty } from './editor-state.js';
 import { takeFile } from './filehandoff.js';
 
 applyI18n();
-// En el editor no recargamos al cambiar de idioma (se perderían los cambios sin
-// guardar): re-traducimos la interfaz en caliente conservando la ficha en curso.
-initLangSelector({ reload: false, onChange: () => {
+function refreshEditorTexts() {
   applyI18n();
   renderPalette();
   renderCanvas();
   renderPanel();
+}
+// En el editor no recargamos al cambiar de idioma (se perderían los cambios sin
+// guardar): re-traducimos la interfaz en caliente conservando la ficha en curso.
+initLangSelector({ reload: false, onChange: () => {
+  refreshEditorTexts();
 } });
 
 // ---------- Referencias al DOM ----------
@@ -59,6 +62,13 @@ const canvasWrap = $('#canvasWrap');
 const panel = $('#panel');
 const palette = $('#palette');
 const titleInput = $('#titulo');
+const EDITOR_ZOOM_KEY = 'wpf-ed-zoom';
+const THUMBS_WIDTH_KEY = 'ows.editorThumbsWidth';
+const PANEL_WIDTH_KEY = 'ows.editorPanelWidth';
+const SIZE_UNIT_KEY = 'ows.pageSizeUnit';
+const PERSISTENT_PREF_KEYS = [EDITOR_ZOOM_KEY, THUMBS_WIDTH_KEY, PANEL_WIDTH_KEY, SIZE_UNIT_KEY, 'wpf-lang', 'wpf-tema'];
+const DEFAULT_THUMBS_W = 168;
+const DEFAULT_PANEL_W = 330;
 
 // ---------- Archivo abierto ----------
 // fileHandle: FileSystemFileHandle (Chrome/Edge) o null
@@ -72,7 +82,7 @@ function clearOpenFile() { openFileHandle = null; openFileName = null; }
 
 const zoomCtl = zoomControl({
   apply: z => { canvas.style.setProperty('--zoom', z); requestAnimationFrame(updatePannable); },
-  key: 'wpf-ed-zoom',
+  key: EDITOR_ZOOM_KEY,
   max: 5,
   titles: { in: t('zoom.in'), out: t('zoom.out'), reset: t('zoom.reset') }
 });
@@ -281,8 +291,6 @@ const SIZE_UNITS = {
   cm: { perPx: 1 / (PX_PER_MM * 10),  step: '0.1',  dec: 1 },
   in: { perPx: 1 / (PX_PER_MM * 25.4), step: '0.05', dec: 2 },
 };
-const SIZE_UNIT_KEY = 'ows.pageSizeUnit';
-
 function sizeUnit() {
   const u = localStorage.getItem(SIZE_UNIT_KEY);
   return SIZE_UNITS[u] ? u : 'cm';
@@ -574,6 +582,8 @@ function renderCanvas({ preserveScroll = false } = {}) {
         const gp = el('div', { class: 'ed-gaps-prev' });
         gp.textContent = field.config.text || '';
         box.appendChild(gp);
+      } else if (field.type === 'table') {
+        box.appendChild(buildEditorTablePreview(field));
       } else if (field.type === 'cover') {
         box.style.background = field.config.color || '#ffffff';
         box.style.opacity = String(field.config.opacity ?? 1);
@@ -896,6 +906,20 @@ canvas.addEventListener('scroll', () => {
 // configuración). No se guarda: cada sesión empieza con los anchos por defecto.
 const thumbsAside = $('#thumbs');
 
+function readStoredSidebarWidth(key, min, max) {
+  const v = parseInt(localStorage.getItem(key) || '', 10);
+  return Number.isFinite(v) ? clamp(v, min, max) : null;
+}
+
+function applyStoredSidebarWidths() {
+  const thumbsW = readStoredSidebarWidth(THUMBS_WIDTH_KEY, 110, 420);
+  const panelW = readStoredSidebarWidth(PANEL_WIDTH_KEY, 260, 620);
+  if (thumbsW != null) edLayout.style.setProperty('--thumbs-w', thumbsW + 'px');
+  if (panelW != null) edLayout.style.setProperty('--panel-w', panelW + 'px');
+}
+
+applyStoredSidebarWidths();
+
 function setupGutter(gutter, onMove) {
   gutter.addEventListener('pointerdown', e => {
     e.preventDefault();
@@ -921,12 +945,14 @@ setupGutter($('#gutterThumbs'), e => {
   const left = thumbsAside.getBoundingClientRect().left;
   const w = Math.max(110, Math.min(420, e.clientX - left));
   edLayout.style.setProperty('--thumbs-w', w + 'px');
+  localStorage.setItem(THUMBS_WIDTH_KEY, String(w));
 });
 
 setupGutter($('#gutterPanel'), e => {
   const right = edLayout.getBoundingClientRect().right;
   const w = Math.max(260, Math.min(620, right - e.clientX));
   edLayout.style.setProperty('--panel-w', w + 'px');
+  localStorage.setItem(PANEL_WIDTH_KEY, String(w));
 });
 
 // ---------- Copiar / cortar / pegar / duplicar páginas ----------
@@ -2531,6 +2557,41 @@ function rebuildCanvasMedia(field) {
   box.appendChild(buildMediaContent(field, fileUrl, { editor: true, host: editorPkgHost() }));
 }
 
+function buildEditorTablePreview(field) {
+  const cfg = normalizeTableConfig(field.config);
+  Object.assign(field.config, cfg);
+  const wrap = el('div', { class: 'ed-table-prev' });
+  const tbl = el('table', { class: 'ed-table-prev-grid' });
+  const useRowHeads = cfg.showRowHeaders;
+  const useColHeads = cfg.showColHeaders;
+  if (useColHeads) {
+    const thead = el('thead', {});
+    const tr = el('tr', {});
+    if (useRowHeads) tr.appendChild(el('th', { class: 'corner' }, ''));
+    cfg.colHeaders.forEach((txt, i) => tr.appendChild(el('th', {}, txt || `C${i + 1}`)));
+    thead.appendChild(tr);
+    tbl.appendChild(thead);
+  }
+  const tbody = el('tbody', {});
+  cfg.cells.forEach((row, r) => {
+    const tr = el('tr', {});
+    if (useRowHeads) tr.appendChild(el(useColHeads ? 'th' : 'td', { class: 'rowhead' }, cfg.rowHeaders[r] || `F${r + 1}`));
+    row.forEach((cell, c) => {
+      const isExample = Boolean(cfg.examples?.[r]?.[c]);
+      tr.appendChild(el('td', { class: isExample ? 'is-example' : '' }, cell || `${r + 1}.${c + 1}`));
+    });
+    tbody.appendChild(tr);
+  });
+  tbl.appendChild(tbody);
+  wrap.appendChild(tbl);
+  return wrap;
+}
+
+function refreshTablePrev(field) {
+  const old = canvas.querySelector(`.ed-field[data-id="${field.id}"] .ed-table-prev`);
+  if (old) old.replaceWith(buildEditorTablePreview(field));
+}
+
 // Controles de tamaño de texto + tipo de letra, comunes a los campos con texto,
 // a los medios (título/pie) y al texto decorativo. Aplican en vivo sobre el campo.
 function appendTextSizeFont(cont, field) {
@@ -3455,6 +3516,119 @@ const configForms = {
     configForms.single(cont, field);
   },
 
+  table(cont, field) {
+    const cfg = normalizeTableConfig(field.config);
+    Object.assign(field.config, cfg);
+    const syncTableCell = (r, c) => {
+      field.config.cells[r][c] = field.config.cellAnswers[r][c]?.[0] ?? '';
+      refreshTablePrev(field);
+    };
+    const applyCfg = patch => {
+      Object.assign(field.config, normalizeTableConfig({ ...field.config, ...patch }));
+      refreshTablePrev(field);
+      markDirty();
+    };
+    const appendHeaderList = (label, items, onInput) => {
+      cont.appendChild(el('label', { class: 'f-label' }, label));
+      const list = el('div', { class: 'opt-list' });
+      items.forEach((item, i) => {
+        const row = el('div', { class: 'opt-row' });
+        row.appendChild(textCell(item, v => onInput(i, v), t('cfg.tableHeaderPlaceholder', { n: i + 1 })));
+        list.appendChild(row);
+      });
+      cont.appendChild(list);
+    };
+
+    const dims = el('div', { class: 'ed-size-grid' });
+    const rowsInp = el('input', { type: 'number', min: '1', max: '12', step: '1', value: String(cfg.rows) });
+    const colsInp = el('input', { type: 'number', min: '1', max: '8', step: '1', value: String(cfg.cols) });
+    rowsInp.addEventListener('change', () => { applyCfg({ rows: rowsInp.value }); renderPanel(); });
+    colsInp.addEventListener('change', () => { applyCfg({ cols: colsInp.value }); renderPanel(); });
+    dims.appendChild(el('label', { class: 'f-label' }, t('cfg.tableRows')));
+    dims.appendChild(rowsInp);
+    dims.appendChild(el('label', { class: 'f-label' }, t('cfg.tableCols')));
+    dims.appendChild(colsInp);
+    cont.appendChild(dims);
+
+    checkRow(cont, t('cfg.tableShowColHeaders'), cfg.showColHeaders, v => {
+      applyCfg({ showColHeaders: v });
+      renderPanel();
+    });
+    checkRow(cont, t('cfg.tableShowRowHeaders'), cfg.showRowHeaders, v => {
+      applyCfg({ showRowHeaders: v });
+      renderPanel();
+    });
+
+    if (field.config.showColHeaders) appendHeaderList(t('cfg.tableColHeaders'), field.config.colHeaders, (i, v) => {
+      field.config.colHeaders[i] = v;
+      refreshTablePrev(field);
+    });
+
+    if (field.config.showRowHeaders) appendHeaderList(t('cfg.tableRowHeaders'), field.config.rowHeaders, (i, v) => {
+      field.config.rowHeaders[i] = v;
+      refreshTablePrev(field);
+    });
+
+    const wrap = el('div', { class: 'cfg-scoring-only' });
+    if (field.noScore) wrap.style.display = 'none';
+    wrap.appendChild(el('label', { class: 'f-label' }, t('cfg.answers')));
+    const grid = el('div', { class: 'cfg-table-grid-wrap' });
+    const tbl = el('table', { class: 'cfg-table-grid' });
+    if (field.config.showColHeaders) {
+      const thead = el('thead', {});
+      const tr = el('tr', {});
+      if (field.config.showRowHeaders) tr.appendChild(el('th', { class: 'corner' }, ''));
+      field.config.colHeaders.forEach((txt, i) => tr.appendChild(el('th', {}, txt || `C${i + 1}`)));
+      thead.appendChild(tr);
+      tbl.appendChild(thead);
+    }
+    const tbody = el('tbody', {});
+    field.config.cells.forEach((row, r) => {
+      const tr = el('tr', {});
+      if (field.config.showRowHeaders) tr.appendChild(el(field.config.showColHeaders ? 'th' : 'td', { class: 'rowhead' }, field.config.rowHeaders[r] || `F${r + 1}`));
+      row.forEach((cell, c) => {
+        const td = el('td', {});
+        if (field.config.examples?.[r]?.[c]) td.classList.add('is-example');
+        const cellWrap = el('div', { class: 'cfg-table-cell' });
+        optionListEditor(cellWrap, {
+          items: () => field.config.cellAnswers[r][c],
+          render: (rowWrap, item, i) => rowWrap.appendChild(textCell(item, v => {
+            field.config.cellAnswers[r][c][i] = v;
+            syncTableCell(r, c);
+          }, i === 0 ? t('cfg.tableCellPlaceholder', { r: r + 1, c: c + 1 }) : t('cfg.answerPlaceholder'))),
+          add: () => field.config.cellAnswers[r][c].push(''),
+          remove: i => {
+            field.config.cellAnswers[r][c].splice(i, 1);
+            if (!field.config.cellAnswers[r][c].length) field.config.cellAnswers[r][c].push('');
+            syncTableCell(r, c);
+          },
+          addLabel: t('cfg.addAnswer')
+        });
+        const exToggle = el('label', { class: 'cfg-table-example-toggle' });
+        const exInput = el('input', { type: 'checkbox' });
+        exInput.checked = Boolean(field.config.examples?.[r]?.[c]);
+        exInput.addEventListener('change', () => {
+          field.config.examples[r][c] = exInput.checked;
+          td.classList.toggle('is-example', exInput.checked);
+          refreshTablePrev(field);
+          markDirty();
+        });
+        exToggle.appendChild(exInput);
+        exToggle.appendChild(el('span', {}, t('cfg.tableExampleCell')));
+        cellWrap.appendChild(exToggle);
+        td.appendChild(cellWrap);
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    tbl.appendChild(tbody);
+    grid.appendChild(tbl);
+    wrap.appendChild(grid);
+    wrap.appendChild(el('label', { class: 'f-label' }, t('cfg.correction')));
+    textNormOptions(wrap, field.config);
+    cont.appendChild(wrap);
+  },
+
   gaps(cont, field) {
     const cfg = field.config;
     cont.appendChild(el('label', { class: 'f-label' }, t('cfg.gapsText')));
@@ -3903,6 +4077,25 @@ function updateCryptoSettingsUi() {
   $('#ajCryptoPassword').disabled = !enabled;
 }
 
+function resetPersistentEditorPrefs() {
+  if (!window.confirm(t('dlg.settings.resetPrefsConfirm'))) return;
+  PERSISTENT_PREF_KEYS.forEach(k => localStorage.removeItem(k));
+  edLayout.style.removeProperty('--thumbs-w');
+  edLayout.style.removeProperty('--panel-w');
+  edLayout.style.setProperty('--thumbs-w', DEFAULT_THUMBS_W + 'px');
+  edLayout.style.setProperty('--panel-w', DEFAULT_PANEL_W + 'px');
+  zoomCtl.set(1);
+  localStorage.removeItem(EDITOR_ZOOM_KEY);
+  localStorage.removeItem(SIZE_UNIT_KEY);
+  if (window.wpfTheme?.apply) window.wpfTheme.apply('auto');
+  const browserLang = (navigator.language || 'es').slice(0, 2).toLowerCase();
+  setLang(browserLang, { save: false, reload: false });
+  const langSel = $('#selLang');
+  if (langSel) langSel.value = getLang();
+  refreshEditorTexts();
+  toast(t('toast.prefsReset'), 'ok');
+}
+
 // Pestañas del diálogo de ajustes: muestra una sección a la vez.
 function activateSettingsTab(name) {
   const dlg = $('#dlgAjustes');
@@ -3958,6 +4151,7 @@ function openSettings(afterSave, initialTab = 'basic') {
 }
 
 $('#ajCifrarEntregas')?.addEventListener('change', updateCryptoSettingsUi);
+$('#ajResetPrefs')?.addEventListener('click', resetPersistentEditorPrefs);
 
 $('#dlgAjustes form')?.addEventListener('submit', ev => {
   if (ev.submitter?.value !== 'ok') return;

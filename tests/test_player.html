@@ -52,6 +52,15 @@ async function main() {
                 { id: 'z1', rect: { x: 0.6, y: 0.6, w: 0.15, h: 0.05 }, answer: 'Norte' },
                 { id: 'z2', rect: { x: 0.6, y: 0.7, w: 0.15, h: 0.05 }, answer: 'Sur' }
               ], distractors: ['Este']
+            } },
+          { id: 'f5', type: 'table', rect: { x: 0.1, y: 0.78, w: 0.46, h: 0.12 }, points: 3, fontScale: 1,
+            config: {
+              rows: 2, cols: 2, showColHeaders: true, showRowHeaders: true,
+              colHeaders: ['A', 'B'], rowHeaders: ['1', '2'],
+              cells: [['sol', 'luna'], ['mar', 'río']],
+              cellAnswers: [[['sol'], ['luna', 'satélite']], [['mar', 'océano'], ['río']]],
+              examples: [[true, false], [false, false]],
+              ignoreCase: true, ignoreAccents: true, collapseSpaces: true
             } }
         ]
       }]
@@ -94,6 +103,15 @@ async function main() {
     root.querySelector('.wpf-zone[data-zone="z2"]').click();
     await sleep(50);
 
+    const tableExample = root.querySelector('[data-id="f5"] .wpf-table-example')?.textContent?.trim();
+    log('ejemplo visible en tabla:', tableExample);
+
+    // f5: tabla editable → 2 bien, 1 mal (la primera celda es ejemplo)
+    const tableInputs = [...root.querySelectorAll('[data-id="f5"] .wpf-table-input')];
+    tableInputs[0].value = 'satelite'; tableInputs[0].dispatchEvent(new Event('input'));
+    tableInputs[1].value = 'oceano'; tableInputs[1].dispatchEvent(new Event('input'));
+    tableInputs[2].value = 'lago'; tableInputs[2].dispatchEvent(new Event('input'));
+
     const progreso = root.querySelector('.al-barra .estado').textContent;
     log('progreso:', progreso);
 
@@ -107,7 +125,7 @@ async function main() {
     await sleep(400);
 
     const nota = root.querySelector('.notaza')?.textContent?.trim();
-    log('nota mostrada:', nota, '| esperada: 5 / 7');
+    log('nota mostrada:', nota, '| esperada: 7 / 10');
 
     // Con intentos restantes y corrección activada, el visor pregunta primero si
     // reintentar o ver la corrección; las marcas no se muestran hasta elegir.
@@ -126,11 +144,11 @@ async function main() {
       partial: root.querySelectorAll('.wpf-field.mark-partial').length,
       ko: root.querySelectorAll('.wpf-field.mark-ko').length
     };
-    log('marcas → ok:', marks.ok, 'parciales:', marks.partial, 'ko:', marks.ko, '| esperado ok:2 parciales:2 ko:0');
+    log('marcas → ok:', marks.ok, 'parciales:', marks.partial, 'ko:', marks.ko, '| esperado ok:2 parciales:3 ko:0');
     const expected = root.querySelectorAll('.wpf-expected').length;
     log('soluciones mostradas en campos fallados:', expected);
 
-    const pass = nota === '5 / 7' && marks.ok === 2 && marks.partial === 2 && marks.ko === 0 && codigo && retry;
+    const pass = nota === '7 / 10' && marks.ok === 2 && marks.partial === 3 && marks.ko === 0 && codigo && retry && tableInputs.length === 3 && tableExample === 'sol';
 
     // ---- Restricciones de acceso ----
     root.textContent = '';
@@ -183,7 +201,7 @@ async function main() {
     const labelOk = root.querySelector('.wpf-label-text')?.textContent === 'Nota del docente';
     const coverOk = !!root.querySelector('.wpf-cover-fill');
     const progDecor = root.querySelector('.al-barra .estado').textContent;
-    const noCuentan = progDecor.includes('de 4'); // 4 preguntas, no 6
+    const noCuentan = progDecor.includes('de 5'); // 5 preguntas, no 7
     log('decorativos → texto:', labelOk, '| tapado:', coverOk, '| no cuentan como preguntas:', noCuentan);
     p2.destroy();
 

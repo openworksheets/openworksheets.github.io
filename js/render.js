@@ -11,7 +11,7 @@
 //     (match, order y dragdrop se barajan siempre: su orden delataría la solución).
 
 import { el, shuffled, shuffledIndices, normalizeText } from './util.js';
-import { parseGaps } from './fieldtypes.js';
+import { parseGaps, normalizeTableConfig } from './fieldtypes.js';
 import { fontStack } from './fonts.js';
 import { mdToHtml } from './markdown.js';
 import { Scorm12Runtime } from './scorm.js';
@@ -111,6 +111,45 @@ function emptyRenderer() {
     isAnswered: () => false,
     setDisabled: () => {}
   };
+}
+
+function buildTable(field, ctx) {
+  const cfg = normalizeTableConfig(field.config);
+  const table = el('table', { class: 'wpf-table-grid' });
+  const inputs = [];
+  if (cfg.showColHeaders) {
+    const thead = el('thead', {});
+    const tr = el('tr', {});
+    if (cfg.showRowHeaders) tr.appendChild(el('th', { class: 'corner' }, ''));
+    cfg.colHeaders.forEach((txt, i) => tr.appendChild(el('th', {}, txt || `C${i + 1}`)));
+    thead.appendChild(tr);
+    table.appendChild(thead);
+  }
+  const tbody = el('tbody', {});
+  cfg.cells.forEach((row, r) => {
+    const tr = el('tr', {});
+    if (cfg.showRowHeaders) tr.appendChild(el(cfg.showColHeaders ? 'th' : 'td', { class: 'rowhead' }, cfg.rowHeaders[r] || `F${r + 1}`));
+    row.forEach((cell, c) => {
+      const isExample = Boolean(cfg.examples?.[r]?.[c]);
+      if (isExample) {
+        tr.appendChild(el('td', { class: 'is-example' }, el('div', { class: 'wpf-table-example' }, cell)));
+        return;
+      }
+      const input = el('input', {
+        class: 'wpf-input wpf-table-input',
+        type: 'text',
+        autocomplete: 'off',
+        'aria-label': t('render.tableCellAria', { r: r + 1, c: c + 1 })
+      });
+      input.addEventListener('input', () => notify(ctx));
+      const td = el('td', {}, input);
+      tr.appendChild(td);
+      inputs.push({ r, c, input });
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  return { cfg, table, inputs };
 }
 
 // Construye el SVG de una forma de dibujo (line, arrow, rect, ellipse).
@@ -956,6 +995,35 @@ const renderers = {
       setAnswer: v => { sel.value = (v === null || v === undefined) ? '' : String(v); },
       isAnswered: () => sel.value !== '',
       setDisabled: b => { sel.disabled = b; }
+    };
+  },
+
+  table(field, root, ctx) {
+    const { cfg, table, inputs } = buildTable(field, ctx);
+    root.appendChild(el('div', { class: 'wpf-table-wrap' }, table));
+    return {
+      getAnswer: () => {
+        const out = Array.from({ length: cfg.rows }, () => Array.from({ length: cfg.cols }, () => ''));
+        inputs.forEach(({ r, c, input }) => { out[r][c] = input.value; });
+        return out;
+      },
+      setAnswer: v => {
+        const rows = Array.isArray(v) ? v : [];
+        inputs.forEach(({ r, c, input }) => { input.value = rows?.[r]?.[c] ?? ''; });
+      },
+      isAnswered: () => inputs.some(({ input }) => input.value.trim() !== ''),
+      setDisabled: b => inputs.forEach(({ input }) => { input.disabled = b; }),
+      markDetail() {
+        const norm = s => normalizeText(s, cfg);
+        inputs.forEach(({ r, c, input }) => {
+          const expected = (cfg.cellAnswers?.[r]?.[c] || []).filter(a => String(a ?? '').trim());
+          input.classList.remove('tb-ok', 'tb-ko');
+          if (cfg.examples?.[r]?.[c]) return;
+          if (!expected.length) return;
+          const val = input.value.trim();
+          input.classList.add(val && expected.some(exp => norm(val) === norm(exp)) ? 'tb-ok' : 'tb-ko');
+        });
+      }
     };
   },
 

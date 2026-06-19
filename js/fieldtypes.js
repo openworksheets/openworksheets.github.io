@@ -6,6 +6,50 @@
 import { t } from './i18n.js';
 import { ICONS } from './icons.js';
 
+function normTableSize(n, min, max, fallback) {
+  const v = parseInt(n, 10);
+  if (!Number.isInteger(v)) return fallback;
+  return Math.max(min, Math.min(max, v));
+}
+
+function normalizeTableAnswerList(value) {
+  const arr = Array.isArray(value) ? value : [value ?? ''];
+  const out = arr.map(v => String(v ?? ''));
+  return out.length ? out : [''];
+}
+
+export function normalizeTableConfig(cfg = {}) {
+  const rows = normTableSize(cfg.rows, 1, 12, 3);
+  const cols = normTableSize(cfg.cols, 1, 8, 3);
+  const rowHeaders = Array.from({ length: rows }, (_, r) => String(cfg.rowHeaders?.[r] ?? ''));
+  const colHeaders = Array.from({ length: cols }, (_, c) => String(cfg.colHeaders?.[c] ?? ''));
+  const cellAnswers = Array.from({ length: rows }, (_, r) =>
+    Array.from({ length: cols }, (_, c) =>
+      normalizeTableAnswerList(cfg.cellAnswers?.[r]?.[c] ?? cfg.cells?.[r]?.[c] ?? '')
+    )
+  );
+  const cells = Array.from({ length: rows }, (_, r) =>
+    Array.from({ length: cols }, (_, c) => cellAnswers[r][c][0] ?? '')
+  );
+  const examples = Array.from({ length: rows }, (_, r) =>
+    Array.from({ length: cols }, (_, c) => Boolean(cfg.examples?.[r]?.[c]))
+  );
+  return {
+    rows,
+    cols,
+    rowHeaders,
+    colHeaders,
+    cells,
+    cellAnswers,
+    examples,
+    showRowHeaders: Boolean(cfg.showRowHeaders),
+    showColHeaders: Boolean(cfg.showColHeaders),
+    ignoreCase: cfg.ignoreCase !== false,
+    ignoreAccents: cfg.ignoreAccents !== false,
+    collapseSpaces: cfg.collapseSpaces !== false
+  };
+}
+
 export const FIELD_TYPES = {
   text: {
     name: 'Respuesta corta',
@@ -53,6 +97,33 @@ export const FIELD_TYPES = {
     glyph: ICONS.chevronsUpDown,
     defRect: { w: 0.2, h: 0.05 },
     defaults: () => ({ options: ['Opción 1', 'Opción 2'], correct: 0 })
+  },
+  table: {
+    name: 'Tabla editable',
+    glyph: ICONS.table,
+    defRect: { w: 0.42, h: 0.2 },
+    defaults: () => normalizeTableConfig({
+      rows: 3,
+      cols: 3,
+      showColHeaders: true,
+      colHeaders: ['Animal', 'Clase', 'Alimentación'],
+      rowHeaders: ['Ejemplo 1', 'Ejemplo 2', 'Ejemplo 3'],
+      cells: [
+        ['Perro', 'Mamífero', 'Omnívora'],
+        ['Águila', 'Ave', 'Carnívora'],
+        ['Trucha', 'Pez', 'Carnívora']
+      ],
+      examples: [
+        [true, true, false],
+        [false, false, false],
+        [false, false, false]
+      ],
+      cellAnswers: [
+        [['Perro'], ['Mamífero'], ['Omnívora']],
+        [['Águila'], ['Ave'], ['Carnívora']],
+        [['Trucha'], ['Pez'], ['Carnívora']]
+      ]
+    })
   },
   gaps: {
     name: 'Completar huecos',
@@ -258,7 +329,7 @@ export const FIELD_TYPES = {
 
 export const FIELD_ORDER = [
   'text', 'number', 'single', 'truefalse', 'multi', 'checkbox',
-  'select', 'gaps', 'textboxes', 'match', 'order', 'dragdrop', 'arrowmatch',
+  'select', 'table', 'gaps', 'textboxes', 'match', 'order', 'dragdrop', 'arrowmatch',
   'record', 'embed', 'scorm',
   'label', 'cover', 'image', 'video', 'audio', 'line', 'rect', 'polygon', 'ellipse'
 ];
@@ -266,7 +337,7 @@ export const FIELD_ORDER = [
 // Grupos temáticos de la paleta del editor. El nombre visible
 // se obtiene de i18n con la clave 'palette.<id>'.
 export const PALETTE_GROUPS = [
-  { id: 'write',  glyph: ICONS.messageSquare,   types: ['text', 'number', 'fillgaps', 'record'] },
+  { id: 'write',  glyph: ICONS.messageSquare,   types: ['text', 'number', 'table', 'fillgaps', 'record'] },
   { id: 'choose', glyph: ICONS.listChecks,      types: ['single', 'multi', 'checkbox', 'truefalse', 'select'] },
   { id: 'relate', glyph: ICONS.arrowLeftRight,  types: ['match', 'order', 'dragdrop', 'arrowmatch'] },
   { id: 'external', glyph: ICONS.package,        types: ['embed', 'scorm'] },

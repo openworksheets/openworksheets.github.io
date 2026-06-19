@@ -11,7 +11,7 @@
 //   dragdrop → { zoneId: token | null }
 
 import { normalizeText, parseDecimal } from './util.js';
-import { parseGaps } from './fieldtypes.js';
+import { parseGaps, normalizeTableConfig } from './fieldtypes.js';
 import { scormRatio } from './scorm.js';
 
 export function gradeField(field, answer) {
@@ -79,6 +79,27 @@ const graders = {
   select(cfg, answer) {
     if (answer === null || answer === undefined) return { ratio: 0, blank: true };
     return { ratio: Number(answer) === Number(cfg.correct) ? 1 : 0 };
+  },
+
+  table(cfg, answer) {
+    const table = normalizeTableConfig(cfg);
+    const expected = [];
+    table.cellAnswers.forEach((row, r) => row.forEach((answers, c) => {
+      if (table.examples?.[r]?.[c]) return;
+      const accepted = answers.filter(a => String(a ?? '').trim());
+      if (accepted.length) expected.push({ r, c, accepted });
+    }));
+    if (!expected.length) return { ratio: 0, blank: true };
+    const given = Array.isArray(answer) ? answer : [];
+    const allBlank = expected.every(({ r, c }) => !String(given?.[r]?.[c] ?? '').trim());
+    if (allBlank) return { ratio: 0, blank: true };
+    const norm = s => normalizeText(s, table);
+    let hits = 0;
+    expected.forEach(({ r, c, accepted }) => {
+      const v = String(given?.[r]?.[c] ?? '');
+      if (v.trim() && accepted.some(ans => norm(v) === norm(ans))) hits++;
+    });
+    return { ratio: hits / expected.length };
   },
 
   checkbox(cfg, answer) {
@@ -229,6 +250,18 @@ export function expectedText(field) {
     case 'truefalse': return cfg.correct ? (cfg.labels?.[0] || 'Verdadero') : (cfg.labels?.[1] || 'Falso');
     case 'multi': return (cfg.correct || []).map(i => cfg.options?.[i]).filter(Boolean).join(', ');
     case 'select': return cfg.options?.[cfg.correct] ?? '';
+    case 'table': {
+      const table = normalizeTableConfig(cfg);
+      return table.cellAnswers
+        .flatMap((row, r) => row.map((answers, c) => {
+          if (table.examples?.[r]?.[c]) return '';
+          const accepted = answers.filter(a => a.trim());
+          return accepted.length ? `${r + 1}.${c + 1}: ${accepted.join(' / ')}` : '';
+        }
+        ))
+        .filter(Boolean)
+        .join(' · ');
+    }
     case 'checkbox': {
       const boxes = cfg.boxes || [];
       const nums = (cfg.correct || [])
@@ -274,6 +307,18 @@ export function answerText(field, answer) {
     case 'single':
     case 'select':
       return cfg.options?.[answer] ?? '';
+    case 'table': {
+      const table = normalizeTableConfig(cfg);
+      const given = Array.isArray(answer) ? answer : [];
+      return table.cells
+        .flatMap((row, r) => row.map((_, c) => {
+          if (table.examples?.[r]?.[c]) return '';
+          const v = String(given?.[r]?.[c] ?? '').trim();
+          return v ? `${r + 1}.${c + 1}: ${v}` : '';
+        }))
+        .filter(Boolean)
+        .join(' · ');
+    }
     case 'truefalse':
       return answer === true ? (cfg.labels?.[0] || 'Verdadero')
            : answer === false ? (cfg.labels?.[1] || 'Falso') : '';

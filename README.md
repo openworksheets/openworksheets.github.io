@@ -1,6 +1,6 @@
 # OpenWorksheets
 
-OpenWorksheets es una aplicación web para convertir PDFs o imágenes en fichas interactivas autocorregibles, de forma parecida a TopWorksheets. El profesorado puede subir un documento, colocar encima distintos tipos de campos de respuesta y configurar las soluciones, la puntuación, las opciones de corrección y las restricciones de acceso.
+OpenWorksheets es una aplicación web para convertir PDFs o imágenes en fichas interactivas autocorregibles, de forma parecida a TopWorksheets. El profesorado puede subir un documento, colocar encima distintos tipos de campos de respuesta y configurar las soluciones, la puntuación, las opciones de corrección y las restricciones de acceso. También permite crear fichas desde una hoja en blanco, sin necesidad de cargar antes un PDF o una imagen.
 
 ## Tipos de campo
 
@@ -14,6 +14,7 @@ Campos en los que el alumno aporta su propia respuesta abierta (la escribe o la 
 |------|-------------|
 | **Respuesta corta** | El alumno escribe texto libre. Admite varias respuestas correctas alternativas y opciones de normalización (tildes, mayúsculas, espacios). |
 | **Respuesta numérica** | El alumno introduce un número. Acepta coma o punto como separador decimal y permite definir una tolerancia de error. |
+| **Tabla editable** | El alumno rellena una tabla. Cada celda puede tener varias respuestas válidas alternativas y algunas celdas pueden marcarse como **ejemplo visible**: se muestran ya resueltas al alumnado y no cuentan para puntuar. |
 | **Rellenar huecos** | El alumno rellena palabras o frases que faltan. Dos modos: *escribir un texto con huecos* (marcados con corchetes en el enunciado) o *marcar huecos sobre el documento* (dibujando un cuadro sobre cada hueco que ya existe en el PDF o imagen). Admite varias respuestas válidas por hueco y puntuación proporcional. |
 | **Grabación de voz** | El alumno graba su voz con el micrófono. No se autocorrige: se valora *manualmente* (el docente pone la nota al revisar la entrega) o por *participación* (grabar algo otorga los puntos completos). El audio viaja dentro de la entrega; por su tamaño, su presencia deshabilita la entrega por enlace (queda solo la descarga de archivo). Duración máxima configurable. |
 
@@ -78,7 +79,16 @@ Todos los campos con texto comparten ajustes de **tipo de letra** (con una fuent
 
 ## Flujo de trabajo
 
-1. **Crear:** el profesorado sube un PDF o imagen, coloca los campos y configura las respuestas correctas y la puntuación en el editor.
+1. **Crear:** el profesorado sube un PDF o imagen, o empieza con una hoja en blanco, coloca los campos y configura las respuestas correctas y la puntuación en el editor.
+
+### Corrección de respuestas de texto
+
+Los campos basados en texto (como **Respuesta corta**, **Rellenar huecos**, **Huecos en documento** y las celdas de **Tabla editable**) siguen el mismo esquema de corrección:
+
+- Se pueden definir **varias respuestas válidas alternativas**.
+- Las opciones **Ignorar mayúsculas y minúsculas**, **Ignorar tildes** e **Ignorar espacios sobrantes** se aplican a todas esas alternativas.
+
+Esto significa que no hace falta añadir variantes que solo cambian por acentos o mayúsculas si esas opciones están activadas. Por ejemplo, con **Ignorar tildes**, `mamífero` y `mamifero` ya se consideran equivalentes. Las alternativas sirven para casos como `océano` / `mar`, `satélite` / `luna` o `carnívora` / `carnivoro` si quieres aceptar formas distintas con significado válido.
 2. **Compartir:** la ficha se exporta como un paquete `.owpkg` (OpenWorksheets Package, internamente un ZIP) que contiene todo lo necesario. Se sube a Google Drive u otro alojamiento público y se comparte con el alumnado mediante un enlace generado en la propia aplicación. El alumnado no tiene acceso al paquete original, lo que protege el contenido.
 3. **Responder y entregar:** el alumnado responde desde el navegador y, al terminar, puede descargar un archivo de entrega (`.owsub`) o copiar un enlace directo para enviárselo al docente.
 

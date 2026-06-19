@@ -28,6 +28,11 @@
     return t === 'auto' ? 'dark' : t === 'dark' ? 'light' : 'auto';
   }
 
+  window.wpfTheme = {
+    apply: aplicar,
+    getCurrent: actual
+  };
+
   document.addEventListener('DOMContentLoaded', function () {
     var btn = document.getElementById('btnTema');
     if (!btn) return;
