@@ -297,7 +297,12 @@ function unitToPx(val, unit) {
   return Math.round((parseFloat(val) || 0) / u.perPx);
 }
 
-function addBlankPage(insertAt) {
+// `newSheet`: la página en blanco es el arranque de una ficha nueva (menú
+// «Archivo» o pantalla inicial), no un añadido a la ficha en curso. En ese caso
+// la ficha queda como base limpia (sin cambios sin guardar) —igual que al abrir
+// un archivo—, así no se avisa de «se perderán los cambios» si no se ha tocado
+// nada. Añadir una página a una ficha existente sí marca cambios.
+function addBlankPage(insertAt, { newSheet = false } = {}) {
   const W = 1600, H = 2263; // A4 a ~192 dpi (igual que páginas PDF)
   const cv = document.createElement('canvas');
   cv.width = W; cv.height = H;
@@ -310,7 +315,14 @@ function addBlankPage(insertAt) {
     const page = { image: path, w: W, h: H, fields: [], bgColor: '#ffffff', blank: true };
     if (insertAt != null) state.manifest.pages.splice(insertAt, 0, page);
     else state.manifest.pages.push(page);
-    markDirty(); autoThumbs(); renderCanvas(); renderPanel();
+    if (newSheet) {
+      // Base limpia: la ficha en blanco no cuenta como cambio pendiente.
+      state.dirty = false;
+      resetHistory();
+    } else {
+      markDirty();
+    }
+    autoThumbs(); renderCanvas(); renderPanel();
   }, 'image/png');
 }
 
@@ -495,7 +507,16 @@ function movePage(pi, delta) {
 
 // ---------- Lienzo ----------
 
-function renderCanvas() {
+function renderCanvas({ preserveScroll = false } = {}) {
+  const prevScrollLeft = preserveScroll ? canvas.scrollLeft : 0;
+  const prevScrollTop = preserveScroll ? canvas.scrollTop : 0;
+  const restoreScroll = () => {
+    if (!preserveScroll) return;
+    requestAnimationFrame(() => {
+      canvas.scrollLeft = Math.max(0, Math.min(prevScrollLeft, canvas.scrollWidth - canvas.clientWidth));
+      canvas.scrollTop = Math.max(0, Math.min(prevScrollTop, canvas.scrollHeight - canvas.clientHeight));
+    });
+  };
   canvas.textContent = '';
   // Fuente global de la ficha: se hereda en los campos (y en la previa del label).
   canvas.style.setProperty('--ficha-font', fontStack(state.manifest.settings.fontFamily));
@@ -514,7 +535,8 @@ function renderCanvas() {
             input.click();
           } }, t('editor.addPdf')),
           el('button', { class: 'btn', onclick: () => $('#inputZip').click() }, t('editor.openZip'))),
-        el('button', { class: 'btn', onclick: () => addBlankPage() }, t('editor.addBlank')))));
+        el('button', { class: 'btn', onclick: () => addBlankPage(undefined, { newSheet: true }) }, t('editor.addBlank')))));
+    restoreScroll();
     return;
   }
 
@@ -742,6 +764,7 @@ function renderCanvas() {
   refreshSelectionStyles();
   renderThumbs();
   requestAnimationFrame(updatePannable);
+  restoreScroll();
 }
 
 // ---------- Tira de miniaturas de páginas ----------
@@ -1362,7 +1385,7 @@ function createField(pi, type, rect) {
     const box = { id: uid('cb'), rect: { ...rect } };
     field.config.boxes.push(box);
     markDirty();
-    renderCanvas();
+    renderCanvas({ preserveScroll: true });
     selectCbBox(pi, field.id, box.id);
     return;
   }
@@ -1371,12 +1394,12 @@ function createField(pi, type, rect) {
     const box = { id: uid('tb'), rect: { ...rect }, answers: [''] };
     field.config.boxes.push(box);
     markDirty();
-    renderCanvas();
+    renderCanvas({ preserveScroll: true });
     selectTbBox(pi, field.id, box.id);
     return;
   }
   markDirty();
-  renderCanvas();
+  renderCanvas({ preserveScroll: true });
   selectField(pi, field.id);
 }
 
@@ -1385,13 +1408,13 @@ function createCbBox(pi, rect) {
   const field = state.sel ? getField(state.sel.pageIndex, state.sel.fieldId) : null;
   if (!field || field.type !== 'checkbox' || state.sel.pageIndex !== pi) {
     toast(t('toast.selectCheckboxFirst'), 'error');
-    renderCanvas();
+    renderCanvas({ preserveScroll: true });
     return;
   }
   const box = { id: uid('cb'), rect };
   field.config.boxes.push(box);
   markDirty();
-  renderCanvas();
+  renderCanvas({ preserveScroll: true });
   selectCbBox(pi, field.id, box.id);
 }
 
@@ -1400,13 +1423,13 @@ function createTbBox(pi, rect) {
   const field = state.sel ? getField(state.sel.pageIndex, state.sel.fieldId) : null;
   if (!field || field.type !== 'textboxes' || state.sel.pageIndex !== pi) {
     toast(t('toast.selectTextboxFirst'), 'error');
-    renderCanvas();
+    renderCanvas({ preserveScroll: true });
     return;
   }
   const box = { id: uid('tb'), rect, answers: [''] };
   field.config.boxes.push(box);
   markDirty();
-  renderCanvas();
+  renderCanvas({ preserveScroll: true });
   selectTbBox(pi, field.id, box.id);
 }
 
@@ -1430,13 +1453,13 @@ function createZone(pi, rect) {
   const field = state.sel ? getField(state.sel.pageIndex, state.sel.fieldId) : null;
   if (!field || field.type !== 'dragdrop' || state.sel.pageIndex !== pi) {
     toast(t('toast.selectDragFirst'), 'error');
-    renderCanvas();
+    renderCanvas({ preserveScroll: true });
     return;
   }
   const zone = { id: uid('z'), rect, answers: ['Etiqueta ' + (field.config.zones.length + 1)] };
   field.config.zones.push(zone);
   markDirty();
-  renderCanvas();
+  renderCanvas({ preserveScroll: true });
   selectZone(pi, field.id, zone.id);
 }
 
@@ -1470,11 +1493,11 @@ async function createPiece(pi, rect) {
   const field = state.sel ? getField(state.sel.pageIndex, state.sel.fieldId) : null;
   if (!field || field.type !== 'dragdrop' || field.config.mode !== 'crops' || state.sel.pageIndex !== pi) {
     toast(t('toast.selectDragFirst'), 'error');
-    renderCanvas();
+    renderCanvas({ preserveScroll: true });
     return;
   }
   const blob = await cropPageRegion(pi, rect);
-  if (!blob) { renderCanvas(); return; }
+  if (!blob) { renderCanvas({ preserveScroll: true }); return; }
   const path = 'dtokens/' + uid() + '.png';
   state.files.set(path, blob);
   if (!Array.isArray(field.config.pieces)) field.config.pieces = [];
@@ -1484,7 +1507,7 @@ async function createPiece(pi, rect) {
   const piece = { id: uid('p'), src: path, rect, zoneId: targetZone };
   field.config.pieces.push(piece);
   markDirty();
-  renderCanvas();
+  renderCanvas({ preserveScroll: true });
   if (targetZone && field.config.zones.some(z => z.id === targetZone)) {
     selectZone(pi, field.id, targetZone); // seguir en el panel de la zona
   } else {
@@ -1714,7 +1737,7 @@ function duplicateSelected() {
   const copy = cloneField(field, 0.03);
   state.manifest.pages[state.sel.pageIndex].fields.push(copy);
   markDirty();
-  renderCanvas();
+  renderCanvas({ preserveScroll: true });
   selectField(state.sel.pageIndex, copy.id);
 }
 
@@ -1734,7 +1757,7 @@ function pasteField(pi) {
   const copy = cloneField(state.copiedField);
   state.manifest.pages[pi].fields.push(copy);
   markDirty();
-  renderCanvas();
+  renderCanvas({ preserveScroll: true });
   selectField(pi, copy.id);
 }
 
@@ -4491,7 +4514,7 @@ fileMenuItem('#miBlank', () => {
   renderCanvas();
   renderPanel();
   refreshPaletteState();
-  addBlankPage();
+  addBlankPage(undefined, { newSheet: true });
 });
 
 fileMenuItem('#miAddPdf', () => {
