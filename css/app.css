@@ -1772,22 +1772,29 @@ body.resizing-col { cursor: col-resize; }
   padding: 0 9px;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--tinta-tenue);
+  border: 2px solid var(--tinta);
   border-radius: 11px;
-  background: transparent;
-  color: var(--tinta-suave);
+  background: var(--blanco);
+  color: var(--tinta);
   font: inherit;
   font-size: 0.8rem;
   font-weight: 700;
   font-style: italic;
   line-height: 1;
   cursor: pointer;
+  box-shadow: 2px 2px 0 rgba(29, 44, 66, 0.15);
+  transition: all 0.08s ease;
 }
 .ed-panel.has-latex-focus .cfg-formula-btn { display: inline-flex; }
 .cfg-formula-btn:hover {
   border-color: var(--rojo);
   color: var(--rojo);
   background: var(--rojo-claro);
+  box-shadow: 2px 2px 0 rgba(198, 61, 44, 0.2);
+}
+.cfg-formula-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 rgba(198, 61, 44, 0.2);
 }
 .field-help-btn {
   width: 22px;
