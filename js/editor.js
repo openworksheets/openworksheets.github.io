@@ -1917,8 +1917,9 @@ function renderPagePanel(pi) {
 
     cont.appendChild(el('div', { class: 'rot-row' },
       el('label', { class: 'f-label' }, t('editor.pageSizeW')), wIn,
-      el('label', { class: 'f-label' }, t('editor.pageSizeH')), hIn,
-      el('label', { class: 'f-label' }, t('editor.pageSizeUnit')), unitSel));
+      el('label', { class: 'f-label' }, t('editor.pageSizeH')), hIn));
+    cont.appendChild(el('label', { class: 'f-label' }, t('editor.pageSizeUnit')));
+    cont.appendChild(unitSel);
 
     sizeSel.addEventListener('change', () => {
       const chosen = sizes.find(s => s.key === sizeSel.value);
@@ -1928,9 +1929,9 @@ function renderPagePanel(pi) {
     });
   } else {
     const dims = `${pxToUnit(page.w, unit)} × ${pxToUnit(page.h, unit)} ${unit}`;
-    cont.appendChild(el('div', { class: 'rot-row' },
-      el('span', { class: 'page-size-info' }, dims),
-      el('label', { class: 'f-label' }, t('editor.pageSizeUnit')), unitSel));
+    cont.appendChild(el('div', { class: 'page-size-info' }, dims));
+    cont.appendChild(el('label', { class: 'f-label' }, t('editor.pageSizeUnit')));
+    cont.appendChild(unitSel);
   }
   const dupBtn = iconBtn({ class: 'btn small', type: 'button' }, ICONS.copyPlus, t('editor.duplicatePage'));
   dupBtn.addEventListener('click', () => duplicatePage(pi));

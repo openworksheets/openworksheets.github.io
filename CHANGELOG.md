@@ -9,6 +9,14 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.16.4] — 2026-06-19
+
+### Corregido
+- **Tamaño de página**: el selector de unidad ya no se solapa con el texto del
+  tamaño; la etiqueta «Unidad» y el desplegable van en su propia línea.
+
+---
+
 ## [1.16.3] — 2026-06-19
 
 ### Añadido
