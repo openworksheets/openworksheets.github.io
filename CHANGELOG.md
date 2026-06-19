@@ -9,6 +9,18 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.17.1] — 2026-06-19
+
+### Cambiado
+- **La fuente elegida (global o por campo) ya se ve en el modo edición**, no solo
+  en la vista previa: el texto que muestra el lienzo —la etiqueta de cada campo,
+  los chips de respuesta de «Huecos en documento», zonas e «Unir con flechas», y
+  el enunciado de «Completar huecos»— se dibuja con la tipografía seleccionada.
+- **«Completar huecos» muestra ahora su enunciado en el lienzo** (con sus
+  `[huecos]`), antes solo aparecía la etiqueta del campo.
+
+---
+
 ## [1.17.0] — 2026-06-19
 
 ### Cambiado

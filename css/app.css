@@ -1396,6 +1396,27 @@ body.resizing-col { cursor: col-resize; }
   overflow: hidden;
   font-family: var(--field-font, var(--ficha-font, var(--cuerpo)));
 }
+/* Chips de respuesta/etiqueta de los subelementos (zona, ítem de unir con
+   flechas, hueco en documento): también con la fuente del campo o la global. */
+.ed-zone .chip,
+.ed-amitem .chip,
+.ed-tbbox .chip {
+  font-family: var(--field-font, var(--ficha-font, var(--cuerpo)));
+}
+/* Enunciado de «Completar huecos» en el lienzo: muestra el texto (con sus
+   [huecos]) en la fuente del campo o la global, como en la vista previa. */
+.ed-gaps-prev {
+  position: absolute;
+  inset: 0;
+  padding: 0.9em 0.3em 0.15em;
+  line-height: 1.4;
+  font-size: calc(0.95em * var(--fs, 1));
+  pointer-events: none;
+  overflow: hidden;
+  white-space: pre-wrap;
+  color: var(--field-fg, var(--tinta));
+  font-family: var(--field-font, var(--ficha-font, var(--cuerpo)));
+}
 .ed-field.ed-field-label .chip,
 .ed-field.ed-field-cover .chip,
 .ed-field.ed-field-image .chip,
@@ -1410,6 +1431,10 @@ body.resizing-col { cursor: col-resize; }
 .ed-field .chip {
   font-size: 0.62em;
   font-weight: 700;
+  /* La etiqueta del campo (lo único que se ve en el lienzo de muchos tipos)
+     usa la fuente del propio campo o la global de la ficha, para previsualizar
+     la tipografía elegida ya en modo edición. */
+  font-family: var(--field-font, var(--ficha-font, var(--cuerpo)));
   background: var(--tinta-suave);
   color: #fff;
   padding: 1px 7px;

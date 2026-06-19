@@ -546,6 +546,12 @@ function renderCanvas() {
         });
         lp.innerHTML = mdToHtml(field.config.text || '');
         box.appendChild(lp);
+      } else if (field.type === 'gaps') {
+        // Enunciado de «Completar huecos» con sus [huecos], para verlo en el
+        // lienzo (y con la fuente elegida), no solo en la vista previa.
+        const gp = el('div', { class: 'ed-gaps-prev' });
+        gp.textContent = field.config.text || '';
+        box.appendChild(gp);
       } else if (field.type === 'cover') {
         box.style.background = field.config.color || '#ffffff';
         box.style.opacity = String(field.config.opacity ?? 1);
@@ -644,6 +650,7 @@ function renderCanvas() {
             el('span', { class: 'chip' }, zChipText),
             el('span', { class: 'handle' }));
           setRectStyle(zEl, zone.rect);
+          if (field.fontFamily) zEl.style.setProperty('--field-font', fontStack(field.fontFamily));
           attachBoxInteraction(zEl, pageEl, zone.rect, {
             onSelect: () => selectZone(pi, field.id, zone.id),
             isSelected: () => state.sel?.kind === 'zone' && state.sel.zoneId === zone.id
@@ -675,6 +682,7 @@ function renderCanvas() {
             el('span', { class: 'chip' }, label),
             el('span', { class: 'handle' }));
           setRectStyle(aEl, item.rect);
+          if (field.fontFamily) aEl.style.setProperty('--field-font', fontStack(field.fontFamily));
           attachBoxInteraction(aEl, pageEl, item.rect, {
             onSelect: () => selectAmItem(pi, field.id, item.id),
             isSelected: () => state.sel?.kind === 'amitem' && state.sel.amItemId === item.id
@@ -708,6 +716,7 @@ function renderCanvas() {
             el('span', { class: 'chip' }, ans || '—'),
             el('span', { class: 'handle' }));
           setRectStyle(tbEl, b.rect);
+          if (field.fontFamily) tbEl.style.setProperty('--field-font', fontStack(field.fontFamily));
           attachBoxInteraction(tbEl, pageEl, b.rect, {
             onSelect: () => selectTbBox(pi, field.id, b.id),
             isSelected: () => state.sel?.kind === 'tbbox' && state.sel.tbBoxId === b.id
