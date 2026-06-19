@@ -63,6 +63,11 @@ const puppeteer = require('puppeteer-core');
 
   await page.click('#btnAjustes');
   await new Promise(r => setTimeout(r, 150));
+  await page.evaluate(() => {
+    const tab = [...document.querySelectorAll('#dlgAjustes .settings-tab')].find(t => t.dataset.tab === 'editorPrefs');
+    if (tab) tab.click();
+  });
+  await new Promise(r => setTimeout(r, 150));
   await page.click('#ajResetPrefs');
   await new Promise(r => setTimeout(r, 250));
   const resetPrefs = await page.evaluate(() => ({
