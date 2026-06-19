@@ -921,6 +921,14 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .ed-layout.thumbs-collapsed {
   grid-template-columns: 78px 0 0 minmax(0, 1fr) 6px var(--panel-w, 330px);
 }
+/* Panel de configuración (derecha) colapsado: su columna y su divisor a 0. */
+.ed-layout.panel-collapsed {
+  grid-template-columns: 78px var(--thumbs-w, 168px) 6px minmax(0, 1fr) 0 0;
+}
+.ed-layout.thumbs-collapsed.panel-collapsed {
+  grid-template-columns: 78px 0 0 minmax(0, 1fr) 0 0;
+}
+.panel-collapsed #gutterPanel { pointer-events: none; }
 /* Durante el arrastre del divisor se anula la transición para que siga al ratón */
 .ed-layout.resizing { transition: none; user-select: none; }
 
@@ -986,8 +994,9 @@ body.resizing-col { cursor: col-resize; }
    aparece con un fundido solo cuando la tira está minimizada. */
 .ed-thumbs-show {
   position: absolute;
-  top: 8px;
+  top: 50%;
   left: 86px;
+  transform: translateY(-50%);
   z-index: 5;
   width: 28px;
   height: 28px;
@@ -999,8 +1008,31 @@ body.resizing-col { cursor: col-resize; }
   pointer-events: none;
   transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.thumbs-collapsed .ed-thumbs-show { opacity: 1; pointer-events: auto; }
+.thumbs-collapsed .ed-thumbs-show:not(.ed-panel-show) { opacity: 1; pointer-events: auto; }
 .ed-thumbs-show:hover { background: var(--blanco); }
+
+/* Botón para plegar el panel: flota en la esquina superior IZQUIERDA del panel
+   (su borde interior, mirando al lienzo), simétrico al de las miniaturas, que
+   está en el borde interior derecho de su columna. El h3 deja hueco a la
+   izquierda con su padding-left. */
+.ed-panel-toggle {
+  position: absolute;
+  top: 12px;
+  right: calc(var(--panel-w, 330px) - 36px);
+  left: auto;
+  z-index: 7;
+  width: 26px;
+  height: 26px;
+  background: var(--blanco);
+}
+.panel-collapsed .ed-panel-toggle { display: none; }
+/* Botón para reabrir el panel: en el borde derecho, centrado verticalmente
+   como el de las miniaturas (hereda top/transform de .ed-thumbs-show). */
+.ed-panel-show {
+  left: auto;
+  right: 8px;
+}
+.panel-collapsed .ed-panel-show { opacity: 1; pointer-events: auto; }
 .ed-thumbs-list {
   overflow-y: auto;
   padding: 8px;
@@ -1620,13 +1652,18 @@ body.resizing-col { cursor: col-resize; }
   border-left: 2px solid var(--tinta);
   overflow-y: auto;
   padding: 16px 18px 50px;
+  min-width: 0;
 }
+.panel-collapsed .ed-panel { border-left: none; padding: 0; overflow: hidden; }
 .ed-panel h3 {
   display: flex;
   align-items: center;
   gap: 8px;
   border-bottom: 1px solid var(--tinta);
   padding-bottom: 8px;
+  /* Hueco a la izquierda para el botón flotante de plegar el panel (en su borde
+     interior, simétrico al de las miniaturas). */
+  padding-left: 30px;
 }
 .ed-panel h3 .spacer { flex: 1; }
 .field-help-btn {
@@ -2885,13 +2922,16 @@ input.wpf-gap-input {
 /* ---------- Responsive ---------- */
 
 @media (max-width: 980px) {
-  .ed-layout, .ed-layout.thumbs-collapsed {
+  .ed-layout, .ed-layout.thumbs-collapsed,
+  .ed-layout.panel-collapsed, .ed-layout.thumbs-collapsed.panel-collapsed {
     grid-template-columns: 64px minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) auto;
     height: auto;
     min-height: calc(100vh - 58px);
   }
-  .ed-thumbs, .ed-thumbs-show, .ed-gutter { display: none !important; }
+  .ed-thumbs, .ed-thumbs-show, .ed-gutter,
+  .ed-panel-toggle, .ed-panel-show { display: none !important; }
+  .ed-panel { grid-column: 1 / -1 !important; }
   .ed-panel {
     grid-column: 1 / -1;
     border-left: none;

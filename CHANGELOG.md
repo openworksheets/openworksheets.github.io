@@ -9,6 +9,18 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.17.2] — 2026-06-19
+
+### Añadido
+- **La columna de configuración (derecha) se puede ocultar**, igual que la tira
+  de páginas y con el mismo icono de chevrons. No es permanente: cada ficha
+  (nueva o abierta) arranca con el panel desplegado.
+- **Controles simétricos**: el botón de plegar de cada columna va en su borde
+  interior (mirando al lienzo) y los botones para reabrirlas aparecen centrados
+  verticalmente en el borde de cada lado, de forma especular.
+
+---
+
 ## [1.17.1] — 2026-06-19
 
 ### Cambiado

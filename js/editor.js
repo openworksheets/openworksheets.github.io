@@ -846,6 +846,19 @@ btnThumbsToggle.addEventListener('click', () => setThumbsCollapsed(true));
 btnThumbsShow.addEventListener('click', () => setThumbsCollapsed(false));
 autoThumbs({ force: true });
 
+// Colapso del panel de configuración (derecha). Como la tira, no es persistente:
+// el usuario lo oculta a mano, pero cada ficha (nueva o abierta) arranca con el
+// panel desplegado. Mismo icono de chevrons para coherencia.
+const btnPanelToggle = $('#btnPanelToggle');
+const btnPanelShow = $('#btnPanelShow');
+btnPanelToggle.innerHTML = ICONS.chevronRight;
+btnPanelShow.innerHTML = ICONS.chevronLeft;
+function setPanelCollapsed(collapsed) {
+  edLayout.classList.toggle('panel-collapsed', collapsed);
+}
+btnPanelToggle.addEventListener('click', () => setPanelCollapsed(true));
+btnPanelShow.addEventListener('click', () => setPanelCollapsed(false));
+
 // Resaltar la miniatura activa al desplazar el lienzo.
 canvas.addEventListener('scroll', () => {
   if (renderThumbs._raf) return;
@@ -4261,6 +4274,7 @@ async function openZipFile(file, handle = null) {
     titleInput.value = state.manifest.title || '';
     state.dirty = false;
     zoomCtl.set(1); // al abrir una ficha, zoom al 100 %
+    setPanelCollapsed(false); // al abrir una ficha, el panel arranca desplegado
     autoThumbs({ force: true }); // mostrar la tira si la ficha tiene más de una página
     renderCanvas();
     renderPanel();
@@ -4462,6 +4476,7 @@ function resetWorksheet() {
   state.submissionCryptoPassword = '';
   titleInput.value = '';
   state.dirty = false;
+  setPanelCollapsed(false); // cada ficha nueva arranca con el panel desplegado
   resetHistory();
 }
 // Solo pide confirmación si hay cambios sin guardar que se perderían. Una ficha
