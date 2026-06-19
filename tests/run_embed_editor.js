@@ -1,6 +1,6 @@
 // Comprueba el campo «Insertar (Web/HTML)»: al crearlo pregunta el tipo (URL,
-// HTML, web en ZIP o paquete .elpx); al elegir «Web en ZIP» y subir un .zip con
-// un index.html, la web se sirve en vivo en el lienzo (iframe).
+// HTML, web en ZIP, paquete .elpx o IMS CP); al elegir «Web en ZIP» y subir un
+// .zip con un index.html, la web se sirve en vivo en el lienzo (iframe).
 //   node tests/run_embed_editor.js   (con el servidor en el puerto 8765)
 const puppeteer = require('puppeteer-core');
 const path = require('path');
@@ -49,9 +49,9 @@ const path = require('path');
   await page.mouse.up();
   await wait(250);
 
-  // Debe aparecer el selector de tipo con 4 opciones, sin opciones concretas aún.
+  // Debe aparecer el selector de tipo con 5 opciones, sin opciones concretas aún.
   const cards = await page.$$eval('#panel .ed-mode-card', ns => ns.length);
-  check('al crear «Insertar» pregunta el tipo (4 opciones)', cards === 4);
+  check('al crear «Insertar» pregunta el tipo (5 opciones)', cards === 5);
 
   // Elegir «URL» y comprobar que una URL conocida se normaliza para el iframe
   // del editor, igual que ocurre en otros medios basados en URL.
@@ -83,7 +83,7 @@ const path = require('path');
   check('el marco de Insertar se pinta en el lienzo con grosor configurable',
     frame && frame.width === '5px' && /42,\s*157,\s*143/.test(frame.color));
 
-  // Elegir «Web en ZIP» (3.ª tarjeta: url, html, zip, elpx).
+  // Elegir «Web en ZIP» (3.ª tarjeta: url, html, zip, elpx, imscp).
   await page.evaluate(() => {
     const b = [...document.querySelectorAll('#panel button')]
       .find(x => /Cambiar tipo|Change type|Canviar tipus|Aldatu mota/i.test(x.textContent));
@@ -119,7 +119,7 @@ const path = require('path');
   });
   await wait(200);
   check('«Cambiar tipo» vuelve a mostrar el selector',
-    (await page.$$eval('#panel .ed-mode-card', ns => ns.length)) === 4);
+    (await page.$$eval('#panel .ed-mode-card', ns => ns.length)) === 5);
 
   if (errors.length) {
     console.log('--- ERRORES DE PÁGINA/CONSOLA ---');

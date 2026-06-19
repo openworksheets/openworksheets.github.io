@@ -1058,9 +1058,12 @@ function setRectStyle(node, rect) {
 // Añade al panel controles para fijar la anchura y la altura exactas (en % de
 // la página) de un rectángulo: el del propio campo o el de un subelemento
 // (casilla, hueco, zona, item). nodeId = data-id del elemento en el lienzo.
-function appendSizeSection(cont, rect, nodeId, onAfter) {
+function appendSizeSection(cont, rect, nodeId, onAfter, extraTop) {
   const section = el('div', { class: 'ed-section' });
   section.appendChild(el('div', { class: 'ed-section-title' }, t('editor.sizeSection')));
+  // Contenido extra (p. ej. la rotación) que vive dentro de la misma sección,
+  // por encima de la rejilla de anchura/altura.
+  if (extraTop) section.appendChild(extraTop);
   const body = el('div', { class: 'ed-section-body ed-size-grid' });
   const mk = (dim, posDim) => {
     const inp = el('input', { type: 'number', min: '0.1', max: '100', step: '0.01',
@@ -1084,6 +1087,34 @@ function appendSizeSection(cont, rect, nodeId, onAfter) {
   body.appendChild(mk('h', 'y'));
   section.appendChild(body);
   cont.appendChild(section);
+}
+
+// Bloque uniforme «color + opacidad» reutilizado por todos los campos que lo
+// necesitan (fondo del campo, tapar zona, relleno de formas). Mantiene el mismo
+// aspecto en todos. Si se omite `opacityLabel`, solo muestra el color.
+// Devuelve { wrap, colorInp, setOpacity } — `wrap` para insertar en el DOM.
+function colorOpacityRow({ colorLabel, opacityLabel, color, opacity, onColor, onOpacity }) {
+  const wrap = el('div', { class: 'color-opacity' });
+  const { inp: colorInp, wrap: colorWrap } = colorInput(color, onColor);
+  wrap.appendChild(el('div', { class: 'co-color' },
+    el('label', { class: 'f-label' }, colorLabel), colorWrap));
+  let setOpacity = () => {};
+  if (opacityLabel) {
+    const pct = Math.round((opacity ?? 1) * 100);
+    const range = el('input', { type: 'range', min: '0', max: '100', step: '1', value: String(pct) });
+    const num = el('input', { type: 'number', min: '0', max: '100', step: '1', value: String(pct) });
+    const sync = val => {
+      const v = Math.max(0, Math.min(100, parseInt(val, 10) || 0));
+      range.value = v; num.value = v;
+      onOpacity(v / 100);
+    };
+    range.addEventListener('input', () => sync(range.value));
+    num.addEventListener('input', () => sync(num.value));
+    wrap.appendChild(el('div', { class: 'co-opacity' },
+      el('label', { class: 'f-label' }, opacityLabel), range, num, el('span', {}, '%')));
+    setOpacity = v => { const p = Math.round((v ?? 1) * 100); range.value = p; num.value = p; };
+  }
+  return { wrap, colorInp, setOpacity };
 }
 
 function refreshSelectionStyles() {
@@ -2089,11 +2120,24 @@ function renderFieldPanel(field) {
     cont.appendChild(ptsRow);
   }
 
-  // Configuración específica del tipo
+  // Configuración específica del tipo, agrupada en su propia sección «Contenido»
+  // para que todos los campos tengan el mismo ritmo: Contenido · Tamaño · Estilo.
   const formBuilder = configForms[field.type];
-  if (formBuilder) formBuilder(cont, field);
+  if (formBuilder) {
+    const contentSec = el('div', { class: 'ed-section' });
+    contentSec.appendChild(el('div', { class: 'ed-section-title' }, t('editor.contentSection')));
+    const contentBody = el('div', { class: 'ed-section-body' });
+    formBuilder(contentBody, field);
+    // Si el tipo no aporta nada configurable, no dejamos una sección vacía.
+    if (contentBody.children.length) {
+      contentSec.appendChild(contentBody);
+      cont.appendChild(contentSec);
+    }
+  }
 
   // Rotación: image, label, cover y las formas de diseño (no vídeo ni audio).
+  // Se construye aquí pero se inserta dentro de la sección «Tamaño y posición».
+  let rotRow = null;
   if (field.type === 'image' || field.type === 'label' || field.type === 'cover' || isShapeField(field.type)) {
     const rotInp = el('input', { type: 'number', class: 'rot-input', step: '1', value: String(field.rotate || 0) });
     const applyRot = (deg, fromInput = false) => {
@@ -2104,13 +2148,12 @@ function renderFieldPanel(field) {
       markDirty();
     };
     rotInp.addEventListener('input', () => applyRot(parseInt(rotInp.value, 10) || 0, true));
-    const row = el('div', { class: 'rot-row' },
+    rotRow = el('div', { class: 'rot-row' },
       el('label', { class: 'f-label' }, t('editor.rotate')),
       rotInp,
       el('button', { class: 'btn small', type: 'button', onclick: () => applyRot((field.rotate || 0) - 90) }, '-90°'),
       el('button', { class: 'btn small', type: 'button', onclick: () => applyRot((field.rotate || 0) + 90) }, '+90°'),
       el('button', { class: 'btn small', type: 'button', title: t('editor.resetRotation'), onclick: () => applyRot(0) }, '0°'));
-    cont.appendChild(row);
   }
 
   // Tamaño exacto. En campos con subelementos el tamaño relevante es el del
@@ -2123,112 +2166,83 @@ function renderFieldPanel(field) {
     const it = (field.config.items || []).find(i => i.id === state.sel.amItemId);
     if (it && it.rect) appendSizeSection(cont, it.rect, it.id);
   } else if (field.type !== 'checkbox' && field.type !== 'textboxes') {
-    appendSizeSection(cont, field.rect, field.id);
+    appendSizeSection(cont, field.rect, field.id, null, rotRow);
   }
 
-  // Acciones
-  cont.appendChild(el('div', { class: 'ed-acciones' },
-    iconBtn({ class: 'btn small', onclick: duplicateSelected }, ICONS.copyPlus, t('editor.duplicate')),
-    iconBtn({ class: 'btn small danger', onclick: deleteSelected }, ICONS.trash, t('editor.delete'))));
-
-  // Acordeón de diseño (tamaño/color de texto y fondo — no para image ni label, que gestionan esto inline).
-  // En modo recorte solo contiene el color del hueco (los recortes conservan su tamaño y color originales).
-  // «Casillas» (checkbox) se excluye: son casillas sueltas sobre la página, sin
-  // texto ni un recuadro de fondo que estilizar, así que no hay nada de diseño que ajustar.
+  // Sección «Estilo». Los tipos con estilo propio (texto decorativo y medios) lo
+  // aportan vía styleForms; el resto de campos interactivos usan los controles
+  // comunes de texto + fondo. «Casillas» (checkbox) y los campos sin texto ni
+  // recuadro (image) no tienen nada que estilizar y se quedan sin la sección.
+  const styleBuilder = styleForms[field.type];
   const hasDesign = interactive && field.type !== 'checkbox' && field.type !== 'scorm';
-  if (hasDesign) {
-    // Sección de diseño siempre visible (sin acordeón).
+  if (styleBuilder || hasDesign) {
     const accordion = el('div', { class: 'ed-section' });
     accordion.appendChild(el('div', { class: 'ed-section-title' }, t('editor.designSection')));
     const body = el('div', { class: 'ed-section-body' });
-    accordion.appendChild(body);
 
-    // Modo recorte: el único ajuste de diseño es el color del hueco vacío.
-    if (dragCrops) {
-      const cfg = field.config;
-      body.appendChild(el('label', { class: 'f-label' }, t('cfg.holeColor')));
-      const { wrap: holeColorWrap } = colorInput(cfg.holeColor || '#ffffff', v => {
-        cfg.holeColor = v;
-        markDirty();
-      });
-      body.appendChild(holeColorWrap);
-    }
-
-    // Texto: tamaño + color
-    if (!dragCrops && field.type !== 'cover' && !isShapeField(field.type)) {
-      const fsVal = field.fontScale || 1;
-      const fsRange = el('input', { type: 'range', min: '0.6', max: '5', step: '0.1', value: String(fsVal) });
-      const fsNum = el('input', { type: 'number', min: '0.1', max: '20', step: '0.1', value: String(fsVal), style: 'width:72px' });
-      const applyFs = v => {
-        v = Math.max(0.1, parseFloat(v) || 1);
-        field.fontScale = v;
-        fsRange.value = Math.min(v, 5);
-        fsNum.value = v;
-        const node = canvas.querySelector(`[data-id="${field.id}"]`);
-        if (node) node.style.setProperty('--fs', v);
-        markDirty();
-      };
-      fsRange.addEventListener('input', () => applyFs(fsRange.value));
-      fsNum.addEventListener('input', () => applyFs(fsNum.value));
-      body.appendChild(el('label', { class: 'f-label' }, t('editor.fontSize')));
-      body.appendChild(el('div', { class: 'rot-row' }, fsRange, fsNum, el('span', {}, '×')));
-      // Tipo de letra del campo (sobrescribe la fuente global de la ficha).
-      const fontSel = fontSelect(field.fontFamily || '', id => {
-        if (id) field.fontFamily = id; else delete field.fontFamily;
-        const node = canvas.querySelector(`[data-id="${field.id}"]`);
-        if (node) {
-          if (id) node.style.setProperty('--field-font', fontStack(id));
-          else node.style.removeProperty('--field-font');
-        }
-        markDirty();
-      }, { inherit: true });
-      body.appendChild(el('label', { class: 'f-label' }, t('editor.font')));
-      body.appendChild(fontSel);
-      if (interactive) {
+    if (styleBuilder) {
+      styleBuilder(body, field);
+    } else {
+      // Modo recorte: el único ajuste de diseño es el color del hueco vacío.
+      if (dragCrops) {
         const cfg = field.config;
-        const { wrap: fgWrap } = colorInput(cfg.fgColor || '#1d2c42', v => {
-          cfg.fgColor = v;
-          canvas.querySelector(`[data-id="${field.id}"]`)?.style.setProperty('--field-fg', v);
+        body.appendChild(el('label', { class: 'f-label' }, t('cfg.holeColor')));
+        const { wrap: holeColorWrap } = colorInput(cfg.holeColor || '#ffffff', v => {
+          cfg.holeColor = v;
           markDirty();
         });
-        body.appendChild(el('label', { class: 'f-label' }, t('cfg.fieldFg')));
-        body.appendChild(fgWrap);
+        body.appendChild(holeColorWrap);
+      }
+
+      // Texto: tamaño + tipo de letra + color
+      if (!dragCrops && field.type !== 'cover' && !isShapeField(field.type)) {
+        appendTextSizeFont(body, field);
+        if (interactive) {
+          const cfg = field.config;
+          const { wrap: fgWrap } = colorInput(cfg.fgColor || '#1d2c42', v => {
+            cfg.fgColor = v;
+            canvas.querySelector(`[data-id="${field.id}"]`)?.style.setProperty('--field-fg', v);
+            markDirty();
+          });
+          body.appendChild(el('label', { class: 'f-label' }, t('cfg.fieldFg')));
+          body.appendChild(fgWrap);
+        }
+      }
+
+      // Fondo: color + opacidad (solo campos interactivos; no en modo recorte)
+      if (interactive && !dragCrops) {
+        const cfg = field.config;
+        const applyFieldBg = () => {
+          const hex = cfg.bg || '#fffdf8';
+          const op = cfg.bgOpacity ?? 1;
+          const r = parseInt(hex.slice(1, 3), 16);
+          const g = parseInt(hex.slice(3, 5), 16);
+          const b = parseInt(hex.slice(5, 7), 16);
+          canvas.querySelector(`[data-id="${field.id}"]`)?.style.setProperty('--field-bg', `rgba(${r},${g},${b},${op})`);
+        };
+        const { wrap: bgRow } = colorOpacityRow({
+          colorLabel: t('cfg.fieldBg'),
+          opacityLabel: t('cfg.fieldBgOpacity'),
+          color: cfg.bg || '#fffdf8',
+          opacity: cfg.bgOpacity ?? 1,
+          onColor: v => { cfg.bg = v; applyFieldBg(); markDirty(); },
+          onOpacity: v => { cfg.bgOpacity = v; applyFieldBg(); markDirty(); }
+        });
+        body.appendChild(bgRow);
       }
     }
 
-    // Fondo: color + opacidad (solo campos interactivos; no en modo recorte)
-    if (interactive && !dragCrops) {
-      const cfg = field.config;
-      const applyFieldBg = () => {
-        const hex = cfg.bg || '#fffdf8';
-        const op = cfg.bgOpacity ?? 1;
-        const r = parseInt(hex.slice(1, 3), 16);
-        const g = parseInt(hex.slice(3, 5), 16);
-        const b = parseInt(hex.slice(5, 7), 16);
-        canvas.querySelector(`[data-id="${field.id}"]`)?.style.setProperty('--field-bg', `rgba(${r},${g},${b},${op})`);
-      };
-      body.appendChild(el('label', { class: 'f-label' }, t('cfg.fieldBg')));
-      const { inp: bgColor, wrap: bgWrap } = colorInput(cfg.bg || '#fffdf8', v => { cfg.bg = v; applyFieldBg(); markDirty(); });
-      const bgOp = el('input', { type: 'range', min: '0', max: '100', step: '1', value: String(Math.round((cfg.bgOpacity ?? 1) * 100)) });
-      const bgOpNum = el('input', { type: 'number', min: '0', max: '100', step: '1', value: String(Math.round((cfg.bgOpacity ?? 1) * 100)) });
-      const syncBgOp = val => {
-        const v = Math.max(0, Math.min(100, parseInt(val, 10) || 0));
-        cfg.bgOpacity = v / 100;
-        bgOp.value = v;
-        bgOpNum.value = v;
-        applyFieldBg();
-        markDirty();
-      };
-      bgOp.addEventListener('input', () => syncBgOp(bgOp.value));
-      bgOpNum.addEventListener('input', () => syncBgOp(bgOpNum.value));
-      body.appendChild(el('div', { class: 'rot-row' },
-        bgWrap,
-        el('label', { class: 'f-label', style: 'margin-left:0.5em' }, t('cfg.fieldBgOpacity')),
-        bgOp, bgOpNum, el('span', {}, '%')));
+    // No dejamos una sección «Estilo» vacía.
+    if (body.children.length) {
+      accordion.appendChild(body);
+      cont.appendChild(accordion);
     }
-
-    cont.appendChild(accordion);
   }
+
+  // Acciones: siempre al final del panel, en todos los tipos.
+  cont.appendChild(el('div', { class: 'ed-acciones ed-acciones-foot' },
+    iconBtn({ class: 'btn small', onclick: duplicateSelected }, ICONS.copyPlus, t('editor.duplicate')),
+    iconBtn({ class: 'btn small danger', onclick: deleteSelected }, ICONS.trash, t('editor.delete'))));
 
   panel.appendChild(cont);
 }
@@ -2472,26 +2486,9 @@ function rebuildCanvasMedia(field) {
   box.appendChild(buildMediaContent(field, fileUrl, { editor: true, host: editorPkgHost() }));
 }
 
-function mediaTitleCaption(cont, field, rebuild = rebuildCanvasMedia) {
-  const cfg = field.config;
-  cont.appendChild(el('label', { class: 'f-label' }, t('cfg.mediaTitle')));
-  const ti = el('input', { type: 'text', value: cfg.title || '', maxlength: '140' });
-  ti.addEventListener('input', () => { cfg.title = ti.value; markDirty(); });
-  ti.addEventListener('change', () => rebuild(field));
-  cont.appendChild(ti);
-  cont.appendChild(el('label', { class: 'f-label' }, t('cfg.mediaCaption')));
-  const ca = el('input', { type: 'text', value: cfg.caption || '', maxlength: '200' });
-  ca.addEventListener('input', () => { cfg.caption = ca.value; markDirty(); });
-  ca.addEventListener('change', () => rebuild(field));
-  cont.appendChild(ca);
-  // Alineación del título y el pie: izquierda, centro o derecha.
-  selectRow(cont, t('cfg.labelAlign'), cfg.align || 'left', [
-    ['left', t('cfg.alignLeft')],
-    ['center', t('cfg.alignCenter')],
-    ['right', t('cfg.alignRight')]
-  ], v => { cfg.align = v; rebuild(field); });
-  // El título y el pie son texto: comparten los controles de texto (tamaño,
-  // tipo de letra y color) de los campos con texto.
+// Controles de tamaño de texto + tipo de letra, comunes a los campos con texto,
+// a los medios (título/pie) y al texto decorativo. Aplican en vivo sobre el campo.
+function appendTextSizeFont(cont, field) {
   const fsVal = field.fontScale || 1;
   const fsRange = el('input', { type: 'range', min: '0.6', max: '5', step: '0.1', value: String(fsVal) });
   const fsNum = el('input', { type: 'number', min: '0.1', max: '20', step: '0.1', value: String(fsVal), style: 'width:72px' });
@@ -2507,7 +2504,7 @@ function mediaTitleCaption(cont, field, rebuild = rebuildCanvasMedia) {
   fsNum.addEventListener('input', () => applyFs(fsNum.value));
   cont.appendChild(el('label', { class: 'f-label' }, t('editor.fontSize')));
   cont.appendChild(el('div', { class: 'rot-row' }, fsRange, fsNum, el('span', {}, '×')));
-
+  // Tipo de letra del campo (sobrescribe la fuente global de la ficha).
   const fontSel = fontSelect(field.fontFamily || '', id => {
     if (id) field.fontFamily = id; else delete field.fontFamily;
     const node = canvas.querySelector(`[data-id="${field.id}"]`);
@@ -2519,7 +2516,29 @@ function mediaTitleCaption(cont, field, rebuild = rebuildCanvasMedia) {
   }, { inherit: true });
   cont.appendChild(el('label', { class: 'f-label' }, t('editor.font')));
   cont.appendChild(fontSel);
+}
 
+// Contenido textual de un medio: título y pie. (El estilo del texto vive en la
+// sección «Estilo», en mediaTextStyle.)
+function mediaTitleCaption(cont, field, rebuild = rebuildCanvasMedia) {
+  const cfg = field.config;
+  cont.appendChild(el('label', { class: 'f-label' }, t('cfg.mediaTitle')));
+  const ti = el('input', { type: 'text', value: cfg.title || '', maxlength: '140' });
+  ti.addEventListener('input', () => { cfg.title = ti.value; markDirty(); });
+  ti.addEventListener('change', () => rebuild(field));
+  cont.appendChild(ti);
+  cont.appendChild(el('label', { class: 'f-label' }, t('cfg.mediaCaption')));
+  const ca = el('input', { type: 'text', value: cfg.caption || '', maxlength: '200' });
+  ca.addEventListener('input', () => { cfg.caption = ca.value; markDirty(); });
+  ca.addEventListener('change', () => rebuild(field));
+  cont.appendChild(ca);
+}
+
+// Estilo del texto de un medio (título/pie): tamaño, tipo de letra, color y
+// alineación. Se muestra en la sección «Estilo».
+function mediaTextStyle(cont, field, rebuild = rebuildCanvasMedia) {
+  const cfg = field.config;
+  appendTextSizeFont(cont, field);
   const { wrap: fgWrap } = colorInput(cfg.fgColor || '#1d2c42', v => {
     cfg.fgColor = v;
     canvas.querySelector(`[data-id="${field.id}"]`)?.style.setProperty('--field-fg', v);
@@ -2527,6 +2546,39 @@ function mediaTitleCaption(cont, field, rebuild = rebuildCanvasMedia) {
   });
   cont.appendChild(el('label', { class: 'f-label' }, t('cfg.fieldFg')));
   cont.appendChild(fgWrap);
+  // Alineación del título y el pie: izquierda, centro o derecha.
+  selectRow(cont, t('cfg.labelAlign'), cfg.align || 'left', [
+    ['left', t('cfg.alignLeft')],
+    ['center', t('cfg.alignCenter')],
+    ['right', t('cfg.alignRight')]
+  ], v => { cfg.align = v; rebuild(field); });
+}
+
+// Estilo del texto decorativo (campo «Texto»): tamaño, tipo de letra, color y
+// alineación. Se muestra en la sección «Estilo».
+function labelStyleControls(cont, field) {
+  const cfg = field.config;
+  const prev = () => canvas.querySelector(`.ed-field[data-id="${field.id}"] .ed-label-prev`);
+  appendTextSizeFont(cont, field);
+  const { wrap: labelColorWrap } = colorInput(cfg.color || '#1d2c42', v => {
+    cfg.color = v;
+    const p = prev();
+    if (p) p.style.color = v;
+    markDirty();
+  });
+  cont.appendChild(el('label', { class: 'f-label' }, t('cfg.labelColor')));
+  cont.appendChild(labelColorWrap);
+  // Alineación del texto: izquierda, centro, derecha o justificado.
+  selectRow(cont, t('cfg.labelAlign'), cfg.align || 'left', [
+    ['left', t('cfg.alignLeft')],
+    ['center', t('cfg.alignCenter')],
+    ['right', t('cfg.alignRight')],
+    ['justify', t('cfg.alignJustify')]
+  ], v => {
+    cfg.align = v;
+    const p = prev();
+    if (p) p.style.textAlign = v;
+  });
 }
 
 // Botón para subir un archivo multimedia (vídeo/audio) a state.files.
@@ -2830,23 +2882,14 @@ const configForms = {
     cont.appendChild(strokeBox);
 
     // Relleno (opcional), con color y opacidad
-    const { inp: fillColor, wrap: fillColorWrap } = colorInput(cfg.fill || '#f8e3a1', v => { cfg.fill = v; refreshShapePrev(field); markDirty(); });
-    const fillOp = el('input', { type: 'range', min: '0', max: '100', step: '1', value: String(Math.round((cfg.fillOpacity ?? 1) * 100)) });
-    const fillOpNum = el('input', { type: 'number', min: '0', max: '100', step: '1', value: String(Math.round((cfg.fillOpacity ?? 1) * 100)) });
-    const syncFillOp = val => {
-      const v = Math.max(0, Math.min(100, parseInt(val, 10) || 0));
-      cfg.fillOpacity = v / 100;
-      fillOp.value = v;
-      fillOpNum.value = v;
-      refreshShapePrev(field);
-      markDirty();
-    };
-    fillOp.addEventListener('input', () => syncFillOp(fillOp.value));
-    fillOpNum.addEventListener('input', () => syncFillOp(fillOpNum.value));
-    const fillRow = el('div', {},
-      el('label', { class: 'f-label' }, t('cfg.fillColor')), fillColorWrap,
-      el('label', { class: 'f-label' }, t('cfg.fillOpacity')),
-      el('div', { class: 'rot-row' }, fillOp, fillOpNum, el('span', {}, '%')));
+    const { wrap: fillRow, colorInp: fillColor } = colorOpacityRow({
+      colorLabel: t('cfg.fillColor'),
+      opacityLabel: t('cfg.fillOpacity'),
+      color: cfg.fill || '#f8e3a1',
+      opacity: cfg.fillOpacity ?? 1,
+      onColor: v => { cfg.fill = v; refreshShapePrev(field); markDirty(); },
+      onOpacity: v => { cfg.fillOpacity = v; refreshShapePrev(field); markDirty(); }
+    });
     if (!cfg.fill) fillRow.style.display = 'none';
     checkRow(cont, t('cfg.shapeFill'), Boolean(cfg.fill), v => {
       cfg.fill = v ? fillColor.value : '';
@@ -2920,23 +2963,14 @@ const configForms = {
     cont.appendChild(strokeBox);
 
     // Relleno (opcional), con color y opacidad
-    const { inp: fillColor, wrap: fillColorWrap } = colorInput(cfg.fill || '#f8e3a1', v => { cfg.fill = v; refreshShapePrev(field); markDirty(); });
-    const fillOp = el('input', { type: 'range', min: '0', max: '100', step: '1', value: String(Math.round((cfg.fillOpacity ?? 1) * 100)) });
-    const fillOpNum = el('input', { type: 'number', min: '0', max: '100', step: '1', value: String(Math.round((cfg.fillOpacity ?? 1) * 100)) });
-    const syncFillOp = val => {
-      const v = Math.max(0, Math.min(100, parseInt(val, 10) || 0));
-      cfg.fillOpacity = v / 100;
-      fillOp.value = v;
-      fillOpNum.value = v;
-      refreshShapePrev(field);
-      markDirty();
-    };
-    fillOp.addEventListener('input', () => syncFillOp(fillOp.value));
-    fillOpNum.addEventListener('input', () => syncFillOp(fillOpNum.value));
-    const fillRow = el('div', {},
-      el('label', { class: 'f-label' }, t('cfg.fillColor')), fillColorWrap,
-      el('label', { class: 'f-label' }, t('cfg.fillOpacity')),
-      el('div', { class: 'rot-row' }, fillOp, fillOpNum, el('span', {}, '%')));
+    const { wrap: fillRow, colorInp: fillColor } = colorOpacityRow({
+      colorLabel: t('cfg.fillColor'),
+      opacityLabel: t('cfg.fillOpacity'),
+      color: cfg.fill || '#f8e3a1',
+      opacity: cfg.fillOpacity ?? 1,
+      onColor: v => { cfg.fill = v; refreshShapePrev(field); markDirty(); },
+      onOpacity: v => { cfg.fillOpacity = v; refreshShapePrev(field); markDirty(); }
+    });
     if (!cfg.fill) fillRow.style.display = 'none';
     checkRow(cont, t('cfg.shapeFill'), Boolean(cfg.fill), v => {
       cfg.fill = v ? fillColor.value : '';
@@ -2992,81 +3026,29 @@ const configForms = {
     cont.appendChild(ta);
     cont.appendChild(preview);
     cont.appendChild(el('p', { class: 'cfg-hint' }, t('cfg.labelMdHint')));
-    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.labelColor')));
-    const { wrap: labelColorWrap } = colorInput(cfg.color || '#1d2c42', v => {
-      cfg.color = v;
-      const p = prev();
-      if (p) p.style.color = v;
-      markDirty();
-    });
-    cont.appendChild(labelColorWrap);
-    // Alineación del texto: izquierda, centro, derecha o justificado.
-    selectRow(cont, t('cfg.labelAlign'), cfg.align || 'left', [
-      ['left', t('cfg.alignLeft')],
-      ['center', t('cfg.alignCenter')],
-      ['right', t('cfg.alignRight')],
-      ['justify', t('cfg.alignJustify')]
-    ], v => {
-      cfg.align = v;
-      const p = prev();
-      if (p) p.style.textAlign = v;
-    });
-    // Tamaño de texto (antes en el acordeón de diseño)
-    const fsVal = field.fontScale || 1;
-    const fsRange = el('input', { type: 'range', min: '0.6', max: '5', step: '0.1', value: String(fsVal) });
-    const fsNum = el('input', { type: 'number', min: '0.1', max: '20', step: '0.1', value: String(fsVal), style: 'width:72px' });
-    const applyFs = v => {
-      v = Math.max(0.1, parseFloat(v) || 1);
-      field.fontScale = v;
-      fsRange.value = Math.min(v, 5);
-      fsNum.value = v;
-      const node = canvas.querySelector(`[data-id="${field.id}"]`);
-      if (node) node.style.setProperty('--fs', v);
-      markDirty();
-    };
-    fsRange.addEventListener('input', () => applyFs(fsRange.value));
-    fsNum.addEventListener('input', () => applyFs(fsNum.value));
-    cont.appendChild(el('label', { class: 'f-label' }, t('editor.fontSize')));
-    cont.appendChild(el('div', { class: 'rot-row' }, fsRange, fsNum, el('span', {}, '×')));
-    // Tipo de letra del texto (sobrescribe la fuente global de la ficha).
-    const fontSel = fontSelect(field.fontFamily || '', id => {
-      if (id) field.fontFamily = id; else delete field.fontFamily;
-      const node = canvas.querySelector(`[data-id="${field.id}"]`);
-      if (node) {
-        if (id) node.style.setProperty('--field-font', fontStack(id));
-        else node.style.removeProperty('--field-font');
-      }
-      markDirty();
-    }, { inherit: true });
-    cont.appendChild(el('label', { class: 'f-label' }, t('editor.font')));
-    cont.appendChild(fontSel);
   },
 
   cover(cont, field) {
     const cfg = field.config;
-    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.coverColor')));
-    const { wrap: coverColorWrap } = colorInput(cfg.color || '#ffffff', v => {
-      cfg.color = v;
-      const box = canvas.querySelector(`.ed-field[data-id="${field.id}"]`);
-      if (box) box.style.background = v;
-      markDirty();
+    const { wrap: coverRow } = colorOpacityRow({
+      colorLabel: t('cfg.coverColor'),
+      opacityLabel: t('cfg.coverOpacity'),
+      color: cfg.color || '#ffffff',
+      opacity: cfg.opacity ?? 1,
+      onColor: v => {
+        cfg.color = v;
+        const box = canvas.querySelector(`.ed-field[data-id="${field.id}"]`);
+        if (box) box.style.background = v;
+        markDirty();
+      },
+      onOpacity: v => {
+        cfg.opacity = v;
+        const box = canvas.querySelector(`.ed-field[data-id="${field.id}"]`);
+        if (box) box.style.opacity = String(v);
+        markDirty();
+      }
     });
-    cont.appendChild(coverColorWrap);
-    const coverOp = el('input', { type: 'range', min: '0', max: '100', step: '1', value: String(Math.round((cfg.opacity ?? 1) * 100)) });
-    const coverOpNum = el('input', { type: 'number', min: '0', max: '100', step: '1', value: String(Math.round((cfg.opacity ?? 1) * 100)) });
-    const syncCoverOp = val => {
-      const v = Math.max(0, Math.min(100, parseInt(val, 10) || 0));
-      cfg.opacity = v / 100;
-      coverOp.value = v;
-      coverOpNum.value = v;
-      const box = canvas.querySelector(`.ed-field[data-id="${field.id}"]`);
-      if (box) box.style.opacity = String(cfg.opacity);
-      markDirty();
-    };
-    coverOp.addEventListener('input', () => syncCoverOp(coverOp.value));
-    coverOpNum.addEventListener('input', () => syncCoverOp(coverOpNum.value));
-    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.coverOpacity')));
-    cont.appendChild(el('div', { class: 'rot-row' }, coverOp, coverOpNum, el('span', {}, '%')));
+    cont.appendChild(coverRow);
     cont.appendChild(el('p', { style: 'font-size:.85rem;color:var(--tinta-suave);margin-top:8px' },
       t('cfg.coverHint')));
   },
@@ -3228,9 +3210,8 @@ const configForms = {
       }
     }
     // El SCORM/embed-paquete no usa el reconstructor de medios (no lo entiende):
-    // su título/pie redibujan el lienzo.
+    // su título/pie redibujan el lienzo. El marco vive en la sección «Estilo».
     const isPkg = cfg.mode === 'zip' || cfg.mode === 'elpx' || cfg.mode === 'imscp';
-    mediaFrameConfig(cont, field, isPkg ? (() => renderCanvas()) : rebuildCanvasMedia);
     if (isPkg) mediaTitleCaption(cont, field, () => renderCanvas());
     else mediaTitleCaption(cont, field);
   },
@@ -3257,9 +3238,7 @@ const configForms = {
     // Re-dibuja el lienzo para que la vista en vivo refleje el cambio de menú.
     checkRow(cont, t('cfg.scormShowMenu'), cfg.showMenu !== false, v => { cfg.showMenu = v; renderCanvas(); });
 
-    mediaFrameConfig(cont, field, () => renderCanvas());
-
-    // Título y pie (con sus controles de texto), como en vídeo/audio/insertar.
+    // Título y pie. El marco y el estilo del texto viven en la sección «Estilo».
     // El SCORM no usa el reconstructor de medios: redibuja el lienzo.
     mediaTitleCaption(cont, field, () => renderCanvas());
   },
@@ -3704,6 +3683,35 @@ const configForms = {
         min: 0
       });
     }
+  }
+};
+
+// Controles de la sección «Estilo» para los tipos que gestionan su propio estilo
+// (texto decorativo y medios), de modo que también lo presenten en una sección
+// «Estilo» separada del contenido, igual que el resto de campos. Los tipos
+// interactivos (text, number, single…) usan la sección de estilo común que
+// construye renderFieldPanel; aquí solo van los que no encajan en ese molde.
+const styleForms = {
+  label(cont, field) {
+    labelStyleControls(cont, field);
+  },
+  video(cont, field) {
+    mediaTextStyle(cont, field, rebuildCanvasMedia);
+  },
+  audio(cont, field) {
+    mediaTextStyle(cont, field, rebuildCanvasMedia);
+  },
+  embed(cont, field) {
+    const cfg = field.config;
+    const isPkg = cfg.mode === 'zip' || cfg.mode === 'elpx' || cfg.mode === 'imscp';
+    const rebuild = isPkg ? (() => renderCanvas()) : rebuildCanvasMedia;
+    mediaFrameConfig(cont, field, rebuild);
+    mediaTextStyle(cont, field, rebuild);
+  },
+  scorm(cont, field) {
+    const rebuild = () => renderCanvas();
+    mediaFrameConfig(cont, field, rebuild);
+    mediaTextStyle(cont, field, rebuild);
   }
 };
 

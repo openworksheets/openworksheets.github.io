@@ -9,6 +9,27 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.17.0] — 2026-06-19
+
+### Cambiado
+- **Panel de propiedades de los campos reorganizado**: ahora todos los tipos de
+  campo comparten el mismo armazón de secciones, en este orden: **Puntuación ·
+  Contenido · Tamaño y posición · Estilo**. Antes el orden y el agrupamiento
+  variaban según el tipo y los botones de acción aparecían en mitad del panel.
+- **Acciones (Duplicar / Eliminar) siempre al final** del panel, separadas del
+  contenido, de forma coherente en todos los paneles.
+- **La rotación** pasa a vivir dentro de la sección «Tamaño y posición».
+- **Estilo separado del contenido en «Texto» y en los medios** (vídeo, audio,
+  «Insertar», SCORM): el tamaño de texto, el tipo de letra, el color, la
+  alineación y el marco se muestran ahora en la sección «Estilo», como en el
+  resto de campos, en lugar de mezclados con el contenido.
+- **Bloque «color + opacidad» unificado** (fondo del campo, «Tapar zona» y
+  relleno de formas): mismo aspecto y comportamiento en todos los sitios.
+- **Etiquetas más cortas y cabeceras más ligeras** para reducir el ruido visual
+  (p. ej. «Color del texto» / «Color de fondo» en lugar de «… del campo»).
+
+---
+
 ## [1.16.4] — 2026-06-19
 
 ### Corregido

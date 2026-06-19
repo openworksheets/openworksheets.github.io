@@ -1,6 +1,7 @@
 // Comprueba la paleta agrupada (acordeón) y las formas de dibujo
-// (line, arrow, rect, ellipse): creación en el editor, configuración
-// y renderizado en la vista previa del alumno.
+// (line, rect, polygon, ellipse): creación en el editor, configuración
+// y renderizado en la vista previa del alumno. La «flecha» ya no es un tipo
+// propio: es una «Línea / Flecha» (line) con puntas en uno o ambos extremos.
 const puppeteer = require('puppeteer-core');
 
 (async () => {
@@ -38,7 +39,7 @@ const puppeteer = require('puppeteer-core');
   const designTools = await page.$$eval('.ed-group-tools[data-group="design"] .ed-tool',
     ns => ns.map(n => n.dataset.type));
   check('grupo design contiene las formas',
-    ['line', 'arrow', 'rect', 'ellipse'].every(t => designTools.includes(t)));
+    ['line', 'rect', 'polygon', 'ellipse'].every(t => designTools.includes(t)));
 
   // Volver a pulsar lo cierra
   await page.click('.ed-group[data-group="design"]');
@@ -68,7 +69,6 @@ const puppeteer = require('puppeteer-core');
   // --- Crear cada forma ---
   const shapes = [
     { type: 'line', y: 100 },
-    { type: 'arrow', y: 180 },
     { type: 'rect', y: 260 },
     { type: 'ellipse', y: 380 }
   ];
@@ -79,21 +79,23 @@ const puppeteer = require('puppeteer-core');
     check(`forma ${s.type} creada con SVG en el editor`, Boolean(svg));
   }
 
-  // --- Configurar la flecha: doble punta e invertir ---
-  await page.click('.ed-field-arrow');
+  // --- Configurar la línea como flecha de doble punta ---
+  await page.click('.ed-field-line');
   await new Promise(r => setTimeout(r, 200));
   const arrowCfg = await page.evaluate(() => {
-    const checks = [...document.querySelectorAll('#panel .check-row input[type="checkbox"]')];
-    // line/arrow no tienen noScore (decorativos): los dos checkboxes son invertir y doble punta
-    checks.forEach(c => { c.checked = true; c.dispatchEvent(new Event('change')); });
-    const ln = document.querySelector('.ed-field-arrow svg.wpf-shape line');
+    // El selector «Puntas» es el que ofrece la opción value="both".
+    const sel = [...document.querySelectorAll('#panel select')]
+      .find(s => s.querySelector('option[value="both"]'));
+    if (sel) { sel.value = 'both'; sel.dispatchEvent(new Event('change')); }
+    const ln = document.querySelector('.ed-field-line svg.wpf-shape line');
     return {
-      nChecks: checks.length,
+      hasSelect: Boolean(sel),
       markerEnd: ln?.getAttribute('marker-end') || '',
       markerStart: ln?.getAttribute('marker-start') || ''
     };
   });
-  check('flecha con punta en ambos extremos', arrowCfg.markerEnd !== '' && arrowCfg.markerStart !== '');
+  check('línea: selector de puntas disponible', arrowCfg.hasSelect);
+  check('línea con punta en ambos extremos', arrowCfg.markerEnd !== '' && arrowCfg.markerStart !== '');
 
   // --- Configurar el rectángulo: relleno con opacidad y sin borde ---
   await page.click('.ed-field-rect');
@@ -106,12 +108,12 @@ const puppeteer = require('puppeteer-core');
     const fill = cbByText(/Con relleno|Filled/i);
     fill.checked = true;
     fill.dispatchEvent(new Event('change'));
-    // Opacidad del relleno: el deslizador justo tras su etiqueta.
+    // Opacidad del relleno: el deslizador (en %) justo tras su etiqueta.
     const opLabel = [...document.querySelectorAll('#panel .f-label')]
       .find(l => /Opacidad del relleno|Fill opacity/i.test(l.textContent));
     const op = opLabel && opLabel.nextElementSibling?.matches('input[type="range"]')
       ? opLabel.nextElementSibling : null;
-    if (op) { op.value = '0.5'; op.dispatchEvent(new Event('input')); }
+    if (op) { op.value = '50'; op.dispatchEvent(new Event('input')); }
     // Quitar el borde.
     const borde = cbByText(/Con borde|With border/i);
     borde.checked = false;
@@ -135,7 +137,7 @@ const puppeteer = require('puppeteer-core');
     const ov = document.querySelector('.prev-overlay');
     return {
       line: Boolean(ov.querySelector('.wpf-field-line svg.wpf-shape line')),
-      arrow: Boolean(ov.querySelector('.wpf-field-arrow svg.wpf-shape line[marker-end]')),
+      arrow: Boolean(ov.querySelector('.wpf-field-line svg.wpf-shape line[marker-end]')),
       rect: Boolean(ov.querySelector('.wpf-field-rect svg.wpf-shape rect')),
       ellipse: Boolean(ov.querySelector('.wpf-field-ellipse svg.wpf-shape ellipse')),
       rectFill: ov.querySelector('.wpf-field-rect svg.wpf-shape rect')?.getAttribute('fill'),
@@ -144,7 +146,7 @@ const puppeteer = require('puppeteer-core');
     };
   });
   check('previa: línea', prev.line);
-  check('previa: flecha con punta', prev.arrow);
+  check('previa: línea con punta', prev.arrow);
   check('previa: rectángulo', prev.rect);
   check('previa: elipse', prev.ellipse);
   check('previa: relleno del rectángulo conservado', prev.rectFill && prev.rectFill !== 'none');
