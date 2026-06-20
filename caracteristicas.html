@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="feat.title">Características · OpenWorksheets</title>
+  <meta name="description" content="Qué puedes hacer con OpenWorksheets: tipos de pregunta, corrección automática, exportación, entregas, seguridad y más.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/caracteristicas.css">
+  <script>(function(){var t=localStorage.getItem('wpf-tema');if(t)document.documentElement.setAttribute('data-theme',t);})();</script>
+</head>
+<body>
+
+  <header class="topbar">
+    <a class="brand" href="index.html">OpenWorksheets <span class="tag" data-i18n="nav.tagline">fichas autocorregibles</span></a>
+    <span class="spacer"></span>
+    <select id="selLang" class="sel-lang" aria-label="Idioma / Language">
+      <option value="es">Español</option>
+      <option value="ca">Català</option>
+      <option value="gl">Galego</option>
+      <option value="eu">Euskara</option>
+      <option value="en">English</option>
+    </select>
+    <button class="btn small ghost" id="btnTema" title="Tema: automático (sigue al sistema)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8M12 17v4"/></svg></button>
+    <a class="btn small" href="index.html" data-i18n="nav.backHome">Volver al inicio</a>
+    <a class="btn small primary" href="editor.html" data-i18n="nav.crearFicha">Crear una ficha</a>
+  </header>
+
+  <main class="page-wrap feat-wrap">
+
+    <section class="feat-hero anim-in">
+      <h1 data-i18n="feat.head">¿Qué puedes hacer con OpenWorksheets?</h1>
+      <p class="feat-lead" data-i18n="feat.lead">Una herramienta para el profesorado que convierte documentos habituales en actividades interactivas, autocorregibles y reutilizables — sin servidor, sin cuentas y sin instalaciones.</p>
+    </section>
+
+    <div class="feat-grid">
+
+      <article class="feat-card anim-in">
+        <div class="feat-card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="12" x2="12" y1="18" y2="12"/><line x1="9" x2="15" y1="15" y2="15"/></svg>
+        </div>
+        <h2 data-i18n="feat.s1.title">Crear fichas interactivas</h2>
+        <div data-i18n-html="feat.s1.body"><p>Transforma un PDF o una imagen en una ficha interactiva colocando campos de respuesta directamente sobre el documento original. También puedes partir de una hoja en blanco. Las fichas admiten varias páginas y es fácil combinar y reorganizar materiales.</p></div>
+      </article>
+
+      <article class="feat-card anim-in">
+        <div class="feat-card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+        </div>
+        <h2 data-i18n="feat.s2.title">Amplia variedad de tipos de pregunta</h2>
+        <div data-i18n-html="feat.s2.body"><ul><li>Respuesta corta de texto</li><li>Respuesta numérica con tolerancia</li><li>Fórmulas matemáticas o químicas</li><li>Verdadero/Falso, opción única, múltiple y casillas</li><li>Desplegables, huecos, emparejamientos, ordenar y arrastrar</li><li>Respuesta larga, grabación de voz y tabla editable</li></ul></div>
+      </article>
+
+      <article class="feat-card anim-in">
+        <div class="feat-card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <h2 data-i18n="feat.s3.title">Corrección automática flexible</h2>
+        <div data-i18n-html="feat.s3.body"><p>La mayoría de tipos se autocorrigen al instante.</p><ul><li>Varias respuestas correctas por pregunta</li><li>Ignorar mayúsculas, tildes o espacios</li><li>Tolerancia numérica</li><li>Corrección de tablas por celda, fila o columna</li></ul></div>
+      </article>
+
+      <article class="feat-card anim-in">
+        <div class="feat-card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h1l2.5 10L11 4h9"/><path d="M14 10l4 4"/><path d="M18 10l-4 4"/></svg>
+        </div>
+        <h2 data-i18n="feat.s4.title">Fórmulas matemáticas y científicas (LaTeX)</h2>
+        <div data-i18n-html="feat.s4.body"><p>Cualquier texto de la ficha admite fórmulas LaTeX.</p><ul><li>Editor visual EdiCuaTeX integrado</li><li>Compatible con ecuaciones químicas</li><li>Renderizado con MathJax, funciona sin conexión</li></ul></div>
+      </article>
+
+      <article class="feat-card anim-in">
+        <div class="feat-card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 8 6 4-6 4V8z"/></svg>
+        </div>
+        <h2 data-i18n="feat.s5.title">Multimedia e interactivos</h2>
+        <div data-i18n-html="feat.s5.body"><ul><li>Imágenes, vídeos y audios incrustados</li><li>HTML, eXeLearning, IMS CP y SCORM incrustado</li><li>La puntuación del SCORM puede contar en la nota</li><li>Grabación de voz desde la ficha</li></ul></div>
+      </article>
+
+      <article class="feat-card anim-in">
+        <div class="feat-card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+        </div>
+        <h2 data-i18n="feat.s6.title">Exportar y compartir</h2>
+        <div data-i18n-html="feat.s6.body"><ul><li>Paquete .owpkg para editar más adelante</li><li>SCORM 1.2 para Moodle u otro LMS</li><li>Página web autónoma</li><li>IMS Content Package</li><li>Enlace directo para el alumnado</li></ul></div>
+      </article>
+
+      <article class="feat-card anim-in">
+        <div class="feat-card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
+        </div>
+        <h2 data-i18n="feat.s7.title">Entregas y revisión de resultados</h2>
+        <div data-i18n-html="feat.s7.body"><ul><li>Entrega por archivo o enlace</li><li>Tabla de resultados de clase</li><li>Exportación a CSV</li><li>Verificación de integridad</li><li>Cifrado de entregas</li></ul></div>
+      </article>
+
+      <article class="feat-card anim-in">
+        <div class="feat-card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h2 data-i18n="feat.s8.title">Control de acceso y supervisión</h2>
+        <div data-i18n-html="feat.s8.body"><ul><li>Fechas y hora de apertura y cierre</li><li>Tiempo límite y número de intentos</li><li>Supervisión ligera: pantalla completa, registro de incidencias</li><li>Entrega automática tras N salidas</li></ul></div>
+      </article>
+
+      <article class="feat-card anim-in">
+        <div class="feat-card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <h2 data-i18n="feat.s9.title">Privacidad, idiomas y herramientas de edición</h2>
+        <div data-i18n-html="feat.s9.body"><ul><li>Sin envío de datos a servidores externos</li><li>Disponible en 5 idiomas</li><li>Fuentes para mejorar la legibilidad (OpenDyslexic)</li><li>Herramientas de edición completas</li><li>Software libre (AGPLv3), gratuito</li></ul></div>
+      </article>
+
+    </div>
+
+    <div class="feat-cta anim-in">
+      <a class="btn primary" href="editor.html" data-i18n="index.card1.btn">Abrir el editor</a>
+      <a class="btn" href="index.html" data-i18n="nav.backHome">Volver al inicio</a>
+    </div>
+
+  </main>
+
+  <footer class="pie">
+    <span data-i18n="index.footer">OpenWorksheets · aplicación web para crear fichas autocorregibles</span>
+    <span class="pie-linea">
+      <span>v<span data-app-version>1.0.0</span></span>
+      <span class="pie-sep">·</span>
+      <a href="https://bilateria.org" target="_blank" rel="noopener">© 2026 Juan José de Haro</a>
+      <span class="pie-sep">·</span>
+      <a href="https://github.com/openworksheets/openworksheets.github.io" target="_blank" rel="noopener">GitHub</a>
+      <span class="pie-sep">·</span>
+      <a href="https://github.com/openworksheets/openworksheets.github.io/issues" target="_blank" rel="noopener" data-i18n="footer.issues">Problemas y sugerencias</a>
+      <span class="pie-sep">·</span>
+      <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener">AGPLv3</a>
+      <span class="pie-sep">·</span>
+      <details class="pie-priv">
+        <summary data-i18n="footer.privacy">Privacidad</summary>
+        <p data-i18n="footer.analyticsNotice">Esta aplicación recoge únicamente estadísticas de uso agregadas con un sistema propio para conocer su utilización y mejorar la herramienta. No se almacenan direcciones IP ni se usan cookies de analítica para los visitantes.</p>
+      </details>
+      <span data-analytics-summary hidden style="display:none">
+        <span class="pie-sep">·</span>
+        <span data-i18n="footer.visits">Visitas</span>&nbsp;<strong data-analytics-total>-</strong>
+        <span class="pie-sep">·</span>
+        <span data-i18n="footer.today">Hoy</span>&nbsp;<strong data-analytics-today>-</strong>
+      </span>
+    </span>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/analytics.js" defer></script>
+  <script type="module" src="js/caracteristicas.js"></script>
+</body>
+</html>

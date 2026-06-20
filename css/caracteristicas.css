@@ -1,0 +1,75 @@
+.feat-wrap { padding-top: 32px; padding-bottom: 40px; }
+
+.feat-hero { text-align: center; margin-bottom: 36px; }
+.feat-hero h1 { font-size: clamp(1.5rem, 4vw, 2.2rem); line-height: 1.2; margin: 0 0 14px; }
+.feat-lead { font-size: 1.05rem; color: var(--tinta-suave); max-width: 680px; margin: 0 auto; }
+
+.feat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 36px;
+}
+
+.feat-card {
+  background: var(--blanco);
+  border: 2px solid var(--tinta-tenue);
+  border-radius: 10px;
+  padding: 22px 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.feat-card-icon {
+  width: 40px;
+  height: 40px;
+  background: color-mix(in srgb, var(--rojo) 12%, var(--blanco));
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.feat-card-icon svg {
+  width: 22px;
+  height: 22px;
+  stroke: var(--rojo);
+}
+
+.feat-card h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.feat-card div {
+  font-size: 0.9rem;
+  color: var(--tinta-suave);
+  line-height: 1.55;
+}
+
+.feat-card div p { margin: 0 0 8px; }
+.feat-card div p:last-child { margin-bottom: 0; }
+
+.feat-card div ul {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.feat-cta {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding-top: 8px;
+}
+
+@media (max-width: 540px) {
+  .feat-grid { grid-template-columns: 1fr; }
+}

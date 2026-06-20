@@ -11,6 +11,13 @@ Las versiones publicadas también están en la página de
 
 ## [Unreleased]
 
+### Añadido
+- **Página «Características»** (`caracteristicas.html`): descripción completa para
+  el profesorado organizada en 9 bloques temáticos (crear fichas, tipos de
+  pregunta, corrección, fórmulas, multimedia, exportar, entregas, supervisión y
+  privacidad), con traducciones a los 5 idiomas de la aplicación. Enlazada desde
+  la barra superior y el pie de la página de inicio.
+
 ### Mejorado
 - **Campo Fórmula:** al pulsar el botón «fx» con una fórmula ya escrita en el
   campo (sin seleccionarla), EdiCuaTeX se abre precargando todo su contenido para
