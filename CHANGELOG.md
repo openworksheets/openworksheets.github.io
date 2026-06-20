@@ -9,7 +9,7 @@ Las versiones publicadas también están en la página de
 
 ---
 
-## [Sin versión] — 2026-06-20
+## [1.19.0] — 2026-06-20
 
 ### Añadido
 - **Campo «Fórmula»**: respuesta corta autocorregible en la que el alumnado
@@ -21,34 +21,51 @@ Las versiones publicadas también están en la página de
   revisar la entrega (queda «pendiente», como la grabación de voz). Incluye una
   pequeña barra de formato (**negrita**, *cursiva*, enlaces) y el botón «fx»
   para insertar fórmulas con EdiCuaTeX, con **vista previa** renderizada
-  (Markdown + LaTeX) mientras se escribe. En la corrección, el docente ve la
-  respuesta ya renderizada y le pone la nota.
+  (Markdown + LaTeX) mientras se escribe, **contador de palabras** y **límite de
+  palabras** opcional fijado por el profesor. En la corrección, el docente ve la
+  respuesta ya renderizada y le pone la nota. Incluye un **botón de ayuda (?)**
+  que explica con ejemplos qué hace cada botón, sin tecnicismos, y el profesor
+  puede **ocultar el botón «fx»** por campo cuando no haga falta.
 - El **botón de fórmulas (EdiCuaTeX)** está ahora disponible también para el
-  alumnado en estos dos campos (antes solo lo tenía el profesorado en el editor).
-- **Contador de palabras** en la «Respuesta larga» para el alumnado y opción del
-  profesorado de **limitar el número de palabras** (en el editor); al alcanzar el
-  tope, el alumnado no puede escribir más y el contador lo señala.
-- **Botón de ayuda (?)** en la barra de la «Respuesta larga» del alumnado que
-  explica con ejemplos qué hace cada botón (negrita con `**`, cursiva con `*`,
-  formato de los enlaces y el editor de fórmulas «fx»), sin tecnicismos.
-- Opción en el editor de la «Respuesta larga» para **ocultar el botón de
-  fórmulas (fx)** al alumnado cuando no haga falta (no distrae); en ese caso la
-  ayuda tampoco lo menciona.
+  alumnado (en los campos «Fórmula» y «Respuesta larga») y en el **editor de
+  tabla a pantalla completa**, además del panel del editor.
 - El ajuste de ficha **«Habilitar fórmulas matemáticas (LaTeX)»** (antes
   «Mostrar el botón para insertar fórmulas») actúa ahora como **interruptor
   global**: al desactivarlo desaparece todo lo relacionado con fórmulas —el campo
   «Fórmula» en la paleta, el botón «fx» en todos los campos y la opción por campo
   de la «Respuesta larga»— para que las materias sin fórmulas no muestren nada de
   LaTeX al alumnado. Incluye un texto explicativo en Ajustes.
+- **Control durante la realización (supervisión)**: nueva sección en Ajustes →
+  Privacidad y seguridad para **mantener la pantalla completa** mientras el
+  alumnado hace la ficha, **registrar** salidas de la pestaña/ventana/pantalla
+  completa en la entrega y, opcionalmente, **entregar automáticamente** tras un
+  número de incidencias. Las opciones de qué hacer al salir y de entrega
+  automática solo aparecen al activar el control de pantalla completa.
+- **Aviso de supervisión en la pantalla de inicio** del alumnado: antes de
+  empezar, se informa de las reglas de vigilancia según lo que el profesor haya
+  configurado, **sin revelar cuántas salidas** fuerzan el envío. Así el alumnado
+  sabe a qué atenerse.
+- **Marca de supervisión en la tabla de entregas**: las entregas con incidencias
+  de vigilancia se **destacan con la fila resaltada y un icono 👁** con el
+  recuento, para que el profesorado las revise.
 - La tabla de entregas indica con un **distintivo ámbar** las que tienen
   respuestas **pendientes de corrección manual** (grabación de voz o respuesta
   larga), antes solo un punto gris poco visible para las grabaciones.
+- En Ajustes → Privacidad y seguridad, si el **cifrado de entregas está activado
+  pero falta la contraseña**, aparece un **asterisco rojo** en la etiqueta de la
+  contraseña y en el título de la pestaña, para no pasar por alto que hay que
+  rellenarla.
+
+### Cambiado
+- Los avisos de **vigilancia** al alumnado (salir de la pantalla completa y
+  alcanzar el límite de salidas) pasan de ser un *toast* efímero abajo a un
+  **aviso centrado en pantalla que permanece hasta que el alumnado lo cierra**,
+  para que no pase desapercibido.
+- El **diálogo de ajustes** es algo más ancho y con desplazamiento para que los
+  textos largos no se salgan de la pantalla.
+- El tooltip del botón de ajustes se simplifica a **«Configuración de la ficha»**.
 
 ### Corregido
-- El botón de fórmulas «fx» ahora también aparece en el **editor de tabla a
-  pantalla completa** (antes solo estaba en el panel lateral, que queda oculto
-  bajo el diálogo); inserta la fórmula en la celda o el encabezado enfocado y
-  solo se muestra cuando el foco está en un campo que admite fórmulas.
 - La **vista previa** ahora **cifra la entrega de prueba** cuando el cifrado de
   entregas está activado (antes el par de claves solo se generaba al exportar, así
   que la entrega de la previa salía sin cifrar y su enlace se abría sin pedir

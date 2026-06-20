@@ -155,6 +155,16 @@ Las fichas admiten las siguientes opciones de control:
 - Entrega automática al agotar el plazo
 - Opción de mostrar u ocultar la nota y la corrección al alumnado
 
+### Supervisión durante la realización
+
+De forma opcional, las fichas pueden hacerse bajo una supervisión ligera (todo en el navegador; no puede impedir del todo que un usuario decidido cambie de dispositivo):
+
+- **Mantener la pantalla completa**: la ficha se abre a pantalla completa y vuelve a solicitarla cuando el alumnado hace clic tras salir de ella.
+- **Qué hacer si el alumnado sale de la pestaña, ventana o pantalla completa**: permitirlo, mostrar un aviso o avisar **y registrar** la incidencia en la entrega.
+- **Entrega automática** tras un número configurable de incidencias (0 = nunca).
+
+Al alumnado se le informan las reglas en la pantalla de inicio (sin revelar cuántas salidas fuerzan el envío automático), los avisos aparecen como un mensaje centrado que permanece hasta que se cierra, y las entregas con incidencias se destacan en la tabla de resultados del docente.
+
 ## Seguridad y cifrado
 
 OpenWorksheets ofrece un nivel de seguridad alto para el uso en el aula: el alumnado no puede acceder al archivo de la ficha y las entregas pueden cifrarse para que solo el docente pueda leerlas. Incorpora dos mecanismos de cifrado **independientes**, ambos ejecutados íntegramente en el navegador mediante la Web Crypto API (`crypto.subtle`), sin servidor ni envío de datos a terceros.

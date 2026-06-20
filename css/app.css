@@ -632,8 +632,12 @@ dialog .dlg-buttons {
   flex-wrap: wrap;
 }
 #dlgAjustes {
-  max-width: 640px;
+  max-width: 720px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
 }
+/* Asterisco de «falta la contraseña de cifrado» (etiqueta y pestaña). */
+.req-mark { color: var(--rojo); font-weight: 700; }
 /* Modales de la pantalla de inicio (compartir y verificar entregas) */
 .home-dialog {
   position: relative;
@@ -1013,6 +1017,11 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .score-high:hover td, .score-mid:hover td, .score-low:hover td { color: inherit; }
 
 .dup-warn { color: var(--ambar); font-size: 0.82rem; cursor: help; }
+/* Marca de supervisión en la tabla de clase: fila destacada + ojo de aviso. */
+.cl-flag { margin-left: 5px; cursor: help; font-size: 0.95rem; }
+tr.cl-flagged { background: var(--rojo-claro) !important; }
+tr.cl-flagged td { border-top: 1px solid var(--rojo); border-bottom: 1px solid var(--rojo); }
+tr.cl-flagged td:first-child { box-shadow: inset 4px 0 0 var(--rojo); }
 .cl-del { width: 24px; }
 .cl-del-btn {
   background: none; border: none; cursor: pointer;
@@ -3355,6 +3364,38 @@ input.wpf-gap-input {
   z-index: 100;
   flex-wrap: wrap;
 }
+
+/* Aviso de vigilancia (salir de pantalla completa / límite de salidas):
+   centrado y persistente hasta que el alumnado lo cierra. */
+.al-security-dialog { border: none; background: transparent; padding: 0; width: fit-content; max-width: 92vw; }
+.al-security-dialog::backdrop { background: rgba(20, 28, 40, 0.55); }
+.al-security-card {
+  background: var(--blanco);
+  color: var(--tinta);
+  border: 3px solid var(--rojo);
+  border-radius: 14px;
+  padding: 26px 28px;
+  max-width: 460px;
+  margin: 0 auto;
+  text-align: center;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+}
+.al-security-icon { font-size: 2.6rem; line-height: 1; margin-bottom: 8px; }
+.al-security-msg { font-size: 1.05rem; font-weight: 600; line-height: 1.45; margin: 0 0 18px; }
+
+/* Aviso de supervisión en la pantalla de inicio del alumnado. */
+.al-monitor-note {
+  margin: 14px 0 4px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--ambar);
+  background: var(--ambar-claro);
+  border-radius: 10px;
+  text-align: left;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+.al-monitor-note .al-monitor-head { font-weight: 700; margin-bottom: 6px; }
+.al-monitor-note p { margin: 4px 0; }
 .al-barra .estado { font-size: 0.88rem; flex: 1; min-width: 140px; }
 .al-barra .mini-prog {
   height: 8px;

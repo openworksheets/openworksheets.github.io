@@ -102,7 +102,7 @@
         <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="ajPanelEditorPrefs" data-tab="editorPrefs" data-i18n="dlg.tab.editorPrefs">Preferencias del editor</button>
         <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="ajPanelCorrection" data-tab="correction" data-i18n="dlg.tab.correction">Corrección</button>
         <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="ajPanelAccess" data-tab="access" data-i18n="dlg.access.section">Restricciones de acceso</button>
-        <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="ajPanelSecurity" data-tab="security" data-i18n="dlg.tab.security">Privacidad y seguridad</button>
+        <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="ajPanelSecurity" data-tab="security"><span data-i18n="dlg.tab.security">Privacidad y seguridad</span><span class="req-mark" id="ajSecurityTabReq" hidden> *</span></button>
         <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="ajPanelScorm" data-tab="scorm" data-i18n="dlg.tab.scorm">SCORM</button>
       </div>
       <div class="settings-panels">
@@ -167,7 +167,7 @@
           <h3 class="settings-subhead" data-i18n="dlg.crypto.section">Privacidad de la entrega</h3>
           <label class="check-row"><input type="checkbox" id="ajCifrarEntregas"> <span data-i18n="dlg.crypto.encryptSubmissions">Cifrar el JSON de entrega para el profesor</span></label>
           <div id="ajCryptoPasswordBlock">
-            <label class="f-label" for="ajCryptoPassword" data-i18n="dlg.crypto.settingsPassword">Contraseña de cifrado</label>
+            <label class="f-label" for="ajCryptoPassword"><span data-i18n="dlg.crypto.settingsPassword">Contraseña de cifrado</span><span class="req-mark" id="ajCryptoReq" hidden> *</span></label>
             <div class="password-row">
               <input type="password" id="ajCryptoPassword" autocomplete="new-password">
               <button type="button" class="pw-toggle" data-target="ajCryptoPassword" data-i18n-title="crypto.showPassword" title="Mostrar contraseña"><svg class="eye-show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
@@ -178,15 +178,17 @@
           <h3 class="settings-subhead" data-i18n="dlg.security.controlSection">Control durante la realización</h3>
           <label class="check-row"><input type="checkbox" id="ajKeepFullscreen"> <span data-i18n="dlg.security.keepFullscreen">Intentar mantener la pantalla completa mientras el alumnado realiza la ficha</span></label>
           <p><small data-i18n="dlg.security.keepFullscreenHint">OpenWorksheets volverá a solicitar pantalla completa al empezar y cuando el alumnado vuelva a hacer clic tras salir de ella. No puede impedir del todo cambiar de pestaña, ventana o dispositivo.</small></p>
-          <label class="f-label" for="ajFocusMode" data-i18n="dlg.security.focusMode">Qué hacer si el alumnado sale de la pestaña, ventana o pantalla completa</label>
-          <select id="ajFocusMode">
-            <option value="free" data-i18n="dlg.security.focusModeFree">Permitirlo sin restricciones</option>
-            <option value="warn" data-i18n="dlg.security.focusModeWarn">Mostrar un aviso</option>
-            <option value="record" data-i18n="dlg.security.focusModeRecord">Mostrar un aviso y registrarlo en la entrega</option>
-          </select>
-          <label class="f-label" for="ajFocusMaxIncidents" data-i18n="dlg.security.focusMaxIncidents">Entregar automáticamente tras este número de incidencias (0 = nunca)</label>
-          <input type="number" id="ajFocusMaxIncidents" min="0" step="1" value="0">
-          <p><small data-i18n="dlg.security.focusMaxIncidentsHint">Cuenta salidas de la pestaña o ventana y, si está activa la pantalla completa, también sus salidas. Si se alcanza este límite, la ficha se entrega sin permitir continuar.</small></p>
+          <div id="ajFocusOptions" hidden>
+            <label class="f-label" for="ajFocusMode" data-i18n="dlg.security.focusMode">Qué hacer si el alumnado sale de la pestaña, ventana o pantalla completa</label>
+            <select id="ajFocusMode">
+              <option value="free" data-i18n="dlg.security.focusModeFree">Permitirlo sin restricciones</option>
+              <option value="warn" data-i18n="dlg.security.focusModeWarn">Mostrar un aviso</option>
+              <option value="record" data-i18n="dlg.security.focusModeRecord">Mostrar un aviso y registrarlo en la entrega</option>
+            </select>
+            <label class="f-label" for="ajFocusMaxIncidents" data-i18n="dlg.security.focusMaxIncidents">Entregar automáticamente tras este número de incidencias (0 = nunca)</label>
+            <input type="number" id="ajFocusMaxIncidents" min="0" step="1" value="0">
+            <p><small data-i18n="dlg.security.focusMaxIncidentsHint">Cuenta salidas de la pestaña o ventana y, si está activa la pantalla completa, también sus salidas. Si se alcanza este límite, la ficha se entrega sin permitir continuar.</small></p>
+          </div>
         </section>
         <section class="settings-panel" id="ajPanelScorm" role="tabpanel" data-panel="scorm" hidden>
           <label class="f-label" for="ajScormStatus" data-i18n="dlg.scorm.status">Estado que se envía a la plataforma</label>

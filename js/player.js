@@ -143,11 +143,41 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     securityCleanup = null;
   }
 
+  // Aviso de vigilancia centrado y persistente: a diferencia de un toast (abajo,
+  // efímero, fácil de pasar por alto), aparece en mitad de la pantalla y se queda
+  // hasta que el alumnado lo cierra. Se reutiliza una sola instancia: nuevos
+  // incidentes actualizan su texto en vez de apilar ventanas.
+  let securityAlert = null;
+  function showSecurityAlert(message) {
+    if (securityAlert && document.body.contains(securityAlert)) {
+      const m = securityAlert.querySelector('.al-security-msg');
+      if (m) m.textContent = message;
+      return securityAlert;
+    }
+    const dlg = el('dialog', { class: 'al-security-dialog' });
+    const btn = el('button', { class: 'btn primary', type: 'button' }, t('player.securityDismiss'));
+    btn.addEventListener('click', () => { try { dlg.close(); } catch { /* noop */ } });
+    dlg.addEventListener('close', () => { dlg.remove(); if (securityAlert === dlg) securityAlert = null; });
+    dlg.appendChild(el('div', { class: 'al-security-card' },
+      el('div', { class: 'al-security-icon' }, '⚠'),
+      el('p', { class: 'al-security-msg' }, message),
+      btn));
+    document.body.appendChild(dlg);
+    securityAlert = dlg;
+    try { dlg.showModal(); } catch { /* navegadores sin <dialog> */ }
+    try { btn.focus(); } catch { /* noop */ }
+    return dlg;
+  }
+  function closeSecurityAlert() {
+    if (securityAlert) { try { securityAlert.close(); } catch { /* noop */ } securityAlert = null; }
+  }
+
   function resetSecurityState() {
     securityIncidents = [];
     securityIncidentCount = 0;
     lastSecurityIncidentAt = 0;
     securityForcedSubmit = false;
+    closeSecurityAlert();
   }
 
   // ---------- Restricciones de acceso ----------
@@ -243,7 +273,28 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
         Number(settings.maxAttempts) > 0
           ? el('p', {}, t('player.attemptsLeft', { left: attemptsLeft(), max: settings.maxAttempts }))
           : null,
+        monitorNoticeEl(),
         form)));
+  }
+
+  // Aviso de supervisión para la pantalla de inicio: informa al alumnado de las
+  // reglas (pantalla completa, cambio de ventana/pestaña) y de las consecuencias
+  // según lo que el profesor haya configurado, SIN revelar cuántas salidas fuerzan
+  // el envío. Devuelve null si la ficha no tiene supervisión.
+  function monitorNoticeEl() {
+    if (scormMode) return null;
+    const focusMode = ['free', 'warn', 'record'].includes(settings.focusMode) ? settings.focusMode : 'free';
+    const maxInc = Math.max(0, Number(settings.focusMaxIncidents) || 0);
+    const keepFs = Boolean(settings.keepFullscreen) && Boolean(document.documentElement?.requestFullscreen);
+    const supervised = keepFs || focusMode !== 'free';
+    if (!supervised) return null;
+    const box = el('div', { class: 'al-monitor-note' },
+      el('div', { class: 'al-monitor-head' }, '👁 ' + t('player.monitorTitle')));
+    box.appendChild(el('p', {}, keepFs ? t('player.monitorWatchFs') : t('player.monitorWatch')));
+    if (focusMode === 'record') box.appendChild(el('p', {}, t('player.monitorRecord')));
+    else if (focusMode === 'warn') box.appendChild(el('p', {}, t('player.monitorWarn')));
+    if (maxInc > 0) box.appendChild(el('p', {}, t('player.monitorAutoSubmit')));
+    return box;
   }
 
   function showBlocked() {
@@ -383,10 +434,10 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
       lastSecurityIncidentAt = now;
       securityIncidentCount += 1;
       if (shouldRecordFocus) securityIncidents.push({ type, at: new Date(now).toISOString() });
-      if (shouldWarnFocus) toast(t('player.focusWarning'), 'error');
+      if (shouldWarnFocus) showSecurityAlert(t('player.focusWarning'));
       if (focusMaxIncidents > 0 && securityIncidentCount >= focusMaxIncidents && !securityForcedSubmit) {
         securityForcedSubmit = true;
-        toast(t('player.focusAutoSubmitted'), 'error');
+        showSecurityAlert(t('player.focusAutoSubmitted'));
         finish(doc, barra, btnFin);
       }
     };

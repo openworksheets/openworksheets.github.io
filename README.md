@@ -156,6 +156,16 @@ Worksheets support the following control options:
 - Automatic submission when time expires
 - Option to show or hide the grade and corrections to students
 
+### Supervision during the activity
+
+Optionally, worksheets can be done under light supervision (all client-side; it cannot fully prevent a determined user from switching device):
+
+- **Keep fullscreen**: the worksheet opens in fullscreen and re-requests it when the student clicks after leaving it.
+- **What to do when the student leaves the tab, window or fullscreen**: allow it, show a warning, or warn **and record** the incident in the submission.
+- **Automatic submission** after a configurable number of incidents (0 = never).
+
+Students are told the rules on the start screen (without revealing the number of exits that triggers auto-submission), warnings appear as a centered notice that stays until dismissed, and submissions with incidents are highlighted in the teacher's results table.
+
 ## Security and encryption
 
 OpenWorksheets offers a high level of security for classroom use: students cannot access the worksheet file and submissions can be encrypted so that only the teacher can read them. It incorporates two **independent** encryption mechanisms, both running entirely in the browser using the Web Crypto API (`crypto.subtle`), with no server or data sent to third parties.

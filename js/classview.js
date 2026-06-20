@@ -111,9 +111,15 @@ export function createClassPanel({ tableEl, detailEl, storageKey = 'openworkshee
       const dup = classResults.filter(cr => cr.data.alumno === d.alumno && cr.data.fichaId === d.fichaId).length > 1;
       const badge = r.valid ? `<span class="vr-badge ok">✓</span>` : `<span class="vr-badge err">✗</span>`;
       const pend = hasManualPending(d) ? `<span class="cl-pending" title="${esc(t('index.pendingTip'))}"> ⋯</span>` : '';
-      return `<tr class="${cls}" data-ri="${r._i}">
+      // Marca de supervisión: el alumno salió de la pantalla completa o cambió de
+      // ventana/pestaña. Destaca la fila para que el profesor la revise.
+      const flagged = d.vigilancia && d.vigilancia.count > 0;
+      const flag = flagged
+        ? `<span class="cl-flag" title="${esc(t('index.monitorTip', { n: d.vigilancia.count }) + (d.vigilancia.forcedSubmit ? ' · ' + t('entrega.monitorForced') : ''))}">👁</span>`
+        : '';
+      return `<tr class="${cls}${flagged ? ' cl-flagged' : ''}" data-ri="${r._i}">
         <td>${rowIdx + 1}</td>
-        <td>${esc(d.alumno)}${dup ? `<span class="dup-warn" title="${esc(t('index.classDup'))}"> ⚠</span>` : ''}</td>
+        <td>${esc(d.alumno)}${dup ? `<span class="dup-warn" title="${esc(t('index.classDup'))}"> ⚠</span>` : ''}${flag}</td>
         ${hasGroups    ? `<td>${esc(d.grupo || '—')}</td>` : ''}
         ${hasManySheets ? `<td>${esc(d.titulo)}</td>` : ''}
         <td class="cl-num">${formatNum(effNota10(r))}${pend}</td>

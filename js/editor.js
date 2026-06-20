@@ -4619,6 +4619,16 @@ function updateCryptoSettingsUi() {
   $('#ajCryptoPasswordBlock').hidden = !enabled;
   $('#ajCryptoDisabledWarning').hidden = enabled;
   $('#ajCryptoPassword').disabled = !enabled;
+  updateCryptoRequiredMark();
+}
+
+// Marca con un asterisco la contraseña de cifrado y la pestaña «Privacidad y
+// seguridad» cuando el cifrado está activado pero falta la contraseña, para que
+// el profesor no lo pase por alto.
+function updateCryptoRequiredMark() {
+  const missing = $('#ajCifrarEntregas').checked && !$('#ajCryptoPassword').value.trim();
+  const m1 = $('#ajCryptoReq'); if (m1) m1.hidden = !missing;
+  const m2 = $('#ajSecurityTabReq'); if (m2) m2.hidden = !missing;
 }
 
 function resetPersistentEditorPrefs() {
@@ -4692,6 +4702,7 @@ function openSettings(afterSave, initialTab = 'basic') {
   $('#ajKeepFullscreen').checked = Boolean(state.manifest.settings.keepFullscreen);
   $('#ajFocusMode').value = state.manifest.settings.focusMode || 'free';
   $('#ajFocusMaxIncidents').value = String(state.manifest.settings.focusMaxIncidents || 0);
+  updateFocusOptionsUi();
   const scorm = state.manifest.settings.scorm || {};
   $('#ajScormStatus').value = scorm.statusMode === 'completion' ? 'completion' : 'score';
   $('#ajScormMastery').value = String(scorm.masteryScore != null ? scorm.masteryScore : 50);
@@ -4699,6 +4710,14 @@ function openSettings(afterSave, initialTab = 'basic') {
 }
 
 $('#ajCifrarEntregas')?.addEventListener('change', updateCryptoSettingsUi);
+$('#ajCryptoPassword')?.addEventListener('input', updateCryptoRequiredMark);
+// Las opciones de «qué hacer al salir» y entrega automática solo tienen sentido
+// con el control de pantalla completa activado: se muestran solo entonces.
+function updateFocusOptionsUi() {
+  const box = $('#ajFocusOptions');
+  if (box) box.hidden = !$('#ajKeepFullscreen').checked;
+}
+$('#ajKeepFullscreen')?.addEventListener('change', updateFocusOptionsUi);
 $('#ajResetPrefs')?.addEventListener('click', resetPersistentEditorPrefs);
 
 $('#dlgAjustes form')?.addEventListener('submit', ev => {
@@ -4734,8 +4753,15 @@ $('#dlgAjustes')?.addEventListener('close', () => {
   state.manifest.settings.showFormulaButton = $('#ajFormulaBtn').checked;
   state.manifest.settings.maxAttempts = Math.max(0, parseInt($('#ajIntentos').value, 10) || 0);
   state.manifest.settings.keepFullscreen = $('#ajKeepFullscreen').checked;
-  state.manifest.settings.focusMode = ['free', 'warn', 'record'].includes($('#ajFocusMode').value) ? $('#ajFocusMode').value : 'free';
-  state.manifest.settings.focusMaxIncidents = Math.max(0, parseInt($('#ajFocusMaxIncidents').value, 10) || 0);
+  // La vigilancia (qué hacer al salir + entrega automática) solo aplica con el
+  // control de pantalla completa activado; si está desmarcado, se desactiva.
+  if ($('#ajKeepFullscreen').checked) {
+    state.manifest.settings.focusMode = ['free', 'warn', 'record'].includes($('#ajFocusMode').value) ? $('#ajFocusMode').value : 'free';
+    state.manifest.settings.focusMaxIncidents = Math.max(0, parseInt($('#ajFocusMaxIncidents').value, 10) || 0);
+  } else {
+    state.manifest.settings.focusMode = 'free';
+    state.manifest.settings.focusMaxIncidents = 0;
+  }
   state.manifest.settings.fontFamily = $('#ajFont').value;
   canvas.style.setProperty('--ficha-font', fontStack(state.manifest.settings.fontFamily));
   state.manifest.settings.encryptSubmissions = $('#ajCifrarEntregas').checked;
