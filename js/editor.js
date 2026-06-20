@@ -4689,6 +4689,9 @@ function openSettings(afterSave, initialTab = 'basic') {
   $('#ajAutoEntrega').checked = Boolean(acc.autoEntrega);
   $('#ajTiempo').value = String(acc.tiempoLimite || 0);
   $('#ajPassword').value = acc.password || '';
+  $('#ajKeepFullscreen').checked = Boolean(state.manifest.settings.keepFullscreen);
+  $('#ajFocusMode').value = state.manifest.settings.focusMode || 'free';
+  $('#ajFocusMaxIncidents').value = String(state.manifest.settings.focusMaxIncidents || 0);
   const scorm = state.manifest.settings.scorm || {};
   $('#ajScormStatus').value = scorm.statusMode === 'completion' ? 'completion' : 'score';
   $('#ajScormMastery').value = String(scorm.masteryScore != null ? scorm.masteryScore : 50);
@@ -4705,14 +4708,14 @@ $('#dlgAjustes form')?.addEventListener('submit', ev => {
   if ($('#ajCifrarEntregas').checked && !cryptoPassword) {
     ev.preventDefault();
     toast(t('crypto.passwordRequired'), 'error');
-    activateSettingsTab('correction');
+    activateSettingsTab('security');
     $('#ajCryptoPassword').focus();
     return;
   }
   if ($('#ajCifrarEntregas').checked && accessPassword && cryptoPassword && accessPassword === cryptoPassword) {
     ev.preventDefault();
     toast(t('crypto.sameAsAccess'), 'error');
-    activateSettingsTab('correction');
+    activateSettingsTab('security');
     $('#ajCryptoPassword').focus();
   }
 });
@@ -4730,6 +4733,9 @@ $('#dlgAjustes')?.addEventListener('close', () => {
   state.manifest.settings.shuffle = $('#ajBarajar').checked;
   state.manifest.settings.showFormulaButton = $('#ajFormulaBtn').checked;
   state.manifest.settings.maxAttempts = Math.max(0, parseInt($('#ajIntentos').value, 10) || 0);
+  state.manifest.settings.keepFullscreen = $('#ajKeepFullscreen').checked;
+  state.manifest.settings.focusMode = ['free', 'warn', 'record'].includes($('#ajFocusMode').value) ? $('#ajFocusMode').value : 'free';
+  state.manifest.settings.focusMaxIncidents = Math.max(0, parseInt($('#ajFocusMaxIncidents').value, 10) || 0);
   state.manifest.settings.fontFamily = $('#ajFont').value;
   canvas.style.setProperty('--ficha-font', fontStack(state.manifest.settings.fontFamily));
   state.manifest.settings.encryptSubmissions = $('#ajCifrarEntregas').checked;
@@ -4874,7 +4880,7 @@ async function prepareExportManifest(retry) {
   if (exportManifest.settings?.encryptSubmissions !== false) {
     if (!state.submissionCryptoPassword) {
       toast(t('crypto.passwordRequired'), 'error');
-      openSettings(retry, 'correction');
+      openSettings(retry, 'security');
       $('#ajCryptoPassword').focus();
       return null;
     }
@@ -5127,10 +5133,20 @@ async function mergeZipFile(file, insertAt) {
 
 // ---------- Vista previa ----------
 
-function openPreview() {
+async function openPreview() {
   state.manifest.title = titleInput.value.trim();
   if (!state.manifest.pages.length) { toast(t('toast.addPageFirst'), 'error'); return; }
   const pageIndex = currentEditorPageIndex();
+  const previewManifest = JSON.parse(JSON.stringify(state.manifest));
+  // El par de claves de cifrado de entregas solo existe en el paquete exportado.
+  // Para que la vista previa sea fiel (la entrega de prueba se cifre y, al abrir
+  // su enlace, pida la contraseña), lo generamos aquí al vuelo cuando el cifrado
+  // está activado y hay contraseña.
+  if (previewManifest.settings?.encryptSubmissions && state.submissionCryptoPassword) {
+    try {
+      previewManifest.submissionCrypto = await createSubmissionCrypto(state.submissionCryptoPassword);
+    } catch { /* si falla, la previa continúa sin cifrar */ }
+  }
   const overlay = el('div', { class: 'prev-overlay' });
   const root = el('div', {});
   const cerrar = iconBtn({ class: 'btn small' }, ICONS.arrowLeft, t('preview.back'));
@@ -5138,7 +5154,7 @@ function openPreview() {
   overlay.appendChild(root);
   document.body.appendChild(overlay);
   document.body.style.overflow = 'hidden';
-  state.preview = mountPlayer(root, { manifest: JSON.parse(JSON.stringify(state.manifest)), files: state.files }, { preview: true });
+  state.preview = mountPlayer(root, { manifest: previewManifest, files: state.files }, { preview: true });
   // Abrir la vista previa en la misma página que se está editando.
   scrollPreviewToPage(overlay, pageIndex);
   cerrar.addEventListener('click', () => {

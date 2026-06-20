@@ -695,7 +695,7 @@ dialog .dlg-buttons {
 /* Textos de ayuda bajo los campos: interlineado más ajustado. */
 .settings-panel p { line-height: 1.3; }
 /* Subtítulo dentro de una pestaña que agrupa dos bloques (p. ej. la parte de
-   privacidad bajo «Corrección y privacidad»). */
+   privacidad dentro de «Privacidad y seguridad»). */
 .settings-subhead {
   margin: 18px 0 6px;
   padding-top: 14px;

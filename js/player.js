@@ -74,6 +74,11 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
   let finished = false;
   let cronoTimer = null;
   let aperturaTimer = null;
+  let securityCleanup = null;
+  let securityIncidents = [];
+  let securityIncidentCount = 0;
+  let lastSecurityIncidentAt = 0;
+  let securityForcedSubmit = false;
 
   function loadState() {
     if (preview) return null;
@@ -133,6 +138,18 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     return Math.max(0, max - datos.attempts);
   }
 
+  function stopSecurityGuard() {
+    if (typeof securityCleanup === 'function') securityCleanup();
+    securityCleanup = null;
+  }
+
+  function resetSecurityState() {
+    securityIncidents = [];
+    securityIncidentCount = 0;
+    lastSecurityIncidentAt = 0;
+    securityForcedSubmit = false;
+  }
+
   // ---------- Restricciones de acceso ----------
 
   function accessState() {
@@ -143,6 +160,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
   }
 
   function showNotYet() {
+    stopSecurityGuard();
     rootEl.textContent = '';
     const cuenta = el('div', { style: 'font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums;margin-top:10px' });
     rootEl.appendChild(el('div', { class: 'al-centro' },
@@ -162,6 +180,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
   }
 
   function showClosed() {
+    stopSecurityGuard();
     rootEl.textContent = '';
     rootEl.appendChild(el('div', { class: 'al-centro' },
       el('div', { class: 'card al-tarjeta' },
@@ -173,6 +192,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
   // ---------- Pantalla de identificación ----------
 
   function showStart() {
+    stopSecurityGuard();
     rootEl.textContent = '';
     if (preview) { startActivity('Vista previa', ''); return; }
     // En SCORM el LMS gestiona acceso e intentos: se entra directo a la actividad.
@@ -248,6 +268,8 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
   // ---------- Actividad ----------
 
   function startActivity(alumno, grupo) {
+    stopSecurityGuard();
+    resetSecurityState();
     datos.alumno = alumno;
     datos.grupo = grupo;
     finished = false;
@@ -343,6 +365,54 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     rootEl.appendChild(doc);
     rootEl.appendChild(barra);
 
+    const focusMode = ['free', 'warn', 'record'].includes(settings.focusMode) ? settings.focusMode : 'free';
+    const focusMaxIncidents = Math.max(0, Number(settings.focusMaxIncidents) || 0);
+    const shouldWarnFocus = focusMode === 'warn' || focusMode === 'record';
+    const shouldRecordFocus = focusMode === 'record';
+    const shouldKeepFullscreen = Boolean(settings.keepFullscreen) && Boolean(document.documentElement?.requestFullscreen);
+    const shouldGuard = !scormMode && (shouldKeepFullscreen || shouldWarnFocus || (focusMode !== 'free' && focusMaxIncidents > 0));
+
+    const requestFullscreen = () => {
+      if (finished || document.fullscreenElement || !shouldKeepFullscreen) return;
+      document.documentElement.requestFullscreen().catch(() => {});
+    };
+    const recordIncident = (type) => {
+      if (!shouldGuard || finished) return;
+      const now = Date.now();
+      if (now - lastSecurityIncidentAt < 1200) return;
+      lastSecurityIncidentAt = now;
+      securityIncidentCount += 1;
+      if (shouldRecordFocus) securityIncidents.push({ type, at: new Date(now).toISOString() });
+      if (shouldWarnFocus) toast(t('player.focusWarning'), 'error');
+      if (focusMaxIncidents > 0 && securityIncidentCount >= focusMaxIncidents && !securityForcedSubmit) {
+        securityForcedSubmit = true;
+        toast(t('player.focusAutoSubmitted'), 'error');
+        finish(doc, barra, btnFin);
+      }
+    };
+
+    if (shouldGuard) {
+      const onPointerDown = () => requestFullscreen();
+      const onVisibility = () => {
+        if (document.visibilityState === 'hidden') recordIncident('hidden');
+      };
+      const onBlur = () => recordIncident('blur');
+      const onFullscreen = () => {
+        if (shouldKeepFullscreen && !document.fullscreenElement) recordIncident('fullscreen-exit');
+      };
+      document.addEventListener('pointerdown', onPointerDown, true);
+      document.addEventListener('visibilitychange', onVisibility);
+      window.addEventListener('blur', onBlur);
+      document.addEventListener('fullscreenchange', onFullscreen);
+      securityCleanup = () => {
+        document.removeEventListener('pointerdown', onPointerDown, true);
+        document.removeEventListener('visibilitychange', onVisibility);
+        window.removeEventListener('blur', onBlur);
+        document.removeEventListener('fullscreenchange', onFullscreen);
+      };
+      requestFullscreen();
+    }
+
     // Renderizar fórmulas LaTeX (\(…\), \[…\]) en todo el documento del alumno:
     // título, instrucciones, textos, opciones, encabezados y celdas de tabla, etc.
     typesetMath(doc);
@@ -409,6 +479,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
   async function finish(doc, barra, btnFin) {
     finished = true;
     clearInterval(cronoTimer);
+    stopSecurityGuard();
     btnFin.disabled = true;
 
     const resultados = [];
@@ -448,7 +519,13 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
       grupo: datos.grupo,
       resultados,
       earned,
-      total: totalPoints
+      total: totalPoints,
+      vigilancia: (securityIncidents.length || securityForcedSubmit) ? {
+        mode: settings.focusMode || 'free',
+        count: securityIncidentCount,
+        events: securityIncidents,
+        forcedSubmit: securityForcedSubmit
+      } : null
     });
     // En SCORM la entrega la registra el LMS: no se cifra ni se genera archivo.
     const entregaArchivo = scormMode ? null : await encryptSubmission(entrega, manifest.submissionCrypto);
@@ -596,6 +673,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     destroy() {
       clearInterval(cronoTimer);
       clearInterval(aperturaTimer);
+      stopSecurityGuard();
       urls.forEach(u => URL.revokeObjectURL(u));
       urls.clear();
       rootEl.textContent = '';

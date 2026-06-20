@@ -115,6 +115,9 @@ export function renderVerificacion(r) {
   const gradeHint = hasManualPending(data)
     ? `<p class="vr-grade-hint">${esc(t('verify.gradeHint'))}</p>`
     : '';
+  const monitor = data.vigilancia?.count > 0
+    ? `<strong>${esc(t('entrega.monitor'))}:</strong> ${esc(String(data.vigilancia.count))}${data.vigilancia.forcedSubmit ? ' · ' + esc(t('entrega.monitorForced')) : ''}<br>`
+    : '';
 
   return `<div class="verify-card">
     <div class="verify-header">
@@ -123,6 +126,7 @@ export function renderVerificacion(r) {
         <strong>${esc(t('entrega.sheet'))}:</strong> ${esc(data.titulo)}<br>
         <strong>${esc(t('entrega.student'))}:</strong> ${esc(data.alumno)}${data.grupo ? ' (' + esc(data.grupo) + ')' : ''}<br>
         <strong>${esc(t('entrega.date'))}:</strong> ${esc(fechaHora(new Date(data.fecha)))}<br>
+        ${monitor}
         <strong>${esc(t('entrega.score'))}:</strong> <span class="vr-score-val">${formatNum(effNota(r))} / ${formatNum(data.total)} &nbsp;(${formatNum(effNota10(r))} ${esc(t('entrega.over10'))})</span>
       </div>
     </div>

@@ -97,6 +97,9 @@ export function newManifest() {
       showCorrection: true,
       shuffle: false,
       maxAttempts: 0,
+      keepFullscreen: false,
+      focusMode: 'free',
+      focusMaxIncidents: 0,
       encryptSubmissions: true,
       fontFamily: 'atkinson',
       scorm: { statusMode: 'score', masteryScore: 50 }

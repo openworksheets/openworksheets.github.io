@@ -17,7 +17,7 @@ import { encryptSubmission, isEncryptedSubmission } from './submissionCrypto.js'
 const SALT = 'workpdf-entrega-v1';
 
 function canonicalPayload(data) {
-  return JSON.stringify({
+  const payload = {
     ficha: data.fichaId,
     titulo: data.titulo,
     alumno: data.alumno,
@@ -26,11 +26,13 @@ function canonicalPayload(data) {
     nota: data.nota,
     total: data.total,
     respuestas: data.respuestas
-  });
+  };
+  if (Object.prototype.hasOwnProperty.call(data, 'vigilancia')) payload.vigilancia = data.vigilancia || null;
+  return JSON.stringify(payload);
 }
 
 // resultados: [{ id, type, page, answer, earned, max, ok }]
-export async function buildEntregaData({ manifest, alumno, grupo, resultados, earned, total }) {
+export async function buildEntregaData({ manifest, alumno, grupo, resultados, earned, total, vigilancia = null }) {
   const data = {
     formato: 'workpdf-entrega',
     version: 1,
@@ -56,7 +58,8 @@ export async function buildEntregaData({ manifest, alumno, grupo, resultados, ea
       puntos: r.earned,
       maximo: r.max,
       resultado: r.ok === true ? 'correcta' : r.ok === 'partial' ? 'parcial' : r.ok === 'pending' ? 'pendiente' : r.ok === 'blank' ? 'en blanco' : 'incorrecta'
-    }))
+    })),
+    ...(vigilancia ? { vigilancia } : {})
   };
   data.codigo = await shortCode(SALT + canonicalPayload(data));
   return data;
@@ -120,6 +123,11 @@ export function entregaResumen(data, { includeScore = true, detail = null } = {}
     }
     lines.push('', t('entrega.results') + ': ' + Object.entries(porTipo)
       .map(([k, v]) => `${v} ${t(v === 1 ? (singKey[k] || k) : (plurKey[k] || k))}`).join(', '));
+  }
+  if (data.vigilancia?.count > 0) {
+    let line = `${t('entrega.monitor')}: ${data.vigilancia.count}`;
+    if (data.vigilancia.forcedSubmit) line += ` · ${t('entrega.monitorForced')}`;
+    lines.push('', line);
   }
   if (detail && detail.length) {
     lines.push('', t('entrega.detail') + ':');

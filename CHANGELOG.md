@@ -49,6 +49,10 @@ Las versiones publicadas también están en la página de
   pantalla completa** (antes solo estaba en el panel lateral, que queda oculto
   bajo el diálogo); inserta la fórmula en la celda o el encabezado enfocado y
   solo se muestra cuando el foco está en un campo que admite fórmulas.
+- La **vista previa** ahora **cifra la entrega de prueba** cuando el cifrado de
+  entregas está activado (antes el par de claves solo se generaba al exportar, así
+  que la entrega de la previa salía sin cifrar y su enlace se abría sin pedir
+  contraseña). Ahora la previa refleja el comportamiento real.
 
 ### Documentación
 - **README traducido al inglés**: el `README.md` principal pasa a estar en inglés para mayor visibilidad internacional en GitHub. El contenido en español se conserva en `README.es.md`.
