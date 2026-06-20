@@ -47,6 +47,7 @@ function refreshEditorTexts() {
   renderPalette();
   renderCanvas();
   renderPanel();
+  updateSecurityMeter();
 }
 // En el editor no recargamos al cambiar de idioma (se perderían los cambios sin
 // guardar): re-traducimos la interfaz en caliente conservando la ficha en curso.
@@ -4691,6 +4692,7 @@ function openSettings(afterSave, initialTab = 'basic') {
   $('#ajFormulaBtn').checked = state.manifest.settings.showFormulaButton !== false;
   $('#ajIntentos').value = String(state.manifest.settings.maxAttempts || 0);
   $('#ajCifrarEntregas').checked = state.manifest.settings.encryptSubmissions !== false;
+  $('#ajSecurityMeter').checked = state.manifest.settings.securityMeter !== false;
   $('#ajCryptoPassword').value = state.submissionCryptoPassword;
   updateCryptoSettingsUi();
   const acc = state.manifest.access || {};
@@ -4778,9 +4780,11 @@ $('#dlgAjustes')?.addEventListener('close', () => {
     statusMode: $('#ajScormStatus').value === 'completion' ? 'completion' : 'score',
     masteryScore: Math.max(0, Math.min(100, parseInt($('#ajScormMastery').value, 10) || 0))
   };
+  state.manifest.settings.securityMeter = $('#ajSecurityMeter').checked;
   markDirty();
   renderPalette(); // el campo «Fórmula» aparece/desaparece según el ajuste
   renderPanel(); // reflejar cambios que afectan al panel (p. ej. el botón de fórmulas)
+  updateSecurityMeter();
   const cb = dlg._afterSave;
   dlg._afterSave = null;
   // Solo es una función cuando openSettings se llamó con un callback (p. ej.
@@ -5108,6 +5112,7 @@ async function openZipFile(file, handle = null) {
     renderCanvas();
     renderPanel();
     refreshPaletteState();
+    updateSecurityMeter();
     resetHistory();
     toast(t('toast.fichaLoaded', { title: state.manifest.title || file.name }), 'ok');
   } catch (e) {
@@ -5317,6 +5322,7 @@ function resetWorksheet() {
   state.dirty = false;
   setPanelCollapsed(false); // cada ficha nueva arranca con el panel desplegado
   resetHistory();
+  updateSecurityMeter();
 }
 // Solo pide confirmación si hay cambios sin guardar que se perderían. Una ficha
 // recién cargada o ya guardada (state.dirty = false) se reemplaza sin avisar.
@@ -5572,6 +5578,33 @@ $('#inputZip').addEventListener('change', e => {
   e.target.value = '';
   if (file && confirmDiscardCurrent()) openZipFile(file);
 });
+// ---------- Semáforo de seguridad ----------
+// Refleja qué protecciones de privacidad están activas. El cifrado de entregas
+// (contraseña del profesor) pesa el doble que la contraseña de acceso del
+// alumnado: protege los datos reales del alumnado y su integridad, mientras que
+// la de acceso solo oculta el contenido y es un secreto compartido con la clase.
+const secMeterEl = $('#secMeter');
+function updateSecurityMeter() {
+  if (!secMeterEl) return;
+  // Se puede ocultar desde Ajustes → Privacidad y seguridad.
+  if (state.manifest.settings?.securityMeter === false) { secMeterEl.hidden = true; return; }
+  secMeterEl.hidden = false;
+  const hasAccess = !!(state.manifest.access?.password || '').trim();
+  const hasCrypto = state.manifest.settings?.encryptSubmissions !== false
+    && (!!(state.submissionCryptoPassword || '').trim() || !!state.manifest.submissionCrypto);
+  const level = (hasAccess ? 1 : 0) + (hasCrypto ? 2 : 0); // 0..3 (alumno=1, profesor=2)
+  const levelName = t('sec.level.' + ['none', 'low', 'medium', 'high'][level]);
+  secMeterEl.dataset.level = String(level);
+  secMeterEl.setAttribute('aria-label', t('sec.aria', { level: levelName }));
+  secMeterEl.title = [
+    t('sec.tip.title', { level: levelName }),
+    (hasAccess ? '✓ ' : '✗ ') + t('sec.tip.accessLabel'),
+    (hasCrypto ? '✓ ' : '✗ ') + t('sec.tip.cryptoLabel'),
+    t('sec.tip.config')
+  ].join('\n');
+}
+secMeterEl?.addEventListener('click', () => openSettings(undefined, 'security'));
+
 $('#btnAjustes').addEventListener('click', openSettings);
 $('#btnCompartir').addEventListener('click', openShare);
 $('#btnImprimir').addEventListener('click', printWorksheet);
@@ -5728,6 +5761,7 @@ function restoreSnapshot(snap) {
   renderCanvas();
   renderPanel();
   refreshPaletteState();
+  updateSecurityMeter();
 }
 
 function resetHistory() {
@@ -5787,6 +5821,7 @@ renderPalette();
 renderCanvas();
 renderPanel();
 resetHistory();
+updateSecurityMeter();
 
 // Carga de ficha de ejemplo desde ?ejemplo=<ruta>. Solo se admiten rutas
 // relativas del propio sitio (sin esquema ni barra inicial), para no descargar

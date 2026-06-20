@@ -12,6 +12,13 @@ Las versiones publicadas también están en la página de
 ## [1.20.0] — 2026-06-20
 
 ### Añadido
+- **Semáforo de seguridad** en la barra del editor: un escudo con una barra de
+  tres segmentos que indica de un vistazo qué protecciones tiene la ficha. La
+  contraseña de acceso del alumnado suma un segmento y el cifrado de las entregas
+  (contraseña del profesor) suma dos, porque protege los datos reales del
+  alumnado. Va de rojo (sin protección) a verde (ambas activas), con un detalle
+  emergente; al pulsarlo abre **Ajustes → Privacidad y seguridad**. Se puede
+  ocultar desde esos mismos ajustes.
 - **Aviso al exportar a SCORM** si la ficha contiene campos de **corrección
   manual** que puntúan (respuesta larga o grabación de voz): el LMS no puede
   corregirlos, así que contarían como 0 y no se podría alcanzar la nota máxima.
