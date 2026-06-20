@@ -270,6 +270,9 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     const ctx = {
       rng,
       shuffle: Boolean(settings.shuffle),
+      // Interruptor global de fórmulas: si está desactivado, los campos no
+      // ofrecen el botón «fx» (no se muestra nada de LaTeX al alumnado).
+      showFormula: settings.showFormulaButton !== false,
       onChange: () => { updateProgress(); scheduleSave(); },
       fileUrl,
       pkgHost: needsPkgHost ? {

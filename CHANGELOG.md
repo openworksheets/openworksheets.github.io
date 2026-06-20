@@ -34,6 +34,12 @@ Las versiones publicadas también están en la página de
 - Opción en el editor de la «Respuesta larga» para **ocultar el botón de
   fórmulas (fx)** al alumnado cuando no haga falta (no distrae); en ese caso la
   ayuda tampoco lo menciona.
+- El ajuste de ficha **«Habilitar fórmulas matemáticas (LaTeX)»** (antes
+  «Mostrar el botón para insertar fórmulas») actúa ahora como **interruptor
+  global**: al desactivarlo desaparece todo lo relacionado con fórmulas —el campo
+  «Fórmula» en la paleta, el botón «fx» en todos los campos y la opción por campo
+  de la «Respuesta larga»— para que las materias sin fórmulas no muestren nada de
+  LaTeX al alumnado. Incluye un texto explicativo en Ajustes.
 - La tabla de entregas indica con un **distintivo ámbar** las que tienen
   respuestas **pendientes de corrección manual** (grabación de voz o respuesta
   larga), antes solo un punto gris poco visible para las grabaciones.

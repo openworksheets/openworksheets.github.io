@@ -1063,9 +1063,10 @@ const renderers = {
       toolBtn(ICONS.italic, t('render.toolItalic'), () => wrapSel('*', '*', t('render.sampleItalic'))),
       toolBtn(ICONS.link, t('render.toolLink'), () => wrapSel('[', '](https://)', t('render.sampleLink'))));
 
-    // El botón de fórmulas es opcional: el profesor puede ocultarlo para no
-    // distraer cuando la respuesta no necesita fórmulas.
-    const showFormula = cfg.showFormula !== false;
+    // El botón de fórmulas es opcional: el profesor puede ocultarlo por campo y,
+    // a nivel de ficha, las fórmulas pueden estar deshabilitadas del todo
+    // (ctx.showFormula). En cualquiera de esos casos no se ofrece.
+    const showFormula = ctx.showFormula !== false && cfg.showFormula !== false;
     let fx = null;
     if (showFormula) {
       fx = el('button', { type: 'button', class: 'wpf-fx-btn', title: t('render.toolFormula'), 'aria-label': t('render.toolFormula') }, 'fx');

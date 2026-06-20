@@ -296,6 +296,9 @@ function renderPalette() {
     const inner = el('div', { class: 'ed-group-tools-inner' });
     tools.appendChild(inner);
     group.types.forEach(type => {
+      // Con las fórmulas deshabilitadas en Ajustes, el campo «Fórmula» no se
+      // ofrece en la paleta (no se muestra nada de LaTeX).
+      if (type === 'formula' && !formulaButtonEnabled()) return;
       const ft = FIELD_TYPES[type];
       const name = fieldTypeName(type);
       const toolGlyph = el('span', { class: 'glyph' });
@@ -3989,8 +3992,11 @@ const configForms = {
     cont.appendChild(el('p', { class: 'cfg-hint' }, t('cfg.essayMaxWordsHint')));
 
     // Botón de fórmulas (fx) para el alumnado: opcional, para no distraer cuando
-    // la respuesta no necesita fórmulas.
-    checkRow(cont, t('cfg.essayShowFormula'), cfg.showFormula !== false, v => { cfg.showFormula = v; });
+    // la respuesta no necesita fórmulas. Solo si las fórmulas están habilitadas
+    // a nivel de ficha (si no, no se ofrece nada de LaTeX).
+    if (formulaButtonEnabled()) {
+      checkRow(cont, t('cfg.essayShowFormula'), cfg.showFormula !== false, v => { cfg.showFormula = v; });
+    }
   },
 
   single(cont, field) {
@@ -4714,6 +4720,7 @@ $('#dlgAjustes')?.addEventListener('close', () => {
     masteryScore: Math.max(0, Math.min(100, parseInt($('#ajScormMastery').value, 10) || 0))
   };
   markDirty();
+  renderPalette(); // el campo «Fórmula» aparece/desaparece según el ajuste
   renderPanel(); // reflejar cambios que afectan al panel (p. ej. el botón de fórmulas)
   const cb = dlg._afterSave;
   dlg._afterSave = null;
