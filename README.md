@@ -115,6 +115,18 @@ The **Editable table** field type allows creating structured data entry grids (u
 - **Import from Spreadsheets:** You can copy data directly from Excel, Google Sheets, Calc, or a CSV file and paste it into the table import button to automatically fill in the structure and content.
 - **Full-screen editor:** For large tables, you can open the table editor in full-screen mode using the corresponding button in the side panel for a more comfortable workflow.
 
+## AI-assisted worksheet creation
+
+OpenWorksheets can generate a complete worksheet automatically from a form you fill in. No account or external API required — the process is entirely copy/paste:
+
+1. Open **File → Create with AI…** (or click the option on the empty-screen start list).
+2. Fill in the form: topic, level, number of questions, language, allowed field types, and background (colour, image, or PDF).
+3. OWS generates a structured prompt. Copy it and paste it into any AI chat (ChatGPT, Gemini, Copilot, Claude…).
+4. Paste the AI's JSON response back into OWS. It validates and imports it, placing fields automatically with tight prompt/answer spacing and auto-paginating as needed.
+5. Edit the result as any other worksheet.
+
+You can also insert AI-generated pages into an existing worksheet using the **«+ AI»** button between pages.
+
 ## Workflow
 
 1. **Create:** the teacher uploads a PDF or image, or starts with a blank page, places the fields, and configures the correct answers and scoring in the editor.

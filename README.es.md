@@ -115,6 +115,18 @@ El tipo de campo **Tabla editable** permite crear rejillas estructuradas de entr
 - **Importación desde Hojas de Cálculo:** Puedes copiar datos directamente desde Excel, Google Sheets, Calc o un archivo CSV y pegarlos en el botón de importación de la tabla para rellenar automáticamente la estructura y los contenidos.
 - **Editor a pantalla completa:** Para tablas grandes, puedes abrir el editor de tablas en pantalla completa mediante el botón correspondiente del panel lateral para trabajar con mayor comodidad.
 
+## Creación de fichas con IA
+
+OpenWorksheets puede generar una ficha completa automáticamente a partir de un formulario que rellena el docente. No requiere cuenta ni API externa: el proceso es íntegramente por copia/pegado:
+
+1. Abre **Archivo → Crear con IA…** (o haz clic en la opción de la pantalla inicial).
+2. Rellena el formulario: tema, nivel, número de preguntas, idioma, tipos de campo permitidos y fondo (color, imagen o PDF).
+3. OWS genera un prompt estructurado. Cópialo y pégalo en cualquier chat de IA (ChatGPT, Gemini, Copilot, Claude…).
+4. Pega la respuesta JSON de la IA de vuelta en OWS. La valida e importa, colocando los campos automáticamente con separación ajustada entre enunciado y respuesta y paginando según haga falta.
+5. Edita el resultado como cualquier otra ficha.
+
+También puedes insertar páginas generadas con IA en una ficha ya comenzada usando el botón **«+ IA»** que aparece entre páginas.
+
 ## Flujo de trabajo
 
 1. **Crear:** el profesorado sube un PDF o imagen, o empieza con una hoja en blanco, coloca los campos y configura las respuestas correctas y la puntuación en el editor.
