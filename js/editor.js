@@ -5017,6 +5017,7 @@ async function exportWeb() {
 }
 
 async function exportImscp() {
+  window.alert(t('dlg.imscp.info'));
   try {
     const exportManifest = await prepareExportManifest(exportImscp);
     if (!exportManifest) return;

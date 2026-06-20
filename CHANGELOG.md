@@ -23,10 +23,17 @@ Las versiones publicadas también están en la página de
   manual** que puntúan (respuesta larga o grabación de voz): el LMS no puede
   corregirlos, así que contarían como 0 y no se podría alcanzar la nota máxima.
   Solo aparece si la ficha lleva alguno de esos campos.
+- **Aviso al exportar a IMS CP**: se informa al profesor de que, al insertar el
+  paquete en un LMS (Moodle, etc.), el enlace de entrega solo funciona si el
+  profesor está autenticado en esa plataforma, y se recomienda la entrega por
+  archivo `.owsub` para mayor fiabilidad.
 
 ### Corregido
 - La validación al exportar ya no marca un falso **«sin respuesta correcta»** en
   el campo **Respuesta larga** (es de corrección manual, como la grabación de voz).
+- El diálogo de aviso de supervisión ya **no cuenta como incidente adicional**:
+  mientras el aviso está visible, los eventos de foco o pantalla completa quedan
+  suspendidos, evitando que pulsar «Aceptar» generara un segundo incidente.
 
 ---
 

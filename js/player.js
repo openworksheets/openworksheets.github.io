@@ -429,6 +429,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     };
     const recordIncident = (type) => {
       if (!shouldGuard || finished) return;
+      if (securityAlert && document.body.contains(securityAlert)) return;
       const now = Date.now();
       if (now - lastSecurityIncidentAt < 1200) return;
       lastSecurityIncidentAt = now;
