@@ -226,6 +226,9 @@ small { color: var(--tinta-suave); }
 .btn.dark { background: var(--tinta); color: var(--papel); }
 .btn.ghost { background: transparent; box-shadow: none; border-color: var(--tinta-tenue); }
 .btn.ghost:hover { border-color: var(--tinta); }
+/* El topbar es siempre oscuro: los ghost dentro de él deben usar color claro */
+.topbar .btn.ghost { color: var(--papel); border-color: rgba(247, 242, 231, 0.3); }
+.topbar .btn.ghost:hover { border-color: rgba(247, 242, 231, 0.8); }
 .btn.small { padding: 5px 10px; font-size: 0.8rem; box-shadow: none; }
 .btn.danger { color: var(--rojo); border-color: var(--rojo); }
 .btn.success { background: #b8f5cc; border-color: #7ee8a2; color: #1a2e1a; }
