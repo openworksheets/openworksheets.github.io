@@ -1,5 +1,7 @@
 # OpenWorksheets
 
+> [English version](README.md) · [Versió en català](README.ca.md)
+
 OpenWorksheets es una aplicación web para convertir PDFs o imágenes en fichas interactivas autocorregibles, de forma parecida a TopWorksheets. El profesorado puede subir un documento, colocar encima distintos tipos de campos de respuesta y configurar las soluciones, la puntuación, las opciones de corrección y las restricciones de acceso. También permite crear fichas desde una hoja en blanco, sin necesidad de cargar antes un PDF o una imagen.
 
 ## Tipos de campo

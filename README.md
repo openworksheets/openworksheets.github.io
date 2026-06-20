@@ -1,6 +1,6 @@
 # OpenWorksheets
 
-> [Versión en español](README.es.md)
+> [Versión en español](README.es.md) · [Versió en català](README.ca.md)
 
 OpenWorksheets is a web application for converting PDFs or images into interactive, self-grading worksheets, similar to TopWorksheets. Teachers can upload a document, place different types of answer fields on top of it, and configure the correct answers, scoring, grading options, and access restrictions. It also allows creating worksheets from a blank page, without needing to load a PDF or image first.
 
