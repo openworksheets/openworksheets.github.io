@@ -30,6 +30,15 @@ Las versiones publicadas también están en la página de
   aplicación. Enlazada desde la barra superior y el pie de la página de inicio.
 
 ### Mejorado
+- **Web pública de OpenWorksheets**: se reforzó el mensaje diferencial de la
+  portada y de la página **«Características»** en los 5 idiomas de la
+  aplicación. Ahora se destaca mejor que OpenWorksheets es **software libre**,
+  que las fichas **se pueden guardar, editar y exportar** sin quedar atrapadas
+  en una plataforma cerrada, la compatibilidad con **SCORM 1.2 para Moodle**,
+  la **privacidad y el cifrado** y el uso de **IA por copia/pega sin proveedor
+  impuesto**. Además, la portada añade un icono al botón «Características» y la
+  página de características separa mejor los bloques de privacidad, edición y
+  diferenciación.
 - **Campo Fórmula:** al pulsar el botón «fx» con una fórmula ya escrita en el
   campo (sin seleccionarla), EdiCuaTeX se abre precargando todo su contenido para
   editarlo directamente, sin tener que seleccionarlo antes. Aplica tanto al editor
