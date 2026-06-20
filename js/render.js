@@ -970,7 +970,7 @@ const renderers = {
     fx.addEventListener('mousedown', e => e.preventDefault()); // conservar el foco/selección
     fx.addEventListener('click', () => {
       if (input.disabled) return;
-      const ok = openFormulaEditor(input, { onInsert: () => { refresh(); notify(ctx); } });
+      const ok = openFormulaEditor(input, { selectAllIfEmpty: true, onInsert: () => { refresh(); notify(ctx); } });
       if (!ok) input.focus();
     });
     input.addEventListener('input', () => { refresh(); notify(ctx); });

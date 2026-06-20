@@ -9,6 +9,16 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [Unreleased]
+
+### Mejorado
+- **Campo Fórmula:** al pulsar el botón «fx» con una fórmula ya escrita en el
+  campo (sin seleccionarla), EdiCuaTeX se abre precargando todo su contenido para
+  editarlo directamente, sin tener que seleccionarlo antes. Aplica tanto al editor
+  (fórmulas aceptadas que escribe el profesor) como al campo que rellena el alumno.
+
+---
+
 ## [1.20.0] — 2026-06-20
 
 ### Añadido

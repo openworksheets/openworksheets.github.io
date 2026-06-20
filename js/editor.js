@@ -153,7 +153,14 @@ function openFormulaEditor() {
   // activeElement sigue siendo el campo; lastLatexField es la red de seguridad.
   const target = isLatexField(document.activeElement) ? document.activeElement : lastLatexField;
   if (!isLatexField(target)) { toast(t('toast.formulaNoField'), 'error'); return; }
-  const selectedText = getSelectedText(target);
+  // Si no hay selección pero el campo tiene contenido, se toma todo su valor (y
+  // se selecciona) para precargarlo en EdiCuaTeX y reemplazarlo al insertar: así
+  // el profesor puede editar la fórmula ya escrita sin tener que seleccionarla.
+  let selectedText = getSelectedText(target);
+  if (!selectedText.trim() && String(target.value ?? '').trim()) {
+    try { target.focus(); target.setSelectionRange(0, target.value.length); } catch { /* algunos inputs no admiten setSelectionRange */ }
+    selectedText = String(target.value);
+  }
   pendingFormulaTarget = target;
   pendingFormulaShouldPreserveDelimiters = selectionHasLatexDelimiters(selectedText);
   ensureFormulaListener();

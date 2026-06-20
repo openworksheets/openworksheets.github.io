@@ -67,10 +67,17 @@ function ensureListener() {
 }
 
 // Abre EdiCuaTeX para el campo dado. Si hay texto seleccionado, lo precarga.
+// Con `selectAllIfEmpty`, cuando no hay selección pero el campo tiene contenido
+// se toma todo su valor (y se selecciona) para precargarlo y reemplazarlo al
+// insertar: así el alumno puede editar la fórmula ya escrita sin seleccionarla.
 // Devuelve false si el navegador bloqueó la ventana emergente.
-export function openFormulaEditor(field, { onInsert } = {}) {
+export function openFormulaEditor(field, { onInsert, selectAllIfEmpty = false } = {}) {
   if (!field) return false;
-  const selectedText = getSelectedText(field);
+  let selectedText = getSelectedText(field);
+  if (!selectedText.trim() && selectAllIfEmpty && String(field.value ?? '').trim()) {
+    try { field.focus(); field.setSelectionRange(0, field.value.length); } catch { /* algunos inputs no admiten setSelectionRange */ }
+    selectedText = String(field.value);
+  }
   pendingTarget = field;
   pendingOnInsert = onInsert || null;
   pendingPreserve = selectionHasLatexDelimiters(selectedText);
