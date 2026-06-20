@@ -106,14 +106,61 @@ function extractJson(raw) {
   let candidate = s.slice(first, last + 1);
   // Tolerar comas finales antes de } o ]
   candidate = candidate.replace(/,(\s*[}\]])/g, '$1');
-  try { return JSON.parse(candidate); } catch { /* continúa */ }
-  // Las IAs a veces generan \( \) \[ \] sin doblar la barra dentro de strings.
-  // Reparar: dentro de valores de cadena JSON, doblar barras sueltas ante
-  // caracteres que no son secuencias de escape JSON válidas.
-  candidate = candidate.replace(/"((?:[^"\\]|\\.)*)"/gs, (_, inner) =>
-    '"' + inner.replace(/\\(?!["\\/bfnrtu])/g, '\\\\') + '"'
-  );
+  try {
+    const parsed = JSON.parse(candidate);
+    // Si el JSON “vale” pero contenía LaTeX con escapes JSON válidos (\f, \r,
+    // \t, \b, \n…), el parser ya habrá corrompido el contenido. En ese caso
+    // reparamos igualmente y volvemos a parsear.
+    if (!hasSuspiciousControlChars(parsed)) return parsed;
+  } catch { /* continúa */ }
+  // Las IAs a veces generan LaTeX sin doblar barras dentro de strings JSON.
+  // Eso puede romper el parseo (\(, \[) o, peor, colarse como escapes JSON
+  // válidos (\frac → \f + "rac"). Reparamos string a string.
+  candidate = repairJsonStringEscapes(candidate);
   try { return JSON.parse(candidate); } catch { return null; }
+}
+
+function repairJsonStringEscapes(candidate) {
+  return candidate.replace(/"((?:[^"\\]|\\.)*)"/gs, (_, inner) =>
+    '"' + repairJsonStringInner(inner) + '"'
+  );
+}
+
+function repairJsonStringInner(inner) {
+  let out = '';
+  for (let i = 0; i < inner.length; i++) {
+    const ch = inner[i];
+    if (ch !== '\\') { out += ch; continue; }
+    const next = inner[i + 1];
+    if (next == null) { out += '\\\\'; continue; }
+    if (next === '"' || next === '\\' || next === '/') {
+      out += '\\' + next;
+      i++;
+      continue;
+    }
+    if (next === 'u' && /^[0-9a-fA-F]{4}$/.test(inner.slice(i + 2, i + 6))) {
+      out += inner.slice(i, i + 6);
+      i += 5;
+      continue;
+    }
+    // Mantener escapes JSON reales (\n, \t, …) salvo que claramente formen
+    // parte de un comando LaTeX como \frac, \text, \bar, \nabla o \right.
+    if ('bfnrt'.includes(next) && !/[A-Za-z]/.test(inner[i + 2] || '')) {
+      out += '\\' + next;
+      i++;
+      continue;
+    }
+    out += '\\\\' + next;
+    i++;
+  }
+  return out;
+}
+
+function hasSuspiciousControlChars(value) {
+  if (typeof value === 'string') return /[\u0000-\u001f]/.test(value);
+  if (Array.isArray(value)) return value.some(hasSuspiciousControlChars);
+  if (value && typeof value === 'object') return Object.values(value).some(hasSuspiciousControlChars);
+  return false;
 }
 
 // Valida el JSON intermedio. Devuelve { ok, data, errors[] }.
