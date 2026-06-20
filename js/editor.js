@@ -3164,9 +3164,17 @@ function openTableEditorDialog(field) {
     fxBtn.addEventListener('mousedown', ev => ev.preventDefault()); // no robar el foco
     fxBtn.addEventListener('click', openFormulaEditor);
     head.appendChild(fxBtn);
-    // El botón solo se activa con un campo LaTeX enfocado; rastreamos el foco
-    // dentro del diálogo (el listener del panel no llega aquí).
-    body.addEventListener('focusin', e => { if (isLatexField(e.target)) lastLatexField = e.target; });
+    // El botón solo se muestra con un campo LaTeX enfocado (igual que el panel
+    // lateral). Rastreamos el foco dentro del diálogo (el listener del panel no
+    // llega aquí) con la clase `has-latex-focus`.
+    body.addEventListener('focusin', e => {
+      if (isLatexField(e.target)) { lastLatexField = e.target; dlg.classList.add('has-latex-focus'); }
+    });
+    dlg.addEventListener('focusout', e => {
+      const to = e.relatedTarget;
+      if (isLatexField(to) || to?.classList?.contains('cfg-formula-btn')) return;
+      dlg.classList.remove('has-latex-focus');
+    });
   }
 
   dlg.appendChild(x);
