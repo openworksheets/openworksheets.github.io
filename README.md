@@ -95,7 +95,7 @@ Rendering uses MathJax with SVG output: it loads only when the worksheet contain
 To make writing math or chemistry formulas easier without needing to know LaTeX syntax, the editor integrates the visual editing tool **EdiCuaTeX**:
 
 1. **`fx` button:** When you focus any text field that supports LaTeX in the side panel (such as prompts, help texts, answer options, etc.), the **`fx`** button will appear in the panel header (or press the shortcut `Ctrl+Shift+F`).
-2. **Visual editing:** Clicking it opens a visual editor in a popup window from [EdiCuaTeX](https://edicuatex.github.io/). If you had text selected in the field, it will be loaded automatically for editing.
+2. **Visual editing:** Clicking it opens a visual editor in a popup window from [EdiCuaTeX](https://edicuatex.github.io/). If you had text selected in the field, it will be loaded automatically for editing; in the **Formula** fields (both the editor's accepted answers and the field the student fills in), if you select nothing the whole formula already typed is loaded and replaced on insert.
 3. **Automatic insertion:** Once the formula is designed, pressing the insert button in EdiCuaTeX will automatically paste it into your OpenWorksheets text field wrapped in the standard inline delimiters `\(` and `\)`.
 
 ### 📊 Editable tables

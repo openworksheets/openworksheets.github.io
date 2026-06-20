@@ -95,7 +95,7 @@ El renderizado usa MathJax con salida SVG: se carga solo cuando la ficha contien
 Para facilitar la escritura de fórmulas matemáticas o químicas sin necesidad de conocer la sintaxis de LaTeX, el editor integra la herramienta de edición visual **EdiCuaTeX**:
 
 1. **Botón `fx`:** Cuando enfocas cualquier campo de texto que admita LaTeX en el panel lateral (como enunciados, textos de ayuda, opciones de respuesta, etc.), aparecerá el botón **`fx`** en la cabecera del panel (o pulsando el atajo `Ctrl+Shift+F`).
-2. **Edición visual:** Al hacer clic en él, se abrirá un editor visual en ventana emergente de [EdiCuaTeX](https://edicuatex.github.io/). Si tenías texto seleccionado en el campo, se cargará automáticamente para que puedas editarlo.
+2. **Edición visual:** Al hacer clic en él, se abrirá un editor visual en ventana emergente de [EdiCuaTeX](https://edicuatex.github.io/). Si tenías texto seleccionado en el campo, se cargará automáticamente para que puedas editarlo; en los campos **Fórmula** (tanto las fórmulas aceptadas del editor como el campo que rellena el alumno), si no seleccionas nada se carga toda la fórmula ya escrita y se reemplaza al insertar.
 3. **Inserción automática:** Una vez diseñada la fórmula, al pulsar el botón de inserción en EdiCuaTeX, esta se pegará automáticamente en tu campo de texto del editor de OpenWorksheets envuelta en los delimitadores de línea estándar `\(` y `\)`.
 
 ### 📊 Tablas editables
