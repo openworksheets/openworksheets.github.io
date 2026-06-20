@@ -1,0 +1,108 @@
+/* Dialog «Crear con IA» */
+.ai-dialog {
+  position: relative;
+  width: min(680px, 94vw);
+  max-height: 90vh;
+  border: 2px solid var(--tinta);
+  border-radius: 12px;
+  background: var(--blanco);
+  color: var(--tinta);
+  padding: 24px;
+  overflow: auto;
+}
+.ai-dialog::backdrop { background: rgba(29, 44, 66, 0.4); }
+
+.ai-title { margin: 0 0 16px; font-size: 1.2rem; padding-right: 28px; }
+
+.ai-dialog .dlg-x {
+  position: absolute;
+  top: 14px; right: 16px;
+  border: none; background: none;
+  font-size: 1.1rem; line-height: 1;
+  cursor: pointer; color: var(--tinta-suave);
+  padding: 4px 8px; border-radius: 6px;
+}
+.ai-dialog .dlg-x:hover { background: var(--tinta-tenue); color: var(--tinta); }
+
+.ai-help { color: var(--tinta-suave); font-size: 0.9rem; margin: 0 0 16px; line-height: 1.5; }
+
+.ai-field { margin-bottom: 14px; }
+.ai-label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; }
+.ai-grid2 { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: end; }
+
+.ai-input {
+  width: 100%;
+  border: 2px solid var(--tinta-tenue);
+  border-radius: 8px;
+  background: var(--papel);
+  color: var(--tinta);
+  padding: 8px 10px;
+  font: inherit;
+  box-sizing: border-box;
+}
+.ai-input:focus { outline: none; border-color: var(--tinta); }
+.ai-num { width: 90px; }
+textarea.ai-input { resize: vertical; }
+.ai-prompt, .ai-result { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.82rem; line-height: 1.45; }
+
+.ai-types { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px 12px; }
+.ai-type { display: flex; align-items: center; gap: 6px; font-size: 0.88rem; cursor: pointer; }
+.ai-type input { flex-shrink: 0; }
+
+.ai-bg-row { display: flex; flex-direction: column; gap: 8px; }
+.ai-radio { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer; }
+.ai-color { width: 38px; height: 26px; padding: 0; border: 1px solid var(--tinta-tenue); border-radius: 5px; cursor: pointer; }
+.ai-file { font-size: 0.82rem; }
+
+.ai-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; flex-wrap: wrap; }
+
+.ai-warn {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+.ai-warn.is-error { background: var(--rojo-claro, #ffe3e0); border: 1px solid var(--rojo, #d9534f); color: #7a1a14; }
+.ai-warn.is-info { background: var(--ambar-claro, #fff4d6); border: 1px solid #e8c45a; color: #6b4e00; }
+
+:root[data-theme='dark'] .ai-warn.is-error,
+:root:not([data-theme='light']) .ai-warn.is-error { background: #4a1f1c; color: #ffd9d4; }
+:root[data-theme='dark'] .ai-warn.is-info,
+:root:not([data-theme='light']) .ai-warn.is-info { background: #3d3318; color: #ffe9b0; }
+
+/* Pantalla inicial del editor: lista discreta de acciones (icono + título en
+   peso normal + subtítulo gris), sin recuadros de botón. Separadores finos y
+   resaltado suave al pasar el ratón. */
+.ed-empty-list {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 400px;
+  margin: 10px auto 0;
+  text-align: left;
+}
+.ed-start-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 8px;
+  border-bottom: 1px solid var(--tinta-tenue);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  transition: background 0.15s;
+}
+.ed-start-item:last-child { border-bottom: none; }
+.ed-start-item:hover,
+.ed-start-item:focus-visible { background: var(--ambar-claro); outline: none; }
+.ed-start-icon { display: inline-flex; flex-shrink: 0; color: var(--tinta-suave); }
+.ed-start-icon svg { width: 22px; height: 22px; }
+.ed-start-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ed-start-title { font-size: 0.96rem; font-weight: 500; color: var(--tinta); }
+.ed-start-sub { font-size: 0.8rem; color: var(--tinta-suave); }

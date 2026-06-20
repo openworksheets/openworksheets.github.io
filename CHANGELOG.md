@@ -12,11 +12,22 @@ Las versiones publicadas también están en la página de
 ## [Unreleased]
 
 ### Añadido
+- **Crear ficha con ayuda de IA** (menú «Archivo → Crear con IA…», botón en la
+  pantalla inicial del editor y opción «entre páginas» para insertar páginas
+  generadas en una ficha ya empezada): un asistente de 3 pasos que **genera un
+  prompt** a partir de un formulario (tema, nivel, idioma, nº de preguntas, tipos permitidos
+  y fondo), el profesor lo **copia y lo pega en la IA que prefiera** (Claude,
+  ChatGPT, Gemini…) y luego **pega la respuesta** (JSON), que OpenWorksheets
+  valida e importa creando la ficha con los campos colocados automáticamente.
+  **No realiza ninguna llamada externa ni usa APIs**: todo es copiar/pegar manual,
+  para preservar la independencia de la herramienta. Soporta texto, numérico,
+  fórmula, verdadero/falso, opción única/múltiple, desplegable, respuesta larga,
+  huecos, tabla, emparejar y ordenar.
 - **Página «Características»** (`caracteristicas.html`): descripción completa para
-  el profesorado organizada en 9 bloques temáticos (crear fichas, tipos de
-  pregunta, corrección, fórmulas, multimedia, exportar, entregas, supervisión y
-  privacidad), con traducciones a los 5 idiomas de la aplicación. Enlazada desde
-  la barra superior y el pie de la página de inicio.
+  el profesorado organizada en 10 bloques temáticos (crear fichas, tipos de
+  pregunta, corrección, fórmulas, multimedia, exportar, entregas, supervisión,
+  privacidad y **creación con IA**), con traducciones a los 5 idiomas de la
+  aplicación. Enlazada desde la barra superior y el pie de la página de inicio.
 
 ### Mejorado
 - **Campo Fórmula:** al pulsar el botón «fx» con una fórmula ya escrita en el

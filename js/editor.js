@@ -40,6 +40,8 @@ import { createSubmissionCrypto, decryptManifestForStudent, encryptManifestForSt
 import { iconBtn, colorInput } from './editor-ui.js';
 import { state, urls, fileUrl, markDirty, onDirty } from './editor-state.js';
 import { takeFile } from './filehandoff.js';
+import { layoutFields } from './aiimport.js';
+import { openAiDialog } from './aiui.js';
 
 applyI18n();
 function refreshEditorTexts() {
@@ -584,9 +586,11 @@ function makeAddPageBar(insertAt) {
     input.addEventListener('change', handler);
     input.click();
   });
+  const aiBtn = el('button', { class: 'btn small', type: 'button' }, t('ai.create'));
+  aiBtn.addEventListener('click', () => openAiDialog({ onImport: (data, bg) => addAiPages(data, bg, insertAt) }));
   return el('div', { class: cls },
     el('span', { class: 'ed-add-page-label' }, t('editor.addPageLabel')),
-    pdfBtn, zipBtn, addBtn);
+    pdfBtn, zipBtn, addBtn, aiBtn);
 }
 
 // Elimina la página y su imagen de fondo, sin pedir confirmación.
@@ -640,6 +644,18 @@ function movePage(pi, delta) {
   renderPanel();
 }
 
+// Fila de la pantalla inicial: icono + título (peso normal) + subtítulo gris.
+// Sin recuadro de botón; el estilo (hover, separadores) va en el CSS.
+function startItem(svg, title, sub, onclick) {
+  const ic = el('span', { class: 'ed-start-icon' });
+  ic.innerHTML = svg;
+  return el('button', { class: 'ed-start-item', type: 'button', onclick },
+    ic,
+    el('span', { class: 'ed-start-text' },
+      el('span', { class: 'ed-start-title' }, title),
+      el('span', { class: 'ed-start-sub' }, sub)));
+}
+
 // ---------- Lienzo ----------
 
 function renderCanvas({ preserveScroll = false } = {}) {
@@ -661,16 +677,16 @@ function renderCanvas({ preserveScroll = false } = {}) {
       el('h2', {}, t('editor.emptyTitle')),
       el('p', {}, t('editor.emptyDesc')),
       el('p', { class: 'ed-empty-alt' }, t('editor.emptyDesc2')),
-      el('div', { style: 'display:flex;flex-direction:column;gap:10px;align-items:center' },
-        el('div', { style: 'display:flex;gap:10px;flex-wrap:wrap;justify-content:center' },
-          el('button', { class: 'btn', onclick: () => {
-            const input = $('#inputPaginas');
-            const handler = e => { addFiles(e.target.files); e.target.value = ''; input.removeEventListener('change', handler); };
-            input.addEventListener('change', handler);
-            input.click();
-          } }, t('editor.addPdf')),
-          el('button', { class: 'btn', onclick: () => $('#inputZip').click() }, t('editor.openZip'))),
-        el('button', { class: 'btn', onclick: () => addBlankPage(undefined, { newSheet: true }) }, t('editor.addBlank')))));
+      el('div', { class: 'ed-empty-list' },
+        startItem(ICONS.fileText, t('editor.addPdf').replace(/^\+\s*/, ''), t('menu.addPdfSub'), () => {
+          const input = $('#inputPaginas');
+          const handler = e => { addFiles(e.target.files); e.target.value = ''; input.removeEventListener('change', handler); };
+          input.addEventListener('change', handler);
+          input.click();
+        }),
+        startItem(ICONS.folderOpen, t('editor.openZip'), t('menu.openZipSub'), () => $('#inputZip').click()),
+        startItem(ICONS.filePlus, t('editor.addBlank'), t('menu.blankSub'), () => addBlankPage(undefined, { newSheet: true })),
+        startItem(ICONS.sparkles, t('ai.create'), t('ai.createSub'), () => openAiDialog({ onImport: createWorksheetFromAi })))));
     restoreScroll();
     return;
   }
@@ -5129,6 +5145,89 @@ async function openZipFile(file, handle = null) {
   }
 }
 
+// ---------- Creación con ayuda de IA ----------
+// Genera un blob de página de un color liso (A4), igual que addBlankPage pero
+// promisificado para encadenarlo en createWorksheetFromAi.
+function colorPageAsset(color) {
+  return new Promise(resolve => {
+    const W = 1600, H = 2263;
+    const cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    const ctx2d = cv.getContext('2d');
+    ctx2d.fillStyle = color || '#ffffff';
+    ctx2d.fillRect(0, 0, W, H);
+    cv.toBlob(blob => resolve({ blob, ext: 'png', w: W, h: H }), 'image/png');
+  });
+}
+
+// Resuelve el fondo elegido en el diálogo a un asset {blob, ext, w, h}: una
+// imagen/PDF subidos o un color liso (A4).
+async function resolveAiBg(bg) {
+  if (bg.mode === 'file' && bg.file) {
+    if (isPdf(bg.file)) return (await pdfToPages(bg.file))[0];
+    if (isImage(bg.file)) return await imageToPage(bg.file);
+    throw new Error(t('ai.badFile'));
+  }
+  return await colorPageAsset(bg.color);
+}
+
+// Convierte el layout (array de páginas → array de campos) en objetos de página
+// del manifest, registrando el blob de fondo en state.files.
+function aiPagesToManifest(layout, asset, bg) {
+  return layout.map(fields => {
+    const path = `pages/page-${state.pageSeq++}.${asset.ext}`;
+    state.files.set(path, asset.blob); // el mismo blob de fondo sirve para todas las páginas
+    const page = { image: path, w: asset.w, h: asset.h, fields };
+    if (bg.mode !== 'file') { page.bgColor = bg.color || '#ffffff'; page.blank = true; }
+    return page;
+  });
+}
+
+// Construye una ficha NUEVA a partir del JSON validado por la IA (reemplaza la
+// actual, con confirmación si hay cambios sin guardar). Devuelve false si el
+// profesor cancela el reemplazo (para no cerrar el diálogo).
+async function createWorksheetFromAi(data, bg) {
+  if (!confirmDiscardCurrent()) return false;
+  const layout = layoutFields(data.items);
+  const asset = await resolveAiBg(bg);
+
+  resetWorksheet();
+  state.manifest.title = String(data.title || '');
+  state.manifest.instructions = String(data.instructions || '');
+  titleInput.value = state.manifest.title;
+  aiPagesToManifest(layout, asset, bg).forEach(p => state.manifest.pages.push(p));
+
+  zoomCtl.set(1);
+  setPanelCollapsed(false);
+  autoThumbs({ force: true });
+  renderCanvas();
+  renderPanel();
+  refreshPaletteState();
+  updateSecurityMeter();
+  resetHistory();
+  markDirty();
+  toast(t('ai.created', { n: layout.reduce((a, p) => a + p.length, 0) }), 'ok');
+  return true;
+}
+
+// Genera páginas con la IA y las INSERTA en la ficha actual en `insertAt` (sin
+// reemplazarla ni tocar el título/instrucciones). Usada entre páginas.
+async function addAiPages(data, bg, insertAt) {
+  const layout = layoutFields(data.items);
+  const asset = await resolveAiBg(bg);
+  const newPages = aiPagesToManifest(layout, asset, bg);
+  const at = insertAt == null ? state.manifest.pages.length : insertAt;
+  state.manifest.pages.splice(at, 0, ...newPages);
+
+  markDirty();
+  autoThumbs();
+  renderCanvas();
+  renderPanel();
+  refreshPaletteState();
+  toast(t('ai.created', { n: layout.reduce((a, p) => a + p.length, 0) }), 'ok');
+  return true;
+}
+
 async function mergeZipFile(file, insertAt) {
   try {
     const ficha = await importFichaZip(file);
@@ -5346,6 +5445,8 @@ fileMenuItem('#miBlank', () => {
   refreshPaletteState();
   addBlankPage(undefined, { newSheet: true });
 });
+
+fileMenuItem('#miIA', () => openAiDialog({ onImport: createWorksheetFromAi }));
 
 fileMenuItem('#miAddPdf', () => {
   const input = $('#inputPaginas');
