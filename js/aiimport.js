@@ -106,6 +106,13 @@ function extractJson(raw) {
   let candidate = s.slice(first, last + 1);
   // Tolerar comas finales antes de } o ]
   candidate = candidate.replace(/,(\s*[}\]])/g, '$1');
+  try { return JSON.parse(candidate); } catch { /* continúa */ }
+  // Las IAs a veces generan \( \) \[ \] sin doblar la barra dentro de strings.
+  // Reparar: dentro de valores de cadena JSON, doblar barras sueltas ante
+  // caracteres que no son secuencias de escape JSON válidas.
+  candidate = candidate.replace(/"((?:[^"\\]|\\.)*)"/gs, (_, inner) =>
+    '"' + inner.replace(/\\(?!["\\/bfnrtu])/g, '\\\\') + '"'
+  );
   try { return JSON.parse(candidate); } catch { return null; }
 }
 
