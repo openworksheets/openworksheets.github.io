@@ -16,6 +16,9 @@ import { fontStack } from './fonts.js';
 import { mdToHtml } from './markdown.js';
 import { Scorm12Runtime } from './scorm.js';
 import { t } from './i18n.js';
+import { typesetMath, textHasMath } from './mathrender.js';
+import { openFormulaEditor, wrapFormula, insertAtCursor } from './edicuatex.js';
+import { ICONS } from './icons.js';
 
 // SVG de una casilla de verificación dibujable (campo checkbox).
 // El marco se ve siempre; la marca (✓) se muestra al estar activada vía CSS.
@@ -938,6 +941,175 @@ const renderers = {
       setAnswer: v => { input.value = v ?? ''; },
       isAnswered: () => input.value.trim() !== '',
       setDisabled: b => { input.disabled = b; }
+    };
+  },
+
+  // Fórmula: el alumno escribe una fórmula con EdiCuaTeX (botón «fx») y ve su
+  // representación renderizada debajo del campo. La respuesta es el LaTeX
+  // (envuelto en \(…\)). Se autocorrige.
+  formula(field, root, ctx) {
+    root.classList.add('wpf-formula');
+    const input = el('input', {
+      class: 'wpf-input wpf-formula-input', type: 'text', autocomplete: 'off',
+      placeholder: t('render.formulaPlaceholder'), 'aria-label': t('render.formulaAria')
+    });
+    const fx = el('button', {
+      type: 'button', class: 'wpf-fx-btn',
+      title: t('render.toolFormula'), 'aria-label': t('render.toolFormula')
+    }, 'fx');
+    const preview = el('div', { class: 'wpf-formula-preview', 'aria-live': 'polite' });
+
+    const refresh = () => {
+      const v = input.value.trim();
+      const src = v ? (textHasMath(v) ? v : wrapFormula(v)) : '';
+      preview.classList.toggle('is-empty', !src);
+      preview.textContent = src || t('render.previewEmpty');
+      if (src) typesetMath(preview);
+    };
+
+    fx.addEventListener('mousedown', e => e.preventDefault()); // conservar el foco/selección
+    fx.addEventListener('click', () => {
+      if (input.disabled) return;
+      const ok = openFormulaEditor(input, { onInsert: () => { refresh(); notify(ctx); } });
+      if (!ok) input.focus();
+    });
+    input.addEventListener('input', () => { refresh(); notify(ctx); });
+
+    root.appendChild(el('div', { class: 'wpf-formula-bar' }, input, fx));
+    root.appendChild(preview);
+    refresh();
+    return {
+      getAnswer: () => input.value,
+      setAnswer: v => { input.value = v ?? ''; refresh(); },
+      isAnswered: () => input.value.trim() !== '',
+      setDisabled: b => { input.disabled = b; fx.disabled = b; }
+    };
+  },
+
+  // Respuesta larga: texto extenso con formato (negrita, cursiva, enlaces) y
+  // fórmulas LaTeX, con vista previa renderizada. No se autocorrige: lo puntúa
+  // el profesor (queda «pendiente»).
+  essay(field, root, ctx) {
+    root.classList.add('wpf-essay');
+    const cfg = field.config || {};
+    if (cfg.prompt) root.appendChild(el('div', { class: 'wpf-essay-prompt' }, cfg.prompt));
+
+    const ta = el('textarea', {
+      class: 'wpf-input wpf-essay-input', rows: String(Math.max(2, Number(cfg.rows) || 4)),
+      placeholder: t('render.essayPlaceholder'), 'aria-label': t('render.essayAria')
+    });
+    const preview = el('div', { class: 'wpf-essay-preview', 'aria-live': 'polite' });
+
+    // Contador de palabras y límite opcional fijado por el profesor (0 = libre).
+    const maxWords = Math.max(0, Math.floor(Number(cfg.maxWords) || 0));
+    const counter = el('div', { class: 'wpf-essay-counter', 'aria-live': 'polite' });
+    const countWords = s => { const m = String(s ?? '').trim().match(/\S+/g); return m ? m.length : 0; };
+    let lastValue = ''; // último valor que respeta el límite (para bloquear excesos)
+    const updateCounter = () => {
+      const n = countWords(ta.value);
+      counter.textContent = maxWords > 0
+        ? t('render.wordCountLimit', { n, max: maxWords })
+        : t('render.wordCount', { n });
+      counter.classList.toggle('at-limit', maxWords > 0 && n >= maxWords);
+    };
+
+    let tHandle = null;
+    const refresh = () => {
+      clearTimeout(tHandle);
+      tHandle = setTimeout(() => {
+        const v = ta.value;
+        preview.classList.toggle('is-empty', !v.trim());
+        if (!v.trim()) { preview.textContent = t('render.previewEmpty'); return; }
+        preview.innerHTML = mdToHtml(v);
+        typesetMath(preview);
+      }, 200);
+    };
+
+    // Aplica el límite de palabras: si el nuevo valor lo supera, restaura el
+    // último válido (bloquea seguir escribiendo o pegar por encima del tope).
+    // Devuelve true si se actualizó (no se bloqueó).
+    const enforceLimit = () => {
+      if (maxWords > 0 && countWords(ta.value) > maxWords) {
+        const pos = Math.max(0, (ta.selectionStart || ta.value.length) - (ta.value.length - lastValue.length));
+        ta.value = lastValue;
+        try { ta.setSelectionRange(pos, pos); } catch { /* noop */ }
+        return false;
+      }
+      lastValue = ta.value;
+      return true;
+    };
+    const onEdited = () => { enforceLimit(); updateCounter(); refresh(); notify(ctx); };
+
+    // Inserta `before … after` alrededor de la selección (o un texto de ejemplo).
+    // insertAtCursor dispara el evento 'input', que recalcula y aplica el límite.
+    const wrapSel = (before, after, sample) => {
+      if (ta.disabled) return;
+      const s = ta.selectionStart ?? ta.value.length;
+      const e = ta.selectionEnd ?? ta.value.length;
+      const sel = ta.value.slice(s, e) || sample;
+      insertAtCursor(ta, before + sel + after);
+    };
+
+    const toolBtn = (icon, title, onClick) => {
+      const b = el('button', { type: 'button', class: 'wpf-tool-btn', title, 'aria-label': title });
+      b.innerHTML = icon;
+      b.addEventListener('mousedown', ev => ev.preventDefault());
+      b.addEventListener('click', onClick);
+      return b;
+    };
+
+    const bar = el('div', { class: 'wpf-essay-toolbar' },
+      toolBtn(ICONS.bold, t('render.toolBold'), () => wrapSel('**', '**', t('render.sampleBold'))),
+      toolBtn(ICONS.italic, t('render.toolItalic'), () => wrapSel('*', '*', t('render.sampleItalic'))),
+      toolBtn(ICONS.link, t('render.toolLink'), () => wrapSel('[', '](https://)', t('render.sampleLink'))));
+    const fx = el('button', { type: 'button', class: 'wpf-fx-btn', title: t('render.toolFormula'), 'aria-label': t('render.toolFormula') }, 'fx');
+    fx.addEventListener('mousedown', e => e.preventDefault());
+    fx.addEventListener('click', () => {
+      if (ta.disabled) return;
+      const ok = openFormulaEditor(ta); // la inserción dispara 'input' → onEdited
+      if (!ok) ta.focus();
+    });
+    bar.appendChild(fx);
+
+    // Ayuda: explica qué hace cada botón (el alumnado no conoce esta notación).
+    const help = el('div', { class: 'wpf-essay-help', hidden: '' },
+      el('p', {}, t('render.helpIntro')),
+      el('ul', {},
+        el('li', {}, t('render.helpBold')),
+        el('li', {}, t('render.helpItalic')),
+        el('li', {}, t('render.helpLink')),
+        el('li', {}, t('render.helpFormula'))));
+    const helpBtn = el('button', {
+      type: 'button', class: 'wpf-tool-btn wpf-help-btn',
+      title: t('render.help'), 'aria-label': t('render.help'), 'aria-expanded': 'false'
+    }, '?');
+    helpBtn.addEventListener('mousedown', e => e.preventDefault());
+    helpBtn.addEventListener('click', () => {
+      const show = help.hidden;
+      help.hidden = !show;
+      helpBtn.setAttribute('aria-expanded', show ? 'true' : 'false');
+      helpBtn.classList.toggle('is-open', show);
+    });
+    bar.appendChild(helpBtn);
+
+    ta.addEventListener('input', onEdited);
+
+    root.appendChild(bar);
+    root.appendChild(help);
+    root.appendChild(ta);
+    root.appendChild(counter);
+    root.appendChild(el('div', { class: 'wpf-essay-preview-label' }, t('render.preview')));
+    root.appendChild(preview);
+    updateCounter();
+    refresh();
+    return {
+      getAnswer: () => ta.value,
+      setAnswer: v => { ta.value = v ?? ''; lastValue = ta.value; updateCounter(); refresh(); },
+      isAnswered: () => ta.value.trim() !== '',
+      setDisabled: b => {
+        ta.disabled = b; fx.disabled = b;
+        bar.querySelectorAll('.wpf-tool-btn').forEach(x => { x.disabled = b; });
+      }
     };
   },
 

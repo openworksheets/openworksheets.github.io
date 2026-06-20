@@ -954,7 +954,15 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   font-size: 0.85rem;
 }
 .al-pending-hint { font-style: italic; }
-.cl-pending { color: var(--tinta-suave); cursor: help; }
+.cl-pending {
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-left: 5px; min-width: 1.5em; height: 1.5em; padding: 0 0.4em;
+  border-radius: 999px;
+  background: var(--ambar-claro); color: var(--ambar);
+  border: 1.5px solid var(--ambar);
+  font-weight: 800; font-size: 0.8em; line-height: 1;
+  cursor: help; vertical-align: middle;
+}
 
 /* ---------- Tabla de clase ---------- */
 
@@ -2556,6 +2564,81 @@ body.resizing-col { cursor: col-resize; }
 .ed-record-icon { flex: 0 0 auto; display: inline-flex; }
 .ed-record-icon svg { width: 1.6em; height: 1.6em; }
 .ed-record-prev-txt { font-size: calc(1.6cqw * var(--fs, 1)); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Campos «Fórmula» y «Respuesta larga» (alumno) ──────────────────── */
+.wpf-field-formula, .wpf-field-essay { overflow: visible; }
+.wpf-field-essay.mark-pending { outline: 3px solid rgba(74, 88, 112, 0.35); outline-offset: 2px; border-radius: 6px; }
+
+.wpf-formula-bar { display: flex; align-items: stretch; gap: 0.4em; }
+.wpf-formula-input { flex: 1 1 auto; height: auto; min-height: 1.7em; }
+.wpf-fx-btn {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 2.2em; padding: 0 0.6em;
+  border: 2px solid var(--tinta); border-radius: 5px;
+  background: var(--blanco); color: var(--tinta);
+  font: inherit; font-weight: 700; font-style: italic; line-height: 1;
+  cursor: pointer; box-shadow: var(--sombra-mini); transition: all 0.08s ease;
+}
+.wpf-fx-btn:hover { border-color: var(--rojo); color: var(--rojo); background: var(--rojo-claro); }
+.wpf-fx-btn:active { transform: translate(1px, 1px); }
+.wpf-fx-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.wpf-formula-preview, .wpf-essay-preview {
+  margin-top: 0.4em; padding: 0.35em 0.5em;
+  border: 1.5px dashed var(--tinta-tenue); border-radius: 5px;
+  background: rgba(255, 255, 255, 0.6); min-height: 1.6em;
+  overflow-x: auto; color: var(--field-fg, inherit);
+}
+.wpf-formula-preview.is-empty, .wpf-essay-preview.is-empty {
+  color: var(--tinta-suave); font-style: italic; border-style: dotted;
+}
+
+.wpf-essay-prompt { font-weight: 600; line-height: 1.25; margin-bottom: 0.35em; color: var(--field-fg, inherit); }
+.wpf-essay-toolbar { display: flex; gap: 0.3em; margin-bottom: 0.35em; flex-wrap: wrap; }
+.wpf-tool-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2em; height: 2em; padding: 0;
+  border: 2px solid var(--tinta); border-radius: 5px;
+  background: var(--blanco); color: var(--tinta); cursor: pointer;
+  box-shadow: var(--sombra-mini); transition: all 0.08s ease;
+}
+.wpf-tool-btn svg { width: 1.1em; height: 1.1em; }
+.wpf-tool-btn:hover { border-color: var(--rojo); color: var(--rojo); background: var(--rojo-claro); }
+.wpf-tool-btn:active { transform: translate(1px, 1px); }
+.wpf-tool-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.wpf-essay-input { width: 100%; height: auto; resize: vertical; font: inherit; }
+.wpf-essay-counter {
+  margin-top: 0.25em; font-size: 0.8em; color: var(--tinta-suave); text-align: right;
+}
+.wpf-essay-counter.at-limit { color: var(--ambar); font-weight: 700; }
+.wpf-help-btn { font-weight: 800; font-size: 0.95em; margin-left: auto; }
+.wpf-help-btn.is-open { border-color: var(--rojo); color: var(--rojo); background: var(--rojo-claro); }
+.wpf-essay-help {
+  margin: 0 0 0.45em; padding: 0.5em 0.7em;
+  border: 1.5px solid var(--ambar); border-radius: 6px;
+  background: var(--ambar-claro); font-size: 0.85em; line-height: 1.4;
+}
+.wpf-essay-help p { margin: 0 0 0.35em; font-weight: 600; }
+.wpf-essay-help ul { margin: 0; padding-left: 1.2em; }
+.wpf-essay-help li { margin: 0.15em 0; }
+.wpf-essay-preview-label {
+  margin-top: 0.5em; font-size: 0.8em; font-weight: 700; color: var(--tinta-suave);
+  text-transform: uppercase; letter-spacing: 0.03em;
+}
+.wpf-essay-preview :first-child { margin-top: 0; }
+.wpf-essay-preview :last-child { margin-bottom: 0; }
+
+/* Vista de los nuevos campos en el lienzo del editor */
+.ed-formula-prev { display: flex; align-items: center; height: 100%; padding: 0 0.5em; overflow: hidden; }
+.ed-formula-prev.is-empty { color: var(--tinta-suave); font-style: italic; }
+.ed-field.ed-essay-field .ed-essay-prev {
+  display: flex; align-items: center; gap: 0.5em; height: 100%; padding: 0 0.6em;
+  color: var(--tinta-suave); overflow: hidden;
+}
+.ed-essay-icon { flex: 0 0 auto; display: inline-flex; }
+.ed-essay-icon svg { width: 1.6em; height: 1.6em; }
+.ed-essay-prev-txt { font-size: calc(1.6cqw * var(--fs, 1)); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wpf-media-empty {
   width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;

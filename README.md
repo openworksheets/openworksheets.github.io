@@ -1,206 +1,208 @@
 # OpenWorksheets
 
-OpenWorksheets es una aplicación web para convertir PDFs o imágenes en fichas interactivas autocorregibles, de forma parecida a TopWorksheets. El profesorado puede subir un documento, colocar encima distintos tipos de campos de respuesta y configurar las soluciones, la puntuación, las opciones de corrección y las restricciones de acceso. También permite crear fichas desde una hoja en blanco, sin necesidad de cargar antes un PDF o una imagen.
+OpenWorksheets is a web application for converting PDFs or images into interactive, self-grading worksheets, similar to TopWorksheets. Teachers can upload a document, place different types of answer fields on top of it, and configure the correct answers, scoring, grading options, and access restrictions. It also allows creating worksheets from a blank page, without needing to load a PDF or image first.
 
-## Tipos de campo
+## Field types
 
-En el editor, los campos se agrupan en la paleta de la izquierda en cinco categorías según lo que tiene que hacer el alumno.
+In the editor, fields are grouped in the left palette into five categories based on what the student needs to do.
 
-### 💬 Responder
+### 💬 Answer
 
-Campos en los que el alumno aporta su propia respuesta abierta (la escribe o la graba).
+Fields where the student provides their own open response (typed or recorded).
 
-| Tipo | Descripción |
+| Type | Description |
 |------|-------------|
-| **Respuesta corta** | El alumno escribe texto libre. Admite varias respuestas correctas alternativas y opciones de normalización (tildes, mayúsculas, espacios). |
-| **Respuesta numérica** | El alumno introduce un número. Acepta coma o punto como separador decimal y permite definir una tolerancia de error. |
-| **Tabla editable** | El alumno rellena una tabla. Cada celda puede ser de **texto** o **número** (con tolerancia ±), tener varias respuestas válidas alternativas y marcarse como **ejemplo visible** (se muestra ya resuelta y no puntúa). Una celda puede **convertirse en desplegable**: sus respuestas se ofrecen como opciones y se marca cuál es la correcta. Las respuestas pueden **pegarse desde una hoja de cálculo** (Calc, Sheets, Excel o CSV) y la corrección puede hacerse celda a celda o por **filas/columnas completas** (útil para clasificar). |
-| **Rellenar huecos** | El alumno rellena palabras o frases que faltan. Dos modos: *escribir un texto con huecos* (marcados con corchetes en el enunciado) o *marcar huecos sobre el documento* (dibujando un cuadro sobre cada hueco que ya existe en el PDF o imagen). Admite varias respuestas válidas por hueco y puntuación proporcional. |
-| **Grabación de voz** | El alumno graba su voz con el micrófono. No se autocorrige: se valora *manualmente* (el docente pone la nota al revisar la entrega) o por *participación* (grabar algo otorga los puntos completos). El audio viaja dentro de la entrega; por su tamaño, su presencia deshabilita la entrega por enlace (queda solo la descarga de archivo). Duración máxima configurable. |
+| **Short answer** | The student writes free text. Supports multiple alternative correct answers and normalization options (accents, case, spaces). |
+| **Formula** | The student writes a math or chemistry formula with the **EdiCuaTeX** visual editor (the "fx" button) and sees it rendered live below the field. Auto-graded: the LaTeX is compared ignoring spaces and delimiters (case matters), and several accepted answers can be defined. |
+| **Numeric answer** | The student enters a number. Accepts comma or period as decimal separator and allows defining an error tolerance. |
+| **Long answer** | The student writes an extended response with formatting (**bold**, *italics*, links) and formulas, with a live preview (Markdown + LaTeX) and a **word counter**. The teacher can set an optional **word limit**. Not auto-graded: the teacher assigns the score when reviewing the submission (it stays *pending* until then). |
+| **Editable table** | The student fills in a table. Each cell can be **text** or **number** (with ± tolerance), have multiple valid alternative answers, and be marked as a **visible example** (shown already filled in and not scored). A cell can be **converted to a dropdown**: its answers are offered as options and the correct one is marked. Answers can be **pasted from a spreadsheet** (Calc, Sheets, Excel or CSV) and grading can be done cell by cell or by **complete rows/columns** (useful for classification). |
+| **Fill in the blanks** | The student fills in missing words or phrases. Two modes: *write a text with blanks* (marked with brackets in the prompt) or *mark blanks on the document* (by drawing a box over each blank already present in the PDF or image). Supports multiple valid answers per blank and proportional scoring. |
+| **Voice recording** | The student records their voice with the microphone. Not auto-graded: evaluated *manually* (the teacher assigns the score when reviewing the submission) or by *participation* (recording anything awards full points). The audio travels within the submission; due to its size, its presence disables link-based submission (only file download remains). Maximum duration is configurable. |
 
-### ☑️ Elegir
+### ☑️ Choose
 
-Campos en los que el alumno selecciona entre opciones predefinidas.
+Fields where the student selects from predefined options.
 
-| Tipo | Descripción |
+| Type | Description |
 |------|-------------|
-| **Opción única** | Lista de opciones en la que el alumno elige una sola. |
-| **Opción múltiple** | Lista de opciones en la que el alumno puede marcar varias. Admite puntuación parcial. |
-| **Casillas de verificación** | Casillas dibujadas libremente sobre el documento. Modo individual o múltiple con puntuación parcial opcional. |
-| **Verdadero / falso** | Dos botones con etiquetas configurables (p. ej. Sí / No, Correcto / Incorrecto). |
-| **Desplegable** | El alumno elige una opción de un menú desplegable. Ocupa poco espacio visual. |
+| **Single choice** | A list of options from which the student picks one. |
+| **Multiple choice** | A list of options from which the student can select several. Supports partial scoring. |
+| **Checkboxes** | Checkboxes drawn freely over the document. Single or multiple mode with optional partial scoring. |
+| **True / False** | Two buttons with configurable labels (e.g. Yes / No, Correct / Incorrect). |
+| **Dropdown** | The student picks an option from a dropdown menu. Takes up minimal visual space. |
 
-### 🔗 Relacionar
+### 🔗 Match
 
-Campos en los que el alumno conecta, ordena o coloca elementos.
+Fields where the student connects, orders, or places elements.
 
-| Tipo | Descripción |
+| Type | Description |
 |------|-------------|
-| **Emparejar** | Dos columnas de elementos que el alumno relaciona entre sí. |
-| **Ordenar** | El alumno arrastra elementos para ponerlos en el orden correcto. |
-| **Arrastrar a zonas** | El alumno arrastra elementos hasta las zonas de destino dibujadas sobre el documento. Dos modos: *escribir las etiquetas* (que parten de una bandeja) o *recortar del propio PDF* trozos de texto o imagen (que parten de su sitio y lo dejan vacío al moverlos). |
-| **Unir con flechas** | El alumno conecta elementos dibujando flechas entre ellos directamente sobre la página. |
+| **Matching** | Two columns of elements that the student connects to each other. |
+| **Ordering** | The student drags elements to put them in the correct order. |
+| **Drag to zones** | The student drags elements to target zones drawn on the document. Two modes: *write the labels* (which start from a tray) or *cut from the PDF itself* pieces of text or image (which start from their position and leave it empty when moved). |
+| **Connect with arrows** | The student connects elements by drawing arrows between them directly on the page. |
 
-### 📦 Interactivo
+### 📦 Interactive
 
-Contenido interactivo externo: webs incrustadas y paquetes SCORM (el SCORM puntúa; «Insertar» es informativo).
+External interactive content: embedded websites and SCORM packages (SCORM scores; "Embed" is informational).
 
-| Tipo | Descripción |
+| Type | Description |
 |------|-------------|
-| **Insertar (Web/HTML)** | Contenido externo. Al crearlo se elige el tipo: **URL** (se incrusta en un iframe), **código HTML** de inserción (Genially, H5P, mapas…), **web completa en `.zip`** (un `index.html` con sus carpetas/CSS/JS, servida desde la propia ficha), **paquete `.elpx` de eXeLearning** (un `.zip` con una web dentro) o **paquete IMS Content Package** (`.zip` con `imsmanifest.xml`, con su menú de navegación). Admite título y pie. |
-| **SCORM (1.2)** | El docente sube un paquete **SCORM 1.2** (`.zip`). OpenWorksheets actúa como mini‑LMS en el navegador: muestra el **menú de navegación** del paquete, ejecuta sus contenidos y captura su **puntuación** (`cmi.core.score.raw`) o su estado de finalización, que se integra en la nota de la ficha de forma proporcional a los puntos del campo. Admite **título y pie** opcionales (con tipo de letra, tamaño y color). El paquete se ve **en vivo en el propio lienzo del editor** (sin interacción, para poder moverlo y redimensionarlo) y de forma interactiva en la vista previa. |
+| **Embed (Web/HTML)** | External content. When creating it, choose the type: **URL** (embedded in an iframe), **HTML embed code** (Genially, H5P, maps…), **full website in `.zip`** (an `index.html` with its folders/CSS/JS, served from the worksheet itself), **`.elpx` eXeLearning package** (a `.zip` with a website inside) or **IMS Content Package** (`.zip` with `imsmanifest.xml`, with its navigation menu). Supports optional title and caption. |
+| **SCORM (1.2)** | The teacher uploads a **SCORM 1.2** package (`.zip`). OpenWorksheets acts as a mini-LMS in the browser: displays the package's **navigation menu**, executes its content and captures its **score** (`cmi.core.score.raw`) or completion status, which is integrated into the worksheet grade proportionally to the field's points. Supports optional **title and caption** (with font, size and color). The package is shown **live on the editor canvas** (non-interactive, so it can be moved and resized) and interactively in the preview. |
 
-#### Notas sobre SCORM
+#### SCORM notes
 
-- **Solo SCORM 1.2** (no SCORM 2004 ni secuenciamiento avanzado). Al subir un paquete 2004 se avisa y no se importa.
-- **Requiere abrir la ficha desde un sitio web (https)**: el paquete se sirve mediante un *Service Worker*, que no está disponible al abrir los HTML como archivo local (`file://`).
-- Dos modos de puntuación: **nota del SCORM** (usa `score.raw` normalizado entre `score.min`/`score.max`) o **aprobado/suspendido** (según `lesson_status`).
-- El paquete viaja **dentro del ZIP** de la ficha, por lo que aumenta su tamaño.
-- El contenido SCORM ejecuta JavaScript propio en el navegador del alumno; la sesión **no se reanuda** entre recargas (se reinicia el intento).
+- **SCORM 1.2 only** (no SCORM 2004 or advanced sequencing). Uploading a 2004 package will show a warning and not import it.
+- **Requires opening the worksheet from a website (https)**: the package is served via a *Service Worker*, which is not available when opening HTML files locally (`file://`).
+- Two scoring modes: **SCORM score** (uses `score.raw` normalized between `score.min`/`score.max`) or **pass/fail** (based on `lesson_status`).
+- The package travels **inside the worksheet ZIP**, so it increases its size.
+- SCORM content runs its own JavaScript in the student's browser; the session **does not resume** between page reloads (the attempt restarts).
 
-> Hay un paquete SCORM 1.2 de ejemplo en `ejemplos/scorm-ejemplo.zip` (una pregunta que reporta su puntuación) para probar la subida desde el editor.
+> A sample SCORM 1.2 package is available at `ejemplos/scorm-ejemplo.zip` (a question that reports its score) to test uploading from the editor.
 
-### 🎨 Diseño
+### 🎨 Design
 
-Elementos decorativos o informativos que no se corrigen ni cuentan en la puntuación.
+Decorative or informational elements that are not graded and do not count toward the score.
 
-| Tipo | Descripción |
+| Type | Description |
 |------|-------------|
-| **Texto** | Bloque de texto fijo (títulos, instrucciones, notas) con edición **Markdown**: negrita, cursiva, títulos, listas y enlaces, con conmutador entre edición y vista. Admite **fórmulas LaTeX** (ver abajo). |
-| **Imagen** | Imagen decorativa o explicativa superpuesta al documento. |
-| **Vídeo** | Vídeo de YouTube/Vimeo (incrustado), enlace directo o archivo subido, con título y pie opcionales. |
-| **Audio** | Audio desde archivo subido o enlace, con título y pie opcionales. |
-| **Tapar zona** | Rectángulo de color que oculta una parte del documento (respuestas, pistas, etc.). |
-| **Línea / Flecha** | Línea recta con puntas de flecha opcionales (ninguna, una o dos) para señalar o conectar elementos. |
-| **Polígono** | Polígono regular con el número de lados que se elija (triángulo, rombo, pentágono, hexágono…), con borde, relleno y rotación. |
-| **Rectángulo / Elipse** | Formas geométricas para resaltar o enmarcar, con borde, relleno y esquinas redondeadas (rectángulo). |
+| **Text** | Fixed text block (titles, instructions, notes) with **Markdown** editing: bold, italic, headings, lists and links, with a toggle between edit and preview. Supports **LaTeX formulas** (see below). |
+| **Image** | Decorative or explanatory image overlaid on the document. |
+| **Video** | YouTube/Vimeo video (embedded), direct link, or uploaded file, with optional title and caption. |
+| **Audio** | Audio from an uploaded file or link, with optional title and caption. |
+| **Cover zone** | A colored rectangle that hides part of the document (answers, hints, etc.). |
+| **Line / Arrow** | Straight line with optional arrowheads (none, one, or two) for pointing or connecting elements. |
+| **Polygon** | Regular polygon with any number of sides (triangle, rhombus, pentagon, hexagon…), with border, fill, and rotation. |
+| **Rectangle / Ellipse** | Geometric shapes for highlighting or framing, with border, fill, and rounded corners (rectangle). |
 
-Todos los campos con texto comparten ajustes de **tipo de letra** (con una fuente global de la ficha y posibilidad de cambiarla por campo, incluida OpenDyslexic), tamaño y color. Cada campo permite fijar su **tamaño exacto** (anchura y altura en %) además de ajustarlo con el ratón, y las formas, la imagen y el texto admiten **rotación**. El editor incluye una **tira de miniaturas** para navegar y reordenar páginas, **menús contextuales** (clic derecho) para copiar, cortar, pegar, duplicar y borrar campos y páginas, **deshacer/rehacer** (Ctrl+Z / Ctrl+Y) y **zoom** hasta el 500 % (Ctrl+rueda) con desplazamiento arrastrando la ficha.
+All text fields share **font** settings (with a global worksheet font and the ability to change it per field, including OpenDyslexic), size, and color. Each field allows setting its **exact size** (width and height in %) in addition to adjusting it with the mouse, and shapes, images, and text support **rotation**. The editor includes a **thumbnail strip** for navigating and reordering pages, **context menus** (right-click) for copying, cutting, pasting, duplicating, and deleting fields and pages, **undo/redo** (Ctrl+Z / Ctrl+Y), and **zoom** up to 500% (Ctrl+wheel) with panning by dragging the worksheet.
 
-### 🧮 Fórmulas matemáticas y química (LaTeX)
+### 🧮 Math and chemistry formulas (LaTeX)
 
-Cualquier texto de la ficha admite **fórmulas LaTeX**, que se renderizan automáticamente al mostrarse al alumnado: el título y las instrucciones, el campo **Texto**, las opciones de respuesta, los encabezados y las celdas de la **Tabla editable**, etc.
+Any text in the worksheet supports **LaTeX formulas**, which are automatically rendered when displayed to students: the title and instructions, the **Text** field, answer options, headers and cells of the **Editable table**, etc.
 
-- **En línea:** escribe la fórmula entre `\(` y `\)` — por ejemplo, `\(\frac{1}{2}\)` o `\(E = mc^2\)`.
-- **En bloque (centrada):** entre `\[` y `\]` — por ejemplo, `\[\int_0^1 x^2\,dx\]`.
+- **Inline:** write the formula between `\(` and `\)` — for example, `\(\frac{1}{2}\)` or `\(E = mc^2\)`.
+- **Block (centered):** between `\[` and `\]` — for example, `\[\int_0^1 x^2\,dx\]`.
 
-Funciona con todo el repertorio habitual: fracciones, raíces, sumatorios e integrales, **matrices**, flechas, símbolos, etc., y con **química** mediante `mhchem` (`\(\ce{H2O}\)`, `\(\ce{2H2 + O2 -> 2H2O}\)`).
+Supports the full standard repertoire: fractions, roots, summations and integrals, **matrices**, arrows, symbols, etc., and **chemistry** via `mhchem` (`\(\ce{H2O}\)`, `\(\ce{2H2 + O2 -> 2H2O}\)`).
 
-El renderizado usa MathJax con salida SVG: se carga solo cuando la ficha contiene fórmulas y **funciona sin conexión**, también dentro de los paquetes SCORM, IMS CP y de la exportación a web.
+Rendering uses MathJax with SVG output: it loads only when the worksheet contains formulas and **works offline**, including inside SCORM, IMS CP, and web export packages.
 
-#### Asistente de fórmulas (EdiCuaTeX)
+#### Formula assistant (EdiCuaTeX)
 
-Para facilitar la escritura de fórmulas matemáticas o químicas sin necesidad de conocer la sintaxis de LaTeX, el editor integra la herramienta de edición visual **EdiCuaTeX**:
+To make writing math or chemistry formulas easier without needing to know LaTeX syntax, the editor integrates the visual editing tool **EdiCuaTeX**:
 
-1. **Botón `fx`:** Cuando enfocas cualquier campo de texto que admita LaTeX en el panel lateral (como enunciados, textos de ayuda, opciones de respuesta, etc.), aparecerá el botón **`fx`** en la cabecera del panel (o pulsando el atajo `Ctrl+Shift+F`).
-2. **Edición visual:** Al hacer clic en él, se abrirá un editor visual en ventana emergente de [EdiCuaTeX](https://edicuatex.github.io/). Si tenías texto seleccionado en el campo, se cargará automáticamente para que puedas editarlo.
-3. **Inserción automática:** Una vez diseñada la fórmula, al pulsar el botón de inserción en EdiCuaTeX, esta se pegará automáticamente en tu campo de texto del editor de OpenWorksheets envuelta en los delimitadores de línea estándar `\(` y `\)`.
+1. **`fx` button:** When you focus any text field that supports LaTeX in the side panel (such as prompts, help texts, answer options, etc.), the **`fx`** button will appear in the panel header (or press the shortcut `Ctrl+Shift+F`).
+2. **Visual editing:** Clicking it opens a visual editor in a popup window from [EdiCuaTeX](https://edicuatex.github.io/). If you had text selected in the field, it will be loaded automatically for editing.
+3. **Automatic insertion:** Once the formula is designed, pressing the insert button in EdiCuaTeX will automatically paste it into your OpenWorksheets text field wrapped in the standard inline delimiters `\(` and `\)`.
 
-### 📊 Tablas editables
+### 📊 Editable tables
 
-El tipo de campo **Tabla editable** permite crear rejillas estructuradas de entrada de datos (hasta un máximo de **12 filas y 8 columnas**) para que el alumnado las complete.
+The **Editable table** field type allows creating structured data entry grids (up to **12 rows and 8 columns**) for students to fill in.
 
-#### Características y configuración avanzada:
-- **Tipos de celda individuales:** Cada celda de la tabla se puede configurar de forma independiente con los siguientes tipos:
-  - **Texto:** Para respuestas alfanuméricas. Permite múltiples alternativas correctas y normalizaciones (tildes, mayúsculas, etc.).
-  - **Número:** Para respuestas numéricas, con posibilidad de definir una **tolerancia de error** (p. ej. `±0.1`).
-  - **Desplegable:** Convierte la celda en una lista de opciones. Las respuestas correctas alternativas se muestran como las opciones del desplegable y se marca cuál es la solución activa.
-- **Celdas de ejemplo:** Cualquier celda se puede marcar como *Ejemplo*. Se mostrará rellena con la solución al alumno, no será editable y no contará para la puntuación.
-- **Modos de corrección:** Desde los ajustes del panel, la corrección de la tabla se puede configurar en tres modalidades:
-  - **Celda a celda:** Cada respuesta correcta suma puntos de forma independiente.
-  - **Por filas completas:** Toda la fila debe ser correcta para puntuar (ideal para clasificaciones o relacionar conceptos en una misma línea).
-  - **Por columnas completas:** Toda la columna debe completarse correctamente para puntuar.
-- **Importación desde Hojas de Cálculo:** Puedes copiar datos directamente desde Excel, Google Sheets, Calc o un archivo CSV y pegarlos en el botón de importación de la tabla para rellenar automáticamente la estructura y los contenidos.
-- **Editor a pantalla completa:** Para tablas grandes, puedes abrir el editor de tablas en pantalla completa mediante el botón correspondiente del panel lateral para trabajar con mayor comodidad.
+#### Features and advanced configuration:
+- **Individual cell types:** Each cell in the table can be independently configured with the following types:
+  - **Text:** For alphanumeric answers. Supports multiple correct alternatives and normalization (accents, case, etc.).
+  - **Number:** For numeric answers, with the option to define an **error tolerance** (e.g. `±0.1`).
+  - **Dropdown:** Converts the cell into a list of options. The alternative correct answers are shown as dropdown options and the active solution is marked.
+- **Example cells:** Any cell can be marked as an *Example*. It will be displayed filled in with the solution to the student, will not be editable, and will not count toward the score.
+- **Grading modes:** From the panel settings, table grading can be configured in three ways:
+  - **Cell by cell:** Each correct answer adds points independently.
+  - **By complete rows:** The entire row must be correct to score (ideal for classifications or matching concepts on the same line).
+  - **By complete columns:** The entire column must be completed correctly to score.
+- **Import from Spreadsheets:** You can copy data directly from Excel, Google Sheets, Calc, or a CSV file and paste it into the table import button to automatically fill in the structure and content.
+- **Full-screen editor:** For large tables, you can open the table editor in full-screen mode using the corresponding button in the side panel for a more comfortable workflow.
 
-## Flujo de trabajo
+## Workflow
 
-1. **Crear:** el profesorado sube un PDF o imagen, o empieza con una hoja en blanco, coloca los campos y configura las respuestas correctas y la puntuación en el editor.
+1. **Create:** the teacher uploads a PDF or image, or starts with a blank page, places the fields, and configures the correct answers and scoring in the editor.
 
-### Corrección de respuestas de texto
+### Text answer grading
 
-Los campos basados en texto (como **Respuesta corta**, **Rellenar huecos**, **Huecos en documento** y las celdas de **Tabla editable**) siguen el mismo esquema de corrección:
+Text-based fields (such as **Short answer**, **Fill in the blanks**, **Blanks on document**, and **Editable table** cells) follow the same grading scheme:
 
-- Se pueden definir **varias respuestas válidas alternativas**.
-- Las opciones **Ignorar mayúsculas y minúsculas**, **Ignorar tildes** e **Ignorar espacios sobrantes** se aplican a todas esas alternativas.
+- **Multiple valid alternative answers** can be defined.
+- The options **Ignore case**, **Ignore accents**, and **Ignore extra spaces** apply to all those alternatives.
 
-Esto significa que no hace falta añadir variantes que solo cambian por acentos o mayúsculas si esas opciones están activadas. Por ejemplo, con **Ignorar tildes**, `mamífero` y `mamifero` ya se consideran equivalentes. Las alternativas sirven para casos como `océano` / `mar`, `satélite` / `luna` o `carnívora` / `carnivoro` si quieres aceptar formas distintas con significado válido.
-2. **Compartir:** la ficha se exporta como un paquete `.owpkg` (OpenWorksheets Package, internamente un ZIP) que contiene todo lo necesario. Se sube a Google Drive u otro alojamiento público y se comparte con el alumnado mediante un enlace generado en la propia aplicación. El alumnado no tiene acceso al paquete original, lo que protege el contenido.
-3. **Responder y entregar:** el alumnado responde desde el navegador y, al terminar, puede descargar un archivo de entrega (`.owsub`) o copiar un enlace directo para enviárselo al docente.
+This means there is no need to add variants that only differ in accents or case if those options are enabled. For example, with **Ignore accents**, `mamífero` and `mamifero` are already considered equivalent. Alternatives are for cases like `ocean` / `sea`, `satellite` / `moon`, or `carnivore` / `carnivorous` when you want to accept different forms with valid meaning.
 
-> **Alternativa: exportar como SCORM 1.2.** Desde *Archivo → Exportar como… → SCORM 1.2* la ficha se empaqueta como un ZIP SCORM autónomo que se sube a **Moodle** o a cualquier LMS compatible como actividad SCORM. En este modo el LMS gestiona la nota, los intentos y el progreso: el visor le envía la puntuación (0–100), el estado (aprobado/suspenso o completado) y el tiempo de sesión según el estándar SCORM 1.2. La nota mínima para aprobar y el modo de estado se configuran en la pestaña **«SCORM»** de los ajustes de la ficha. No usa el archivo de entrega ni el enlace de entrega (los sustituye el LMS).
+2. **Share:** the worksheet is exported as an `.owpkg` package (OpenWorksheets Package, internally a ZIP) containing everything needed. It is uploaded to Google Drive or another public host and shared with students via a link generated within the application. Students do not have access to the original package, which protects the content.
+3. **Answer and submit:** students answer in the browser and, when done, can download a submission file (`.owsub`) or copy a direct link to send to the teacher.
 
-> **Alternativa: exportar como IMS Content Package.** Desde *Archivo → Exportar como… → IMS CP* la ficha se empaqueta como un ZIP IMS CP 1.1.4 (con `imsmanifest.xml`) para repositorios y plataformas compatibles. A diferencia del SCORM, no incluye seguimiento ni calificación.
+> **Alternative: export as SCORM 1.2.** From *File → Export as… → SCORM 1.2*, the worksheet is packaged as a standalone SCORM ZIP that can be uploaded to **Moodle** or any compatible LMS as a SCORM activity. In this mode the LMS manages the grade, attempts, and progress: the viewer sends it the score (0–100), status (passed/failed or completed), and session time according to the SCORM 1.2 standard. The minimum passing grade and status mode are configured in the **"SCORM"** tab of the worksheet settings. It does not use the submission file or submission link (these are replaced by the LMS).
 
-> **Alternativa: exportar como página web autónoma.** Desde *Archivo → Exportar como… → Exportar a web (ZIP)* la ficha se empaqueta como un ZIP con una copia del visor y un `index.html`. Basta con descomprimirlo y subir su contenido a cualquier alojamiento web propio para tenerla funcionando sin depender de OpenWorksheets ni de Google Drive. Conserva la contraseña de acceso y el cifrado de entrega de la ficha. El alumnado responde y, al terminar, descarga su archivo de entrega (`.owsub`) o copia el enlace de entrega. El propio `index.html` del paquete reconoce esos enlaces y abre un **panel de corrección** donde el docente va acumulando las entregas en una tabla con resumen y exportación a CSV (pegando varios enlaces o abriendo archivos `.owsub`), igual que en la web oficial; con `#corregir` se abre el panel vacío. Así la web es totalmente autónoma. Debe servirse por http(s): no funciona abriendo el `index.html` como archivo local.
+> **Alternative: export as IMS Content Package.** From *File → Export as… → IMS CP*, the worksheet is packaged as an IMS CP 1.1.4 ZIP (with `imsmanifest.xml`) for compatible repositories and platforms. Unlike SCORM, it does not include tracking or grading.
 
-## Entregas y verificación
+> **Alternative: export as a standalone web page.** From *File → Export as… → Export to web (ZIP)*, the worksheet is packaged as a ZIP with a copy of the viewer and an `index.html`. Simply unzip it and upload its contents to any web host to have it running independently of OpenWorksheets or Google Drive. It retains the access password and submission encryption. Students answer and, when done, download their submission file (`.owsub`) or copy the submission link. The package's own `index.html` recognizes those links and opens a **grading panel** where the teacher accumulates submissions in a table with a summary and CSV export (by pasting multiple links or opening `.owsub` files), just like on the official website; `#corregir` opens the empty panel. This makes the website completely self-contained. It must be served over http(s): it does not work when opening `index.html` as a local file.
 
-El docente puede abrir los archivos de entrega desde la página principal para ver la puntuación, las respuestas y comprobar automáticamente que no han sido modificados. Es posible cargar múltiples archivos a la vez o recibirlos mediante el enlace que genera el alumnado al terminar. Los resultados de toda una clase se muestran en una tabla ordenable y se pueden exportar a CSV.
+## Submissions and verification
 
-Las respuestas que no se autocorrigen —las **grabaciones de voz** en modo *manual*— aparecen como **pendientes**: al abrir la entrega, el docente reproduce cada audio y escribe su puntuación, y la nota total, la nota sobre 10, el porcentaje y el CSV de la clase se recalculan al instante. Estos ajustes se guardan localmente en el navegador del docente **sin modificar la entrega original** del alumnado, por lo que su verificación de integridad sigue siendo válida.
+The teacher can open submission files from the main page to view the score, the answers, and automatically verify they have not been tampered with. Multiple files can be loaded at once or received via the link generated by students when they finish. The results for an entire class are displayed in a sortable table and can be exported to CSV.
 
-La verificación de integridad es automática y avisa si algún archivo ha sido manipulado. Las entregas también pueden cifrarse para que solo el docente pueda leerlas (ver [Seguridad y cifrado](#seguridad-y-cifrado)).
+Answers that are not auto-graded — **voice recordings** in *manual* mode — appear as **pending**: when opening the submission, the teacher plays each audio and enters the score, and the total grade, grade out of 10, percentage, and class CSV are recalculated instantly. These adjustments are saved locally in the teacher's browser **without modifying the student's original submission**, so its integrity verification remains valid.
 
-## Control de acceso
+Integrity verification is automatic and warns if any file has been tampered with. Submissions can also be encrypted so that only the teacher can read them (see [Security and encryption](#security-and-encryption)).
 
-Las fichas admiten las siguientes opciones de control:
+## Access control
 
-- Fecha y hora de inicio y de finalización
-- Contraseña de acceso
-- Tiempo límite por intento
-- Número máximo de intentos
-- Entrega automática al agotar el plazo
-- Opción de mostrar u ocultar la nota y la corrección al alumnado
+Worksheets support the following control options:
 
-## Seguridad y cifrado
+- Start and end date and time
+- Access password
+- Time limit per attempt
+- Maximum number of attempts
+- Automatic submission when time expires
+- Option to show or hide the grade and corrections to students
 
-OpenWorksheets ofrece un nivel de seguridad alto para el uso en el aula: el alumnado no puede acceder al archivo de la ficha y las entregas pueden cifrarse para que solo el docente pueda leerlas. Incorpora dos mecanismos de cifrado **independientes**, ambos ejecutados íntegramente en el navegador mediante la Web Crypto API (`crypto.subtle`), sin servidor ni envío de datos a terceros.
+## Security and encryption
 
-### Cifrado de entregas (clave pública)
+OpenWorksheets offers a high level of security for classroom use: students cannot access the worksheet file and submissions can be encrypted so that only the teacher can read them. It incorporates two **independent** encryption mechanisms, both running entirely in the browser using the Web Crypto API (`crypto.subtle`), with no server or data sent to third parties.
 
-Pensado para que **solo el docente** pueda leer lo que entrega el alumnado.
+### Submission encryption (public key)
 
-- Al activarlo, el docente fija una contraseña y la aplicación genera un par de claves **RSA-OAEP de 2048 bits** (SHA-256). La clave pública se incrusta en la ficha; la clave privada se guarda **cifrada** con **AES-GCM de 256 bits**, usando una clave derivada de la contraseña del docente mediante **PBKDF2-SHA256 con 250 000 iteraciones** y sal aleatoria.
-- Cuando el alumnado entrega, la aplicación genera una clave AES-GCM aleatoria, cifra la entrega con ella y, a su vez, cifra esa clave con la clave pública RSA (esquema híbrido). El alumnado puede **cifrar pero no descifrar**.
-- Solo el docente, introduciendo su contraseña, recupera la clave privada y descifra las entregas.
+Designed so that **only the teacher** can read what students submit.
 
-Ventaja: aunque el archivo de entrega (`.owsub`) o el enlace de entrega se intercepten, su contenido permanece ilegible sin la contraseña del docente.
+- When enabled, the teacher sets a password and the application generates a **2048-bit RSA-OAEP** key pair (SHA-256). The public key is embedded in the worksheet; the private key is stored **encrypted** with **256-bit AES-GCM**, using a key derived from the teacher's password via **PBKDF2-SHA256 with 250,000 iterations** and a random salt.
+- When a student submits, the application generates a random AES-GCM key, encrypts the submission with it, and in turn encrypts that key with the RSA public key (hybrid scheme). Students can **encrypt but not decrypt**.
+- Only the teacher, by entering their password, recovers the private key and decrypts the submissions.
 
-### Cifrado de la ficha (protección de las soluciones)
+Advantage: even if the submission file (`.owsub`) or the submission link is intercepted, its content remains unreadable without the teacher's password.
 
-Protege el contenido de la ficha —en especial las respuestas correctas, que viajan dentro del archivo— frente a quien obtenga el paquete `.owpkg` sin autorización.
+### Worksheet encryption (solution protection)
 
-- El contenido sensible del manifiesto (instrucciones, ajustes, páginas con soluciones, configuración de acceso…) se cifra con **AES-GCM de 256 bits**, con clave derivada de la contraseña de acceso por **PBKDF2-SHA256 (250 000 iteraciones)**. Solo quedan en claro datos no sensibles (título, idioma e identificador).
-- La contraseña de acceso cumple doble función: da acceso a la ficha y descifra su contenido.
+Protects the worksheet content — especially the correct answers, which travel inside the file — from anyone who obtains the `.owpkg` package without authorization.
 
-### Implicaciones de seguridad
+- The sensitive manifest content (instructions, settings, pages with solutions, access configuration…) is encrypted with **256-bit AES-GCM**, with a key derived from the access password via **PBKDF2-SHA256 (250,000 iterations)**. Only non-sensitive data (title, language and identifier) remains in plaintext.
+- The access password serves a dual purpose: it grants access to the worksheet and decrypts its content.
 
-Conviene entender bien el modelo, porque condiciona qué protege y qué no:
+### Security implications
 
-- **Toda la seguridad recae en la contraseña.** Como no hay servidor, la clave privada cifrada y los datos cifrados viajan dentro de archivos que pueden acabar en manos de terceros. Quien obtenga uno de esos archivos puede intentar un **ataque de diccionario sin conexión**. Las 250 000 iteraciones de PBKDF2 encarecen mucho cada intento, pero **una contraseña débil sigue siendo vulnerable**. Usa contraseñas largas y únicas.
-- **No hay recuperación.** Si se pierde la contraseña, las entregas cifradas y la ficha cifrada son **irrecuperables**: no existe restablecimiento ni puerta trasera.
-- **El cifrado de la ficha no es DRM.** Protege las soluciones frente a quien **no** tiene la contraseña (por ejemplo, un paquete filtrado públicamente). No protege frente a un alumno que **sí** recibe la contraseña de acceso, ya que esa misma contraseña descifra el manifiesto: técnicamente podría extraer las respuestas. Evita la fuga accidental del archivo, no a un usuario autorizado y malintencionado.
-- **Integridad garantizada.** AES-GCM es cifrado autenticado: cualquier manipulación del texto cifrado se detecta al descifrar. Las entregas, además, incluyen verificación de integridad que avisa si un archivo ha sido alterado.
-- **Límite inherente a las aplicaciones de cliente.** Como todo se ejecuta en el navegador del alumnado, el cifrado protege los datos **en reposo** (los archivos), pero no impide que un usuario con conocimientos técnicos inspeccione o manipule su propia sesión en ejecución. Por eso OpenWorksheets es adecuado para el aula, pero **no sustituye a un sistema de examen de alta seguridad** con supervisión y backend de confianza.
+It is important to understand the model, as it determines what is and is not protected:
 
-## Idiomas
+- **All security relies on the password.** Since there is no server, the encrypted private key and encrypted data travel inside files that may end up in the hands of third parties. Anyone who obtains one of those files can attempt an **offline dictionary attack**. The 250,000 PBKDF2 iterations significantly increase the cost of each attempt, but **a weak password remains vulnerable**. Use long, unique passwords.
+- **No recovery.** If the password is lost, the encrypted submissions and encrypted worksheet are **irrecoverable**: there is no reset or backdoor.
+- **Worksheet encryption is not DRM.** It protects solutions from anyone who does **not** have the password (for example, a publicly leaked package). It does not protect against a student who **does** receive the access password, since that same password decrypts the manifest: they could technically extract the answers. It prevents accidental file leaks, not an authorized and malicious user.
+- **Integrity guaranteed.** AES-GCM is authenticated encryption: any tampering with the ciphertext is detected during decryption. Submissions also include integrity verification that warns if a file has been altered.
+- **Inherent limitation of client-side applications.** Since everything runs in the student's browser, encryption protects data **at rest** (the files), but does not prevent a technically skilled user from inspecting or manipulating their own running session. For this reason, OpenWorksheets is suitable for the classroom, but **does not replace a high-security examination system** with supervision and a trusted backend.
 
-La interfaz está disponible en español, inglés, català, galego y euskera.
+## Languages
 
-## Tecnología
+The interface is available in Spanish, English, Catalan, Galician, and Basque.
 
-Funciona sin servidor, sin cuentas y sin instalaciones. Es una aplicación web estática en JavaScript vanilla (módulos ES, sin framework ni paso de compilación), compatible con cualquier navegador moderno.
+## Technology
 
-Las únicas dependencias son bibliotecas locales que viajan con la aplicación, por lo que todo funciona **sin conexión** (también en los paquetes SCORM, IMS CP y de exportación a web):
+Works without a server, without accounts, and without installation. It is a static web application in vanilla JavaScript (ES modules, no framework or build step), compatible with any modern browser.
 
-- **[pdf.js](https://mozilla.github.io/pdf.js/)** — convierte cada página del PDF en imagen al importar.
-- **[JSZip](https://stuk.github.io/jszip/)** — lee y escribe los paquetes `.owpkg`, `.owsub` y los ZIP de exportación.
-- **[MathJax](https://www.mathjax.org/)** (componente *tex-svg*) — renderiza las fórmulas LaTeX y químicas a SVG; se carga solo cuando la ficha contiene fórmulas.
+The only dependencies are local libraries that travel with the application, so everything works **offline** (including in SCORM, IMS CP, and web export packages):
 
-El cifrado usa la **Web Crypto API** del navegador (sin biblioteca externa).
+- **[pdf.js](https://mozilla.github.io/pdf.js/)** — converts each PDF page to an image on import.
+- **[JSZip](https://stuk.github.io/jszip/)** — reads and writes `.owpkg`, `.owsub` packages and export ZIPs.
+- **[MathJax](https://www.mathjax.org/)** (*tex-svg* component) — renders LaTeX and chemistry formulas to SVG; loaded only when the worksheet contains formulas.
 
+Encryption uses the browser's **Web Crypto API** (no external library).
 
-## Licencia
+## License
 
 [AGPLv3](LICENSE) · © Juan José de Haro

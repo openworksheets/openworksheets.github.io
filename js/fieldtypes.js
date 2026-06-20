@@ -147,6 +147,24 @@ export const FIELD_TYPES = {
     defRect: { w: 0.16, h: 0.05 },
     defaults: () => ({ answer: '', tolerance: 0 })
   },
+  // Respuesta con fórmula: el alumno escribe una fórmula matemática o química
+  // con el editor visual EdiCuaTeX. Se autocorrige comparando el LaTeX (sin
+  // delimitadores ni espacios) con las respuestas aceptadas.
+  formula: {
+    name: 'Fórmula',
+    glyph: ICONS.sigma,
+    defRect: { w: 0.24, h: 0.06 },
+    defaults: () => ({ answers: [''] })
+  },
+  // Respuesta larga: texto extenso con formato (negrita, cursiva, enlaces) y
+  // fórmulas LaTeX. No se autocorrige: lo puntúa el profesor al revisar la
+  // entrega (queda «pendiente» hasta entonces), igual que la grabación de voz.
+  essay: {
+    name: 'Respuesta larga',
+    glyph: ICONS.fileText,
+    defRect: { w: 0.5, h: 0.16 },
+    defaults: () => ({ prompt: '', rows: 4, maxWords: 0 })
+  },
   single: {
     name: 'Opción única',
     glyph: ICONS.circleDot,
@@ -407,7 +425,7 @@ export const FIELD_TYPES = {
 };
 
 export const FIELD_ORDER = [
-  'text', 'number', 'single', 'truefalse', 'multi', 'checkbox',
+  'text', 'formula', 'number', 'essay', 'single', 'truefalse', 'multi', 'checkbox',
   'select', 'table', 'gaps', 'textboxes', 'match', 'order', 'dragdrop', 'arrowmatch',
   'record', 'embed', 'scorm',
   'label', 'cover', 'image', 'video', 'audio', 'line', 'rect', 'polygon', 'ellipse'
@@ -416,7 +434,7 @@ export const FIELD_ORDER = [
 // Grupos temáticos de la paleta del editor. El nombre visible
 // se obtiene de i18n con la clave 'palette.<id>'.
 export const PALETTE_GROUPS = [
-  { id: 'write',  glyph: ICONS.messageSquare,   types: ['text', 'number', 'table', 'fillgaps', 'record'] },
+  { id: 'write',  glyph: ICONS.messageSquare,   types: ['text', 'formula', 'number', 'essay', 'table', 'fillgaps', 'record'] },
   { id: 'choose', glyph: ICONS.listChecks,      types: ['single', 'multi', 'checkbox', 'truefalse', 'select'] },
   { id: 'relate', glyph: ICONS.arrowLeftRight,  types: ['match', 'order', 'dragdrop', 'arrowmatch'] },
   { id: 'external', glyph: ICONS.package,        types: ['embed', 'scorm'] },

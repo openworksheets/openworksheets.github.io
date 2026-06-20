@@ -9,6 +9,37 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [Sin versión] — 2026-06-20
+
+### Añadido
+- **Campo «Fórmula»**: respuesta corta autocorregible en la que el alumnado
+  escribe una fórmula matemática o química con el editor visual **EdiCuaTeX**
+  (botón «fx») y ve su representación renderizada debajo del campo en tiempo
+  real. La corrección compara el LaTeX ignorando espacios y delimitadores (las
+  mayúsculas sí cuentan) y admite varias respuestas aceptadas.
+- **Campo «Respuesta larga»**: texto extenso que **corrige el profesor** al
+  revisar la entrega (queda «pendiente», como la grabación de voz). Incluye una
+  pequeña barra de formato (**negrita**, *cursiva*, enlaces) y el botón «fx»
+  para insertar fórmulas con EdiCuaTeX, con **vista previa** renderizada
+  (Markdown + LaTeX) mientras se escribe. En la corrección, el docente ve la
+  respuesta ya renderizada y le pone la nota.
+- El **botón de fórmulas (EdiCuaTeX)** está ahora disponible también para el
+  alumnado en estos dos campos (antes solo lo tenía el profesorado en el editor).
+- **Contador de palabras** en la «Respuesta larga» para el alumnado y opción del
+  profesorado de **limitar el número de palabras** (en el editor); al alcanzar el
+  tope, el alumnado no puede escribir más y el contador lo señala.
+- **Botón de ayuda (?)** en la barra de la «Respuesta larga» del alumnado que
+  explica con ejemplos qué hace cada botón (negrita con `**`, cursiva con `*`,
+  formato de los enlaces y el editor de fórmulas «fx»), sin tecnicismos.
+- La tabla de entregas indica con un **distintivo ámbar** las que tienen
+  respuestas **pendientes de corrección manual** (grabación de voz o respuesta
+  larga), antes solo un punto gris poco visible para las grabaciones.
+
+### Documentación
+- **README traducido al inglés**: el `README.md` principal pasa a estar en inglés para mayor visibilidad internacional en GitHub. El contenido en español se conserva en `README.es.md`.
+
+---
+
 ## [1.18.0] — 2026-06-19
 
 ### Añadido

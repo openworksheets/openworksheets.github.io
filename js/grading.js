@@ -14,6 +14,16 @@ import { normalizeText, parseDecimal } from './util.js';
 import { parseGaps, normalizeTableConfig, tableCellMatches } from './fieldtypes.js';
 import { scormRatio } from './scorm.js';
 
+// Normaliza una fórmula para compararla: quita los delimitadores LaTeX
+// (\(…\), \[…\], $…$, $$…$$) y todos los espacios. Las fórmulas distinguen
+// mayúsculas (x ≠ X), así que NO se pliega el caso.
+function normalizeFormula(s) {
+  return String(s ?? '')
+    .replace(/\\\(|\\\)|\\\[|\\\]|\$\$|\$/g, '')
+    .replace(/\s+/g, '')
+    .trim();
+}
+
 export function gradeField(field, answer) {
   const max = Number(field.points) || 0;
   const res = graders[field.type]
@@ -49,6 +59,23 @@ const graders = {
     if (isNaN(v) || isNaN(target)) return { ratio: 0 };
     const tol = Math.abs(parseDecimal(cfg.tolerance)) || 0;
     return { ratio: Math.abs(v - target) <= tol + 1e-9 ? 1 : 0 };
+  },
+
+  formula(cfg, answer) {
+    const given = normalizeFormula(answer);
+    if (!given) return { ratio: 0, blank: true };
+    const ok = (cfg.answers || []).some(a => {
+      const na = normalizeFormula(a);
+      return na !== '' && na === given;
+    });
+    return { ratio: ok ? 1 : 0 };
+  },
+
+  essay(cfg, answer) {
+    // No autocorregible: lo puntúa el profesor al revisar la entrega.
+    const has = typeof answer === 'string' && answer.trim() !== '';
+    if (!has) return { ratio: 0, blank: true };
+    return { pending: true };
   },
 
   single(cfg, answer) {
@@ -261,6 +288,8 @@ export function expectedText(field) {
   const cfg = field.config || {};
   switch (field.type) {
     case 'text': return (cfg.answers || []).filter(a => a.trim()).join(' / ');
+    case 'formula': return (cfg.answers || []).filter(a => a.trim()).join(' / ');
+    case 'essay': return '';
     case 'number': return String(cfg.answer ?? '') + (parseDecimal(cfg.tolerance) > 0 ? ` (±${cfg.tolerance})` : '');
     case 'single': return cfg.options?.[cfg.correct] ?? '';
     case 'truefalse': return cfg.correct ? (cfg.labels?.[0] || 'Verdadero') : (cfg.labels?.[1] || 'Falso');
@@ -322,6 +351,8 @@ export function answerText(field, answer) {
   switch (field.type) {
     case 'text':
     case 'number':
+    case 'formula':
+    case 'essay':
       return String(answer ?? '').trim();
     case 'single':
     case 'select':

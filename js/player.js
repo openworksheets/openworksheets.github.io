@@ -487,6 +487,8 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
         detalleCorreccion.push({ answer: ans, texto: answerText(c.field, ans), ok: res.ok, expected: exp });
       });
       doc.classList.add('al-show-correction');
+      // Las soluciones mostradas (p. ej. la fórmula esperada) pueden llevar LaTeX.
+      typesetMath(doc);
       const hint = tarjeta.querySelector('.al-correction-hint');
       if (hint) hint.hidden = false;
     }

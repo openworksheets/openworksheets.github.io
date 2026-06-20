@@ -7,6 +7,11 @@
 
 import { fechaHora, formatNum } from './util.js';
 import { t } from './i18n.js';
+import { mdToHtml } from './markdown.js';
+import { typesetMath } from './mathrender.js';
+
+// Tipos cuya respuesta el profesor puntúa manualmente (quedan «pendientes»).
+const MANUAL_TYPES = new Set(['record', 'essay']);
 
 export function esc(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -42,7 +47,7 @@ export function effPct(r) {
   return total > 0 ? Math.round(effNota(r) / total * 100) : 0;
 }
 export function hasManualPending(data) {
-  return (data.respuestas || []).some(r => r.tipo === 'record' && r.resultado === 'pendiente');
+  return (data.respuestas || []).some(r => MANUAL_TYPES.has(r.tipo) && r.resultado === 'pendiente');
 }
 
 // HTML del badge de resultado de una respuesta. Si el profesor ya ha puesto
@@ -74,11 +79,25 @@ export function renderVerificacion(r) {
 
   const rows = (data.respuestas || []).map((resp, i) => {
     const isRecord = resp.tipo === 'record';
-    const ansText = ('respuestaTexto' in resp) ? (resp.respuestaTexto || '—') : formatAnswer(resp.respuesta);
-    const ansCell = isRecord
-      ? `<td class="vr-ans vr-audio-cell" data-fid="${esc(resp.id)}"></td>`
-      : `<td class="vr-ans">${esc(ansText)}</td>`;
-    const manual = isRecord && resp.resultado === 'pendiente';
+    const isEssay = resp.tipo === 'essay';
+    const isFormula = resp.tipo === 'formula';
+    const rawText = ('respuestaTexto' in resp) ? (resp.respuestaTexto || '') : '';
+    let ansCell;
+    if (isRecord) {
+      ansCell = `<td class="vr-ans vr-audio-cell" data-fid="${esc(resp.id)}"></td>`;
+    } else if (isEssay) {
+      // Respuesta larga: se renderiza el Markdown (negrita, cursiva, enlaces) y
+      // las fórmulas se tipografían después en mountVerificacion.
+      ansCell = `<td class="vr-ans vr-rich">${rawText ? mdToHtml(rawText) : '—'}</td>`;
+    } else if (isFormula) {
+      // Fórmula: el LaTeX sobrevive a esc() (no toca \ ni paréntesis) y se
+      // tipografía después.
+      ansCell = `<td class="vr-ans vr-math">${rawText ? esc(rawText) : '—'}</td>`;
+    } else {
+      const ansText = ('respuestaTexto' in resp) ? (resp.respuestaTexto || '—') : formatAnswer(resp.respuesta);
+      ansCell = `<td class="vr-ans">${esc(ansText)}</td>`;
+    }
+    const manual = (isRecord || isEssay) && resp.resultado === 'pendiente';
     const ptsVal = r.overrides && resp.id in r.overrides ? r.overrides[resp.id] : resp.puntos;
     const ptsCell = manual
       ? `<td class="vr-grade-cell"><input type="text" inputmode="decimal" class="vr-grade" data-fid="${esc(resp.id)}" data-max="${resp.maximo}" value="${formatNum(ptsVal)}"> / ${formatNum(resp.maximo)}</td>`
@@ -127,6 +146,9 @@ export function renderVerificacion(r) {
 // cambio actualiza la nota y el badge de la fila; `onGradeChange(r)` (opcional)
 // se llama para persistir donde haga falta (la tabla de clase en index.js).
 export function mountVerificacion(container, r, { onGradeChange } = {}) {
+  // Renderiza las fórmulas LaTeX de las respuestas (fórmula / respuesta larga).
+  typesetMath(container);
+
   container.querySelectorAll('.vr-audio-cell').forEach(td => {
     const resp = (r.data.respuestas || []).find(x => String(x.id) === td.dataset.fid);
     const url = resp && typeof resp.respuesta === 'string' && resp.respuesta.startsWith('data:') ? resp.respuesta : '';

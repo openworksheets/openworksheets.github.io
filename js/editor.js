@@ -735,6 +735,20 @@ function renderCanvas({ preserveScroll = false } = {}) {
         box.appendChild(el('div', { class: 'ed-record-prev' },
           icon,
           el('div', { class: 'ed-record-prev-txt' }, field.config?.prompt || t('cfg.recordPromptPlaceholder'))));
+      } else if (field.type === 'formula') {
+        // Vista del lienzo: primera respuesta aceptada renderizada (o aviso).
+        const first = (field.config?.answers || []).find(a => String(a ?? '').trim()) || '';
+        const fp = el('div', { class: 'ed-formula-prev' });
+        fp.textContent = first || t('cfg.formulaEmpty');
+        if (!first) fp.classList.add('is-empty');
+        box.appendChild(fp);
+      } else if (field.type === 'essay') {
+        box.classList.add('ed-essay-field');
+        const icon = el('span', { class: 'ed-essay-icon' });
+        icon.innerHTML = ICONS.fileText;
+        box.appendChild(el('div', { class: 'ed-essay-prev' },
+          icon,
+          el('div', { class: 'ed-essay-prev-txt' }, field.config?.prompt || t('cfg.essayPromptPlaceholder'))));
       } else if (isShapeField(field.type)) {
         box.appendChild(buildShapeSvg(field));
       }
@@ -2727,6 +2741,17 @@ function refreshTablePrev(field) {
   if (old) old.replaceWith(buildEditorTablePreview(field));
 }
 
+// Actualiza en vivo la vista del campo «Fórmula» en el lienzo (primera
+// respuesta aceptada renderizada) al editar sus respuestas en el panel.
+function refreshFormulaPrev(field) {
+  const prev = canvas.querySelector(`.ed-field[data-id="${field.id}"] .ed-formula-prev`);
+  if (!prev) return;
+  const first = (field.config?.answers || []).find(a => String(a ?? '').trim()) || '';
+  prev.classList.toggle('is-empty', !first);
+  prev.textContent = first || t('cfg.formulaEmpty');
+  if (first) typesetMath(prev);
+}
+
 // Convierte texto copiado de una hoja de cálculo en una matriz de celdas.
 // Delimitador: tabulador (Calc/Sheets/Excel) y, si no hay, «;» o «,» (CSV).
 function parseSpreadsheetGrid(text) {
@@ -3919,6 +3944,49 @@ const configForms = {
     wrap.appendChild(el('p', { style: 'font-size:.82rem;color:var(--tinta-suave)' },
       t('cfg.numHint')));
     cont.appendChild(wrap);
+  },
+
+  formula(cont, field) {
+    const cfg = field.config;
+    if (!Array.isArray(cfg.answers)) cfg.answers = [''];
+    // Respuestas aceptadas (en LaTeX). El botón «fx» sirve también para
+    // escribirlas con EdiCuaTeX (textCell las marca con data-latex="1").
+    const wrap = el('div', { class: 'cfg-scoring-only' });
+    if (field.noScore) wrap.style.display = 'none';
+    optionListEditor(wrap, {
+      label: t('cfg.formulaAnswers'),
+      items: () => cfg.answers,
+      render: (row, item, i) => row.appendChild(textCell(item, v => { cfg.answers[i] = v; refreshFormulaPrev(field); }, t('cfg.formulaPlaceholder'))),
+      add: () => { cfg.answers.push(''); refreshFormulaPrev(field); },
+      remove: i => { cfg.answers.splice(i, 1); refreshFormulaPrev(field); },
+      addLabel: t('cfg.addAnswer')
+    });
+    wrap.appendChild(el('p', { class: 'cfg-hint' }, t('cfg.formulaHint')));
+    cont.appendChild(wrap);
+  },
+
+  essay(cont, field) {
+    const cfg = field.config;
+    // No autocorregible: lo puntúa el profesor al revisar la entrega.
+    cont.appendChild(el('p', { class: 'cfg-hint' }, t('cfg.essayManualHint')));
+
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.essayPrompt')));
+    const pr = el('input', { type: 'text', value: cfg.prompt || '', maxlength: '300', placeholder: t('cfg.essayPromptPlaceholder') });
+    pr.dataset.latex = '1'; // admite fórmulas con el botón «fx»
+    pr.addEventListener('input', () => { cfg.prompt = pr.value; markDirty(); });
+    pr.addEventListener('change', () => renderCanvas());
+    cont.appendChild(pr);
+
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.essayRows')));
+    const rows = el('input', { type: 'number', min: '2', max: '20', step: '1', value: String(cfg.rows || 4) });
+    rows.addEventListener('input', () => { cfg.rows = Math.max(2, Math.min(20, parseInt(rows.value, 10) || 4)); markDirty(); });
+    cont.appendChild(rows);
+
+    cont.appendChild(el('label', { class: 'f-label' }, t('cfg.essayMaxWords')));
+    const mw = el('input', { type: 'number', min: '0', step: '10', value: String(cfg.maxWords || 0) });
+    mw.addEventListener('input', () => { cfg.maxWords = Math.max(0, parseInt(mw.value, 10) || 0); markDirty(); });
+    cont.appendChild(mw);
+    cont.appendChild(el('p', { class: 'cfg-hint' }, t('cfg.essayMaxWordsHint')));
   },
 
   single(cont, field) {
