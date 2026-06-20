@@ -238,7 +238,7 @@ small { color: var(--tinta-suave); }
 /* display:inline-flex ganaría a la regla [hidden]{display:none} del navegador,
    así que lo reponemos explícitamente para poder ocultar el indicador. */
 .sec-meter[hidden] { display: none; }
-.sec-meter-shield { width: 16px; height: 16px; flex-shrink: 0; stroke-width: 2px; transition: color 0.2s, fill 0.2s; }
+.sec-meter-dot { width: 13px; height: 13px; flex-shrink: 0; border-radius: 50%; background: var(--tinta-tenue); transition: background 0.2s; }
 .sec-meter-bars { display: inline-flex; gap: 2px; align-items: flex-end; }
 .sec-meter-bars i {
   display: block; width: 4px; border-radius: 1px;
@@ -248,18 +248,16 @@ small { color: var(--tinta-suave); }
 .sec-meter-bars i:nth-child(1) { height: 7px; }
 .sec-meter-bars i:nth-child(2) { height: 10px; }
 .sec-meter-bars i:nth-child(3) { height: 13px; }
-/* El escudo se rellena con el color sólido de su nivel (no solo el contorno,
-   que a 16 px se veía casi blanco) para que se lea de un vistazo como una
-   insignia. fill en CSS pisa el fill="none" del SVG por especificidad. */
-/* Nivel 0: sin protección. Escudo rojo, sin segmentos rellenos. */
-.sec-meter[data-level="0"] .sec-meter-shield { color: var(--rojo); fill: var(--rojo); }
-/* Niveles 1 y 2: protección parcial. Escudo y segmentos rellenos en ámbar. */
-.sec-meter[data-level="1"] .sec-meter-shield,
-.sec-meter[data-level="2"] .sec-meter-shield { color: var(--ambar); fill: var(--ambar); }
+/* La bola se rellena con el color sólido de su nivel para leerse de un vistazo. */
+/* Nivel 0: sin protección. Bola roja, sin segmentos rellenos. */
+.sec-meter[data-level="0"] .sec-meter-dot { background: var(--rojo); }
+/* Niveles 1 y 2: protección parcial. Bola y segmentos rellenos en ámbar. */
+.sec-meter[data-level="1"] .sec-meter-dot,
+.sec-meter[data-level="2"] .sec-meter-dot { background: var(--ambar); }
 .sec-meter[data-level="1"] .sec-meter-bars i:nth-child(-n+1),
 .sec-meter[data-level="2"] .sec-meter-bars i:nth-child(-n+2) { background: var(--ambar); }
-/* Nivel 3: protección alta. Escudo relleno y los tres segmentos en verde. */
-.sec-meter[data-level="3"] .sec-meter-shield { color: var(--verde); fill: var(--verde); }
+/* Nivel 3: protección alta. Bola y los tres segmentos en verde. */
+.sec-meter[data-level="3"] .sec-meter-dot { background: var(--verde); }
 .sec-meter[data-level="3"] .sec-meter-bars i { background: var(--verde); }
 
 /* Divisor vertical entre bloques de la barra superior (agrupa por familia). */
