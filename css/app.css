@@ -2039,7 +2039,11 @@ body.resizing-col { cursor: col-resize; }
   display: flex;
   flex-direction: column;
 }
-.ed-table-dialog-title { margin: 0 28px 12px 0; }
+.ed-table-dialog-head { display: flex; align-items: center; gap: 10px; margin: 0 28px 12px 0; }
+.ed-table-dialog-title { margin: 0; }
+/* El botón «fx» del panel está oculto por defecto; en el diálogo se muestra
+   siempre (se desactiva visualmente si no hay un campo de fórmula enfocado). */
+.ed-table-dialog .cfg-formula-btn { display: inline-flex; }
 .ed-table-dialog-body { overflow: auto; flex: 1; min-height: 0; }
 /* En el diálogo las columnas tienen ancho cómodo y la rejilla se desplaza
    horizontalmente si hay muchas, en vez de comprimirse. */

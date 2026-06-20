@@ -44,6 +44,11 @@ Las versiones publicadas también están en la página de
   respuestas **pendientes de corrección manual** (grabación de voz o respuesta
   larga), antes solo un punto gris poco visible para las grabaciones.
 
+### Corregido
+- El botón de fórmulas «fx» ahora también aparece en el **editor de tabla a
+  pantalla completa** (antes solo estaba en el panel lateral, que queda oculto
+  bajo el diálogo); inserta la fórmula en la celda o el encabezado enfocado.
+
 ### Documentación
 - **README traducido al inglés**: el `README.md` principal pasa a estar en inglés para mayor visibilidad internacional en GitHub. El contenido en español se conserva en `README.es.md`.
 

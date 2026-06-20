@@ -3150,8 +3150,27 @@ function openTableEditorDialog(field) {
   const done = el('button', { class: 'btn primary', type: 'button' }, t('cfg.tableEditorClose'));
   done.addEventListener('click', () => dlg.close());
   footer.appendChild(done);
+
+  // Cabecera con título y, si las fórmulas están habilitadas, el botón «fx»:
+  // el del panel lateral queda oculto bajo el diálogo modal, así que aquí va su
+  // propia copia, que actúa sobre la celda/encabezado enfocado.
+  const head = el('div', { class: 'ed-table-dialog-head' },
+    el('h3', { class: 'ed-table-dialog-title' }, t('cfg.tableEditorTitle')));
+  if (formulaButtonEnabled()) {
+    const fxBtn = el('button', {
+      class: 'cfg-formula-btn', type: 'button',
+      title: t('cfg.insertFormula') + ' (Ctrl+Shift+F)', 'aria-label': t('cfg.insertFormula')
+    }, 'fx');
+    fxBtn.addEventListener('mousedown', ev => ev.preventDefault()); // no robar el foco
+    fxBtn.addEventListener('click', openFormulaEditor);
+    head.appendChild(fxBtn);
+    // El botón solo se activa con un campo LaTeX enfocado; rastreamos el foco
+    // dentro del diálogo (el listener del panel no llega aquí).
+    body.addEventListener('focusin', e => { if (isLatexField(e.target)) lastLatexField = e.target; });
+  }
+
   dlg.appendChild(x);
-  dlg.appendChild(el('h3', { class: 'ed-table-dialog-title' }, t('cfg.tableEditorTitle')));
+  dlg.appendChild(head);
   dlg.appendChild(body);
   dlg.appendChild(footer);
   document.body.appendChild(dlg);
