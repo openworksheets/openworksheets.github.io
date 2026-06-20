@@ -1062,23 +1062,32 @@ const renderers = {
       toolBtn(ICONS.bold, t('render.toolBold'), () => wrapSel('**', '**', t('render.sampleBold'))),
       toolBtn(ICONS.italic, t('render.toolItalic'), () => wrapSel('*', '*', t('render.sampleItalic'))),
       toolBtn(ICONS.link, t('render.toolLink'), () => wrapSel('[', '](https://)', t('render.sampleLink'))));
-    const fx = el('button', { type: 'button', class: 'wpf-fx-btn', title: t('render.toolFormula'), 'aria-label': t('render.toolFormula') }, 'fx');
-    fx.addEventListener('mousedown', e => e.preventDefault());
-    fx.addEventListener('click', () => {
-      if (ta.disabled) return;
-      const ok = openFormulaEditor(ta); // la inserción dispara 'input' → onEdited
-      if (!ok) ta.focus();
-    });
-    bar.appendChild(fx);
+
+    // El botón de fórmulas es opcional: el profesor puede ocultarlo para no
+    // distraer cuando la respuesta no necesita fórmulas.
+    const showFormula = cfg.showFormula !== false;
+    let fx = null;
+    if (showFormula) {
+      fx = el('button', { type: 'button', class: 'wpf-fx-btn', title: t('render.toolFormula'), 'aria-label': t('render.toolFormula') }, 'fx');
+      fx.addEventListener('mousedown', e => e.preventDefault());
+      fx.addEventListener('click', () => {
+        if (ta.disabled) return;
+        const ok = openFormulaEditor(ta); // la inserción dispara 'input' → onEdited
+        if (!ok) ta.focus();
+      });
+      bar.appendChild(fx);
+    }
 
     // Ayuda: explica qué hace cada botón (el alumnado no conoce esta notación).
+    // La línea de fórmulas solo se incluye si ese botón está disponible.
+    const helpItems = el('ul', {},
+      el('li', {}, t('render.helpBold')),
+      el('li', {}, t('render.helpItalic')),
+      el('li', {}, t('render.helpLink')));
+    if (showFormula) helpItems.appendChild(el('li', {}, t('render.helpFormula')));
     const help = el('div', { class: 'wpf-essay-help', hidden: '' },
       el('p', {}, t('render.helpIntro')),
-      el('ul', {},
-        el('li', {}, t('render.helpBold')),
-        el('li', {}, t('render.helpItalic')),
-        el('li', {}, t('render.helpLink')),
-        el('li', {}, t('render.helpFormula'))));
+      helpItems);
     const helpBtn = el('button', {
       type: 'button', class: 'wpf-tool-btn wpf-help-btn',
       title: t('render.help'), 'aria-label': t('render.help'), 'aria-expanded': 'false'
@@ -1107,7 +1116,8 @@ const renderers = {
       setAnswer: v => { ta.value = v ?? ''; lastValue = ta.value; updateCounter(); refresh(); },
       isAnswered: () => ta.value.trim() !== '',
       setDisabled: b => {
-        ta.disabled = b; fx.disabled = b;
+        ta.disabled = b;
+        if (fx) fx.disabled = b;
         bar.querySelectorAll('.wpf-tool-btn').forEach(x => { x.disabled = b; });
       }
     };

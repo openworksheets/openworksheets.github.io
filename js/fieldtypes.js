@@ -163,7 +163,7 @@ export const FIELD_TYPES = {
     name: 'Respuesta larga',
     glyph: ICONS.fileText,
     defRect: { w: 0.5, h: 0.16 },
-    defaults: () => ({ prompt: '', rows: 4, maxWords: 0 })
+    defaults: () => ({ prompt: '', rows: 4, maxWords: 0, showFormula: true })
   },
   single: {
     name: 'Opción única',

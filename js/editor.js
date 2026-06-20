@@ -3987,6 +3987,10 @@ const configForms = {
     mw.addEventListener('input', () => { cfg.maxWords = Math.max(0, parseInt(mw.value, 10) || 0); markDirty(); });
     cont.appendChild(mw);
     cont.appendChild(el('p', { class: 'cfg-hint' }, t('cfg.essayMaxWordsHint')));
+
+    // Botón de fórmulas (fx) para el alumnado: opcional, para no distraer cuando
+    // la respuesta no necesita fórmulas.
+    checkRow(cont, t('cfg.essayShowFormula'), cfg.showFormula !== false, v => { cfg.showFormula = v; });
   },
 
   single(cont, field) {

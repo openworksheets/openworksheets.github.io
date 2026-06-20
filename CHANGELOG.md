@@ -31,6 +31,9 @@ Las versiones publicadas también están en la página de
 - **Botón de ayuda (?)** en la barra de la «Respuesta larga» del alumnado que
   explica con ejemplos qué hace cada botón (negrita con `**`, cursiva con `*`,
   formato de los enlaces y el editor de fórmulas «fx»), sin tecnicismos.
+- Opción en el editor de la «Respuesta larga» para **ocultar el botón de
+  fórmulas (fx)** al alumnado cuando no haga falta (no distrae); en ese caso la
+  ayuda tampoco lo menciona.
 - La tabla de entregas indica con un **distintivo ámbar** las que tienen
   respuestas **pendientes de corrección manual** (grabación de voz o respuesta
   larga), antes solo un punto gris poco visible para las grabaciones.
