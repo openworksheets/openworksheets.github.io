@@ -679,6 +679,7 @@ const STRINGS = {
     'validate.noZones': 'Página {n}: el campo "Arrastrar a zonas" no tiene zonas de destino.',
     'validate.review': 'Antes de exportar, revisa:\n\n· {problems}',
     'validate.anyway': '\n\n¿Exportar de todas formas?',
+    'validate.scormManual': 'Esta ficha tiene {n} campo(s) de corrección manual (respuesta larga o grabación de voz). En SCORM el LMS no puede corregirlos: contarán como 0 puntos y el alumnado no podrá alcanzar la nota máxima. Puedes marcarlos como «No contar para la puntuación».\n\n¿Exportar a SCORM de todas formas?',
 
     // Player — pantalla de inicio
     'player.nameLabel': 'Nombre y apellidos o código de alumno/a *',
@@ -1356,6 +1357,7 @@ const STRINGS = {
     'validate.noZones': 'Page {n}: the "Drag to zones" field has no drop zones.',
     'validate.review': 'Before exporting, please review:\n\n· {problems}',
     'validate.anyway': '\n\nExport anyway?',
+    'validate.scormManual': 'This worksheet has {n} manually-graded field(s) (long answer or voice recording). In SCORM the LMS cannot grade them: they will count as 0 points and students cannot reach the top score. You can mark them as "Do not count toward the score".\n\nExport to SCORM anyway?',
 
     'player.nameLabel': 'Full name or student code *',
     'player.groupLabel': 'Group or identifier (optional)',
@@ -2187,6 +2189,7 @@ const STRINGS = {
     'validate.noZones': 'Pàgina {n}: el camp "Arrossegar a zones" no té zones de destí.',
     'validate.review': 'Abans d\'exportar, revisa:\n\n· {problems}',
     'validate.anyway': '\n\nExportar igualment?',
+    'validate.scormManual': 'Aquesta fitxa té {n} camp(s) de correcció manual (resposta llarga o gravació de veu). En SCORM l\'LMS no els pot corregir: comptaran com a 0 punts i l\'alumnat no podrà assolir la nota màxima. Pots marcar-los com a «No comptar per a la puntuació».\n\nVols exportar a SCORM igualment?',
 
     'player.nameLabel': 'Nom i cognoms o codi d\'alumne/a *',
     'player.groupLabel': 'Grup o identificador (opcional)',
@@ -3018,6 +3021,7 @@ const STRINGS = {
     'validate.noZones': 'Páxina {n}: o campo "Arrastrar a zonas" non ten zonas de destino.',
     'validate.review': 'Antes de exportar, revisa:\n\n· {problems}',
     'validate.anyway': '\n\nExportar de todas formas?',
+    'validate.scormManual': 'Esta ficha ten {n} campo(s) de corrección manual (resposta longa ou gravación de voz). En SCORM o LMS non os pode corrixir: contarán como 0 puntos e o alumnado non poderá acadar a nota máxima. Podes marcalos como «Non contar para a puntuación».\n\nQueres exportar a SCORM igualmente?',
 
     'player.nameLabel': 'Nome e apelidos ou código de alumno/a *',
     'player.groupLabel': 'Grupo ou identificador (opcional)',
@@ -3849,6 +3853,7 @@ const STRINGS = {
     'validate.noZones': '{n}. orrialdea: «Guneetara arrastatu» eremuak ez du helmuga-gunerik.',
     'validate.review': 'Esportatu aurretik, berrikusi:\n\n· {problems}',
     'validate.anyway': '\n\nEsportatu hala ere?',
+    'validate.scormManual': 'Fitxa honek eskuz zuzentzeko {n} eremu ditu (erantzun luzea edo ahots-grabaketa). SCORMen LMSak ezin ditu zuzendu: 0 puntu balioko dute eta ikasleek ezin izango dute gehienezko nota lortu. «Ez zenbatu puntuaziorako» gisa marka ditzakezu.\n\nEsportatu SCORMera hala ere?',
 
     'player.nameLabel': 'Izena eta abizenak edo ikasle-kodea *',
     'player.groupLabel': 'Taldea edo identifikatzailea (aukerakoa)',

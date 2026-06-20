@@ -9,6 +9,20 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.20.0] — 2026-06-20
+
+### Añadido
+- **Aviso al exportar a SCORM** si la ficha contiene campos de **corrección
+  manual** que puntúan (respuesta larga o grabación de voz): el LMS no puede
+  corregirlos, así que contarían como 0 y no se podría alcanzar la nota máxima.
+  Solo aparece si la ficha lleva alguno de esos campos.
+
+### Corregido
+- La validación al exportar ya no marca un falso **«sin respuesta correcta»** en
+  el campo **Respuesta larga** (es de corrección manual, como la grabación de voz).
+
+---
+
 ## [1.19.0] — 2026-06-20
 
 ### Añadido

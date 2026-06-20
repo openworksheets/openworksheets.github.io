@@ -4859,9 +4859,9 @@ function validate() {
   state.manifest.pages.forEach((p, pi) => {
     p.fields.forEach(f => {
       if (FIELD_TYPES[f.type]?.decor) return; // los decorativos no necesitan respuesta
-      // La grabación de voz no tiene respuesta correcta (se valora a mano o por
-      // participación): no requiere comprobación de solución.
-      if (!f.noScore && f.type !== 'record') {
+      // La grabación de voz y la respuesta larga no tienen respuesta correcta (se
+      // valoran a mano o por participación): no requieren comprobación de solución.
+      if (!f.noScore && f.type !== 'record' && f.type !== 'essay') {
         const e = expectedText(f);
         if (!e || !e.trim()) problems.push(t('validate.noAnswer', { n: pi + 1, type: fieldTypeName(f.type) }));
       }
@@ -5039,6 +5039,13 @@ async function exportScorm() {
     if (blocking) { window.alert(msg); return; }
     if (!window.confirm(msg + t('validate.anyway'))) return;
   }
+  // Aviso: los campos de corrección manual (respuesta larga, grabación de voz)
+  // no los puede puntuar un LMS, así que en SCORM contarán como 0 y bajarán el
+  // máximo alcanzable. Solo avisa si esos campos cuentan para la puntuación.
+  const manualFields = state.manifest.pages
+    .flatMap(p => p.fields)
+    .filter(f => (f.type === 'essay' || f.type === 'record') && !f.noScore && (Number(f.points) || 0) > 0);
+  if (manualFields.length && !window.confirm(t('validate.scormManual', { n: manualFields.length }))) return;
   state.manifest.lang = getLang();
   try {
     toast(t('toast.generatingScorm'));
