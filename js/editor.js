@@ -5049,8 +5049,21 @@ $('#dlgAjustes')?.addEventListener('close', () => {
 
 function openShare() {
   $('#compSalida').style.display = 'none';
+  // Resetear a la pestaña «Enlace» al abrir.
+  document.querySelectorAll('#compSalida .settings-tab').forEach(b => b.classList.toggle('is-active', b.dataset.tab === 'link'));
+  document.querySelectorAll('#compSalida .settings-panel').forEach(p => p.classList.toggle('is-active', p.dataset.panel === 'link'));
   $('#dlgCompartir').showModal();
 }
+
+// Pestañas del resultado (Enlace / QR / Incrustar).
+document.querySelectorAll('#compSalida .share-result-tabs .settings-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#compSalida .settings-tab').forEach(b => b.classList.remove('is-active'));
+    document.querySelectorAll('#compSalida .settings-panel').forEach(p => p.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    document.querySelector(`#compSalida [data-panel="${btn.dataset.tab}"]`)?.classList.add('is-active');
+  });
+});
 
 $('#btnGenerarEnlace')?.addEventListener('click', async () => {
   const url = $('#compUrl').value.trim();

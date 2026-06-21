@@ -12,6 +12,10 @@ Las versiones publicadas también están en la página de
 ## [Unreleased]
 
 ### Añadido
+- **Diálogo de compartir reorganizado con pestañas**: el resultado (enlace,
+  código QR e iframe) se organiza en tres pestañas (Enlace / Código QR /
+  Incrustar) en ambos diálogos —pantalla de inicio y editor—, eliminando el
+  scroll excesivo. Las instrucciones pasan a un bloque `<details>` colapsable.
 - **Código QR en la pantalla de inicio**: el diálogo «Generar enlace» de la
   pantalla de inicio genera ahora también un código QR (con zoom para proyectar
   en clase), igual que el diálogo del editor.

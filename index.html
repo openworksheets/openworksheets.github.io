@@ -121,34 +121,43 @@
   <dialog id="dlgCompartir" class="home-dialog">
     <button type="button" class="dlg-x" data-close-dialog data-i18n-title="dlg.close" aria-label="Cerrar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h2 data-i18n="index.linkTitle">Generar el enlace para el alumnado</h2>
-    <ol class="steps-ol">
-      <li data-i18n="index.linkStep1">Exporta tu ficha como paquete (.owpkg) desde el editor.</li>
-      <li data-i18n="index.linkStep2">Súbela a Google Drive (u otro alojamiento público).</li>
-      <li data-i18n-html="index.linkStep3">En Drive: <em>Compartir → Cualquier persona con el enlace → Copiar enlace</em>.</li>
-      <li data-i18n="index.linkStep4">Pega aquí ese enlace y distribuye la dirección resultante al alumnado.</li>
-    </ol>
+    <details class="share-instructions">
+      <summary data-i18n="dlg.share.instructionsTitle">Instrucciones</summary>
+      <ol class="steps-ol">
+        <li data-i18n="index.linkStep1">Exporta tu ficha como paquete (.owpkg) desde el editor.</li>
+        <li data-i18n="index.linkStep2">Súbela a Google Drive (u otro alojamiento público).</li>
+        <li data-i18n-html="index.linkStep3">En Drive: <em>Compartir → Cualquier persona con el enlace → Copiar enlace</em>.</li>
+        <li data-i18n="index.linkStep4">Pega aquí ese enlace y distribuye la dirección resultante al alumnado.</li>
+      </ol>
+    </details>
     <label class="f-label" for="urlZip" data-i18n="index.urlLabel">URL pública del paquete</label>
-    <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
       <input type="url" id="urlZip" placeholder="https://drive.google.com/file/d/…" style="flex:1;min-width:240px">
       <button class="btn primary" id="btnGenerar" data-i18n="index.generateBtn">Generar enlace</button>
     </div>
     <div id="salidaEnlace" style="display:none">
-      <p class="settings-warning" data-i18n="dlg.share.uniqueUrlWarning">⚠ Cada vez que generas el enlace se crea una URL diferente, aunque la ficha sea la misma. Guarda el enlace, el código QR o el iframe si piensas utilizarlos más adelante.</p>
-      <p class="f-label" data-i18n="index.studentLinkLabel">Comparte esta dirección con el alumnado para que puedan completar la ficha:</p>
-      <div class="link-out" id="enlaceAlumnos"></div>
-      <div class="link-actions">
-        <button class="btn small" id="btnCopiarEnlace"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> <span data-i18n="index.copyLink">Copiar enlace</span></button>
-        <a class="btn small" id="btnProbarEnlace" target="_blank" rel="noopener"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg> <span data-i18n="index.tryLink">Probar (opcional)</span></a>
+      <p class="settings-warning share-unique-warn" data-i18n="dlg.share.uniqueUrlWarning">⚠ Cada vez que generas el enlace se crea una URL diferente, aunque la ficha sea la misma. Guarda el enlace, el código QR o el iframe si piensas utilizarlos más adelante.</p>
+      <div class="settings-tabs share-result-tabs" role="tablist">
+        <button class="settings-tab is-active" data-tab="link" data-i18n="dlg.share.tabLink">Enlace</button>
+        <button class="settings-tab" data-tab="qr" data-i18n="dlg.share.tabQr">Código QR</button>
+        <button class="settings-tab" data-tab="embed" data-i18n="dlg.share.tabEmbed">Incrustar</button>
       </div>
-      <div id="homeQrContainer" class="share-qr-wrap"></div>
-
-      <div class="embed-block">
-        <p class="f-label" data-i18n="index.embedLabel">O incrústala en un blog o página web pegando este código (iframe):</p>
-        <div class="embed-opts">
+      <div class="settings-panel is-active" data-panel="link">
+        <div class="link-out" id="enlaceAlumnos"></div>
+        <div class="link-actions">
+          <button class="btn small" id="btnCopiarEnlace"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> <span data-i18n="index.copyLink">Copiar enlace</span></button>
+          <a class="btn small" id="btnProbarEnlace" target="_blank" rel="noopener"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg> <span data-i18n="index.tryLink">Probar (opcional)</span></a>
+        </div>
+      </div>
+      <div class="settings-panel" data-panel="qr">
+        <div id="homeQrContainer" class="share-qr-wrap"></div>
+      </div>
+      <div class="settings-panel" data-panel="embed">
+        <div class="embed-opts" style="margin-top:12px">
           <label class="f-label" for="embedHeight" data-i18n="index.embedHeight">Altura (px)</label>
           <input type="number" id="embedHeight" min="200" max="3000" step="50" value="800" style="width:90px">
         </div>
-        <textarea id="embedCode" class="embed-code" rows="3" readonly spellcheck="false"></textarea>
+        <textarea id="embedCode" class="embed-code" rows="4" readonly spellcheck="false"></textarea>
         <div class="link-actions">
           <button class="btn small" id="btnCopiarEmbed"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> <span data-i18n="index.copyEmbed">Copiar código</span></button>
         </div>
