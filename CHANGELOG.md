@@ -12,9 +12,10 @@ Las versiones publicadas también están en la página de
 ## [Unreleased]
 
 ### Añadido
-- **Código para incrustar la ficha (iframe)**: en el modal «Generar enlace» de la
-  pantalla de inicio, junto al enlace del alumnado, aparece ahora un **código
-  `<iframe>` listo para pegar** en un blog o página web. Reutiliza el enlace
+- **Código para incrustar la ficha (iframe)**: en el modal de compartir —tanto el
+  del **editor** (con QR) como el de la **pantalla de inicio**—, junto al enlace
+  del alumnado, aparece ahora un **código `<iframe>` listo para pegar** en un blog
+  o página web. Reutiliza el enlace
   generado añadiéndole `embed=1`, un nuevo modo del visor que **oculta la barra
   superior** para que la ficha ocupe todo el marco. La **altura es configurable**
   (la ficha se desplaza dentro del marco, así nada queda cortado) e incluye los

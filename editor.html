@@ -234,6 +234,19 @@
         <a class="btn small" id="btnProbarEnlace" target="_blank" rel="noopener"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg> <span data-i18n="dlg.share.tryLink">Probar (opcional)</span></a>
       </div>
       <div id="compQrContainer" class="share-qr-wrap"></div>
+
+      <div class="embed-block">
+        <p class="f-label" data-i18n="index.embedLabel">O incrústala en un blog o página web pegando este código (iframe):</p>
+        <div class="embed-opts">
+          <label class="f-label" for="compEmbedHeight" data-i18n="index.embedHeight">Altura (px)</label>
+          <input type="number" id="compEmbedHeight" min="200" max="3000" step="50" value="800" style="width:90px">
+        </div>
+        <textarea id="compEmbedCode" class="embed-code" rows="3" readonly spellcheck="false"></textarea>
+        <div class="link-actions">
+          <button class="btn small" id="btnCopiarEmbed"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> <span data-i18n="index.copyEmbed">Copiar código</span></button>
+        </div>
+        <p class="embed-hint" data-i18n="index.embedHint">La ficha se desplaza dentro del marco; ajusta la altura a tu gusto. Algunos blogs no permiten insertar iframes.</p>
+      </div>
     </div>
     <div class="dlg-buttons">
       <form method="dialog"><button class="btn" value="cancel" data-i18n="dlg.close">Cerrar</button></form>

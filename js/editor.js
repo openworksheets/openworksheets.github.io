@@ -5052,9 +5052,35 @@ $('#btnGenerarEnlace')?.addEventListener('click', async () => {
     qrHint.addEventListener('click', openZoom);
   }
 
+  shareLink = link;
+  updateShareEmbedCode();
+
   $('#compSalida').style.display = 'block';
   const ok = await copyToClipboard(link);
   if (ok) toast(t('toast.linkCopied'), 'ok');
+});
+
+// --- Código para incrustar (iframe) ---
+// Reutiliza el enlace del alumnado añadiéndole `embed=1` (oculta la barra del
+// visor). Altura fija + scroll interno: nada se corta y basta pegar el <iframe>.
+let shareLink = '';
+
+function updateShareEmbedCode() {
+  const codeEl = $('#compEmbedCode');
+  if (!shareLink || !codeEl) return;
+  const u = new URL(shareLink);
+  u.searchParams.set('embed', '1');
+  const h = Math.max(200, Math.min(3000, parseInt($('#compEmbedHeight').value, 10) || 800));
+  codeEl.value = `<iframe src="${u.href}" width="100%" height="${h}" `
+    + `style="border:1px solid #ccc;border-radius:8px;max-width:900px" `
+    + `loading="lazy" allow="fullscreen; microphone"></iframe>`;
+}
+
+$('#compEmbedHeight')?.addEventListener('input', updateShareEmbedCode);
+
+$('#btnCopiarEmbed')?.addEventListener('click', async () => {
+  const ok = await copyToClipboard($('#compEmbedCode').value);
+  toast(ok ? t('toast.copied') : t('toast.notCopied'), ok ? 'ok' : 'error');
 });
 
 $('#btnCopiarEnlace')?.addEventListener('click', async () => {
