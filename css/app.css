@@ -781,6 +781,7 @@ dialog .dlg-buttons {
   padding: 9px 11px;
   color: var(--tinta);
 }
+.share-unique-warn::before { content: "⚠ "; color: #e6a800; }
 .settings-two {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
