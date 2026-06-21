@@ -802,8 +802,6 @@ function renderCanvas({ preserveScroll = false } = {}) {
     zoomWrap.style.display = 'none'; // sin páginas no hay nada que previsualizar ni ampliar
     canvas.appendChild(el('div', { class: 'ed-empty card anim-in' },
       el('h2', {}, t('editor.emptyTitle')),
-      el('p', {}, t('editor.emptyDesc')),
-      el('p', { class: 'ed-empty-alt' }, t('editor.emptyDesc2')),
       el('div', { class: 'ed-empty-list' },
         startItem(ICONS.fileText, t('editor.addPdf').replace(/^\+\s*/, ''), t('menu.addPdfSub'), () => {
           const input = $('#inputPaginas');
