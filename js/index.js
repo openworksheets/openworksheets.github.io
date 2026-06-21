@@ -4,7 +4,6 @@
 import { toast, copyToClipboard } from './util.js';
 import { buildShortLink, parseDriveId } from './drive.js';
 import { t, applyI18n, initLangSelector, getLang } from './i18n.js';
-import { stashFile } from './filehandoff.js';
 import { typesetMath } from './mathrender.js';
 
 // Entrega recibida por enlace (#e=…): los enlaces que genera el alumnado apuntan
@@ -43,23 +42,6 @@ if (linkEjemplo) {
 // «Abrir ficha»: el usuario elige un paquete (.owpkg) en la portada y lo abrimos
 // en el editor. El selector de archivos exige un gesto del usuario que no se
 // conserva al navegar, así que guardamos la ficha elegida y la recoge el editor.
-const btnAbrirFicha = document.getElementById('btnAbrirFicha');
-const inputAbrirFicha = document.getElementById('inputAbrirFicha');
-if (btnAbrirFicha && inputAbrirFicha) {
-  btnAbrirFicha.addEventListener('click', () => inputAbrirFicha.click());
-  inputAbrirFicha.addEventListener('change', async () => {
-    const file = inputAbrirFicha.files[0];
-    inputAbrirFicha.value = '';
-    if (!file) return;
-    try {
-      await stashFile(file);
-      location.href = 'editor.html?abrir=1';
-    } catch (e) {
-      console.error(e);
-      toast(t('toast.openError'), 'error');
-    }
-  });
-}
 
 const $ = s => document.querySelector(s);
 const APP_VERSION = window.OPENWORKSHEETS_CONFIG?.appVersion || '';
