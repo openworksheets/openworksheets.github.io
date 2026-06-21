@@ -135,7 +135,7 @@ You can also insert AI-generated pages into an existing worksheet using the **«
 
 ### Text answer grading
 
-Text-based fields (such as **Short answer**, **Fill in the blanks**, **Blanks on document**, and **Editable table** cells) follow the same grading scheme:
+Text-based fields (such as **Short answer**, **Fill in the blanks** —in either mode— and **Editable table** cells) follow the same grading scheme:
 
 - **Multiple valid alternative answers** can be defined.
 - The options **Ignore case**, **Ignore accents**, and **Ignore extra spaces** apply to all those alternatives.

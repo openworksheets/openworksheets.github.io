@@ -135,7 +135,7 @@ També pots inserir pàgines generades amb IA en una fitxa ja començada usant e
 
 ### Correcció de respostes de text
 
-Els camps basats en text (com **Resposta curta**, **Omplir buits**, **Buits al document** i les cel·les de **Taula editable**) segueixen el mateix esquema de correcció:
+Els camps basats en text (com **Resposta curta**, **Omplir buits** —en qualsevol dels dos modes— i les cel·les de **Taula editable**) segueixen el mateix esquema de correcció:
 
 - Es poden definir **diverses respostes vàlides alternatives**.
 - Les opcions **Ignorar majúscules i minúscules**, **Ignorar accents** i **Ignorar espais sobrants** s'apliquen a totes aquestes alternatives.

@@ -24,9 +24,11 @@ Las versiones publicadas también están en la página de
   fórmula, verdadero/falso, opción única/múltiple, desplegable, respuesta larga,
   huecos, tabla, emparejar y ordenar.
 - **Página «Características»** (`caracteristicas.html`): descripción completa para
-  el profesorado organizada en 10 bloques temáticos (crear fichas, tipos de
-  pregunta, corrección, fórmulas, multimedia, exportar, entregas, supervisión,
-  privacidad y **creación con IA**), con traducciones a los 5 idiomas de la
+  el profesorado organizada en 13 bloques temáticos (crear fichas, tipos de
+  pregunta, corrección automática, fórmulas LaTeX, multimedia e interactivos,
+  exportar y compartir, entregas, control de acceso y supervisión, privacidad y
+  seguridad, idiomas y accesibilidad, software libre, **creación con IA** y
+  **¿qué diferencia a OpenWorksheets?**), con traducciones a los 5 idiomas de la
   aplicación. Enlazada desde la barra superior y el pie de la página de inicio.
 
 ### Mejorado
@@ -39,6 +41,12 @@ Las versiones publicadas también están en la página de
   impuesto**. Además, la portada añade un icono al botón «Características» y la
   página de características separa mejor los bloques de privacidad, edición y
   diferenciación.
+- **Página «Características»:** el bloque «¿Qué diferencia a OpenWorksheets?»
+  usa ahora un icono de distinción (medalla), coherente con el resto de iconos
+  del sitio, en lugar del icono de código que no encajaba con su contenido.
+- **READMEs (ES, EN, CA):** la sección de corrección de texto ya no menciona
+  «Huecos en documento» como campo separado; se indica que «Rellenar huecos»
+  cubre ambos modos, reflejando la unificación de v1.6.0.
 - **Campo Fórmula:** al pulsar el botón «fx» con una fórmula ya escrita en el
   campo (sin seleccionarla), EdiCuaTeX se abre precargando todo su contenido para
   editarlo directamente, sin tener que seleccionarlo antes. Aplica tanto al editor

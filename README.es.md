@@ -135,7 +135,7 @@ También puedes insertar páginas generadas con IA en una ficha ya comenzada usa
 
 ### Corrección de respuestas de texto
 
-Los campos basados en texto (como **Respuesta corta**, **Rellenar huecos**, **Huecos en documento** y las celdas de **Tabla editable**) siguen el mismo esquema de corrección:
+Los campos basados en texto (como **Respuesta corta**, **Rellenar huecos** —en cualquier modo— y las celdas de **Tabla editable**) siguen el mismo esquema de corrección:
 
 - Se pueden definir **varias respuestas válidas alternativas**.
 - Las opciones **Ignorar mayúsculas y minúsculas**, **Ignorar tildes** e **Ignorar espacios sobrantes** se aplican a todas esas alternativas.
