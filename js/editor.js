@@ -468,6 +468,19 @@ function addBlankPage(insertAt, { newSheet = false } = {}) {
 // páginas importadas (PDF/imagen) no: su imagen es el escaneo real.
 function isBlankPage(page) { return !!(page && page.blank); }
 
+// Estilo CSS de la capa de imagen de fondo importada (page.bgFile) según su modo
+// de ajuste. Devuelve '' si la página no tiene imagen de fondo importada.
+function bgImageStyle(page) {
+  if (!page || !page.bgFile) return '';
+  const fit = page.bgFit || 'contain';
+  let sizing;
+  if (fit === 'cover') sizing = 'background-size:cover;background-repeat:no-repeat';
+  else if (fit === 'stretch') sizing = 'background-size:100% 100%;background-repeat:no-repeat';
+  else if (fit === 'tile') sizing = 'background-size:auto;background-repeat:repeat';
+  else sizing = 'background-size:contain;background-repeat:no-repeat';
+  return `background-image:url("${fileUrl(page.bgFile)}");${sizing};opacity:${page.bgOpacity ?? 1}`;
+}
+
 // Color de fondo de página: capa CSS bajo la imagen (todas las páginas). En las
 // páginas en blanco, además, se repinta la imagen sólida para mantenerlas igual.
 function setPageBg(pi, color) {
@@ -516,6 +529,102 @@ function resizePage(pi, w, h) {
     state.sel = { kind: 'page', pageIndex: pi };
     renderPanel();
   }, 'image/png');
+}
+
+// Abre un diálogo con las páginas de un PDF en miniatura y resuelve con el índice
+// elegido (o null si se cancela). Revoca los object URLs locales al cerrar.
+function openPdfPagePicker(pages) {
+  return new Promise(resolve => {
+    const dlg = el('dialog', { class: 'pdf-pick-dialog' });
+    const localUrls = [];
+    let chosen = null;
+    const x = el('button', { class: 'dlg-x', type: 'button', 'aria-label': t('cfg.tableEditorClose') }, '✕');
+    x.addEventListener('click', () => dlg.close());
+    const grid = el('div', { class: 'pdf-pick-grid' });
+    pages.forEach((p, i) => {
+      const u = URL.createObjectURL(p.blob);
+      localUrls.push(u);
+      const cell = el('button', { class: 'pdf-pick-cell', type: 'button' },
+        el('img', { src: u, alt: '', draggable: 'false' }),
+        el('span', { class: 'pdf-pick-num' }, t('editor.pdfPickPageN', { n: i + 1 })));
+      cell.addEventListener('click', () => { chosen = i; dlg.close(); });
+      grid.appendChild(cell);
+    });
+    dlg.appendChild(x);
+    dlg.appendChild(el('h3', { class: 'pdf-pick-title' }, t('editor.pdfPickTitle')));
+    dlg.appendChild(grid);
+    document.body.appendChild(dlg);
+    dlg.addEventListener('close', () => {
+      localUrls.forEach(u => URL.revokeObjectURL(u));
+      dlg.remove();
+      resolve(chosen);
+    });
+    dlg.showModal();
+  });
+}
+
+// Importa una imagen o un PDF como imagen de fondo de la página `pi`. Con un PDF
+// de varias páginas, deja elegir cuál usar mediante el selector de miniaturas;
+// con una sola página, la usa directamente. No cambia el tamaño de la página.
+function importPageBackground(pi) {
+  const pick = document.createElement('input');
+  pick.type = 'file';
+  pick.accept = 'image/*,application/pdf';
+  pick.addEventListener('change', async () => {
+    const f = pick.files[0]; if (!f) return;
+    let chosen = null; // { blob, ext }
+    try {
+      if (isPdf(f)) {
+        toast(t('toast.convertingPdf'));
+        const pages = await pdfToPages(f, (n, total) => toast(t('toast.convertingPage', { n, total })));
+        if (!pages.length) return;
+        let idx = 0;
+        if (pages.length > 1) {
+          idx = await openPdfPagePicker(pages);
+          if (idx == null) return; // cancelado
+        }
+        chosen = { blob: pages[idx].blob, ext: pages[idx].ext };
+      } else if (isImage(f)) {
+        const p = await imageToPage(f);
+        chosen = { blob: p.blob, ext: p.ext };
+      } else {
+        toast(t('toast.notMedia', { name: f.name }), 'error');
+        return;
+      }
+    } catch (e) {
+      console.error(e);
+      toast(t('toast.errorFile', { name: f.name, msg: e.message }), 'error');
+      return;
+    }
+    const page = state.manifest.pages[pi];
+    if (!page || !chosen) return;
+    // Sustituir una imagen de fondo anterior si la hubiera.
+    if (page.bgFile) {
+      if (urls.has(page.bgFile)) { URL.revokeObjectURL(urls.get(page.bgFile)); urls.delete(page.bgFile); }
+      state.files.delete(page.bgFile);
+    }
+    const path = `pages/bg-${state.pageSeq++}.${chosen.ext}`;
+    state.files.set(path, chosen.blob);
+    page.bgFile = path;
+    if (!page.bgFit) page.bgFit = 'contain';
+    if (page.bgOpacity == null) page.bgOpacity = 1;
+    markDirty();
+    renderCanvas();
+    renderPanel();
+  });
+  pick.click();
+}
+
+// Quita la imagen de fondo importada de la página `pi`.
+function removePageBackground(pi) {
+  const page = state.manifest.pages[pi];
+  if (!page || !page.bgFile) return;
+  if (urls.has(page.bgFile)) { URL.revokeObjectURL(urls.get(page.bgFile)); urls.delete(page.bgFile); }
+  state.files.delete(page.bgFile);
+  delete page.bgFile; delete page.bgFit; delete page.bgOpacity;
+  markDirty();
+  renderCanvas();
+  renderPanel();
 }
 
 function printWorksheet() {
@@ -587,17 +696,33 @@ function makeAddPageBar(insertAt) {
     input.click();
   });
   const aiBtn = el('button', { class: 'btn small', type: 'button' }, t('ai.create'));
-  aiBtn.addEventListener('click', () => openAiDialog({ onImport: (data, bg) => addAiPages(data, bg, insertAt) }));
+  aiBtn.addEventListener('click', () => openAiDialog({ onImport: (data) => addAiPages(data, insertAt) }));
   return el('div', { class: cls },
     el('span', { class: 'ed-add-page-label' }, t('editor.addPageLabel')),
     pdfBtn, zipBtn, addBtn, aiBtn);
 }
 
-// Elimina la página y su imagen de fondo, sin pedir confirmación.
+// Duplica la imagen de fondo importada de una página a una ruta nueva, para
+// clonar/pegar/duplicar sin que dos páginas compartan el mismo archivo. Devuelve
+// la ruta nueva, o undefined si la página no tenía imagen de fondo.
+function cloneBgFile(srcPage) {
+  if (!srcPage.bgFile || !state.files.has(srcPage.bgFile)) return undefined;
+  const ext = srcPage.bgFile.split('.').pop() || 'png';
+  const newPath = `pages/bg-${state.pageSeq++}.${ext}`;
+  state.files.set(newPath, state.files.get(srcPage.bgFile));
+  return newPath;
+}
+
+// Elimina la página y sus imágenes (escaneo/color y fondo importado), sin pedir
+// confirmación.
 function removePage(pi) {
   const page = state.manifest.pages[pi];
   state.files.delete(page.image);
   if (urls.has(page.image)) { URL.revokeObjectURL(urls.get(page.image)); urls.delete(page.image); }
+  if (page.bgFile) {
+    state.files.delete(page.bgFile);
+    if (urls.has(page.bgFile)) { URL.revokeObjectURL(urls.get(page.bgFile)); urls.delete(page.bgFile); }
+  }
   state.manifest.pages.splice(pi, 1);
   state.sel = null;
   markDirty();
@@ -625,6 +750,8 @@ function duplicatePage(pi) {
     image: newPath,
     fields: page.fields.map(f => cloneField(f))
   };
+  const dupBg = cloneBgFile(page);
+  if (dupBg) newPage.bgFile = dupBg; else delete newPage.bgFile;
   state.manifest.pages.splice(pi + 1, 0, newPage);
   state.sel = { kind: 'page', pageIndex: pi + 1 };
   markDirty();
@@ -705,6 +832,7 @@ function renderCanvas({ preserveScroll = false } = {}) {
       draggable: 'false',
       style: `opacity:${page.imageOpacity ?? 1}`
     }));
+    if (page.bgFile) pageEl.appendChild(el('div', { class: 'fondo-img', style: bgImageStyle(page) }));
 
     page.fields.forEach(field => {
       const decor = Boolean(FIELD_TYPES[field.type]?.decor);
@@ -960,6 +1088,7 @@ function renderThumbs() {
       class: 'ed-thumb-frame',
       style: page.bgColor ? `background-color:${page.bgColor}` : ''
     }, el('img', { src: fileUrl(page.image), alt: '', draggable: 'false', style: `opacity:${page.imageOpacity ?? 1}` }));
+    if (page.bgFile) frame.appendChild(el('div', { class: 'fondo-img', style: bgImageStyle(page) }));
     const thumb = el('div', {
       class: 'ed-thumb', draggable: 'true', tabindex: '0', dataset: { page: pi },
       title: t('editor.pageN', { n: pi + 1, total: state.manifest.pages.length })
@@ -1124,6 +1253,7 @@ let internalPageClip = null; // { page, files: Map<ruta, Blob> }
 function collectPageFiles(page) {
   const paths = new Set();
   if (page.image) paths.add(page.image);
+  if (page.bgFile) paths.add(page.bgFile);
   for (const f of page.fields || []) {
     const c = f.config || {};
     if (c.src) paths.add(c.src);
@@ -1166,6 +1296,9 @@ function pastePageAt(insertAt) {
     image: newImage,
     fields: (src.fields || []).map(f => cloneField(f))
   };
+  // Imagen de fondo importada: copia con ruta nueva para no compartir el archivo.
+  const pasteBg = cloneBgFile(src);
+  if (pasteBg) newPage.bgFile = pasteBg; else delete newPage.bgFile;
   // Re-empaquetar paquetes (SCORM/zip/…) con prefijo nuevo.
   for (const f of newPage.fields) {
     const c = f.config || {};
@@ -2109,6 +2242,59 @@ function renderPagePanel(pi) {
   cont.appendChild(el('label', { class: 'f-label' }, t('editor.pageBgColor')));
   const { wrap: colorPickWrap } = colorInput(page.bgColor || '#ffffff', v => setPageBg(pi, v));
   cont.appendChild(colorPickWrap);
+
+  // ----- Imagen de fondo importada (imagen o página de PDF) -----
+  // Se superpone al color/escaneo y se ajusta al tamaño de la página, sin alterar
+  // el control de tamaño. Disponible en todas las páginas.
+  cont.appendChild(el('label', { class: 'f-label' }, t('editor.pageBgImage')));
+  if (page.bgFile) {
+    cont.appendChild(el('div', { class: 'page-bg-thumb' },
+      el('img', { src: fileUrl(page.bgFile), alt: '', draggable: 'false' })));
+    const replaceBtn = el('button', { class: 'btn small', type: 'button' }, t('editor.pageBgImageImport'));
+    replaceBtn.addEventListener('click', () => importPageBackground(pi));
+    const removeBtn = el('button', { class: 'btn small danger', type: 'button' }, t('editor.pageBgImageRemove'));
+    removeBtn.addEventListener('click', () => removePageBackground(pi));
+    cont.appendChild(el('div', { class: 'rot-row' }, replaceBtn, removeBtn));
+
+    // Modo de ajuste
+    cont.appendChild(el('label', { class: 'f-label' }, t('editor.pageBgFit')));
+    const fitSel = el('select', {});
+    [['contain', 'fit.contain'], ['cover', 'fit.cover'], ['stretch', 'fit.stretch'], ['tile', 'fit.tile']]
+      .forEach(([val, key]) => {
+        const opt = el('option', { value: val }, t(key));
+        if ((page.bgFit || 'contain') === val) opt.selected = true;
+        fitSel.appendChild(opt);
+      });
+    fitSel.addEventListener('change', () => {
+      page.bgFit = fitSel.value;
+      const layer = canvas.querySelector(`.wpf-page[data-page="${pi}"] .fondo-img`);
+      if (layer) layer.setAttribute('style', bgImageStyle(page));
+      markDirty();
+    });
+    cont.appendChild(fitSel);
+
+    // Opacidad de la imagen de fondo importada
+    const bgOpVal = Math.round((page.bgOpacity ?? 1) * 100);
+    const bgOp = el('input', { type: 'range', min: '0', max: '100', step: '1', value: String(bgOpVal) });
+    const bgOpNum = el('input', { type: 'number', min: '0', max: '100', step: '1', value: String(bgOpVal) });
+    const syncBgOp = val => {
+      const v = Math.max(0, Math.min(100, parseInt(val, 10) || 0));
+      page.bgOpacity = v / 100;
+      bgOp.value = v;
+      bgOpNum.value = v;
+      const layer = canvas.querySelector(`.wpf-page[data-page="${pi}"] .fondo-img`);
+      if (layer) layer.style.opacity = String(page.bgOpacity);
+      markDirty();
+    };
+    bgOp.addEventListener('input', () => syncBgOp(bgOp.value));
+    bgOpNum.addEventListener('input', () => syncBgOp(bgOpNum.value));
+    cont.appendChild(el('label', { class: 'f-label' }, t('editor.pageBgImageOpacity')));
+    cont.appendChild(el('div', { class: 'rot-row' }, bgOp, bgOpNum, el('span', {}, '%')));
+  } else {
+    const importBtn = el('button', { class: 'btn small', type: 'button' }, t('editor.pageBgImageImport'));
+    importBtn.addEventListener('click', () => importPageBackground(pi));
+    cont.appendChild(importBtn);
+  }
 
   // Opacidad de la imagen de fondo: solo para páginas importadas (en las páginas
   // en blanco la «imagen» es el propio color, así que no aporta nada).
@@ -5121,10 +5307,16 @@ async function openZipFile(file, handle = null) {
     state.submissionCryptoPassword = '';
     urls.forEach(u => URL.revokeObjectURL(u));
     urls.clear();
-    // Recalcular numeración de páginas para nuevas incorporaciones.
+    // Recalcular numeración de páginas para nuevas incorporaciones. Considera
+    // tanto las imágenes de página (page-N) como las de fondo importadas (bg-N),
+    // que comparten el mismo contador, para no reutilizar un número existente.
     state.pageSeq = 1 + state.manifest.pages.reduce((max, p) => {
-      const m = /page-(\d+)\./.exec(p.image);
-      return m ? Math.max(max, parseInt(m[1], 10)) : max;
+      let m = max;
+      const mi = /-(\d+)\./.exec(p.image || '');
+      if (mi) m = Math.max(m, parseInt(mi[1], 10));
+      const mb = p.bgFile && /-(\d+)\./.exec(p.bgFile);
+      if (mb) m = Math.max(m, parseInt(mb[1], 10));
+      return m;
     }, 0);
     state.sel = null;
     state.activeTool = null;
@@ -5160,42 +5352,31 @@ function colorPageAsset(color) {
   });
 }
 
-// Resuelve el fondo elegido en el diálogo a un asset {blob, ext, w, h}: una
-// imagen/PDF subidos o un color liso (A4).
-async function resolveAiBg(bg) {
-  if (bg.mode === 'file' && bg.file) {
-    if (isPdf(bg.file)) return (await pdfToPages(bg.file))[0];
-    if (isImage(bg.file)) return await imageToPage(bg.file);
-    throw new Error(t('ai.badFile'));
-  }
-  return await colorPageAsset(bg.color);
-}
-
 // Convierte el layout (array de páginas → array de campos) en objetos de página
-// del manifest, registrando el blob de fondo en state.files.
-function aiPagesToManifest(layout, asset, bg) {
+// del manifest. Las páginas se crean en blanco (A4, fondo blanco); el profesor
+// ajusta luego el color o añade una imagen de fondo desde la configuración de
+// página. `asset` es una hoja blanca A4 reutilizada para todas las páginas.
+function aiPagesToManifest(layout, asset) {
   return layout.map(fields => {
     const path = `pages/page-${state.pageSeq++}.${asset.ext}`;
-    state.files.set(path, asset.blob); // el mismo blob de fondo sirve para todas las páginas
-    const page = { image: path, w: asset.w, h: asset.h, fields };
-    if (bg.mode !== 'file') { page.bgColor = bg.color || '#ffffff'; page.blank = true; }
-    return page;
+    state.files.set(path, asset.blob);
+    return { image: path, w: asset.w, h: asset.h, fields, bgColor: '#ffffff', blank: true };
   });
 }
 
 // Construye una ficha NUEVA a partir del JSON validado por la IA (reemplaza la
 // actual, con confirmación si hay cambios sin guardar). Devuelve false si el
 // profesor cancela el reemplazo (para no cerrar el diálogo).
-async function createWorksheetFromAi(data, bg) {
+async function createWorksheetFromAi(data) {
   if (!confirmDiscardCurrent()) return false;
   const layout = layoutFields(data.items);
-  const asset = await resolveAiBg(bg);
+  const asset = await colorPageAsset('#ffffff');
 
   resetWorksheet();
   state.manifest.title = String(data.title || '');
   state.manifest.instructions = String(data.instructions || '');
   titleInput.value = state.manifest.title;
-  aiPagesToManifest(layout, asset, bg).forEach(p => state.manifest.pages.push(p));
+  aiPagesToManifest(layout, asset).forEach(p => state.manifest.pages.push(p));
 
   zoomCtl.set(1);
   setPanelCollapsed(false);
@@ -5212,10 +5393,10 @@ async function createWorksheetFromAi(data, bg) {
 
 // Genera páginas con la IA y las INSERTA en la ficha actual en `insertAt` (sin
 // reemplazarla ni tocar el título/instrucciones). Usada entre páginas.
-async function addAiPages(data, bg, insertAt) {
+async function addAiPages(data, insertAt) {
   const layout = layoutFields(data.items);
-  const asset = await resolveAiBg(bg);
-  const newPages = aiPagesToManifest(layout, asset, bg);
+  const asset = await colorPageAsset('#ffffff');
+  const newPages = aiPagesToManifest(layout, asset);
   const at = insertAt == null ? state.manifest.pages.length : insertAt;
   state.manifest.pages.splice(at, 0, ...newPages);
 
@@ -5248,6 +5429,7 @@ async function mergeZipFile(file, insertAt) {
     const newPages = ficha.manifest.pages.map(page => ({
       ...page,
       image: remap.get(page.image) ?? page.image,
+      ...(page.bgFile ? { bgFile: remap.get(page.bgFile) ?? page.bgFile } : {}),
       fields: page.fields.map(f => {
         const configSrc = f.config?.src;
         return {

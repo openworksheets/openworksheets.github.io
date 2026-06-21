@@ -81,6 +81,8 @@ Decorative or informational elements that are not graded and do not count toward
 
 All text fields share **font** settings (with a global worksheet font and the ability to change it per field, including OpenDyslexic), size, and color. Each field allows setting its **exact size** (width and height in %) in addition to adjusting it with the mouse, and shapes, images, and text support **rotation**. The editor includes a **thumbnail strip** for navigating and reordering pages, **context menus** (right-click) for copying, cutting, pasting, duplicating, and deleting fields and pages, **undo/redo** (Ctrl+Z / Ctrl+Y), and **zoom** up to 500% (Ctrl+wheel) with panning by dragging the worksheet.
 
+Each page supports a **background color** and an imported **background image** (an image or a PDF page) with four fit modes —*keep proportions*, *cover*, *stretch* and *tile*— plus opacity control. This lets you combine a **controlled page size** (A4, Letter or free) with a background image. When importing a multi-page PDF, a **thumbnail picker** lets you choose which page to use (handy for inserting a single page from a PDF).
+
 ### 🧮 Math and chemistry formulas (LaTeX)
 
 Any text in the worksheet supports **LaTeX formulas**, which are automatically rendered when displayed to students: the title and instructions, the **Text** field, answer options, headers and cells of the **Editable table**, etc.
@@ -122,7 +124,7 @@ The **Editable table** field type allows creating structured data entry grids (u
 OpenWorksheets can generate a complete worksheet automatically from a form you fill in. No account or external API required — the process is entirely copy/paste:
 
 1. Open **File → Create with AI…** (or click the option on the empty-screen start list).
-2. Fill in the form: topic, level, number of questions, language, allowed field types, and background (colour, image, or PDF).
+2. Fill in the form: topic, level, number of questions, language, and allowed field types. The worksheet is created with blank pages; the background colour or image is set afterwards from the page settings.
 3. OWS generates a structured prompt. Copy it and paste it into any AI chat (ChatGPT, Gemini, Copilot, Claude…).
 4. Paste the AI's JSON response back into OWS. It validates and imports it, placing fields automatically with tight prompt/answer spacing and auto-paginating as needed.
 5. Edit the result as any other worksheet.

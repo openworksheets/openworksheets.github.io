@@ -11,14 +11,28 @@ Las versiones publicadas también están en la página de
 
 ## [Unreleased]
 
+## [1.21.0] — 2026-06-21
+
 ### Añadido
+- **Imagen de fondo importable en las páginas**: en la configuración de página, un
+  botón **«Importar imagen o PDF…»** permite poner una imagen de fondo sobre
+  cualquier página (en blanco o importada) con cuatro **modos de ajuste**:
+  *mantener proporción*, *cubrir*, *estirar* y *mosaico*, más un control de
+  **opacidad**. Así se puede combinar un **tamaño de página controlado** (A4,
+  carta, libre) con una imagen de fondo, antes imposible en las hojas en blanco.
+  Si se importa un **PDF de varias páginas**, se muestra un **selector de
+  miniaturas** para elegir cuál usar de fondo (útil para insertar una hoja suelta
+  de un PDF tras un cambio puntual en el original). La imagen se reajusta sola al
+  cambiar el tamaño de la página y se guarda y exporta con la ficha.
 - **Crear ficha con ayuda de IA** (menú «Archivo → Crear con IA…», botón en la
   pantalla inicial del editor y opción «entre páginas» para insertar páginas
   generadas en una ficha ya empezada): un asistente de 3 pasos que **genera un
-  prompt** a partir de un formulario (tema, nivel, idioma, nº de preguntas, tipos permitidos
-  y fondo), el profesor lo **copia y lo pega en la IA que prefiera** (Claude,
+  prompt** a partir de un formulario (tema, nivel, idioma, nº de preguntas y tipos
+  permitidos), el profesor lo **copia y lo pega en la IA que prefiera** (Claude,
   ChatGPT, Gemini…) y luego **pega la respuesta** (JSON), que OpenWorksheets
   valida e importa creando la ficha con los campos colocados automáticamente.
+  Las páginas se crean **en blanco**; el color o la imagen de fondo se ajustan
+  después desde la configuración de página.
   **No realiza ninguna llamada externa ni usa APIs**: todo es copiar/pegar manual,
   para preservar la independencia de la herramienta. Soporta texto, numérico,
   fórmula, verdadero/falso, opción única/múltiple, desplegable, respuesta larga,

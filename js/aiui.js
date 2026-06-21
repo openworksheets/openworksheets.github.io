@@ -8,8 +8,9 @@ import { AI_TYPES, buildPrompt, parseImport } from './aiimport.js';
 
 const LANG_NAMES = { es: 'español', ca: 'català', gl: 'galego', eu: 'euskara', en: 'English' };
 
-// Abre el dialog. `onImport(data, bg)` recibe el JSON validado y la opción de
-// fondo elegida ({ mode:'color', color } | { mode:'file', file }). Debe ser async.
+// Abre el dialog. `onImport(data)` recibe el JSON validado. Debe ser async. Las
+// páginas se crean en blanco; el fondo (color o imagen) se ajusta después desde
+// la configuración de página.
 export function openAiDialog({ onImport }) {
   const dlg = el('dialog', { class: 'ai-dialog' });
 
@@ -37,16 +38,6 @@ export function openAiDialog({ onImport }) {
     return el('label', { class: 'ai-type' }, cb, el('span', {}, t('field.' + id)));
   });
 
-  // Fondo: color (con selector) o archivo (imagen/PDF de una página).
-  const bgColor = el('input', { type: 'color', value: '#ffffff', class: 'ai-color' });
-  const bgFile = el('input', { type: 'file', accept: 'image/*,application/pdf', class: 'ai-file' });
-  const rColor = el('input', { type: 'radio', name: 'ai-bg', value: 'color', checked: '' });
-  const rFile = el('input', { type: 'radio', name: 'ai-bg', value: 'file' });
-  rColor.checked = true;
-  const bgRow = el('div', { class: 'ai-bg-row' },
-    el('label', { class: 'ai-radio' }, rColor, el('span', {}, t('ai.bgColor')), bgColor),
-    el('label', { class: 'ai-radio' }, rFile, el('span', {}, t('ai.bgFile')), bgFile));
-
   const btnGen = el('button', { class: 'btn primary', type: 'button' }, t('ai.genPrompt'));
 
   const step1 = el('div', { class: 'ai-step' },
@@ -56,7 +47,6 @@ export function openAiDialog({ onImport }) {
     field(t('ai.lang'), fLang),
     el('div', { class: 'ai-field' }, el('label', { class: 'ai-label' }, t('ai.types')),
       el('div', { class: 'ai-types' }, ...typeBoxes)),
-    el('div', { class: 'ai-field' }, el('label', { class: 'ai-label' }, t('ai.bg')), bgRow),
     el('div', { class: 'ai-actions' }, btnGen));
 
   // ---------- Paso 2: prompt ----------
@@ -121,14 +111,11 @@ export function openAiDialog({ onImport }) {
       warnBox.className = 'ai-warn is-info';
       warnBox.textContent = t('ai.partial') + ' ' + res.errors.join(' ');
     }
-    const bg = rFile.checked && bgFile.files[0]
-      ? { mode: 'file', file: bgFile.files[0] }
-      : { mode: 'color', color: bgColor.value };
     try {
       btnImport.disabled = true;
       // onImport devuelve false si el profesor cancela (p. ej. al confirmar el
       // descarte de la ficha actual): en ese caso el dialog se mantiene abierto.
-      const ok = await onImport(res.data, bg);
+      const ok = await onImport(res.data);
       if (ok !== false) dlg.close();
     } catch (e) {
       console.error(e);

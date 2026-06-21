@@ -12,6 +12,19 @@ function iconBtn(attrs, svgStr, label) {
   b.innerHTML = svgStr + (label ? ' <span>' + label + '</span>' : '');
   return b;
 }
+
+// Estilo CSS de la capa de imagen de fondo importada (page.bgFile) según su modo
+// de ajuste. `fileUrl` resuelve la ruta del blob/archivo. Devuelve '' si no hay.
+function bgImageStyle(page, fileUrl) {
+  if (!page || !page.bgFile) return '';
+  const fit = page.bgFit || 'contain';
+  let sizing;
+  if (fit === 'cover') sizing = 'background-size:cover;background-repeat:no-repeat';
+  else if (fit === 'stretch') sizing = 'background-size:100% 100%;background-repeat:no-repeat';
+  else if (fit === 'tile') sizing = 'background-size:auto;background-repeat:repeat';
+  else sizing = 'background-size:contain;background-repeat:no-repeat';
+  return `background-image:url("${fileUrl(page.bgFile)}");${sizing};opacity:${page.bgOpacity ?? 1}`;
+}
 import { isDecorField } from './fieldtypes.js';
 import { renderField } from './render.js';
 import { typesetMath } from './mathrender.js';
@@ -369,6 +382,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
         alt: 'Página ' + (pi + 1),
         style: `opacity:${page.imageOpacity ?? 1}`
       }));
+      if (page.bgFile) pageEl.appendChild(el('div', { class: 'fondo-img', style: bgImageStyle(page, fileUrl) }));
       page.fields.forEach(field => {
         const ctl = renderField(field, pageEl, ctx);
         if (!gradable(field)) return; // decorativos o noScore: se muestran pero no puntúan

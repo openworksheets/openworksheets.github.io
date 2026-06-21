@@ -81,6 +81,8 @@ Elements decoratius o informatius que no es corregeixen ni compten en la puntuac
 
 Tots els camps amb text comparteixen ajustos de **tipus de lletra** (amb una font global de la fitxa i possibilitat de canviar-la per camp, inclosa OpenDyslexic), mida i color. Cada camp permet fixar la seva **mida exacta** (amplada i alçada en %) a més d'ajustar-la amb el ratolí, i les formes, la imatge i el text admeten **rotació**. L'editor inclou una **tira de miniatures** per navegar i reordenar pàgines, **menús contextuals** (clic dret) per copiar, retallar, enganxar, duplicar i esborrar camps i pàgines, **desfer/refer** (Ctrl+Z / Ctrl+Y) i **zoom** fins al 500 % (Ctrl+roda) amb desplaçament arrossegant la fitxa.
 
+Cada pàgina admet un **color de fons** i una **imatge de fons** importada (imatge o pàgina d'un PDF) amb quatre modes d'ajust —*mantenir proporció*, *cobrir*, *estirar* i *mosaic*— i control d'opacitat. Això permet combinar una **mida de pàgina controlada** (A4, carta o lliure) amb una imatge de fons. En importar un PDF de diverses pàgines es mostra un **selector de miniatures** per triar quina usar (útil per inserir un full solt d'un PDF).
+
 ### 🧮 Fórmules matemàtiques i química (LaTeX)
 
 Qualsevol text de la fitxa admet **fórmules LaTeX**, que es renderitzen automàticament en mostrar-se a l'alumnat: el títol i les instruccions, el camp **Text**, les opcions de resposta, els encapçalaments i les cel·les de la **Taula editable**, etc.
@@ -122,7 +124,7 @@ El tipus de camp **Taula editable** permet crear graelles estructurades d'entrad
 OpenWorksheets pot generar una fitxa completa automàticament a partir d'un formulari que omple el docent. No requereix compte ni API externa: el procés és íntegrament per copiar/enganxar:
 
 1. Obre **Fitxer → Crear amb IA…** (o fes clic a l'opció de la pantalla inicial).
-2. Omple el formulari: tema, nivell, nombre de preguntes, idioma, tipus de camp permesos i fons (color, imatge o PDF).
+2. Omple el formulari: tema, nivell, nombre de preguntes, idioma i tipus de camp permesos. La fitxa es crea amb pàgines en blanc; el color o la imatge de fons s'ajusten després des de la configuració de pàgina.
 3. OWS genera un prompt estructurat. Copia'l i enganxa'l en qualsevol xat d'IA (ChatGPT, Gemini, Copilot, Claude…).
 4. Enganxa la resposta JSON de la IA de tornada a OWS. La valida i importa, col·locant els camps automàticament amb separació ajustada entre enunciat i resposta i paginant segons faci falta.
 5. Edita el resultat com qualsevol altra fitxa.

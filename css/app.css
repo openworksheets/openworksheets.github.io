@@ -1247,6 +1247,7 @@ body.resizing-col { cursor: col-resize; }
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 .ed-thumb-frame img {
   width: 100%;
@@ -1578,6 +1579,16 @@ body.resizing-col { cursor: col-resize; }
   border-radius: 2px;
   pointer-events: none;
   user-select: none;
+}
+/* Capa de imagen de fondo importada (sobre el color/escaneo, bajo los campos) */
+.wpf-page > .fondo-img,
+.ed-thumb-frame > .fondo-img {
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  pointer-events: none;
+  user-select: none;
+  background-position: center;
 }
 
 /* Campos en el editor */
@@ -2080,6 +2091,54 @@ body.resizing-col { cursor: col-resize; }
   display: flex;
   flex-direction: column;
 }
+
+/* Selector de página de un PDF para usar como imagen de fondo */
+.pdf-pick-dialog {
+  width: min(900px, calc(100vw - 40px));
+  max-width: calc(100vw - 40px);
+  max-height: calc(100vh - 40px);
+  padding: 18px 22px;
+  position: relative;
+}
+.pdf-pick-title { margin: 0 28px 14px 0; }
+.pdf-pick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 14px;
+  overflow: auto;
+}
+.pdf-pick-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border: 2px solid var(--tinta-tenue);
+  border-radius: 6px;
+  background: var(--blanco);
+  cursor: pointer;
+}
+.pdf-pick-cell:hover { border-color: var(--rojo); }
+.pdf-pick-cell img {
+  width: 100%;
+  height: auto;
+  display: block;
+  box-shadow: var(--sombra-mini);
+}
+.pdf-pick-num { font-size: 0.85rem; color: var(--tinta-suave); }
+
+/* Miniatura de la imagen de fondo en el panel de página */
+.page-bg-thumb {
+  border: 1px solid var(--tinta-tenue);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--blanco);
+  margin: 4px 0 8px;
+  max-height: 140px;
+  display: flex;
+  justify-content: center;
+}
+.page-bg-thumb img { max-width: 100%; max-height: 140px; height: auto; display: block; }
 .ed-table-dialog-head { display: flex; align-items: center; gap: 10px; margin: 0 28px 12px 0; }
 .ed-table-dialog-title { margin: 0; }
 /* El botón «fx» solo se muestra cuando el foco está en un campo que admite

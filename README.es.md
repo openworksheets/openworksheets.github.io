@@ -81,6 +81,8 @@ Elementos decorativos o informativos que no se corrigen ni cuentan en la puntuac
 
 Todos los campos con texto comparten ajustes de **tipo de letra** (con una fuente global de la ficha y posibilidad de cambiarla por campo, incluida OpenDyslexic), tamaño y color. Cada campo permite fijar su **tamaño exacto** (anchura y altura en %) además de ajustarlo con el ratón, y las formas, la imagen y el texto admiten **rotación**. El editor incluye una **tira de miniaturas** para navegar y reordenar páginas, **menús contextuales** (clic derecho) para copiar, cortar, pegar, duplicar y borrar campos y páginas, **deshacer/rehacer** (Ctrl+Z / Ctrl+Y) y **zoom** hasta el 500 % (Ctrl+rueda) con desplazamiento arrastrando la ficha.
 
+Cada página admite un **color de fondo** y una **imagen de fondo** importada (imagen o página de un PDF) con cuatro modos de ajuste —*mantener proporción*, *cubrir*, *estirar* y *mosaico*— y control de opacidad. Esto permite combinar un **tamaño de página controlado** (A4, carta o libre) con una imagen de fondo. Al importar un PDF de varias páginas se muestra un **selector de miniaturas** para elegir cuál usar (útil para insertar una hoja suelta de un PDF).
+
 ### 🧮 Fórmulas matemáticas y química (LaTeX)
 
 Cualquier texto de la ficha admite **fórmulas LaTeX**, que se renderizan automáticamente al mostrarse al alumnado: el título y las instrucciones, el campo **Texto**, las opciones de respuesta, los encabezados y las celdas de la **Tabla editable**, etc.
@@ -122,7 +124,7 @@ El tipo de campo **Tabla editable** permite crear rejillas estructuradas de entr
 OpenWorksheets puede generar una ficha completa automáticamente a partir de un formulario que rellena el docente. No requiere cuenta ni API externa: el proceso es íntegramente por copia/pegado:
 
 1. Abre **Archivo → Crear con IA…** (o haz clic en la opción de la pantalla inicial).
-2. Rellena el formulario: tema, nivel, número de preguntas, idioma, tipos de campo permitidos y fondo (color, imagen o PDF).
+2. Rellena el formulario: tema, nivel, número de preguntas, idioma y tipos de campo permitidos. La ficha se crea con páginas en blanco; el color o la imagen de fondo se ajustan luego desde la configuración de página.
 3. OWS genera un prompt estructurado. Cópialo y pégalo en cualquier chat de IA (ChatGPT, Gemini, Copilot, Claude…).
 4. Pega la respuesta JSON de la IA de vuelta en OWS. La valida e importa, colocando los campos automáticamente con separación ajustada entre enunciado y respuesta y paginando según haga falta.
 5. Edita el resultado como cualquier otra ficha.
