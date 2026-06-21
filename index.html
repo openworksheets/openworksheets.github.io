@@ -121,27 +121,25 @@
   <dialog id="dlgCompartir" class="home-dialog">
     <button type="button" class="dlg-x" data-close-dialog data-i18n-title="dlg.close" aria-label="Cerrar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h2 data-i18n="index.linkTitle">Generar el enlace para el alumnado</h2>
-    <details class="share-instructions">
-      <summary data-i18n="dlg.share.instructionsTitle">Instrucciones</summary>
-      <ol class="steps-ol">
-        <li data-i18n="index.linkStep1">Exporta tu ficha como paquete (.owpkg) desde el editor.</li>
-        <li data-i18n="index.linkStep2">Súbela a Google Drive (u otro alojamiento público).</li>
-        <li data-i18n-html="index.linkStep3">En Drive: <em>Compartir → Cualquier persona con el enlace → Copiar enlace</em>.</li>
-        <li data-i18n="index.linkStep4">Pega aquí ese enlace y distribuye la dirección resultante al alumnado.</li>
-      </ol>
-    </details>
+    <ol class="steps-ol">
+      <li data-i18n="index.linkStep1">Exporta tu ficha como paquete (.owpkg) desde el editor.</li>
+      <li data-i18n="index.linkStep2">Súbela a Google Drive (u otro alojamiento público).</li>
+      <li data-i18n-html="index.linkStep3">En Drive: <em>Compartir → Cualquier persona con el enlace → Copiar enlace</em>.</li>
+      <li data-i18n="index.linkStep4">Pega aquí ese enlace y distribuye la dirección resultante al alumnado.</li>
+    </ol>
     <label class="f-label" for="urlZip" data-i18n="index.urlLabel">URL pública del paquete</label>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
       <input type="url" id="urlZip" placeholder="https://drive.google.com/file/d/…" style="flex:1;min-width:240px">
       <button class="btn primary" id="btnGenerar" data-i18n="index.generateBtn">Generar enlace</button>
     </div>
+    <p class="settings-warning share-unique-warn" id="homeShareWarn" style="display:none" data-i18n="dlg.share.uniqueUrlWarning">Cada vez que generas el enlace se crea una URL diferente, aunque la ficha sea la misma. Guarda el enlace, el código QR o el iframe si piensas utilizarlos más adelante.</p>
+    <div class="settings-tabs share-result-tabs" role="tablist">
+      <button class="settings-tab" data-tab="link" data-i18n="dlg.share.tabLink">Enlace</button>
+      <button class="settings-tab" data-tab="qr" data-i18n="dlg.share.tabQr">Código QR</button>
+      <button class="settings-tab" data-tab="embed" data-i18n="dlg.share.tabEmbed">Incrustar</button>
+      <button class="settings-tab is-active" data-tab="export" data-i18n="dlg.share.offlineTitle">Exportar</button>
+    </div>
     <div id="salidaEnlace" style="display:none">
-      <p class="settings-warning share-unique-warn" data-i18n="dlg.share.uniqueUrlWarning">Cada vez que generas el enlace se crea una URL diferente, aunque la ficha sea la misma. Guarda el enlace, el código QR o el iframe si piensas utilizarlos más adelante.</p>
-      <div class="settings-tabs share-result-tabs" role="tablist">
-        <button class="settings-tab is-active" data-tab="link" data-i18n="dlg.share.tabLink">Enlace</button>
-        <button class="settings-tab" data-tab="qr" data-i18n="dlg.share.tabQr">Código QR</button>
-        <button class="settings-tab" data-tab="embed" data-i18n="dlg.share.tabEmbed">Incrustar</button>
-      </div>
       <div class="settings-panel is-active" data-panel="link">
         <p class="share-tab-hint" data-i18n="dlg.share.tabLinkHint">Copia este enlace y proporciónalo a tu alumnado para que puedan acceder a la ficha.</p>
         <div class="link-out" id="enlaceAlumnos"></div>
@@ -167,8 +165,7 @@
         <p class="embed-hint" data-i18n="index.embedHint">La ficha se desplaza dentro del marco; ajusta la altura a tu gusto. Algunos blogs no permiten insertar iframes.</p>
       </div>
     </div>
-    <div class="share-offline-block">
-      <div class="ed-section-title" data-i18n="dlg.share.offlineTitle">Otras formas de distribuir</div>
+    <div class="settings-panel is-active" id="homeExportPanel" data-panel="export">
       <p class="share-tab-hint" data-i18n="dlg.share.offlineHintIndex">Para distribuir la ficha sin enlace externo, ábrela en el editor y usa el menú Exportar como:</p>
       <div class="share-offline-info">
         <div class="share-offline-item">

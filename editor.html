@@ -217,26 +217,24 @@
 
   <dialog id="dlgCompartir">
     <h2 data-i18n="dlg.share.title">Compartir con el alumnado</h2>
-    <details class="share-instructions">
-      <summary data-i18n="dlg.share.instructionsTitle">Instrucciones</summary>
-      <ol class="steps-ol">
-        <li data-i18n="dlg.share.step1">Exporta la ficha como ZIP (botón «Exportar ZIP»).</li>
-        <li data-i18n="dlg.share.step2">Sube el ZIP a Google Drive.</li>
-        <li data-i18n-html="dlg.share.step3">En Drive: <em>Compartir → Cualquier persona con el enlace → Copiar enlace</em>.</li>
-        <li data-i18n="dlg.share.step4">Pega aquí ese enlace:</li>
-      </ol>
-    </details>
+    <ol class="steps-ol">
+      <li data-i18n="dlg.share.step1">Exporta la ficha como ZIP (botón «Exportar ZIP»).</li>
+      <li data-i18n="dlg.share.step2">Sube el ZIP a Google Drive.</li>
+      <li data-i18n-html="dlg.share.step3">En Drive: <em>Compartir → Cualquier persona con el enlace → Copiar enlace</em>.</li>
+      <li data-i18n="dlg.share.step4">Pega aquí ese enlace:</li>
+    </ol>
     <input type="url" id="compUrl" data-i18n-placeholder="dlg.share.urlPlaceholder" placeholder="https://drive.google.com/file/d/…">
-    <div style="margin-top:10px;margin-bottom:12px">
+    <div style="margin-top:10px;margin-bottom:8px">
       <button class="btn primary" id="btnGenerarEnlace" data-i18n="dlg.share.generateBtn">Generar enlace para alumnos</button>
     </div>
+    <p class="settings-warning share-unique-warn" id="shareWarn" style="display:none" data-i18n="dlg.share.uniqueUrlWarning">Cada vez que generas el enlace se crea una URL diferente, aunque la ficha sea la misma. Guarda el enlace, el código QR o el iframe si piensas utilizarlos más adelante.</p>
+    <div class="settings-tabs share-result-tabs" role="tablist">
+      <button class="settings-tab" data-tab="link" data-i18n="dlg.share.tabLink">Enlace</button>
+      <button class="settings-tab" data-tab="qr" data-i18n="dlg.share.tabQr">Código QR</button>
+      <button class="settings-tab" data-tab="embed" data-i18n="dlg.share.tabEmbed">Incrustar</button>
+      <button class="settings-tab is-active" data-tab="export" data-i18n="dlg.share.offlineTitle">Exportar</button>
+    </div>
     <div id="compSalida" style="display:none">
-      <p class="settings-warning share-unique-warn" data-i18n="dlg.share.uniqueUrlWarning">Cada vez que generas el enlace se crea una URL diferente, aunque la ficha sea la misma. Guarda el enlace, el código QR o el iframe si piensas utilizarlos más adelante.</p>
-      <div class="settings-tabs share-result-tabs" role="tablist">
-        <button class="settings-tab is-active" data-tab="link" data-i18n="dlg.share.tabLink">Enlace</button>
-        <button class="settings-tab" data-tab="qr" data-i18n="dlg.share.tabQr">Código QR</button>
-        <button class="settings-tab" data-tab="embed" data-i18n="dlg.share.tabEmbed">Incrustar</button>
-      </div>
       <div class="settings-panel is-active" data-panel="link">
         <p class="share-tab-hint" data-i18n="dlg.share.tabLinkHint">Copia este enlace y proporciónalo a tu alumnado para que puedan acceder a la ficha.</p>
         <div class="link-out" id="compEnlace"></div>
@@ -262,8 +260,7 @@
         <p class="embed-hint" data-i18n="index.embedHint">La ficha se desplaza dentro del marco; ajusta la altura a tu gusto. Algunos blogs no permiten insertar iframes.</p>
       </div>
     </div>
-    <div class="share-offline-block">
-      <div class="ed-section-title" data-i18n="dlg.share.offlineTitle">Otras formas de distribuir</div>
+    <div class="settings-panel is-active" id="compExportPanel" data-panel="export">
       <p class="share-tab-hint" data-i18n="dlg.share.offlineHintEditor">Descarga la ficha en estos formatos para usarla sin enlace externo.</p>
       <div class="share-offline-btns">
         <button class="btn small share-offline-btn" id="shareExportWeb" type="button">
