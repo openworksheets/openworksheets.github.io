@@ -47,6 +47,10 @@ Las versiones publicadas también están en la página de
 - **READMEs (ES, EN, CA):** la sección de corrección de texto ya no menciona
   «Huecos en documento» como campo separado; se indica que «Rellenar huecos»
   cubre ambos modos, reflejando la unificación de v1.6.0.
+- **Mensaje «sin páginas» en el editor** (`editor.noFieldDescNoPages`): ya no
+  dice «botón superior» (inexacto desde el rediseño del menú Archivo en v1.8.0)
+  ni omite la hoja en blanco; ahora indica abrir un PDF, imagen o hoja en blanco
+  desde el menú «Archivo». Actualizado en los 5 idiomas.
 - **Campo Fórmula:** al pulsar el botón «fx» con una fórmula ya escrita en el
   campo (sin seleccionarla), EdiCuaTeX se abre precargando todo su contenido para
   editarlo directamente, sin tener que seleccionarlo antes. Aplica tanto al editor
