@@ -729,6 +729,7 @@ const STRINGS = {
     'dlg.share.tryLink': 'Probar (opcional)',
     'dlg.share.qrZoomHint': 'Haz clic para ampliar y proyectar en clase',
     'dlg.share.qrZoomTitle': 'Proyectar código QR para la clase',
+    'dlg.share.uniqueUrlWarning': '⚠ Cada vez que generas el enlace se crea una URL diferente, aunque la ficha sea la misma. Guarda el enlace, el código QR o el iframe si piensas utilizarlos más adelante.',
 
     // Editor — restricciones de acceso
     'dlg.access.section': 'Restricciones de acceso',
@@ -1526,6 +1527,7 @@ const STRINGS = {
     'dlg.share.tryLink': 'Preview (optional)',
     'dlg.share.qrZoomHint': 'Click to enlarge and project in class',
     'dlg.share.qrZoomTitle': 'Project QR Code for class',
+    'dlg.share.uniqueUrlWarning': '⚠ Each time you generate the link a different URL is created, even if the worksheet is the same. Save the link, the QR code or the iframe if you plan to use them later.',
 
     'dlg.access.section': 'Access restrictions',
     'dlg.access.desde': 'Available from (optional)',
@@ -2473,6 +2475,7 @@ const STRINGS = {
     'dlg.share.tryLink': 'Provar (opcional)',
     'dlg.share.qrZoomHint': 'Fes clic per ampliar i projectar a classe',
     'dlg.share.qrZoomTitle': 'Projectar codi QR per a la classe',
+    'dlg.share.uniqueUrlWarning': '⚠ Cada vegada que generes l\'enllaç es crea una URL diferent, tot i que la fitxa sigui la mateixa. Guarda l\'enllaç, el codi QR o l\'iframe si el vols fer servir més endavant.',
 
     'dlg.access.section': 'Restriccions d\'accés',
     'dlg.access.desde': 'Disponible des de (opcional)',
@@ -3420,6 +3423,7 @@ const STRINGS = {
     'dlg.share.tryLink': 'Probar (opcional)',
     'dlg.share.qrZoomHint': 'Fai clic para ampliar e proxectar en clase',
     'dlg.share.qrZoomTitle': 'Proxectar código QR para a clase',
+    'dlg.share.uniqueUrlWarning': '⚠ Cada vez que xeras o enlace créase un URL diferente, aínda que a ficha sexa a mesma. Garda o enlace, o código QR ou o iframe se o pensas utilizar máis adiante.',
 
     'dlg.access.section': 'Restricións de acceso',
     'dlg.access.desde': 'Dispoñible desde (opcional)',
@@ -4367,6 +4371,7 @@ const STRINGS = {
     'dlg.share.tryLink': 'Probatu (aukerakoa)',
     'dlg.share.qrZoomHint': 'Egin klik gelan handitzeko eta proiektatzeko',
     'dlg.share.qrZoomTitle': 'QR kodea klaserako proiektatu',
+    'dlg.share.uniqueUrlWarning': '⚠ Esteka sortzen duzun bakoitzean URL ezberdin bat sortzen da, fitxa bera bada ere. Gorde esteka, QR kodea edo iframe-a gero erabiltzeko asmoa baduzu.',
 
     'dlg.access.section': 'Sarbide-murrizketak',
     'dlg.access.desde': 'Noiztik erabilgarri (aukerakoa)',

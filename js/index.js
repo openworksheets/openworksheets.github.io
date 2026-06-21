@@ -89,6 +89,32 @@ $('#btnGenerar').addEventListener('click', async () => {
   $('#salidaEnlace').style.display = 'block';
   studentLink = link;
   updateEmbedCode();
+
+  // Generar código QR
+  const qrContainer = $('#homeQrContainer');
+  if (qrContainer && typeof qrcode === 'function') {
+    qrContainer.innerHTML = '';
+    const qr = qrcode(0, 'M');
+    qr.addData(link);
+    qr.make();
+    const qrImg = document.createElement('div');
+    qrImg.className = 'share-qr-img';
+    qrImg.title = t('dlg.share.qrZoomHint');
+    qrImg.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 4, scalable: true });
+    const qrHint = document.createElement('div');
+    qrHint.className = 'share-qr-hint';
+    qrHint.textContent = t('dlg.share.qrZoomHint');
+    qrContainer.appendChild(qrImg);
+    qrContainer.appendChild(qrHint);
+    const openZoom = () => {
+      const zoomContent = $('#qrZoomContent');
+      if (zoomContent) zoomContent.innerHTML = qr.createSvgTag({ cellSize: 8, margin: 4, scalable: true });
+      $('#dlgQrZoom')?.showModal();
+    };
+    qrImg.addEventListener('click', openZoom);
+    qrHint.addEventListener('click', openZoom);
+  }
+
   const ok = await copyToClipboard(link);
   if (ok) toast(t('toast.linkCopied'), 'ok');
 });

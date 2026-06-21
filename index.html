@@ -133,12 +133,14 @@
       <button class="btn primary" id="btnGenerar" data-i18n="index.generateBtn">Generar enlace</button>
     </div>
     <div id="salidaEnlace" style="display:none">
+      <p class="settings-warning" data-i18n="dlg.share.uniqueUrlWarning">⚠ Cada vez que generas el enlace se crea una URL diferente, aunque la ficha sea la misma. Guarda el enlace, el código QR o el iframe si piensas utilizarlos más adelante.</p>
       <p class="f-label" data-i18n="index.studentLinkLabel">Comparte esta dirección con el alumnado para que puedan completar la ficha:</p>
       <div class="link-out" id="enlaceAlumnos"></div>
       <div class="link-actions">
         <button class="btn small" id="btnCopiarEnlace"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> <span data-i18n="index.copyLink">Copiar enlace</span></button>
         <a class="btn small" id="btnProbarEnlace" target="_blank" rel="noopener"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg> <span data-i18n="index.tryLink">Probar (opcional)</span></a>
       </div>
+      <div id="homeQrContainer" class="share-qr-wrap"></div>
 
       <div class="embed-block">
         <p class="f-label" data-i18n="index.embedLabel">O incrústala en un blog o página web pegando este código (iframe):</p>
@@ -152,6 +154,14 @@
         </div>
         <p class="embed-hint" data-i18n="index.embedHint">La ficha se desplaza dentro del marco; ajusta la altura a tu gusto. Algunos blogs no permiten insertar iframes.</p>
       </div>
+    </div>
+  </dialog>
+
+  <dialog id="dlgQrZoom" class="qr-zoom-dialog">
+    <h3 data-i18n="dlg.share.qrZoomTitle">Proyectar código QR para la clase</h3>
+    <div class="qr-large-wrap" id="qrZoomContent"></div>
+    <div class="dlg-buttons">
+      <form method="dialog"><button class="btn" data-i18n="dlg.close">Cerrar</button></form>
     </div>
   </dialog>
 
@@ -186,6 +196,7 @@
   <script src="config.js"></script>
   <script src="js/theme.js"></script>
   <script src="js/analytics.js" defer></script>
+  <script src="vendor/qrcode.min.js"></script>
   <script type="module" src="js/index.js"></script>
 </body>
 </html>

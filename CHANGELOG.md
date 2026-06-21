@@ -12,6 +12,12 @@ Las versiones publicadas también están en la página de
 ## [Unreleased]
 
 ### Añadido
+- **Código QR en la pantalla de inicio**: el diálogo «Generar enlace» de la
+  pantalla de inicio genera ahora también un código QR (con zoom para proyectar
+  en clase), igual que el diálogo del editor.
+- **Aviso de URL única**: ambos diálogos de compartir (pantalla de inicio y editor)
+  advierten claramente que cada generación produce una URL diferente, y piden
+  guardar el enlace, el QR o el iframe antes de cerrar.
 - **Estilo del enunciado en Respuesta larga y Grabación de voz**: el panel de
   configuración de estos dos campos incluye ahora controles para personalizar el
   enunciado: **negrita**, **color**, **alineación** e **tamaño** (pequeño,
