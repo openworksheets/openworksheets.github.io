@@ -86,12 +86,10 @@ $('#btnGenerar').addEventListener('click', async () => {
   $('#enlaceAlumnos').textContent = link;
   const tryBtn = $('#btnProbarEnlace');
   if (tryBtn) tryBtn.href = link;
-  // Activar pestaña «Enlace» y mostrar resultado.
-  document.querySelectorAll('#dlgCompartir .share-result-tabs .settings-tab').forEach(b => b.classList.toggle('is-active', b.dataset.tab === 'link'));
-  $('#homeExportPanel').classList.remove('is-active');
-  document.querySelectorAll('#salidaEnlace .settings-panel').forEach(p => p.classList.toggle('is-active', p.dataset.panel === 'link'));
   $('#salidaEnlace').style.display = 'block';
-  $('#homeShareWarn').style.display = '';
+  // Resetear a la pestaña «Enlace» con cada nueva generación.
+  document.querySelectorAll('#salidaEnlace .settings-tab').forEach(b => b.classList.toggle('is-active', b.dataset.tab === 'link'));
+  document.querySelectorAll('#salidaEnlace .settings-panel').forEach(p => p.classList.toggle('is-active', p.dataset.panel === 'link'));
   studentLink = link;
   updateEmbedCode();
 
@@ -171,23 +169,12 @@ document.querySelectorAll('[data-close-dialog]').forEach(btn => {
 // Cerrar al pulsar sobre el fondo (backdrop) del diálogo.
 dlgCompartir?.addEventListener('click', e => { if (e.target === dlgCompartir) dlgCompartir.close(); });
 
-// Pestañas (Enlace / QR / Incrustar / Exportar).
-document.querySelectorAll('#dlgCompartir .share-result-tabs .settings-tab').forEach(btn => {
+// Pestañas del resultado (Enlace / QR / Incrustar).
+document.querySelectorAll('#salidaEnlace .share-result-tabs .settings-tab').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('#dlgCompartir .share-result-tabs .settings-tab').forEach(b => b.classList.remove('is-active'));
+    document.querySelectorAll('#salidaEnlace .settings-tab').forEach(b => b.classList.remove('is-active'));
+    document.querySelectorAll('#salidaEnlace .settings-panel').forEach(p => p.classList.remove('is-active'));
     btn.classList.add('is-active');
-    const tab = btn.dataset.tab;
-    if (tab === 'export') {
-      $('#salidaEnlace').style.display = 'none';
-      $('#homeShareWarn').style.display = 'none';
-      $('#homeExportPanel').classList.add('is-active');
-    } else {
-      $('#homeExportPanel').classList.remove('is-active');
-      if (studentLink) {
-        $('#salidaEnlace').style.display = 'block';
-        $('#homeShareWarn').style.display = '';
-        document.querySelectorAll('#salidaEnlace .settings-panel').forEach(p => p.classList.toggle('is-active', p.dataset.panel === tab));
-      }
-    }
+    document.querySelector(`#salidaEnlace [data-panel="${btn.dataset.tab}"]`)?.classList.add('is-active');
   });
 });

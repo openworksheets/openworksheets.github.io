@@ -690,9 +690,13 @@ dialog .dlg-buttons {
 .share-result-tabs + .settings-panel { padding-top: 12px; min-height: 120px; }
 .share-unique-warn { margin-top: 14px; font-size: 0.85rem; }
 .share-tab-hint { font-size: 0.88rem; color: var(--tinta-suave); margin: 10px 0 8px; }
-.share-offline-btns { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
-.share-offline-btn { display: flex; align-items: flex-start; gap: 10px; text-align: left; height: auto; padding: 8px 12px; white-space: normal; }
-.share-offline-btn .btn-icon { flex-shrink: 0; margin-top: 1px; }
+.share-export-details { margin: 10px 0 4px; font-size: 0.88rem; }
+.share-export-details summary { cursor: pointer; color: var(--tinta-suave); font-size: 0.85rem; padding: 4px 0; user-select: none; }
+.share-export-details summary:hover { color: var(--tinta); }
+.share-offline-btns { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.share-offline-btn { display: flex; align-items: center; justify-content: flex-start; gap: 10px; text-align: left; height: auto; padding: 6px 10px; white-space: normal; width: 100%; }
+.share-offline-btn .btn-icon { flex-shrink: 0; }
+.share-offline-btn span { display: flex; flex-direction: column; gap: 1px; text-align: left; }
 .share-offline-btn span { display: flex; flex-direction: column; gap: 2px; }
 .share-offline-btn small { font-weight: 400; color: var(--tinta-suave); font-size: 0.8rem; }
 .share-offline-info { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }

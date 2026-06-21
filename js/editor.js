@@ -5048,34 +5048,19 @@ $('#dlgAjustes')?.addEventListener('close', () => {
 // ---------- Compartir ----------
 
 function openShare() {
-  // Resetear a «Exportar» al abrir (siempre disponible, no requiere enlace).
-  document.querySelectorAll('#dlgCompartir .share-result-tabs .settings-tab').forEach(b => b.classList.toggle('is-active', b.dataset.tab === 'export'));
   $('#compSalida').style.display = 'none';
-  $('#shareWarn').style.display = 'none';
-  document.querySelectorAll('#compSalida .settings-panel').forEach(p => p.classList.remove('is-active'));
-  document.querySelector('#compSalida [data-panel="link"]')?.classList.add('is-active');
-  $('#compExportPanel').classList.add('is-active');
+  document.querySelectorAll('#compSalida .settings-tab').forEach(b => b.classList.toggle('is-active', b.dataset.tab === 'link'));
+  document.querySelectorAll('#compSalida .settings-panel').forEach(p => p.classList.toggle('is-active', p.dataset.panel === 'link'));
   $('#dlgCompartir').showModal();
 }
 
-// Pestañas (Enlace / QR / Incrustar / Exportar).
-document.querySelectorAll('#dlgCompartir .share-result-tabs .settings-tab').forEach(btn => {
+// Pestañas del resultado (Enlace / QR / Incrustar).
+document.querySelectorAll('#compSalida .share-result-tabs .settings-tab').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('#dlgCompartir .share-result-tabs .settings-tab').forEach(b => b.classList.remove('is-active'));
+    document.querySelectorAll('#compSalida .settings-tab').forEach(b => b.classList.remove('is-active'));
+    document.querySelectorAll('#compSalida .settings-panel').forEach(p => p.classList.remove('is-active'));
     btn.classList.add('is-active');
-    const tab = btn.dataset.tab;
-    if (tab === 'export') {
-      $('#compSalida').style.display = 'none';
-      $('#shareWarn').style.display = 'none';
-      $('#compExportPanel').classList.add('is-active');
-    } else {
-      $('#compExportPanel').classList.remove('is-active');
-      if (shareLink) {
-        $('#compSalida').style.display = 'block';
-        $('#shareWarn').style.display = '';
-        document.querySelectorAll('#compSalida .settings-panel').forEach(p => p.classList.toggle('is-active', p.dataset.panel === tab));
-      }
-    }
+    document.querySelector(`#compSalida [data-panel="${btn.dataset.tab}"]`)?.classList.add('is-active');
   });
 });
 
@@ -5130,12 +5115,7 @@ $('#btnGenerarEnlace')?.addEventListener('click', async () => {
   shareLink = link;
   updateShareEmbedCode();
 
-  // Activar pestaña «Enlace» y mostrar resultado.
-  document.querySelectorAll('#dlgCompartir .share-result-tabs .settings-tab').forEach(b => b.classList.toggle('is-active', b.dataset.tab === 'link'));
-  $('#compExportPanel').classList.remove('is-active');
-  document.querySelectorAll('#compSalida .settings-panel').forEach(p => p.classList.toggle('is-active', p.dataset.panel === 'link'));
   $('#compSalida').style.display = 'block';
-  $('#shareWarn').style.display = '';
   const ok = await copyToClipboard(link);
   if (ok) toast(t('toast.linkCopied'), 'ok');
 });

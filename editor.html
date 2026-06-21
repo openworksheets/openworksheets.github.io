@@ -227,14 +227,39 @@
     <div style="margin-top:10px;margin-bottom:8px">
       <button class="btn primary" id="btnGenerarEnlace" data-i18n="dlg.share.generateBtn">Generar enlace para alumnos</button>
     </div>
-    <p class="settings-warning share-unique-warn" id="shareWarn" style="display:none" data-i18n="dlg.share.uniqueUrlWarning">Cada vez que generas el enlace se crea una URL diferente, aunque la ficha sea la misma. Guarda el enlace, el código QR o el iframe si piensas utilizarlos más adelante.</p>
-    <div class="settings-tabs share-result-tabs" role="tablist">
-      <button class="settings-tab" data-tab="link" data-i18n="dlg.share.tabLink">Enlace</button>
-      <button class="settings-tab" data-tab="qr" data-i18n="dlg.share.tabQr">Código QR</button>
-      <button class="settings-tab" data-tab="embed" data-i18n="dlg.share.tabEmbed">Incrustar</button>
-      <button class="settings-tab is-active" data-tab="export" data-i18n="dlg.share.offlineTitle">Exportar</button>
-    </div>
+    <details class="share-export-details">
+      <summary data-i18n="dlg.share.offlineTitle">Otras formas de distribuir</summary>
+      <div class="share-offline-btns">
+        <button class="btn small share-offline-btn" id="shareExportWeb" type="button">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span>
+            <strong data-i18n="menu.saveWeb">Exportar a web (ZIP)</strong>
+            <small data-i18n="menu.saveWebSub">Página autónoma para subir a tu propio sitio web</small>
+          </span>
+        </button>
+        <button class="btn small share-offline-btn" id="shareExportScorm" type="button">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+          <span>
+            <strong data-i18n="menu.saveScorm">Exportar a SCORM 1.2</strong>
+            <small data-i18n="menu.saveScormSub">Para entregar y calificar en plataformas compatibles con SCORM (Moodle, etc.)</small>
+          </span>
+        </button>
+        <button class="btn small share-offline-btn" id="shareExportImscp" type="button">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>
+          <span>
+            <strong data-i18n="menu.saveImscp">Exportar a IMS CP</strong>
+            <small data-i18n="menu.saveImscpSub">Para repositorios y plataformas IMS compatibles</small>
+          </span>
+        </button>
+      </div>
+    </details>
     <div id="compSalida" style="display:none">
+      <p class="settings-warning share-unique-warn" data-i18n="dlg.share.uniqueUrlWarning">Cada vez que generas el enlace se crea una URL diferente, aunque la ficha sea la misma. Guarda el enlace, el código QR o el iframe si piensas utilizarlos más adelante.</p>
+      <div class="settings-tabs share-result-tabs" role="tablist">
+        <button class="settings-tab is-active" data-tab="link" data-i18n="dlg.share.tabLink">Enlace</button>
+        <button class="settings-tab" data-tab="qr" data-i18n="dlg.share.tabQr">Código QR</button>
+        <button class="settings-tab" data-tab="embed" data-i18n="dlg.share.tabEmbed">Incrustar</button>
+      </div>
       <div class="settings-panel is-active" data-panel="link">
         <p class="share-tab-hint" data-i18n="dlg.share.tabLinkHint">Copia este enlace y proporciónalo a tu alumnado para que puedan acceder a la ficha.</p>
         <div class="link-out" id="compEnlace"></div>
@@ -258,32 +283,6 @@
           <button class="btn small" id="btnCopiarEmbed"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> <span data-i18n="index.copyEmbed">Copiar código</span></button>
         </div>
         <p class="embed-hint" data-i18n="index.embedHint">La ficha se desplaza dentro del marco; ajusta la altura a tu gusto. Algunos blogs no permiten insertar iframes.</p>
-      </div>
-    </div>
-    <div class="settings-panel is-active" id="compExportPanel" data-panel="export">
-      <p class="share-tab-hint" data-i18n="dlg.share.offlineHintEditor">Descarga la ficha en estos formatos para usarla sin enlace externo.</p>
-      <div class="share-offline-btns">
-        <button class="btn small share-offline-btn" id="shareExportWeb" type="button">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-          <span>
-            <strong data-i18n="menu.saveWeb">Exportar a web (ZIP)</strong>
-            <small data-i18n="menu.saveWebSub">Página autónoma para subir a tu propio sitio web</small>
-          </span>
-        </button>
-        <button class="btn small share-offline-btn" id="shareExportScorm" type="button">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
-          <span>
-            <strong data-i18n="menu.saveScorm">Exportar a SCORM 1.2</strong>
-            <small data-i18n="menu.saveScormSub">Para entregar y calificar en plataformas compatibles con SCORM (Moodle, etc.)</small>
-          </span>
-        </button>
-        <button class="btn small share-offline-btn" id="shareExportImscp" type="button">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>
-          <span>
-            <strong data-i18n="menu.saveImscp">Exportar a IMS CP</strong>
-            <small data-i18n="menu.saveImscpSub">Para repositorios y plataformas IMS compatibles</small>
-          </span>
-        </button>
       </div>
     </div>
     <div class="dlg-buttons">
