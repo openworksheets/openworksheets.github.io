@@ -5065,6 +5065,10 @@ document.querySelectorAll('#compSalida .share-result-tabs .settings-tab').forEac
   });
 });
 
+$('#shareExportWeb')?.addEventListener('click', () => { $('#dlgCompartir').close(); exportWeb(); });
+$('#shareExportScorm')?.addEventListener('click', () => { $('#dlgCompartir').close(); exportScorm(); });
+$('#shareExportImscp')?.addEventListener('click', () => { $('#dlgCompartir').close(); exportImscp(); });
+
 $('#btnGenerarEnlace')?.addEventListener('click', async () => {
   const url = $('#compUrl').value.trim();
   if (!url) { toast(t('toast.pasteUrl'), 'error'); return; }
