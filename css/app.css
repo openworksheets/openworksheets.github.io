@@ -133,6 +133,8 @@ small { color: var(--tinta-suave); }
   color: var(--papel);
   flex-wrap: wrap;
 }
+/* Modo incrustado (iframe): sin barra superior, para que la ficha ocupe el marco */
+body.embed-mode .topbar { display: none; }
 .topbar .brand {
   font-family: var(--display);
   font-weight: 900;
@@ -843,6 +845,32 @@ dialog .dlg-buttons {
 }
 .link-actions .btn { box-sizing: border-box; }
 a.btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+
+/* Bloque de código para incrustar (iframe) en el modal de compartir */
+.embed-block {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--tinta-tenue);
+}
+.embed-opts {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 8px;
+}
+.embed-opts .f-label { margin: 0; }
+.embed-code {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: ui-monospace, 'Cascadia Mono', monospace;
+  font-size: 0.8rem;
+  background: var(--azul-claro);
+  border: 2px solid var(--tinta-tenue);
+  border-radius: 6px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+.embed-hint { font-size: 0.8rem; color: var(--tinta-suave); margin: 8px 0 0; }
 
 /* QR en ventana de compartir */
 .share-qr-wrap {

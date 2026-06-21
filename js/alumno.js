@@ -133,6 +133,10 @@ async function main() {
   let zipUrl = params.get('z') || params.get('url');
   const shortToken = params.get('s');
 
+  // Modo incrustado (iframe en un blog/web): oculta la barra superior del visor
+  // para que la ficha ocupe todo el marco. Se activa con `embed=1`.
+  if (params.get('embed') === '1') document.body.classList.add('embed-mode');
+
   if (!zipUrl && !shortToken) { showOpener(); return; }
 
   const loading = showLoading();

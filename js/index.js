@@ -87,12 +87,43 @@ $('#btnGenerar').addEventListener('click', async () => {
   const tryBtn = $('#btnProbarEnlace');
   if (tryBtn) tryBtn.href = link;
   $('#salidaEnlace').style.display = 'block';
+  studentLink = link;
+  updateEmbedCode();
   const ok = await copyToClipboard(link);
   if (ok) toast(t('toast.linkCopied'), 'ok');
 });
 
 $('#btnCopiarEnlace').addEventListener('click', async () => {
   const ok = await copyToClipboard($('#enlaceAlumnos').textContent);
+  toast(ok ? t('toast.copied') : t('toast.notCopied'), ok ? 'ok' : 'error');
+});
+
+// --- Código para incrustar (iframe) ---
+// El embed reutiliza el mismo enlace del alumnado añadiéndole `embed=1`, que
+// oculta la barra superior del visor. Altura fija + scroll interno: así nada se
+// corta y funciona pegando solo el <iframe> (sin scripts en la web anfitriona).
+let studentLink = '';
+
+function buildEmbedSrc(link) {
+  const u = new URL(link);
+  u.searchParams.set('embed', '1');
+  return u.href;
+}
+
+function updateEmbedCode() {
+  const codeEl = $('#embedCode');
+  if (!studentLink || !codeEl) return;
+  const h = Math.max(200, Math.min(3000, parseInt($('#embedHeight').value, 10) || 800));
+  const src = buildEmbedSrc(studentLink);
+  codeEl.value = `<iframe src="${src}" width="100%" height="${h}" `
+    + `style="border:1px solid #ccc;border-radius:8px;max-width:900px" `
+    + `loading="lazy" allow="fullscreen; microphone"></iframe>`;
+}
+
+$('#embedHeight')?.addEventListener('input', updateEmbedCode);
+
+$('#btnCopiarEmbed')?.addEventListener('click', async () => {
+  const ok = await copyToClipboard($('#embedCode').value);
   toast(ok ? t('toast.copied') : t('toast.notCopied'), ok ? 'ok' : 'error');
 });
 
