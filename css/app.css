@@ -689,6 +689,7 @@ dialog .dlg-buttons {
 .share-result-tabs { margin-top: 14px; }
 .share-result-tabs + .settings-panel { padding-top: 12px; min-height: 120px; }
 .share-unique-warn { margin-top: 14px; font-size: 0.85rem; }
+.share-tab-hint { font-size: 0.88rem; color: var(--tinta-suave); margin: 10px 0 8px; }
 .dlg-x {
   position: absolute;
   top: 14px;

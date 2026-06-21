@@ -238,6 +238,7 @@
         <button class="settings-tab" data-tab="embed" data-i18n="dlg.share.tabEmbed">Incrustar</button>
       </div>
       <div class="settings-panel is-active" data-panel="link">
+        <p class="share-tab-hint" data-i18n="dlg.share.tabLinkHint">Copia este enlace y proporciónalo a tu alumnado para que puedan acceder a la ficha.</p>
         <div class="link-out" id="compEnlace"></div>
         <div class="link-actions">
           <button class="btn small" id="btnCopiarEnlace"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> <span data-i18n="dlg.share.copyLink">Copiar enlace</span></button>
@@ -245,9 +246,11 @@
         </div>
       </div>
       <div class="settings-panel" data-panel="qr">
+        <p class="share-tab-hint" data-i18n="dlg.share.tabQrHint">Proyecta este código QR en clase para que el alumnado acceda escaneándolo con el móvil.</p>
         <div id="compQrContainer" class="share-qr-wrap"></div>
       </div>
       <div class="settings-panel" data-panel="embed">
+        <p class="share-tab-hint" data-i18n="dlg.share.tabEmbedHint">Copia este código y pégalo en tu blog o página web para incrustar la ficha en ella.</p>
         <div class="embed-opts" style="margin-top:12px">
           <label class="f-label" for="compEmbedHeight" data-i18n="index.embedHeight">Altura (px)</label>
           <input type="number" id="compEmbedHeight" min="200" max="3000" step="50" value="800" style="width:90px">
