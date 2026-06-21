@@ -14,8 +14,15 @@ Las versiones publicadas también están en la página de
 ### Añadido
 - **Diálogo de compartir reorganizado con pestañas**: el resultado (enlace,
   código QR e iframe) se organiza en tres pestañas (Enlace / Código QR /
-  Incrustar) en ambos diálogos —pantalla de inicio y editor—, eliminando el
-  scroll excesivo. Las instrucciones pasan a un bloque `<details>` colapsable.
+  Incrustar) en ambos diálogos —pantalla de inicio y editor—. Las instrucciones
+  se muestran siempre visibles encima del campo de URL.
+- **«Otras formas de compartir y distribuir»**: acordeón discreto bajo el botón
+  «Generar enlace» que da acceso a los formatos de exportación sin enlace externo.
+  En el **editor** muestra botones clicables para exportar directamente a
+  **Web (ZIP)**, **SCORM 1.2** e **IMS CP**; en la **pantalla de inicio** muestra
+  los mismos formatos como información, indicando que hay que abrir la ficha en el
+  editor para acceder a ellos. El estilo reutiliza el de los items del menú
+  principal (icono + título + descripción con separador).
 - **Código QR en la pantalla de inicio**: el diálogo «Generar enlace» de la
   pantalla de inicio genera ahora también un código QR (con zoom para proyectar
   en clase), igual que el diálogo del editor.
@@ -24,17 +31,19 @@ Las versiones publicadas también están en la página de
   guardar el enlace, el QR o el iframe antes de cerrar.
 - **Estilo del enunciado en Respuesta larga y Grabación de voz**: el panel de
   configuración de estos dos campos incluye ahora controles para personalizar el
-  enunciado: **negrita**, **color**, **alineación** e **tamaño** (pequeño,
-  normal, grande, muy grande). Los cambios se aplican en tiempo real en el lienzo.
+  enunciado: **negrita**, **color**, **alineación** y **tamaño** (control
+  deslizante + número, igual que el tamaño del texto en otros campos). Los cambios
+  se aplican en tiempo real en el lienzo.
 - **Código para incrustar la ficha (iframe)**: en el modal de compartir —tanto el
-  del **editor** (con QR) como el de la **pantalla de inicio**—, junto al enlace
-  del alumnado, aparece ahora un **código `<iframe>` listo para pegar** en un blog
-  o página web. Reutiliza el enlace
-  generado añadiéndole `embed=1`, un nuevo modo del visor que **oculta la barra
-  superior** para que la ficha ocupe todo el marco. La **altura es configurable**
-  (la ficha se desplaza dentro del marco, así nada queda cortado) e incluye los
-  permisos `fullscreen` y `microphone` (para la supervisión a pantalla completa y
-  los campos de grabación de voz).
+  del **editor** como el de la **pantalla de inicio**—, junto al enlace del
+  alumnado, aparece ahora un **código `<iframe>` listo para pegar** en un blog o
+  página web. Reutiliza el enlace generado añadiéndole `embed=1`, un modo del
+  visor que oculta la barra superior. La altura es configurable e incluye los
+  permisos `fullscreen` y `microphone`.
+
+### Eliminado
+- **Botones «Soy alumno/a» y «Abrir ficha»** de la cabecera de la pantalla de
+  inicio.
 
 ## [1.21.0] — 2026-06-21
 
