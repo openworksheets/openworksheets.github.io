@@ -20,6 +20,17 @@ import { typesetMath, textHasMath } from './mathrender.js';
 import { openFormulaEditor, wrapFormula, insertAtCursor } from './edicuatex.js';
 import { ICONS } from './icons.js';
 
+function promptStyle(cfg) {
+  const parts = [];
+  if (cfg.promptBold === true) parts.push('font-weight:700');
+  else if (cfg.promptBold === false) parts.push('font-weight:400');
+  if (cfg.promptColor) parts.push(`color:${cfg.promptColor}`);
+  if (cfg.promptAlign && cfg.promptAlign !== 'left') parts.push(`text-align:${cfg.promptAlign}`);
+  const scale = parseFloat(cfg.promptScale);
+  if (scale && scale !== 1) parts.push(`font-size:${scale}em`);
+  return parts.join(';');
+}
+
 // SVG de una casilla de verificación dibujable (campo checkbox).
 // El marco se ve siempre; la marca (✓) se muestra al estar activada vía CSS.
 // preserveAspectRatio mantiene la casilla cuadrada dentro de cualquier rectángulo.
@@ -771,7 +782,7 @@ const renderers = {
     const cfg = field.config || {};
     const maxSec = Math.max(5, Math.min(600, Number(cfg.maxSec) || 30));
 
-    if (cfg.prompt) root.appendChild(el('div', { class: 'wpf-record-prompt' }, cfg.prompt));
+    if (cfg.prompt) root.appendChild(el('div', { class: 'wpf-record-prompt', style: promptStyle(cfg) }, cfg.prompt));
 
     const supported = typeof window.MediaRecorder !== 'undefined'
       && navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
@@ -992,7 +1003,7 @@ const renderers = {
   essay(field, root, ctx) {
     root.classList.add('wpf-essay');
     const cfg = field.config || {};
-    if (cfg.prompt) root.appendChild(el('div', { class: 'wpf-essay-prompt' }, cfg.prompt));
+    if (cfg.prompt) root.appendChild(el('div', { class: 'wpf-essay-prompt', style: promptStyle(cfg) }, cfg.prompt));
 
     const ta = el('textarea', {
       class: 'wpf-input wpf-essay-input', rows: String(Math.max(2, Number(cfg.rows) || 4)),

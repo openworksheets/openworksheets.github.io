@@ -3495,6 +3495,46 @@ function labelStyleControls(cont, field) {
   });
 }
 
+// Controles de estilo para el enunciado (prompt) de los campos essay y record.
+// `promptCls` es la clase CSS del elemento de prompt en el lienzo.
+function promptStyleControls(cont, field, promptCls) {
+  const cfg = field.config;
+  const getEl = () => canvas.querySelector(`.ed-field[data-id="${field.id}"] .${promptCls}`);
+  const applyStyle = () => {
+    const p = getEl(); if (!p) return;
+    p.style.fontWeight = cfg.promptBold === false ? '400' : '700';
+    p.style.color = cfg.promptColor || '';
+    p.style.textAlign = cfg.promptAlign || 'left';
+    const scale = parseFloat(cfg.promptScale);
+    p.style.fontSize = scale && scale !== 1 ? `${scale}em` : '';
+  };
+  checkRow(cont, t('cfg.labelBold'), cfg.promptBold !== false, v => { cfg.promptBold = v; applyStyle(); markDirty(); });
+  const { wrap: colorWrap } = colorInput(cfg.promptColor || '#1d2c42', v => {
+    cfg.promptColor = v; applyStyle(); markDirty();
+  });
+  cont.appendChild(el('label', { class: 'f-label' }, t('cfg.labelColor')));
+  cont.appendChild(colorWrap);
+  selectRow(cont, t('cfg.labelAlign'), cfg.promptAlign || 'left', [
+    ['left', t('cfg.alignLeft')],
+    ['center', t('cfg.alignCenter')],
+    ['right', t('cfg.alignRight')]
+  ], v => { cfg.promptAlign = v; applyStyle(); markDirty(); });
+  const scaleVal = parseFloat(cfg.promptScale) || 1;
+  const fsRange = el('input', { type: 'range', min: '0.6', max: '5', step: '0.1', value: String(scaleVal) });
+  const fsNum = el('input', { type: 'number', min: '0.1', max: '20', step: '0.1', value: String(scaleVal), style: 'width:72px' });
+  const applyScale = v => {
+    v = Math.max(0.1, parseFloat(v) || 1);
+    cfg.promptScale = v;
+    fsRange.value = Math.min(v, 5);
+    fsNum.value = v;
+    applyStyle(); markDirty();
+  };
+  fsRange.addEventListener('input', () => applyScale(fsRange.value));
+  fsNum.addEventListener('input', () => applyScale(fsNum.value));
+  cont.appendChild(el('label', { class: 'f-label' }, t('editor.fontSize')));
+  cont.appendChild(el('div', { class: 'rot-row' }, fsRange, fsNum, el('span', {}, '×')));
+}
+
 // Botón para subir un archivo multimedia (vídeo/audio) a state.files.
 function mediaFileRow(cont, field, accept, folder, label) {
   const cfg = field.config;
@@ -4067,6 +4107,7 @@ const configForms = {
     pr.addEventListener('input', () => { cfg.prompt = pr.value; markDirty(); });
     pr.addEventListener('change', () => renderCanvas());
     cont.appendChild(pr);
+    promptStyleControls(cont, field, 'wpf-record-prompt');
   },
 
   embed(cont, field) {
@@ -4216,6 +4257,7 @@ const configForms = {
     pr.addEventListener('input', () => { cfg.prompt = pr.value; markDirty(); });
     pr.addEventListener('change', () => renderCanvas());
     cont.appendChild(pr);
+    promptStyleControls(cont, field, 'wpf-essay-prompt');
 
     cont.appendChild(el('label', { class: 'f-label' }, t('cfg.essayRows')));
     const rows = el('input', { type: 'number', min: '2', max: '20', step: '1', value: String(cfg.rows || 4) });

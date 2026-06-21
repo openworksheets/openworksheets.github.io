@@ -163,7 +163,7 @@ export const FIELD_TYPES = {
     name: 'Respuesta larga',
     glyph: ICONS.fileText,
     defRect: { w: 0.5, h: 0.16 },
-    defaults: () => ({ prompt: '', rows: 4, maxWords: 0, showFormula: true })
+    defaults: () => ({ prompt: '', promptBold: true, promptColor: '', promptAlign: 'left', promptScale: 1, rows: 4, maxWords: 0, showFormula: true })
   },
   single: {
     name: 'Opción única',
@@ -327,7 +327,7 @@ export const FIELD_TYPES = {
     name: 'Grabación de voz',
     glyph: ICONS.mic,
     defRect: { w: 0.4, h: 0.1 },
-    defaults: () => ({ scoreMode: 'manual', maxSec: 30, prompt: '' })
+    defaults: () => ({ scoreMode: 'manual', maxSec: 30, prompt: '', promptBold: true, promptColor: '', promptAlign: 'left', promptScale: 1 })
   },
   // Elementos decorativos: no puntúan ni cuentan como preguntas.
   label: {

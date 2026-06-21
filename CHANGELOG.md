@@ -12,6 +12,10 @@ Las versiones publicadas también están en la página de
 ## [Unreleased]
 
 ### Añadido
+- **Estilo del enunciado en Respuesta larga y Grabación de voz**: el panel de
+  configuración de estos dos campos incluye ahora controles para personalizar el
+  enunciado: **negrita**, **color**, **alineación** e **tamaño** (pequeño,
+  normal, grande, muy grande). Los cambios se aplican en tiempo real en el lienzo.
 - **Código para incrustar la ficha (iframe)**: en el modal de compartir —tanto el
   del **editor** (con QR) como el de la **pantalla de inicio**—, junto al enlace
   del alumnado, aparece ahora un **código `<iframe>` listo para pegar** en un blog
