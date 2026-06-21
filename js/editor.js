@@ -4102,6 +4102,7 @@ const configForms = {
     sec.addEventListener('input', () => { cfg.maxSec = Math.max(5, Math.min(600, parseInt(sec.value, 10) || 30)); markDirty(); });
     cont.appendChild(sec);
 
+    cont.appendChild(el('div', { class: 'ed-section-title' }, t('editor.promptSection')));
     cont.appendChild(el('label', { class: 'f-label' }, t('cfg.recordPrompt')));
     const pr = el('input', { type: 'text', value: cfg.prompt || '', maxlength: '200', placeholder: t('cfg.recordPromptPlaceholder') });
     pr.addEventListener('input', () => { cfg.prompt = pr.value; markDirty(); });
@@ -4251,6 +4252,7 @@ const configForms = {
     // No autocorregible: lo puntúa el profesor al revisar la entrega.
     cont.appendChild(el('p', { class: 'cfg-hint' }, t('cfg.essayManualHint')));
 
+    cont.appendChild(el('div', { class: 'ed-section-title' }, t('editor.promptSection')));
     cont.appendChild(el('label', { class: 'f-label' }, t('cfg.essayPrompt')));
     const pr = el('input', { type: 'text', value: cfg.prompt || '', maxlength: '300', placeholder: t('cfg.essayPromptPlaceholder') });
     pr.dataset.latex = '1'; // admite fórmulas con el botón «fx»
