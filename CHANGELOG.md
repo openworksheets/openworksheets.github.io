@@ -11,6 +11,14 @@ Las versiones publicadas también están en la página de
 
 ## [Unreleased]
 
+### Cambiado
+- **Separador entre páginas rediseñado**: los botones de añadir página que
+  aparecían entre cada par de páginas del editor se reemplazan por una línea
+  fina con un botón circular «+» que solo es visible al pasar el ratón. Al
+  hacer clic se despliega un menú con las cuatro opciones (PDF/imagen, paquete,
+  hoja en blanco, IA). La barra de añadir del final del documento mantiene su
+  diseño original con los botones siempre visibles.
+
 ### Añadido
 - **Diálogo de compartir reorganizado con pestañas**: el resultado (enlace,
   código QR e iframe) se organiza en tres pestañas (Enlace / Código QR /
@@ -40,6 +48,12 @@ Las versiones publicadas también están en la página de
   página web. Reutiliza el enlace generado añadiéndole `embed=1`, un modo del
   visor que oculta la barra superior. La altura es configurable e incluye los
   permisos `fullscreen` y `microphone`.
+
+- **Aviso del límite de Google Drive**: en el diálogo de compartir del editor,
+  bajo el campo de URL, aparece un aviso informando de que Google Drive limita
+  la descarga directa a unos 20 MB y sugiriendo Dropbox o Nextcloud para
+  fichas más grandes. El aviso está localizado en los cinco idiomas disponibles
+  (es, en, ca, gl, eu).
 
 ### Eliminado
 - **Botones «Soy alumno/a» y «Abrir ficha»** de la cabecera de la pantalla de

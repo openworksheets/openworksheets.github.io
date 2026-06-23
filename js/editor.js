@@ -676,30 +676,72 @@ function printWorksheet() {
   setTimeout(() => window.print(), 600);
 }
 
+let _openSepBar = null;
+function _closeCurrentSepMenu() {
+  if (!_openSepBar) return;
+  _openSepBar.querySelector('.ed-page-sep-menu').hidden = true;
+  _openSepBar.classList.remove('is-open');
+  _openSepBar = null;
+}
+document.addEventListener('click', e => {
+  if (_openSepBar && !_openSepBar.contains(e.target)) _closeCurrentSepMenu();
+}, true);
+
 function makeAddPageBar(insertAt) {
   const between = insertAt != null;
-  const cls = between ? 'ed-add-page-bar ed-add-page-bar--between' : 'ed-add-page-bar';
-  const addBtn = el('button', { class: 'btn small', type: 'button' }, t('editor.addBlank'));
-  addBtn.addEventListener('click', () => addBlankPage(insertAt));
-  const pdfBtn = el('button', { class: 'btn small', type: 'button' }, t('editor.addPdf'));
-  pdfBtn.addEventListener('click', () => {
+
+  const addBlankAction  = () => addBlankPage(insertAt);
+  const pdfAction       = () => {
     const input = $('#inputPaginas');
     const handler = e => { addFiles(e.target.files, insertAt); e.target.value = ''; input.removeEventListener('change', handler); };
     input.addEventListener('change', handler);
     input.click();
-  });
-  const zipBtn = el('button', { class: 'btn small', type: 'button' }, t('editor.addZip'));
-  zipBtn.addEventListener('click', () => {
+  };
+  const zipAction       = () => {
     const input = $('#inputZipMerge');
     const handler = e => { if (e.target.files[0]) mergeZipFile(e.target.files[0], insertAt); e.target.value = ''; input.removeEventListener('change', handler); };
     input.addEventListener('change', handler);
     input.click();
+  };
+  const aiAction        = () => openAiDialog({ onImport: (data) => addAiPages(data, insertAt) });
+
+  if (!between) {
+    const addBtn = el('button', { class: 'btn small', type: 'button' }, t('editor.addBlank'));
+    addBtn.addEventListener('click', addBlankAction);
+    const pdfBtn = el('button', { class: 'btn small', type: 'button' }, t('editor.addPdf'));
+    pdfBtn.addEventListener('click', pdfAction);
+    const zipBtn = el('button', { class: 'btn small', type: 'button' }, t('editor.addZip'));
+    zipBtn.addEventListener('click', zipAction);
+    const aiBtn = el('button', { class: 'btn small', type: 'button' }, t('ai.create'));
+    aiBtn.addEventListener('click', aiAction);
+    return el('div', { class: 'ed-add-page-bar' },
+      el('span', { class: 'ed-add-page-label' }, t('editor.addPageLabel')),
+      pdfBtn, zipBtn, addBtn, aiBtn);
+  }
+
+  const mkItem = (label, action) => {
+    const btn = el('button', { class: 'ed-page-sep-item', type: 'button' }, label);
+    btn.addEventListener('click', () => { _closeCurrentSepMenu(); action(); });
+    return btn;
+  };
+  const menu = el('div', { class: 'ed-page-sep-menu', hidden: '' },
+    mkItem(t('editor.addPdf'),   pdfAction),
+    mkItem(t('editor.addZip'),   zipAction),
+    mkItem(t('editor.addBlank'), addBlankAction),
+    mkItem(t('ai.create'),       aiAction));
+
+  const plusBtn = el('button', { class: 'ed-page-sep-btn', type: 'button', title: t('editor.addPageHere') }, '+');
+  plusBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    if (_openSepBar === bar) { _closeCurrentSepMenu(); return; }
+    _closeCurrentSepMenu();
+    menu.hidden = false;
+    bar.classList.add('is-open');
+    _openSepBar = bar;
   });
-  const aiBtn = el('button', { class: 'btn small', type: 'button' }, t('ai.create'));
-  aiBtn.addEventListener('click', () => openAiDialog({ onImport: (data) => addAiPages(data, insertAt) }));
-  return el('div', { class: cls },
-    el('span', { class: 'ed-add-page-label' }, t('editor.addPageLabel')),
-    pdfBtn, zipBtn, addBtn, aiBtn);
+
+  const bar = el('div', { class: 'ed-add-page-bar ed-add-page-bar--between' }, plusBtn, menu);
+  return bar;
 }
 
 // Duplica la imagen de fondo importada de una página a una ruta nueva, para
