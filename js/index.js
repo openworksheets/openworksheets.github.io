@@ -160,3 +160,21 @@ document.querySelectorAll('#salidaEnlace .share-result-tabs .settings-tab').forE
     document.querySelector(`#salidaEnlace [data-panel="${btn.dataset.tab}"]`)?.classList.add('is-active');
   });
 });
+
+(function () {
+  const det = document.querySelector('.share-export-details');
+  if (!det) return;
+  det.querySelector('summary')?.addEventListener('click', e => {
+    e.preventDefault();
+    if (det.open) {
+      const wrap = det.querySelector('.share-export-list-wrap');
+      wrap.style.gridTemplateRows = '0fr';
+      wrap.addEventListener('transitionend', () => { det.removeAttribute('open'); }, { once: true });
+    } else {
+      det.setAttribute('open', '');
+      const wrap = det.querySelector('.share-export-list-wrap');
+      wrap.style.gridTemplateRows = '0fr';
+      requestAnimationFrame(() => requestAnimationFrame(() => { wrap.style.gridTemplateRows = ''; }));
+    }
+  });
+})();

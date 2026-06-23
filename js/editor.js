@@ -5293,6 +5293,24 @@ $('#shareExportWeb')?.addEventListener('click', () => { $('#dlgCompartir').close
 $('#shareExportScorm')?.addEventListener('click', () => { $('#dlgCompartir').close(); exportScorm(); });
 $('#shareExportImscp')?.addEventListener('click', () => { $('#dlgCompartir').close(); exportImscp(); });
 
+(function () {
+  const det = document.querySelector('.share-export-details');
+  if (!det) return;
+  det.querySelector('summary')?.addEventListener('click', e => {
+    e.preventDefault();
+    if (det.open) {
+      const wrap = det.querySelector('.share-export-list-wrap');
+      wrap.style.gridTemplateRows = '0fr';
+      wrap.addEventListener('transitionend', () => { det.removeAttribute('open'); }, { once: true });
+    } else {
+      det.setAttribute('open', '');
+      const wrap = det.querySelector('.share-export-list-wrap');
+      wrap.style.gridTemplateRows = '0fr';
+      requestAnimationFrame(() => requestAnimationFrame(() => { wrap.style.gridTemplateRows = ''; }));
+    }
+  });
+})();
+
 $('#btnGenerarEnlace')?.addEventListener('click', async () => {
   const url = $('#compUrl').value.trim();
   if (!url) { toast(t('toast.pasteUrl'), 'error'); return; }
