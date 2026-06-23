@@ -57,7 +57,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="home-icon" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
         </div>
         <h3 data-i18n="index.card2.title">Comparte</h3>
-        <p data-i18n="index.card2.desc">Exporta la ficha como un paquete, súbela a un alojamiento público (como Google Drive) y genera el enlace para tu alumnado. La abren en el navegador, responden y reciben su corrección al instante.</p>
+        <p data-i18n="index.card2.desc">Guarda la ficha desde Archivo -> Guardar ficha (.owpkg), súbela a un alojamiento público y genera el enlace para tu alumnado. La abren en el navegador, responden y reciben su corrección al instante.</p>
         <button class="btn" id="btnAbrirCompartir" data-i18n="index.card2.btn">Generar enlace</button>
       </div>
       <div class="card home-card anim-in">
@@ -119,12 +119,12 @@
     <button type="button" class="dlg-x" data-close-dialog data-i18n-title="dlg.close" aria-label="Cerrar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h2 data-i18n="index.linkTitle">Generar el enlace para el alumnado</h2>
     <ol class="steps-ol">
-      <li data-i18n="index.linkStep1">Exporta tu ficha como paquete (.owpkg) desde el editor.</li>
-      <li data-i18n="index.linkStep2">Súbela a Google Drive (u otro alojamiento público).</li>
+      <li data-i18n="index.linkStep1">En el editor: Archivo -> Guardar ficha (.owpkg).</li>
+      <li data-i18n="index.linkStep2">Sube ese archivo .owpkg a Google Drive (u otro alojamiento público).</li>
       <li data-i18n-html="index.linkStep3">En Drive: <em>Compartir → Cualquier persona con el enlace → Copiar enlace</em>.</li>
       <li data-i18n="index.linkStep4">Pega aquí ese enlace y distribuye la dirección resultante al alumnado.</li>
     </ol>
-    <label class="f-label" for="urlZip" data-i18n="index.urlLabel">URL pública del paquete</label>
+    <label class="f-label" for="urlZip" data-i18n="index.urlLabel">URL pública de la ficha</label>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
       <input type="url" id="urlZip" placeholder="https://drive.google.com/file/d/…" style="flex:1;min-width:240px">
       <button class="btn primary" id="btnGenerar" data-i18n="index.generateBtn">Generar enlace</button>

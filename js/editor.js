@@ -687,23 +687,38 @@ document.addEventListener('click', e => {
   if (_openSepBar && !_openSepBar.contains(e.target)) _closeCurrentSepMenu();
 }, true);
 
+function makeAddPageActions(insertAt) {
+  return {
+    addBlankAction: () => addBlankPage(insertAt),
+    pdfAction: () => {
+      const input = $('#inputPaginas');
+      const handler = e => { addFiles(e.target.files, insertAt); e.target.value = ''; input.removeEventListener('change', handler); };
+      input.addEventListener('change', handler);
+      input.click();
+    },
+    zipAction: () => {
+      const input = $('#inputZipMerge');
+      const handler = e => { if (e.target.files[0]) mergeZipFile(e.target.files[0], insertAt); e.target.value = ''; input.removeEventListener('change', handler); };
+      input.addEventListener('change', handler);
+      input.click();
+    },
+    aiAction: () => openAiDialog({ onImport: (data) => addAiPages(data, insertAt) })
+  };
+}
+
+function buildAddPageCtxSubmenu(insertAt) {
+  const { addBlankAction, pdfAction, zipAction, aiAction } = makeAddPageActions(insertAt);
+  return [
+    { icon: ICONS.image, label: t('editor.addPdf'), fn: pdfAction },
+    { icon: ICONS.folderOpen, label: t('editor.addZip'), fn: zipAction },
+    { icon: ICONS.filePlus, label: t('editor.addBlank'), fn: addBlankAction },
+    { icon: ICONS.sparkles, label: t('ai.create'), fn: aiAction }
+  ];
+}
+
 function makeAddPageBar(insertAt) {
   const between = insertAt != null;
-
-  const addBlankAction  = () => addBlankPage(insertAt);
-  const pdfAction       = () => {
-    const input = $('#inputPaginas');
-    const handler = e => { addFiles(e.target.files, insertAt); e.target.value = ''; input.removeEventListener('change', handler); };
-    input.addEventListener('change', handler);
-    input.click();
-  };
-  const zipAction       = () => {
-    const input = $('#inputZipMerge');
-    const handler = e => { if (e.target.files[0]) mergeZipFile(e.target.files[0], insertAt); e.target.value = ''; input.removeEventListener('change', handler); };
-    input.addEventListener('change', handler);
-    input.click();
-  };
-  const aiAction        = () => openAiDialog({ onImport: (data) => addAiPages(data, insertAt) });
+  const { addBlankAction, pdfAction, zipAction, aiAction } = makeAddPageActions(insertAt);
 
   if (!between) {
     const addBtn = el('button', { class: 'btn small', type: 'button' }, t('editor.addBlank'));
@@ -1375,7 +1390,7 @@ function onCtxOutside(e) {
   if (ctxMenuEl && !ctxMenuEl.contains(e.target)) closeCtxMenu();
 }
 
-// items: array de { icon, label, fn, danger, disabled } o 'sep' para un separador.
+// items: array de { icon, label, fn, danger, disabled, submenu } o 'sep' para un separador.
 function showCtxMenu(x, y, items) {
   closeCtxMenu();
   const menu = el('div', { class: 'ctx-menu' });
@@ -1383,8 +1398,29 @@ function showCtxMenu(x, y, items) {
     if (item === 'sep') { menu.appendChild(el('div', { class: 'ctx-sep' })); continue; }
     const ic = el('span', { class: 'ctx-icon', 'aria-hidden': 'true' });
     ic.innerHTML = item.icon || '';
+    if (item.submenu) {
+      const wrap = el('div', { class: 'ctx-submenu-wrap' });
+      const label = el('span', { class: 'ctx-label' }, item.label);
+      const arrow = el('span', { class: 'ctx-submenu-arrow', 'aria-hidden': 'true' });
+      arrow.innerHTML = ICONS.chevronRight;
+      const trigger = el('button', { class: 'ctx-item ctx-submenu-trigger', type: 'button' }, ic, label, arrow);
+      if (item.disabled) trigger.disabled = true;
+      const submenu = el('div', { class: 'ctx-submenu' });
+      for (const subitem of item.submenu) {
+        const subIcon = el('span', { class: 'ctx-icon', 'aria-hidden': 'true' });
+        subIcon.innerHTML = subitem.icon || '';
+        const subBtn = el('button', { class: 'ctx-item' + (subitem.danger ? ' danger' : ''), type: 'button' },
+          subIcon, el('span', { class: 'ctx-label' }, subitem.label));
+        if (subitem.disabled) subBtn.disabled = true;
+        else subBtn.addEventListener('click', () => { closeCtxMenu(); subitem.fn(); });
+        submenu.appendChild(subBtn);
+      }
+      wrap.append(trigger, submenu);
+      menu.appendChild(wrap);
+      continue;
+    }
     const b = el('button', { class: 'ctx-item' + (item.danger ? ' danger' : ''), type: 'button' },
-      ic, el('span', {}, item.label));
+      ic, el('span', { class: 'ctx-label' }, item.label));
     if (item.disabled) b.disabled = true;
     else b.addEventListener('click', () => { closeCtxMenu(); item.fn(); });
     menu.appendChild(b);
@@ -1406,6 +1442,8 @@ function showPageCtxMenu(x, y, pi) {
     { icon: ICONS.clipboard, label: t('ctx.paste'), fn: () => pastePageAt(pi + 1) },
     { icon: ICONS.copyPlus, label: t('ctx.duplicate'), fn: () => duplicatePage(pi) },
     'sep',
+    { icon: ICONS.filePlus, label: t('editor.addPageHere'), submenu: buildAddPageCtxSubmenu(pi + 1) },
+    'sep',
     { icon: ICONS.settings, label: t('menu.settings'), fn: () => openSettings() },
     { icon: ICONS.trash, label: t('ctx.delete'), fn: () => deletePage(pi), danger: true }
   ]);
@@ -1420,7 +1458,7 @@ canvas.addEventListener('contextmenu', e => {
     e.preventDefault();
     showCtxMenu(e.clientX, e.clientY, [
       { icon: ICONS.clipboard, label: t('ctx.paste'), fn: () => pastePageAt(state.manifest.pages.length), disabled: !internalPageClip },
-      { icon: ICONS.filePlus, label: t('editor.addBlank'), fn: () => addBlankPage() },
+      { icon: ICONS.filePlus, label: t('editor.addPageHere'), submenu: buildAddPageCtxSubmenu(undefined) },
       'sep',
       { icon: ICONS.settings, label: t('menu.settings'), fn: () => openSettings() }
     ]);
@@ -1437,12 +1475,16 @@ canvas.addEventListener('contextmenu', e => {
       { icon: ICONS.copyPlus, label: t('editor.duplicate'), fn: duplicateSelected },
       { icon: ICONS.clipboard, label: t('editor.paste'), fn: () => pasteField(pi), disabled: !state.copiedField },
       'sep',
+      { icon: ICONS.filePlus, label: t('editor.addPageHere'), submenu: buildAddPageCtxSubmenu(pi + 1) },
+      'sep',
       { icon: ICONS.settings, label: t('menu.settings'), fn: () => openSettings() },
       { icon: ICONS.trash, label: t('editor.delete'), fn: deleteSelected, danger: true }
     ]);
   } else {
     showCtxMenu(e.clientX, e.clientY, [
       { icon: ICONS.clipboard, label: t('editor.paste'), fn: () => pasteField(pi), disabled: !state.copiedField },
+      'sep',
+      { icon: ICONS.filePlus, label: t('editor.addPageHere'), submenu: buildAddPageCtxSubmenu(pi + 1) },
       'sep',
       { icon: ICONS.copyPlus, label: t('ctx.duplicate'), fn: () => duplicatePage(pi) },
       { icon: ICONS.settings, label: t('menu.settings'), fn: () => openSettings() },

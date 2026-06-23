@@ -333,7 +333,8 @@ body.embed-mode .topbar { display: none; }
 .mi-sub { font-size: 0.76rem; font-weight: 400; line-height: 1.25; color: var(--tinta-suave); }
 .topbar-menu-item--primary .mi-sub { color: var(--rojo); opacity: 0.8; }
 .topbar-submenu-wrap { position: relative; }
-.topbar-submenu-trigger { justify-content: space-between; }
+.topbar-submenu-trigger { justify-content: flex-start; }
+.topbar-submenu-trigger .mi-text { flex: 1 1 auto; text-align: left; }
 .submenu-arrow { width: 14px !important; height: 14px !important; flex-shrink: 0; margin-top: 0 !important; opacity: 0.6; }
 .topbar-submenu {
   position: absolute;
@@ -1340,8 +1341,10 @@ body.resizing-col { cursor: col-resize; }
   font-family: var(--cuerpo);
   font-size: 0.9rem;
   text-align: left;
+  white-space: nowrap;
   cursor: pointer;
 }
+.ctx-label { flex: 1 1 auto; text-align: left; }
 .ctx-item:hover, .ctx-item:focus-visible { background: var(--ambar-claro); outline: none; }
 .ctx-item.danger { color: var(--rojo); }
 .ctx-item.danger:hover { background: var(--rojo-claro); }
@@ -1350,6 +1353,41 @@ body.resizing-col { cursor: col-resize; }
 .ctx-icon { display: inline-flex; flex-shrink: 0; }
 .ctx-icon svg { width: 16px; height: 16px; }
 .ctx-sep { height: 1px; margin: 5px 8px; background: var(--tinta-tenue); }
+.ctx-submenu-wrap { position: relative; }
+.ctx-submenu-trigger { justify-content: flex-start; }
+.ctx-submenu-arrow {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-left: auto;
+  opacity: 0.6;
+}
+.ctx-submenu-arrow svg { width: 14px; height: 14px; }
+.ctx-submenu {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 4px);
+  z-index: 201;
+  min-width: 250px;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  background: var(--blanco);
+  color: var(--tinta);
+  border: 2px solid var(--tinta);
+  border-radius: 10px;
+  box-shadow: 4px 4px 0 rgba(29, 44, 66, 0.18);
+}
+.ctx-submenu-wrap:hover .ctx-submenu,
+.ctx-submenu-wrap:focus-within .ctx-submenu { display: flex; }
+.ctx-submenu::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -8px;
+  width: 8px;
+  height: 100%;
+}
 
 /* Paleta de tipos de campo */
 .ed-palette {
