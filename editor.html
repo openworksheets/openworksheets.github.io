@@ -209,9 +209,11 @@
               <option value="warn" data-i18n="dlg.security.focusModeWarn">Mostrar un aviso</option>
               <option value="record" data-i18n="dlg.security.focusModeRecord">Mostrar un aviso y registrarlo en la entrega</option>
             </select>
-            <label class="f-label" for="ajFocusMaxIncidents" data-i18n="dlg.security.focusMaxIncidents">Entregar automáticamente tras este número de incidencias (0 = nunca)</label>
-            <input type="number" id="ajFocusMaxIncidents" min="0" step="1" value="0">
-            <p><small data-i18n="dlg.security.focusMaxIncidentsHint">Cuenta salidas de la pestaña o ventana y, si está activa la pantalla completa, también sus salidas. Si se alcanza este límite, la ficha se entrega sin permitir continuar.</small></p>
+            <div id="ajFocusMaxIncidentsBox" hidden>
+              <label class="f-label" for="ajFocusMaxIncidents" data-i18n="dlg.security.focusMaxIncidents">Entregar automáticamente tras este número de incidencias (0 = nunca)</label>
+              <input type="number" id="ajFocusMaxIncidents" min="0" step="1" value="0">
+              <p><small data-i18n="dlg.security.focusMaxIncidentsHint">Cuenta salidas de la pestaña o ventana y, si está activa la pantalla completa, también sus salidas. Si se alcanza este límite, la ficha se entrega sin permitir continuar.</small></p>
+            </div>
           </div>
           <h3 class="settings-subhead" data-i18n="dlg.security.meterSection">Indicador de seguridad</h3>
           <label class="check-row"><input type="checkbox" id="ajSecurityMeter" checked> <span data-i18n="dlg.security.meterShow">Mostrar el semáforo de seguridad en la barra del editor</span></label>

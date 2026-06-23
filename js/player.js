@@ -92,6 +92,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
   let securityIncidentCount = 0;
   let lastSecurityIncidentAt = 0;
   let securityForcedSubmit = false;
+  let securityIgnoreUntil = 0;
 
   function loadState() {
     if (preview) return null;
@@ -161,6 +162,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
   // hasta que el alumnado lo cierra. Se reutiliza una sola instancia: nuevos
   // incidentes actualizan su texto en vez de apilar ventanas.
   let securityAlert = null;
+  let onSecurityAlertDismiss = null;
   function showSecurityAlert(message) {
     if (securityAlert && document.body.contains(securityAlert)) {
       const m = securityAlert.querySelector('.al-security-msg');
@@ -170,7 +172,11 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     const dlg = el('dialog', { class: 'al-security-dialog' });
     const btn = el('button', { class: 'btn primary', type: 'button' }, t('player.securityDismiss'));
     btn.addEventListener('click', () => { try { dlg.close(); } catch { /* noop */ } });
-    dlg.addEventListener('close', () => { dlg.remove(); if (securityAlert === dlg) securityAlert = null; });
+    dlg.addEventListener('close', () => {
+      dlg.remove();
+      if (securityAlert === dlg) securityAlert = null;
+      if (typeof onSecurityAlertDismiss === 'function') onSecurityAlertDismiss();
+    });
     dlg.appendChild(el('div', { class: 'al-security-card' },
       el('div', { class: 'al-security-icon' }, '⚠'),
       el('p', { class: 'al-security-msg' }, message),
@@ -190,6 +196,8 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     securityIncidentCount = 0;
     lastSecurityIncidentAt = 0;
     securityForcedSubmit = false;
+    securityIgnoreUntil = 0;
+    onSecurityAlertDismiss = null;
     closeSecurityAlert();
   }
 
@@ -437,14 +445,17 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     const shouldKeepFullscreen = Boolean(settings.keepFullscreen) && Boolean(document.documentElement?.requestFullscreen);
     const shouldGuard = !scormMode && (shouldKeepFullscreen || shouldWarnFocus || (focusMode !== 'free' && focusMaxIncidents > 0));
 
-    const requestFullscreen = () => {
+    const requestFullscreen = ({ suppressIncidents = false } = {}) => {
       if (finished || document.fullscreenElement || !shouldKeepFullscreen) return;
+      if (suppressIncidents) securityIgnoreUntil = Date.now() + 1500;
       document.documentElement.requestFullscreen().catch(() => {});
     };
+    onSecurityAlertDismiss = () => requestFullscreen({ suppressIncidents: true });
     const recordIncident = (type) => {
       if (!shouldGuard || finished) return;
-      if (securityAlert && document.body.contains(securityAlert)) return;
       const now = Date.now();
+      if (now < securityIgnoreUntil) return;
+      if (securityAlert && document.body.contains(securityAlert)) return;
       if (now - lastSecurityIncidentAt < 1200) return;
       lastSecurityIncidentAt = now;
       securityIncidentCount += 1;
@@ -458,7 +469,10 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
     };
 
     if (shouldGuard) {
-      const onPointerDown = () => requestFullscreen();
+      const onPointerDown = (e) => {
+        if (securityAlert && securityAlert.contains(e.target)) return;
+        requestFullscreen();
+      };
       const onVisibility = () => {
         if (document.visibilityState === 'hidden') recordIncident('hidden');
       };
@@ -470,13 +484,15 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
       document.addEventListener('visibilitychange', onVisibility);
       window.addEventListener('blur', onBlur);
       document.addEventListener('fullscreenchange', onFullscreen);
+      document.addEventListener('focusin', onPointerDown, true);
       securityCleanup = () => {
         document.removeEventListener('pointerdown', onPointerDown, true);
         document.removeEventListener('visibilitychange', onVisibility);
         window.removeEventListener('blur', onBlur);
         document.removeEventListener('fullscreenchange', onFullscreen);
+        document.removeEventListener('focusin', onPointerDown, true);
       };
-      requestFullscreen();
+      requestFullscreen({ suppressIncidents: true });
     }
 
     // Renderizar fórmulas LaTeX (\(…\), \[…\]) en todo el documento del alumno:

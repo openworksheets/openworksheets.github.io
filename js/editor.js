@@ -5191,13 +5191,19 @@ function openSettings(afterSave, initialTab = 'basic') {
 
 $('#ajCifrarEntregas')?.addEventListener('change', updateCryptoSettingsUi);
 $('#ajCryptoPassword')?.addEventListener('input', updateCryptoRequiredMark);
-// Las opciones de «qué hacer al salir» y entrega automática solo tienen sentido
-// con el control de pantalla completa activado: se muestran solo entonces.
+// Las opciones de «qué hacer al salir» solo tienen sentido con el control de
+// pantalla completa activado. La entrega automática, además, solo aplica si el
+// profesor ha elegido avisar o registrar incidencias.
 function updateFocusOptionsUi() {
   const box = $('#ajFocusOptions');
-  if (box) box.hidden = !$('#ajKeepFullscreen').checked;
+  const incidentsBox = $('#ajFocusMaxIncidentsBox');
+  const keepFullscreen = $('#ajKeepFullscreen').checked;
+  const focusMode = $('#ajFocusMode').value;
+  if (box) box.hidden = !keepFullscreen;
+  if (incidentsBox) incidentsBox.hidden = !keepFullscreen || focusMode === 'free';
 }
 $('#ajKeepFullscreen')?.addEventListener('change', updateFocusOptionsUi);
+$('#ajFocusMode')?.addEventListener('change', updateFocusOptionsUi);
 $('#ajResetPrefs')?.addEventListener('click', resetPersistentEditorPrefs);
 
 $('#dlgAjustes form')?.addEventListener('submit', ev => {
@@ -5237,7 +5243,9 @@ $('#dlgAjustes')?.addEventListener('close', () => {
   // control de pantalla completa activado; si está desmarcado, se desactiva.
   if ($('#ajKeepFullscreen').checked) {
     state.manifest.settings.focusMode = ['free', 'warn', 'record'].includes($('#ajFocusMode').value) ? $('#ajFocusMode').value : 'free';
-    state.manifest.settings.focusMaxIncidents = Math.max(0, parseInt($('#ajFocusMaxIncidents').value, 10) || 0);
+    state.manifest.settings.focusMaxIncidents = state.manifest.settings.focusMode === 'free'
+      ? 0
+      : Math.max(0, parseInt($('#ajFocusMaxIncidents').value, 10) || 0);
   } else {
     state.manifest.settings.focusMode = 'free';
     state.manifest.settings.focusMaxIncidents = 0;
