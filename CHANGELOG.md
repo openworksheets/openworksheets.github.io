@@ -14,6 +14,9 @@ Las versiones publicadas también están en la página de
 ### Mejorado
 - **Modal de compartir del editor**: input URL y botón «Generar enlace» ahora aparecen en la misma fila (igual que en la pantalla de inicio), con label y aviso de tamaño debajo del campo; anchura aumentada a 680 px para que todos los puntos de la lista quepan en una línea.
 
+### Corregido
+- **Aviso de supervisión**: el mensaje al salir de la pestaña/ventana/pantalla completa ya no dice «quedará registrada en la entrega» cuando el modo es solo aviso (warn); esa frase aparece únicamente en modo registro (record).
+
 ## [1.22.0] — 2026-06-23
 
 ### Añadido

@@ -449,7 +449,7 @@ export function mountPlayer(rootEl, ficha, opts = {}) {
       lastSecurityIncidentAt = now;
       securityIncidentCount += 1;
       if (shouldRecordFocus) securityIncidents.push({ type, at: new Date(now).toISOString() });
-      if (shouldWarnFocus) showSecurityAlert(t('player.focusWarning'));
+      if (shouldWarnFocus) showSecurityAlert(t(shouldRecordFocus ? 'player.focusWarningRecord' : 'player.focusWarning'));
       if (focusMaxIncidents > 0 && securityIncidentCount >= focusMaxIncidents && !securityForcedSubmit) {
         securityForcedSubmit = true;
         showSecurityAlert(t('player.focusAutoSubmitted'));
