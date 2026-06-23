@@ -327,6 +327,16 @@ body.embed-mode .topbar { display: none; }
 .topbar-menu-item--primary { color: var(--rojo); font-weight: 600; }
 .topbar-menu-item--primary:hover,
 .topbar-menu-item--primary:focus-visible { background: var(--rojo-claro); }
+.topbar-menu-item--workflow {
+  background: color-mix(in srgb, var(--azul-claro) 58%, transparent);
+  box-shadow: inset 0 0 0 1px var(--tinta-tenue);
+}
+.topbar-menu-item--workflow:hover,
+.topbar-menu-item--workflow:focus-visible {
+  background: color-mix(in srgb, var(--azul-claro) 70%, var(--ambar-claro));
+}
+.topbar-menu-item--workflow .mi-title { font-weight: 700; }
+.topbar-menu-item--workflow .mi-sub { color: var(--tinta); opacity: 0.82; }
 /* Opción de menú con título + subtítulo descriptivo en dos líneas. */
 .topbar-menu-item { align-items: flex-start; }
 .mi-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
