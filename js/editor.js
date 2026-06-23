@@ -2119,14 +2119,131 @@ function pasteField(pi) {
   selectField(pi, copy.id);
 }
 
+function focusedThumbPageIndex() {
+  const thumbEl = document.activeElement?.closest?.('.ed-thumb');
+  return thumbEl ? parseInt(thumbEl.dataset.page, 10) : null;
+}
+
+function currentEditPageIndex() {
+  const thumbPi = focusedThumbPageIndex();
+  if (thumbPi !== null) return thumbPi;
+  if (state.sel?.pageIndex !== undefined) return state.sel.pageIndex;
+  const pi = currentPageIndex();
+  return pi >= 0 ? pi : null;
+}
+
+function currentEditTarget() {
+  const thumbPi = focusedThumbPageIndex();
+  if (thumbPi !== null) return { kind: 'page', pageIndex: thumbPi };
+  if (state.sel?.kind === 'page') return { kind: 'page', pageIndex: state.sel.pageIndex };
+  if (state.sel?.kind === 'field') return { kind: 'field', pageIndex: state.sel.pageIndex };
+  if (state.sel) return { kind: 'subfield', pageIndex: state.sel.pageIndex };
+  return { kind: 'none', pageIndex: null };
+}
+
+function canPasteIntoPage(pi) {
+  return pi !== null && (state.copiedField || internalPageClip || state.manifest.pages[pi]);
+}
+
+async function pasteFromClipboardOrInternal(pi = currentEditPageIndex()) {
+  if (state.copiedField && pi !== null) {
+    pasteField(pi);
+    return;
+  }
+  if (internalPageClip) {
+    pastePageAt(pi === null ? state.manifest.pages.length : pi + 1);
+    return;
+  }
+  try {
+    const clipItems = await navigator.clipboard.read();
+    for (const item of clipItems) {
+      const imgType = item.types.find(tp => tp.startsWith('image/'));
+      if (imgType) {
+        const blob = await item.getType(imgType);
+        await pasteImage(blob, imgType);
+        return;
+      }
+    }
+    for (const item of clipItems) {
+      if (item.types.includes('text/plain')) {
+        const blob = await item.getType('text/plain');
+        const text = (await blob.text()).trim();
+        if (text) { await pasteText(text); return; }
+      }
+    }
+    toast(t('toast.pasteEmpty'), 'error');
+  } catch {
+    toast(t('toast.pasteUseCtrlV'), 'info');
+  }
+}
+
+function editCopy() {
+  const target = currentEditTarget();
+  if (target.kind === 'page') copyPage(target.pageIndex);
+  else if (target.kind === 'field') copySelected();
+}
+
+function editCut() {
+  const target = currentEditTarget();
+  if (target.kind === 'page') copyPage(target.pageIndex, { cut: true });
+  else if (target.kind === 'field') {
+    copySelected();
+    deleteSelected();
+  }
+}
+
+async function editPaste() {
+  await pasteFromClipboardOrInternal();
+}
+
+function editDuplicate() {
+  const target = currentEditTarget();
+  if (target.kind === 'page') duplicatePage(target.pageIndex);
+  else if (target.kind === 'field') duplicateSelected();
+}
+
+function editDelete() {
+  const target = currentEditTarget();
+  if (target.kind === 'page') deletePage(target.pageIndex);
+  else if (target.kind !== 'none') deleteSelected();
+}
+
+function addPageAtCurrentPosition(kind) {
+  const currentPi = currentEditPageIndex();
+  const insertAt = currentPi === null ? undefined : currentPi + 1;
+  if (kind === 'blank') return addBlankPage(insertAt);
+  if (kind === 'ai') return openAiDialog({ onImport: (data) => addAiPages(data, insertAt) });
+  if (kind === 'pdf') {
+    const input = $('#inputPaginas');
+    const handler = e => {
+      addFiles(e.target.files, insertAt);
+      e.target.value = '';
+      input.removeEventListener('change', handler);
+    };
+    input.addEventListener('change', handler);
+    input.click();
+    return;
+  }
+  if (kind === 'zip') {
+    const input = $('#inputZipMerge');
+    const handler = e => {
+      if (e.target.files[0]) mergeZipFile(e.target.files[0], insertAt);
+      e.target.value = '';
+      input.removeEventListener('change', handler);
+    };
+    input.addEventListener('change', handler);
+    input.click();
+  }
+}
+
 document.addEventListener('keydown', e => {
   const inForm = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || '');
   if (inForm) return;
 
   // Si el foco está en una miniatura de la tira, los atajos actúan sobre páginas.
-  const thumbEl = document.activeElement?.closest?.('.ed-thumb');
-  if (thumbEl) {
-    const pi = parseInt(thumbEl.dataset.page, 10);
+  const thumbPi = focusedThumbPageIndex();
+  if (thumbPi !== null) {
+    const pi = thumbPi;
     const mod = e.ctrlKey || e.metaKey;
     if (mod && e.key.toLowerCase() === 'c') { e.preventDefault(); copyPage(pi); }
     else if (mod && e.key.toLowerCase() === 'x') { e.preventDefault(); copyPage(pi, { cut: true }); }
@@ -2137,14 +2254,30 @@ document.addEventListener('keydown', e => {
   }
 
   // Copiar y pegar: funcionan con cualquier tipo de selección (campo o página).
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'x') {
+    const target = currentEditTarget();
+    if (target.kind === 'page' || target.kind === 'field') {
+      e.preventDefault();
+      editCut();
+    }
+    return;
+  }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
-    if (state.sel?.kind === 'field') { e.preventDefault(); copySelected(); }
+    const target = currentEditTarget();
+    if (target.kind === 'page' || target.kind === 'field') {
+      e.preventDefault();
+      editCopy();
+    }
     return;
   }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
     if (state.copiedField && state.sel?.pageIndex !== undefined) {
       e.preventDefault();
       pasteField(state.sel.pageIndex);
+    } else if (internalPageClip) {
+      const pi = currentEditPageIndex();
+      e.preventDefault();
+      pastePageAt(pi === null ? state.manifest.pages.length : pi + 1);
     }
     return;
   }
@@ -2155,6 +2288,17 @@ document.addEventListener('keydown', e => {
   }
   if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey))) {
     e.preventDefault(); redo(); return;
+  }
+
+  if (state.sel?.kind === 'page') {
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      e.preventDefault();
+      deletePage(state.sel.pageIndex);
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+      e.preventDefault();
+      duplicatePage(state.sel.pageIndex);
+    }
+    return;
   }
 
   // El resto de atajos requieren un campo seleccionado.
@@ -2204,7 +2348,6 @@ document.addEventListener('keydown', e => {
 
 function renderPanel() {
   panel.textContent = '';
-  $('#btnCopiarCampo').disabled = !(state.sel?.kind === 'field');
   if (state.sel) {
     if (state.sel.kind === 'page') {
       renderPagePanel(state.sel.pageIndex);
@@ -5695,6 +5838,12 @@ titleInput.addEventListener('input', () => { state.manifest.title = titleInput.v
 const menuArchivo = $('#menuArchivo');
 const btnArchivo = $('#btnArchivo');
 const menuArchivoList = menuArchivo.querySelector('.topbar-menu-list');
+const menuEditar = $('#menuEditar');
+const btnEditar = $('#btnEditar');
+const menuEditarList = menuEditar.querySelector('.topbar-menu-list');
+const menuUtilidades = $('#menuUtilidades');
+const btnUtilidades = $('#btnUtilidades');
+const menuUtilidadesList = menuUtilidades.querySelector('.topbar-menu-list');
 
 function closeFileMenu() {
   if (menuArchivoList.hidden) return;
@@ -5704,6 +5853,8 @@ function closeFileMenu() {
   document.removeEventListener('keydown', onKeyFileMenu, true);
 }
 function openFileMenu() {
+  closeEditMenu();
+  closeUtilMenu();
   menuArchivoList.hidden = false;
   btnArchivo.setAttribute('aria-expanded', 'true');
   document.addEventListener('click', onDocClickFileMenu, true);
@@ -5720,6 +5871,72 @@ btnArchivo.addEventListener('click', () => {
 });
 // Cada opción ejecuta su acción y cierra el menú.
 const fileMenuItem = (id, fn) => $(id).addEventListener('click', () => { closeFileMenu(); fn(); });
+
+// ---------- Menú «Editar» ----------
+
+const editMenuItems = {
+  undo: $('#miUndo'),
+  redo: $('#miRedo'),
+  cut: $('#miCut'),
+  copy: $('#miCopy'),
+  paste: $('#miPaste'),
+  duplicate: $('#miDuplicate'),
+  del: $('#miDelete'),
+  addPdf: $('#miEditAddPdf'),
+  addZip: $('#miEditAddZip'),
+  addBlank: $('#miEditAddBlank'),
+  addAi: $('#miEditAddAi')
+};
+
+function updateEditMenuState() {
+  const target = currentEditTarget();
+  const pi = currentEditPageIndex();
+  editMenuItems.undo.disabled = undoStack.length === 0;
+  editMenuItems.redo.disabled = redoStack.length === 0;
+  editMenuItems.cut.disabled = !(target.kind === 'page' || target.kind === 'field');
+  editMenuItems.copy.disabled = !(target.kind === 'page' || target.kind === 'field');
+  editMenuItems.paste.disabled = !canPasteIntoPage(pi);
+  editMenuItems.duplicate.disabled = !(target.kind === 'page' || target.kind === 'field');
+  editMenuItems.del.disabled = target.kind === 'none';
+}
+
+function closeEditMenu() {
+  if (menuEditarList.hidden) return;
+  menuEditarList.hidden = true;
+  btnEditar.setAttribute('aria-expanded', 'false');
+  document.removeEventListener('click', onDocClickEditMenu, true);
+  document.removeEventListener('keydown', onKeyEditMenu, true);
+}
+function openEditMenu() {
+  closeFileMenu();
+  closeUtilMenu();
+  updateEditMenuState();
+  menuEditarList.hidden = false;
+  btnEditar.setAttribute('aria-expanded', 'true');
+  document.addEventListener('click', onDocClickEditMenu, true);
+  document.addEventListener('keydown', onKeyEditMenu, true);
+}
+function onDocClickEditMenu(e) {
+  if (!menuEditar.contains(e.target)) closeEditMenu();
+}
+function onKeyEditMenu(e) {
+  if (e.key === 'Escape') { closeEditMenu(); btnEditar.focus(); }
+}
+btnEditar.addEventListener('click', () => {
+  menuEditarList.hidden ? openEditMenu() : closeEditMenu();
+});
+const editMenuItem = (id, fn) => $(id).addEventListener('click', async () => { closeEditMenu(); await fn(); });
+editMenuItem('#miUndo', undo);
+editMenuItem('#miRedo', redo);
+editMenuItem('#miCut', editCut);
+editMenuItem('#miCopy', editCopy);
+editMenuItem('#miPaste', editPaste);
+editMenuItem('#miDuplicate', editDuplicate);
+editMenuItem('#miDelete', editDelete);
+editMenuItem('#miEditAddPdf', () => addPageAtCurrentPosition('pdf'));
+editMenuItem('#miEditAddZip', () => addPageAtCurrentPosition('zip'));
+editMenuItem('#miEditAddBlank', () => addPageAtCurrentPosition('blank'));
+editMenuItem('#miEditAddAi', () => addPageAtCurrentPosition('ai'));
 
 // El menú «Archivo» reemplaza la ficha del editor (abrir o empezar de cero); para
 // añadir páginas a la ficha actual están los botones entre páginas.
@@ -5801,10 +6018,6 @@ fileMenuItem('#miAjustes', openSettings);
 
 // ---------- Menú Utilidades ----------
 
-const menuUtilidades = $('#menuUtilidades');
-const btnUtilidades = $('#btnUtilidades');
-const menuUtilidadesList = menuUtilidades.querySelector('.topbar-menu-list');
-
 function closeUtilMenu() {
   if (menuUtilidadesList.hidden) return;
   menuUtilidadesList.hidden = true;
@@ -5813,6 +6026,8 @@ function closeUtilMenu() {
   document.removeEventListener('keydown', onKeyUtilMenu, true);
 }
 function openUtilMenu() {
+  closeFileMenu();
+  closeEditMenu();
   menuUtilidadesList.hidden = false;
   btnUtilidades.setAttribute('aria-expanded', 'true');
   document.addEventListener('click', onDocClickUtilMenu, true);
@@ -6106,37 +6321,6 @@ document.addEventListener('paste', async e => {
   await handlePasteItems(Array.from(e.clipboardData?.items || []));
 });
 
-$('#btnCopiarCampo').addEventListener('click', () => copySelected());
-
-$('#btnPegar').addEventListener('click', async () => {
-  // Si hay un campo copiado internamente, pegarlo en la página actual.
-  if (state.copiedField && state.sel?.pageIndex !== undefined) {
-    pasteField(state.sel.pageIndex);
-    return;
-  }
-  try {
-    const clipItems = await navigator.clipboard.read();
-    for (const item of clipItems) {
-      const imgType = item.types.find(tp => tp.startsWith('image/'));
-      if (imgType) {
-        const blob = await item.getType(imgType);
-        await pasteImage(blob, imgType);
-        return;
-      }
-    }
-    for (const item of clipItems) {
-      if (item.types.includes('text/plain')) {
-        const blob = await item.getType('text/plain');
-        const text = (await blob.text()).trim();
-        if (text) { await pasteText(text); return; }
-      }
-    }
-    toast(t('toast.pasteEmpty'), 'error');
-  } catch {
-    toast(t('toast.pasteUseCtrlV'), 'info');
-  }
-});
-
 // Arrastrar archivos al lienzo
 canvas.addEventListener('dragover', e => e.preventDefault());
 canvas.addEventListener('drop', e => {
@@ -6228,6 +6412,7 @@ function redo() {
 function updateUndoButtons() {
   const u = $('#btnDeshacer'); if (u) u.disabled = undoStack.length === 0;
   const r = $('#btnRehacer'); if (r) r.disabled = redoStack.length === 0;
+  updateEditMenuState();
 }
 
 onDirty(scheduleCommit);
