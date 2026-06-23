@@ -1,6 +1,8 @@
 // Reconocimiento de enlaces de Google Drive y construcción del enlace
 // que se comparte con el alumnado.
 
+import { compressToBase64url, decompressFromBase64url } from './util.js';
+
 // Extrae el identificador de archivo de las distintas formas de URL de Drive.
 export function parseDriveId(url) {
   if (!url) return null;
@@ -55,7 +57,7 @@ export function toDirectUrl(url) {
   return url;
 }
 
-// Construye el enlace largo para el alumnado (fallback sin GAS).
+// Construye el enlace legible para el alumnado (compatibilidad / fallback).
 export function buildStudentLink(zipUrl) {
   const direct = toDirectUrl(zipUrl);
   const base = new URL('alumno.html', window.location.href);
@@ -63,30 +65,21 @@ export function buildStudentLink(zipUrl) {
   return base.href;
 }
 
-// Genera un enlace corto opaco mediante el GAS.
-// Devuelve { link, short: true } si el GAS responde con token,
-// o { link, short: false } con el enlace largo si falla.
-// NOTA: el GAS (config.js -> gasUrl) es compartido con Visor Web-ZIP; su
-// código vive en el repo de Visor Web-ZIP (gas/Code.js). Los tokens se
-// guardan en shortlinks.json en Drive: no borrar ese archivo compartido.
+// Genera un enlace autocontenido y opaco para el alumnado.
+// No necesita servidor ni mantener un índice externo de tokens.
 export async function buildShortLink(zipUrl) {
   const direct = toDirectUrl(zipUrl);
-  const gasUrl = window.OPENWORKSHEETS_CONFIG?.gasUrl;
-  if (gasUrl) {
-    try {
-      const res = await fetch(
-        gasUrl + '?short=1&url=' + encodeURIComponent(direct),
-        { redirect: 'follow' }
-      );
-      const json = await res.json();
-      if (json.token) {
-        const base = new URL('alumno.html', window.location.href);
-        base.search = '?s=' + json.token;
-        return { link: base.href, short: true };
-      }
-    } catch (_) { /* si falla el GAS, usar enlace largo */ }
-  }
-  return { link: buildStudentLink(zipUrl), short: false };
+  const encoded = await compressToBase64url(direct);
+  const base = new URL('alumno.html', window.location.href);
+  base.search = '?d=' + encoded;
+  return { link: base.href };
+}
+
+// Resuelve el nuevo formato autocontenido ?d=...
+export async function resolvePackedUrl(data) {
+  const url = await decompressFromBase64url(data);
+  if (typeof url !== 'string' || !url) throw new Error('Enlace no válido');
+  return url;
 }
 
 // Resuelve un token corto a la URL original llamando al GAS.

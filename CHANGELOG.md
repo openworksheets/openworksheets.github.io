@@ -11,11 +11,20 @@ Las versiones publicadas también están en la página de
 
 ## [Unreleased]
 
+## [1.23.0] — 2026-06-23
+
 ### Mejorado
-- **Modal de compartir del editor**: input URL y botón «Generar enlace» ahora aparecen en la misma fila (igual que en la pantalla de inicio), con label y aviso de tamaño debajo del campo; anchura aumentada a 680 px para que todos los puntos de la lista quepan en una línea.
+- **Diálogo de compartir del editor**: input URL y botón «Generar enlace» ahora aparecen en la misma fila (igual que en la pantalla de inicio), con label y aviso de tamaño debajo del campo; anchura aumentada a 680 px para que todos los puntos de la lista quepan en una línea.
+- **Instrucciones de compartir más claras**: tanto en la pantalla de inicio como en el modal del editor, los textos explican mejor que el enlace final generado es el que debe compartirse con el alumnado para abrir la ficha y completar los ejercicios.
+- **Mensajes de supervisión más directos**: los avisos al alumnado sobre salir de la pestaña o de la pantalla completa se han simplificado y armonizado en los cinco idiomas, con una redacción más clara para norma, aviso y cierre forzado.
+
+### Cambiado
+- **Enlaces para el alumnado sin índice externo**: la generación de enlaces compartibles deja de depender del archivo `shortlinks.json` y pasa a usar un formato autocontenido y opaco (`?d=...`) que no necesita servidor ni almacenamiento adicional. Se mantiene compatibilidad con enlaces antiguos `?s=` y `?z=`.
 
 ### Corregido
-- **Aviso de supervisión**: el mensaje al salir de la pestaña/ventana/pantalla completa ya no dice «quedará registrada en la entrega» cuando el modo es solo aviso (warn); esa frase aparece únicamente en modo registro (record).
+- **Aviso de supervisión**: el mensaje al salir de la pestaña/ventana/pantalla completa ya no dice «quedará registrada en la entrega» cuando el modo es solo aviso (`warn`); esa frase aparece únicamente en modo registro (`record`).
+- **Salida de pantalla completa**: al cerrar el aviso de supervisión ya no se encadenan dos incidencias visibles por una sola salida; la reentrada en pantalla completa vuelve a producirse sin mostrar el mismo mensaje dos veces.
+- **Ajustes de supervisión**: la opción «Entregar automáticamente tras este número de incidencias» solo se muestra cuando el profesorado ha activado el control de pantalla completa y ha elegido avisar o registrar incidencias, evitando configuraciones incoherentes.
 
 ## [1.22.0] — 2026-06-23
 

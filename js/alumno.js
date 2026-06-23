@@ -1,6 +1,6 @@
 // Arranque del visor del alumno (alumno.html).
-// Con ?z=<url> descarga el ZIP automáticamente; sin parámetro permite
-// abrir un ZIP local o pegar un enlace.
+// Con ?d=<datos> o ?z=<url> descarga la ficha automáticamente; sin parámetro
+// permite abrir un ZIP local o pegar un enlace.
 
 import { el, toast } from './util.js';
 import { toDirectUrl } from './drive.js';
@@ -131,16 +131,22 @@ function showOpener() {
 async function main() {
   const params = new URLSearchParams(window.location.search);
   let zipUrl = params.get('z') || params.get('url');
+  const packedUrl = params.get('d');
   const shortToken = params.get('s');
 
   // Modo incrustado (iframe en un blog/web): oculta la barra superior del visor
   // para que la ficha ocupe todo el marco. Se activa con `embed=1`.
   if (params.get('embed') === '1') document.body.classList.add('embed-mode');
 
-  if (!zipUrl && !shortToken) { showOpener(); return; }
+  if (!zipUrl && !packedUrl && !shortToken) { showOpener(); return; }
 
   const loading = showLoading();
   try {
+    if (packedUrl) {
+      loading.setStatus(t('alumno.connecting'));
+      const { resolvePackedUrl } = await import('./drive.js');
+      zipUrl = await resolvePackedUrl(packedUrl);
+    }
     if (shortToken) {
       loading.setStatus(t('alumno.connecting'));
       const { resolveShortToken } = await import('./drive.js');
