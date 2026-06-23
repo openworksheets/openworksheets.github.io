@@ -684,7 +684,8 @@ dialog .dlg-buttons {
 /* Asterisco de «falta la contraseña de cifrado» (etiqueta y pestaña). */
 .req-mark { color: var(--rojo); font-weight: 700; }
 /* Modales de la pantalla de inicio (compartir y verificar entregas) */
-.home-dialog {
+.home-dialog,
+#dlgCompartir {
   position: relative;
   max-width: 680px;
   max-height: calc(100vh - 48px);

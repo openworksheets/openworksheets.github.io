@@ -11,6 +11,9 @@ Las versiones publicadas también están en la página de
 
 ## [Unreleased]
 
+### Mejorado
+- **Modal de compartir del editor**: input URL y botón «Generar enlace» ahora aparecen en la misma fila (igual que en la pantalla de inicio), con label y aviso de tamaño debajo del campo; anchura aumentada a 680 px para que todos los puntos de la lista quepan en una línea.
+
 ## [1.22.0] — 2026-06-23
 
 ### Añadido
