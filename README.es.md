@@ -146,6 +146,22 @@ Esto significa que no hace falta añadir variantes que solo cambian por acentos 
 2. **Compartir:** la ficha se exporta como un paquete `.owpkg` (OpenWorksheets Package, internamente un ZIP) que contiene todo lo necesario. Se sube a Google Drive u otro alojamiento público y se comparte con el alumnado mediante un enlace generado en la propia aplicación. Ese mismo modal ofrece además un **código `<iframe>` para incrustar la ficha** en un blog o página web (con altura configurable). El alumnado no tiene acceso al paquete original, lo que protege el contenido.
 3. **Responder y entregar:** el alumnado responde desde el navegador y, al terminar, puede descargar un archivo de entrega (`.owsub`) o copiar un enlace directo para enviárselo al docente.
 
+#### Continuidad y caché del visor del alumnado
+
+- En el **enlace oficial del alumnado** (`alumno.html`), OpenWorksheets guarda una **copia local** de la ficha en el navegador (`IndexedDB`). Si la pestaña se recarga o se cierra por error, puede reabrirse **sin volver a descargar** la ficha.
+- Si esa copia local ya existe, el visor la abre primero para que la ficha cargue antes. Después hace una **comprobación en segundo plano** de la versión remota mediante validadores HTTP ligeros (`ETag`/`Last-Modified`/tamaño), sin volver a descargar el archivo completo; si detecta que el archivo publicado ha cambiado, muestra un aviso para recargar y abrir la versión nueva. Esta comprobación solo está disponible cuando el origen expone esos validadores (servidor propio, GitHub Pages…); en orígenes servidos por proxy como **Google Drive** no se comprueba, y basta con volver a abrir el enlace para obtener la versión más reciente.
+- Este comportamiento afecta también al uso **incrustado por `<iframe>`** cuando el iframe apunta al mismo `alumno.html`.
+- En las fichas abiertas desde **archivo local `.owpkg`**, la copia local también permite recuperarlas tras una recarga accidental.
+- En un **navegador compartido** (equipo de aula), cada alumno mantiene su propio estado: los intentos consumidos, la corrección y la última entrega se guardan por alumno (nombre + grupo), de modo que empezar como otra persona no queda bloqueado por los intentos de la anterior. La copia local de fichas se poda automáticamente para no crecer sin límite.
+
+#### Reanudación del intento tras recarga
+
+- Mientras el alumnado responde, OpenWorksheets guarda localmente el **estado del intento en curso**: respuestas, tiempo de inicio, progreso y datos de supervisión.
+- Si la pestaña se recarga o se cierra por error, al volver se reanuda **el mismo intento**, no uno nuevo.
+- Esto significa que **no se reinician** el tiempo límite, los intentos consumidos ni el contador de incidencias por salir de la pestaña o de la pantalla completa.
+- Si la actividad ya había quedado **finalizada o forzada a entregar**, la recarga no permite seguir como si fuera un intento limpio.
+- La misma lógica de reanudación del intento se reutiliza en las exportaciones **web autónoma**, **IMS CP** y **SCORM**. En esas exportaciones no hay comprobación de versión remota de la ficha empaquetada, porque el paquete ya viaja cerrado dentro del ZIP o del LMS.
+
 > **Alternativa: exportar como SCORM 1.2.** Desde *Archivo → Exportar como… → SCORM 1.2* la ficha se empaqueta como un ZIP SCORM autónomo que se sube a **Moodle** o a cualquier LMS compatible como actividad SCORM. En este modo el LMS gestiona la nota, los intentos y el progreso: el visor le envía la puntuación (0–100), el estado (aprobado/suspenso o completado) y el tiempo de sesión según el estándar SCORM 1.2. La nota mínima para aprobar y el modo de estado se configuran en la pestaña **«SCORM»** de los ajustes de la ficha. No usa el archivo de entrega ni el enlace de entrega (los sustituye el LMS).
 
 > **Alternativa: exportar como IMS Content Package.** Desde *Archivo → Exportar como… → IMS CP* la ficha se empaqueta como un ZIP IMS CP 1.1.4 (con `imsmanifest.xml`) para repositorios y plataformas compatibles. A diferencia del SCORM, no incluye seguimiento ni calificación.
@@ -180,6 +196,8 @@ De forma opcional, las fichas pueden hacerse bajo una supervisión ligera (todo 
 - **Entrega automática** tras un número configurable de incidencias (0 = nunca).
 
 Al alumnado se le informan las reglas en la pantalla de inicio (sin revelar cuántas salidas fuerzan el envío automático), los avisos aparecen como un mensaje centrado que permanece hasta que se cierra, y las entregas con incidencias se destacan en la tabla de resultados del docente.
+
+Si el intento se reanuda tras una recarga accidental, estas medidas de supervisión **se conservan**: el contador de incidencias, el tiempo restante y cualquier cierre forzado previo siguen vigentes.
 
 ## Seguridad y cifrado
 

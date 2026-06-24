@@ -147,6 +147,22 @@ This means there is no need to add variants that only differ in accents or case 
 2. **Share:** the worksheet is exported as an `.owpkg` package (OpenWorksheets Package, internally a ZIP) containing everything needed. It is uploaded to Google Drive or another public host and shared with students via a link generated within the application. That same dialog also offers an **`<iframe>` embed code** to insert the worksheet into a blog or website (with a configurable height). Students do not have access to the original package, which protects the content.
 3. **Answer and submit:** students answer in the browser and, when done, can download a submission file (`.owsub`) or copy a direct link to send to the teacher.
 
+#### Student viewer continuity and cache
+
+- In the **official student link** (`alumno.html`), OpenWorksheets stores a **local copy** of the worksheet in the browser (`IndexedDB`). If the tab is reloaded or accidentally closed, it can be reopened **without downloading the worksheet again**.
+- If that local copy already exists, the viewer opens it first so the worksheet appears sooner. It then performs a **background check** against the remote source using lightweight HTTP validators (`ETag`/`Last-Modified`/size), without re-downloading the whole file; if the published file has changed, it shows a notice asking the user to reload to open the newer version. This check is only available when the source exposes those validators (own server, GitHub Pages…); for proxy-served sources such as **Google Drive** it is not performed, and simply reopening the link fetches the latest version.
+- This also applies to the **embedded `<iframe>`** mode when the iframe points to the same `alumno.html`.
+- For worksheets opened from a **local `.owpkg` file**, the same local copy also allows recovery after an accidental reload.
+- On a **shared browser** (classroom computer), each student keeps their own state: consumed attempts, correction, and the last submission are stored per student (name + group), so starting as a different person is not blocked by the previous student's attempts. The local worksheet cache is pruned automatically so it does not grow without bound.
+
+#### Attempt resumption after reload
+
+- While students work, OpenWorksheets saves the **current attempt state** locally: answers, start time, progress, and supervision data.
+- If the tab is reloaded or accidentally closed, reopening it resumes **the same attempt**, not a new one.
+- This means the time limit, consumed attempts, and tab/fullscreen incident counters are **not reset**.
+- If the activity had already been **ended or force-submitted**, reloading does not reopen it as a clean attempt.
+- The same attempt-resume logic is reused in the **standalone web export**, **IMS CP**, and **SCORM** packages. Those exports do not include remote-version checking for the packaged worksheet, because the worksheet already travels sealed inside the ZIP or LMS package.
+
 > **Alternative: export as SCORM 1.2.** From *File → Export as… → SCORM 1.2*, the worksheet is packaged as a standalone SCORM ZIP that can be uploaded to **Moodle** or any compatible LMS as a SCORM activity. In this mode the LMS manages the grade, attempts, and progress: the viewer sends it the score (0–100), status (passed/failed or completed), and session time according to the SCORM 1.2 standard. The minimum passing grade and status mode are configured in the **"SCORM"** tab of the worksheet settings. It does not use the submission file or submission link (these are replaced by the LMS).
 
 > **Alternative: export as IMS Content Package.** From *File → Export as… → IMS CP*, the worksheet is packaged as an IMS CP 1.1.4 ZIP (with `imsmanifest.xml`) for compatible repositories and platforms. Unlike SCORM, it does not include tracking or grading.
@@ -181,6 +197,8 @@ Optionally, worksheets can be done under light supervision (all client-side; it 
 - **Automatic submission** after a configurable number of incidents (0 = never).
 
 Students are told the rules on the start screen (without revealing the number of exits that triggers auto-submission), warnings appear as a centered notice that stays until dismissed, and submissions with incidents are highlighted in the teacher's results table.
+
+If an attempt is resumed after an accidental reload, these supervision rules **remain in force**: the incident counter, remaining time, and any previous forced-end state are preserved.
 
 ## Security and encryption
 

@@ -122,6 +122,27 @@ async function tryCorsProxies(url, onProgress) {
   throw lastError || new Error('Sin proxies disponibles');
 }
 
+// Metadatos ligeros del recurso remoto (validadores HTTP) para detectar cambios
+// de versión SIN descargar el archivo completo. Devuelve { etag, lastModified,
+// size } o null si no se pueden obtener de forma fiable: Google Drive se sirve
+// por proxy y no expone estos encabezados por CORS, y otros servidores pueden no
+// permitir HEAD o no exponer los validadores. En esos casos se prefiere no
+// comprobar la versión antes que descargar la ficha entera en segundo plano.
+export async function fetchRemoteMeta(url) {
+  if (isGoogleDriveUrl(url)) return null;
+  try {
+    const resp = await fetch(url, { method: 'HEAD', redirect: 'follow' });
+    if (!resp.ok) return null;
+    const etag = resp.headers.get('ETag') || '';
+    const lastModified = resp.headers.get('Last-Modified') || '';
+    const size = Number(resp.headers.get('Content-Length')) || 0;
+    if (!etag && !lastModified && !size) return null;
+    return { etag, lastModified, size };
+  } catch {
+    return null;
+  }
+}
+
 const inflightDownloads = new Map();
 
 // Descarga el ZIP y devuelve sus bytes (Uint8Array).

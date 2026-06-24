@@ -9,7 +9,29 @@ Las versiones publicadas también están en la página de
 
 ---
 
-## [Unreleased]
+## [1.24.0] — 2026-06-24
+
+### Añadido
+- **Continuidad del intento tras recargas accidentales**: el visor del alumnado guarda en el navegador no solo las respuestas, sino también el estado del intento en curso (inicio del tiempo, incidencias de supervisión y cierre forzado si ya se alcanzó el límite). Si la pestaña se recarga o se cierra por error, la ficha puede reabrirse y continuar en el mismo punto, sin reiniciar temporizador ni contador de incidencias.
+- **Caché local de la ficha del alumnado**: al abrir una ficha desde enlace o desde archivo local `.owpkg`, el navegador conserva una copia en `IndexedDB` para poder recuperarla tras una recarga accidental sin volver a descargarla.
+
+### Cambiado
+- **Apertura preferente desde copia local**: si una ficha del alumnado ya estaba guardada en el navegador, OpenWorksheets la abre primero desde esa copia para reducir esperas y mejorar la tolerancia a fallos de red. Después comprueba en segundo plano si la versión remota ha cambiado y, si detecta una versión nueva, avisa para recargar.
+- **Comprobación de versión sin descargar la ficha**: la detección de versión nueva usa ahora validadores HTTP ligeros (`ETag`/`Last-Modified`/tamaño) mediante una petición `HEAD`, en lugar de volver a descargar el archivo completo para compararlo byte a byte. Solo se descarga la ficha cuando esos validadores confirman un cambio real, lo que evita tráfico innecesario en el aula y los avisos falsos al reexportar una ficha sin cambios.
+- **Intentos y progreso por alumno en el mismo navegador**: el visor guarda ahora un perfil independiente por alumno (nombre + grupo) dentro de cada ficha, en lugar de un único estado compartido. En un equipo de aula compartido, cada persona tiene su propio recuento de intentos, su corrección y su última entrega, y empezar como otra persona ya no queda bloqueado porque la anterior agotara sus intentos. La pantalla de inicio actualiza los intentos restantes y el aviso de progreso guardado según el nombre que se escribe. El estado anterior (formato único por ficha) se migra automáticamente.
+
+### Corregido
+- **Apertura con almacenamiento bloqueado**: si el navegador no permite usar `IndexedDB` (modo privado, restricciones del centro…), la lectura de la copia local ya no impide abrir la ficha; OpenWorksheets degrada con normalidad a la descarga remota en lugar de mostrar un error de apertura.
+- **Actualización durante un intento en curso**: la comprobación de versión remota ya no avisa de una versión nueva mientras el alumnado tiene un intento activo, evitando que recargar para abrirla descarte el progreso (respuestas, temporizador e incidencias).
+- **Intento heredado en equipos compartidos**: si en el mismo navegador entra una persona distinta de la que dejó un intento a medias, ahora se inicia un intento limpio. Solo se reanudan el temporizador, las respuestas y las incidencias de supervisión cuando coincide el nombre de quien continúa, evitando que un alumno herede el reloj o el contador de incidencias de otro.
+- **Caché local sin crecimiento ilimitado**: la copia local de fichas en `IndexedDB` se poda automáticamente; se conservan como mucho las 25 fichas más recientes y se descartan las que llevan más de 60 días sin usarse, para no acumular fichas indefinidamente en equipos de aula compartidos.
+
+### Documentado
+- **Ámbito de la mejora**: el caché local y la comprobación de versión remota afectan al visor oficial del enlace del alumnado (`alumno.html`, incluido su uso incrustado con `embed=1`). La reanudación del intento tras recarga afecta también a las exportaciones que reutilizan `player.js` (web autónoma, IMS CP y paquete SCORM), aunque en esas exportaciones no existe comprobación de actualización remota de la ficha empaquetada.
+- **Límite de la comprobación de versión**: solo se realiza cuando el origen de la ficha expone validadores HTTP accesibles (servidor propio, GitHub Pages…). En orígenes servidos por proxy, como Google Drive, no hay validadores accesibles por CORS, por lo que no se comprueba la versión para no descargar la ficha entera en segundo plano; en esos casos basta con volver a abrir el enlace para obtener la versión más reciente.
+
+### Pruebas
+- **Verificación en navegador real (Chromium headless)**: el visor del alumnado (`test_player.html`) pasa con el nuevo estado por alumno —identificación, autoguardado, nota, reintento, código de entrega, corrección, plazos, contraseña y cronómetro—. La exportación a web autónoma (`test_webexport.html`) genera el paquete con el visor y la ficha empaquetada reabrible. Una prueba *end to end* adicional genera el paquete web, lo extrae, lo sirve y abre su `index.html` real: identificación, relleno, autoguardado por perfil de alumno, entrega y cierre del intento (intentos contabilizados y entrega registrada) funcionan correctamente.
 
 ## [1.23.0] — 2026-06-23
 

@@ -115,9 +115,14 @@ async function main() {
     const progreso = root.querySelector('.al-barra .estado').textContent;
     log('progreso:', progreso);
 
-    // Comprobar autoguardado
+    // Comprobar autoguardado. El estado se guarda por alumno: contenedor
+    // { lastStudent, students: { <clave>: { ...perfil } } }.
+    function loadProfile() {
+      const c = JSON.parse(localStorage.getItem('workpdf:al:wpftest1'));
+      return c?.students?.[c.lastStudent] || null;
+    }
     await sleep(600);
-    const saved = JSON.parse(localStorage.getItem('workpdf:al:wpftest1'));
+    const saved = loadProfile();
     log('autoguardado alumno:', saved.alumno, '| respuestas guardadas:', Object.keys(saved.answers).length);
 
     // Finalizar
@@ -133,7 +138,7 @@ async function main() {
     log('pregunta de reintento (queda 1 intento):', retry);
 
     // El código de entrega ya no se muestra en pantalla: queda en el estado guardado.
-    const codigo = JSON.parse(localStorage.getItem('workpdf:al:wpftest1'))?.lastEntrega?.codigo;
+    const codigo = loadProfile()?.lastEntrega?.codigo;
     log('código de entrega (en el estado):', codigo);
 
     // Elegir «No, ver corrección» aplica las marcas por campo.
