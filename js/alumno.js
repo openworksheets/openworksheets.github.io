@@ -85,12 +85,19 @@ function showLoading() {
   root.textContent = '';
   const status = el('p', {}, t('alumno.connecting'));
   const barra = el('div', {});
+  // Aviso de carga lenta: oculto al principio y mostrado solo si la descarga se
+  // alarga (p. ej. fichas grandes o conexión lenta), para no alarmar cuando va
+  // rápido. El temporizador no necesita limpiarse: si la pantalla ya se sustituyó
+  // (al montar el visor o mostrar un error), el elemento deja de estar conectado.
+  const hint = el('p', { style: 'margin-top:14px;font-size:.85rem;opacity:.7', hidden: true }, t('alumno.loadingHint'));
   root.appendChild(el('div', { class: 'al-centro' },
     el('div', { class: 'card al-tarjeta al-carga' },
       el('div', { class: 'spinner' }),
       el('h1', {}, t('alumno.loadingTitle')),
       status,
-      el('div', { class: 'al-progreso' }, barra))));
+      el('div', { class: 'al-progreso' }, barra),
+      hint)));
+  setTimeout(() => { if (hint.isConnected) hint.hidden = false; }, 10000);
   return {
     setStatus: msg => { status.textContent = msg; },
     setProgress: (recibido, total) => {

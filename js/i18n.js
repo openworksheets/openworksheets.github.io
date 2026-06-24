@@ -875,6 +875,7 @@ const STRINGS = {
 
     // Alumno.js
     'alumno.loadingTitle': 'Cargando la ficha',
+    'alumno.loadingHint': 'La primera carga puede tardar un poco. No cierres esta página.',
     'alumno.connecting': 'Conectando…',
     'alumno.downloading': 'Descargando: {received} de {total}',
     'alumno.downloadingUnk': 'Descargando: {received}',
@@ -1677,6 +1678,7 @@ const STRINGS = {
     'player.focusAutoSubmitted': 'You have left this tab or fullscreen too many times. The activity has ended.',
 
     'alumno.loadingTitle': 'Loading worksheet',
+    'alumno.loadingHint': 'The first load may take a while. Please don\'t close this page.',
     'alumno.connecting': 'Connecting…',
     'alumno.downloading': 'Downloading: {received} of {total}',
     'alumno.downloadingUnk': 'Downloading: {received}',
@@ -2642,6 +2644,7 @@ const STRINGS = {
     'player.focusAutoSubmitted': 'Has sortit massa vegades d\'aquesta pestanya o de la pantalla completa. L\'activitat ha finalitzat.',
 
     'alumno.loadingTitle': 'Carregant la fitxa',
+    'alumno.loadingHint': 'La primera càrrega pot trigar una mica. No tanquis aquesta pàgina.',
     'alumno.connecting': 'Connectant…',
     'alumno.downloading': 'Descarregant: {received} de {total}',
     'alumno.downloadingUnk': 'Descarregant: {received}',
@@ -3607,6 +3610,7 @@ const STRINGS = {
     'player.focusAutoSubmitted': 'Saíches demasiadas veces desta lapela ou da pantalla completa. A actividade rematou.',
 
     'alumno.loadingTitle': 'Cargando a ficha',
+    'alumno.loadingHint': 'A primeira carga pode tardar un pouco. Non peches esta páxina.',
     'alumno.connecting': 'Conectando…',
     'alumno.downloading': 'Descargando: {received} de {total}',
     'alumno.downloadingUnk': 'Descargando: {received}',
@@ -4572,6 +4576,7 @@ const STRINGS = {
     'player.focusAutoSubmitted': 'Gehiegitan irten zara fitxa honetatik edo pantaila osotik. Jarduera amaitu da.',
 
     'alumno.loadingTitle': 'Fitxa kargatzen',
+    'alumno.loadingHint': 'Lehen kargak denbora pixka bat behar dezake. Ez itxi orri hau.',
     'alumno.connecting': 'Konektatzen…',
     'alumno.downloading': 'Deskargatzen: {received} {total}etik',
     'alumno.downloadingUnk': 'Deskargatzen: {received}',

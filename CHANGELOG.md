@@ -9,6 +9,11 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.24.1] — 2026-06-24
+
+### Añadido
+- **Aviso de carga lenta en el visor del alumnado**: si la apertura de la ficha se alarga (más de ~10 segundos, p. ej. con fichas grandes o conexión lenta), la pantalla de carga muestra un aviso discreto pidiendo paciencia y que no se cierre la página. No aparece cuando la carga es rápida.
+
 ## [1.24.0] — 2026-06-24
 
 ### Añadido
