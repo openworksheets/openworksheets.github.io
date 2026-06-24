@@ -9,6 +9,11 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.24.3] — 2026-06-24
+
+### Corregido
+- **Carga lenta y errores 404 con fichas en Google Drive**: la descarga a través del proxy de Google Apps Script se hace ahora **por trozos** (primero la metadata y luego las partes, en paralelo cuando se conoce el tamaño), en lugar de pedir el archivo entero de una vez. Pedir el archivo completo hacía que el proxy tardara mucho (≈12 s por intento) y acabara devolviendo 404/timeout con fichas grandes; la descarga troceada lo evita desde el primer intento. Es la misma estrategia que ya usaba con éxito Visor Web-ZIP sobre el mismo despliegue, y **no requiere cambios en el Google Apps Script** (compartido entre ambos proyectos).
+
 ## [1.24.2] — 2026-06-24
 
 ### Corregido

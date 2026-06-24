@@ -60,51 +60,107 @@ async function tryDirect(url, onProgress) {
 
 // Proxy con el protocolo "bundle" de Visor Web-ZIP, de modo que puede
 // reutilizarse un despliegue ya existente de ese proyecto:
-//   ?url=...&bundle=1                      → { name, size, base64 } | { error }
-//   ?url=...&bundle=1&part=N&chunkSize=S   → { totalSize, start, end, size, base64, ... }
-const GAS_CHUNK = 6 * 1024 * 1024;
+//   ?url=...&bundle=1&meta=1               → { name, totalSize, chunkSize, ... }
+//   ?url=...&bundle=1&part=N&chunkSize=S   → { totalSize, size, base64, chunkSize, ... }
+const GAS_CHUNK = 20 * 1024 * 1024;   // 20 MB por trozo (igual que visor-webzip)
+const GAS_MAX_PARALLEL = 3;
 
 async function gasJson(query) {
-  const resp = await fetch(query);
+  const resp = await fetch(query, { cache: 'no-store' });
   if (!resp.ok) throw new Error('Proxy: HTTP ' + resp.status);
   return resp.json();
 }
 
+function concatParts(parts, size) {
+  let total = Number(size) || 0;
+  if (!total) for (const p of parts) total += p ? p.length : 0;
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const p of parts) { if (p && p.length) { out.set(p, offset); offset += p.length; } }
+  return offset === total ? out : out.slice(0, offset);
+}
+
+// Metadatos del archivo en el proxy (tamaño total, trozo sugerido…), sin descargar.
+async function gasMeta(gasUrl, url) {
+  const data = await gasJson(gasUrl + '?url=' + encodeURIComponent(url) + '&bundle=1&meta=1&ts=' + Date.now());
+  if (data && data.error) throw new Error('Proxy: ' + data.error);
+  return data || {};
+}
+
+// Un trozo del archivo, con reintentos ante fallos transitorios del proxy.
+async function gasPart(gasUrl, url, part, chunkSize) {
+  const q = gasUrl + '?url=' + encodeURIComponent(url) + '&bundle=1&part=' + part + '&chunkSize=' + chunkSize;
+  let lastErr;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const data = await gasJson(q);
+      if (data && data.error) throw new Error('Proxy: ' + data.error);
+      return data || {};
+    } catch (e) {
+      lastErr = e;
+      if (attempt < 2) await sleep(700 * (attempt + 1));
+    }
+  }
+  throw lastErr;
+}
+
+// Descarga a través del proxy GAS SIEMPRE por trozos (como visor-webzip): se pide
+// primero la metadata y luego las partes, en paralelo si se conoce el tamaño. Así
+// se evita pedir el archivo entero de una vez, que para fichas grandes hace que el
+// proxy tarde mucho y acabe devolviendo 404/timeout. No requiere cambios en el GAS.
 async function tryGas(url, onProgress) {
   const gasUrl = config().gasUrl;
   if (!gasUrl) throw new Error('Sin proxy configurado');
-  const base = gasUrl + '?url=' + encodeURIComponent(url) + '&bundle=1';
 
-  const data = await gasJson(base);
-  if (!data.error && data.base64) {
-    const bytes = base64ToBytes(data.base64);
-    if (!looksLikeZip(bytes)) throw new Error('El proxy no devolvió un ZIP.');
-    if (onProgress) onProgress(bytes.length, bytes.length);
-    return bytes;
+  let chunkSize = GAS_CHUNK;
+  let totalSize = 0;
+  try {
+    const meta = await gasMeta(gasUrl, url);
+    if (meta.chunkSize) chunkSize = Number(meta.chunkSize) || chunkSize;
+    totalSize = Number(meta.totalSize || meta.size) || 0;
+  } catch { /* sin meta: se descarga secuencialmente desde la parte 0 */ }
+
+  // Tamaño conocido: partes en paralelo (más rápido).
+  if (totalSize > 0) {
+    const totalParts = Math.ceil(totalSize / chunkSize);
+    const parts = new Array(totalParts);
+    let received = 0;
+    let next = 0;
+    const worker = async () => {
+      while (next < totalParts) {
+        const i = next++;
+        const data = await gasPart(gasUrl, url, i, chunkSize);
+        const bytes = base64ToBytes(data.base64 || '');
+        parts[i] = bytes;
+        received += bytes.length;
+        if (onProgress) onProgress(Math.min(received, totalSize), totalSize);
+      }
+    };
+    const workers = [];
+    for (let k = 0; k < Math.min(GAS_MAX_PARALLEL, totalParts); k++) workers.push(worker());
+    await Promise.all(workers);
+    const out = concatParts(parts, totalSize);
+    if (!looksLikeZip(out)) throw new Error('El proxy no devolvió un ZIP.');
+    return out;
   }
-  // Solo merece la pena trocear si el fallo es por tamaño.
-  const err = String(data.error || 'respuesta vacía');
-  if (!/grande|l[ií]mite|supera/i.test(err)) throw new Error('Proxy: ' + err);
 
+  // Sin tamaño: descarga secuencial hasta que una parte venga incompleta o vacía.
   const parts = [];
   let received = 0;
   let total = 0;
-  for (let part = 0; part < 500; part++) {
-    const d = await gasJson(base + '&part=' + part + '&chunkSize=' + GAS_CHUNK);
-    if (d.error) throw new Error('Proxy: ' + d.error);
-    const bytes = base64ToBytes(d.base64 || '');
+  for (let part = 0; part < 1000; part++) {
+    const data = await gasPart(gasUrl, url, part, chunkSize);
+    if (data.chunkSize) chunkSize = Number(data.chunkSize) || chunkSize;
+    if (!total && data.totalSize) total = Number(data.totalSize) || 0;
+    const bytes = base64ToBytes(data.base64 || '');
     if (!bytes.length) break;
     parts.push(bytes);
     received += bytes.length;
-    total = Number(d.totalSize) || total;
-    if (onProgress) onProgress(received, total);
+    if (onProgress) onProgress(received, total || 0);
     if (total && received >= total) break;
-    // Servidores sin soporte de Range devuelven el archivo entero en el part 0.
-    if (part === 0 && bytes.length > Number(d.chunkSize || GAS_CHUNK)) break;
+    if (bytes.length < chunkSize) break; // última parte
   }
-  const out = new Uint8Array(received);
-  let offset = 0;
-  for (const p of parts) { out.set(p, offset); offset += p.length; }
+  const out = concatParts(parts);
   if (!looksLikeZip(out)) throw new Error('El proxy no devolvió un ZIP.');
   return out;
 }
