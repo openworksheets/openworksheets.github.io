@@ -252,20 +252,8 @@
       <button class="btn primary" id="btnGenerarEnlace" data-i18n="index.generateBtn">Generar enlace</button>
     </div>
     <p class="settings-warning" style="margin-top:8px"><small data-i18n-html="dlg.share.driveSizeWarning">Google Drive limita la descarga directa a unos 25 MB. Si tu ficha supera ese tamaño, usa otro servicio de alojamiento en la nube (Dropbox, Nextcloud…).</small></p>
-    <details class="share-export-details">
-      <summary data-i18n="dlg.share.offlineTitle">Otras formas de compartir y distribuir</summary>
-      <div class="share-export-list-wrap">
-        <div class="share-export-list-inner">
-          <div class="share-export-list">
-            <button class="topbar-menu-item" id="shareExportWeb" type="button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span class="mi-text"><span class="mi-title" data-i18n="menu.saveWeb">Exportar a web (ZIP)</span><span class="mi-sub" data-i18n="menu.saveWebSub">Página autónoma para subir a tu propio sitio web</span></span></button>
-            <button class="topbar-menu-item" id="shareExportScorm" type="button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg><span class="mi-text"><span class="mi-title" data-i18n="menu.saveScorm">Exportar a SCORM 1.2</span><span class="mi-sub" data-i18n="menu.saveScormSub">Para entregar y calificar en plataformas compatibles con SCORM (Moodle, etc.)</span></span></button>
-            <button class="topbar-menu-item" id="shareExportImscp" type="button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg><span class="mi-text"><span class="mi-title" data-i18n="menu.saveImscp">Exportar a IMS CP</span><span class="mi-sub" data-i18n="menu.saveImscpSub">Para repositorios y plataformas IMS compatibles</span></span></button>
-          </div>
-        </div>
-      </div>
-    </details>
     <div id="compSalida" style="display:none">
-      <p class="settings-warning share-unique-warn" data-i18n="dlg.share.uniqueUrlWarning">Guarda el enlace, el código QR o el iframe si piensas utilizarlos más adelante.</p>
+      <p class="share-unique-warn" data-i18n="dlg.share.uniqueUrlWarning">Guarda el enlace, el código QR o el iframe si piensas utilizarlos más adelante.</p>
       <div class="settings-tabs share-result-tabs" role="tablist">
         <button class="settings-tab is-active" data-tab="link" data-i18n="dlg.share.tabLink">Enlace</button>
         <button class="settings-tab" data-tab="qr" data-i18n="dlg.share.tabQr">Código QR</button>
@@ -296,6 +284,18 @@
         <p class="embed-hint" data-i18n="index.embedHint">La ficha se desplaza dentro del marco; ajusta la altura a tu gusto. Algunos blogs no permiten insertar iframes.</p>
       </div>
     </div>
+    <details class="share-export-details">
+      <summary data-i18n="dlg.share.offlineTitle">Otras formas de compartir y distribuir</summary>
+      <div class="share-export-list-wrap">
+        <div class="share-export-list-inner">
+          <div class="share-export-list">
+            <button class="topbar-menu-item" id="shareExportWeb" type="button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span class="mi-text"><span class="mi-title" data-i18n="menu.saveWeb">Exportar a web (ZIP)</span><span class="mi-sub" data-i18n="menu.saveWebSub">Página autónoma para subir a tu propio sitio web</span></span></button>
+            <button class="topbar-menu-item" id="shareExportScorm" type="button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg><span class="mi-text"><span class="mi-title" data-i18n="menu.saveScorm">Exportar a SCORM 1.2</span><span class="mi-sub" data-i18n="menu.saveScormSub">Para entregar y calificar en plataformas compatibles con SCORM (Moodle, etc.)</span></span></button>
+            <button class="topbar-menu-item" id="shareExportImscp" type="button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg><span class="mi-text"><span class="mi-title" data-i18n="menu.saveImscp">Exportar a IMS CP</span><span class="mi-sub" data-i18n="menu.saveImscpSub">Para repositorios y plataformas IMS compatibles</span></span></button>
+          </div>
+        </div>
+      </div>
+    </details>
     <div class="dlg-buttons">
       <form method="dialog"><button class="btn" value="cancel" data-i18n="dlg.close">Cerrar</button></form>
     </div>
