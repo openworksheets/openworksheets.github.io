@@ -9,6 +9,11 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.24.2] — 2026-06-24
+
+### Corregido
+- **Descarga intermitente de la ficha (proxy de Google Drive)**: la descarga reintenta automáticamente toda la operación (hasta 3 veces, con espera creciente) cuando falla de forma transitoria. El proxy de Google Apps Script falla a veces por arranque en frío, cuotas o enlaces temporales caducados; antes el alumnado veía el error «No se pudo abrir la ficha» y tenía que pulsar «Reintentar» varias veces, y ahora se resuelve solo en la mayoría de los casos. No se modifica la lógica del proxy.
+
 ## [1.24.1] — 2026-06-24
 
 ### Añadido

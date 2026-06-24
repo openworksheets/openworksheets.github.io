@@ -145,6 +145,53 @@ export async function fetchRemoteMeta(url) {
 
 const inflightDownloads = new Map();
 
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// Reintentos automáticos de toda la cadena de descarga: el proxy de Google Apps
+// Script falla de forma intermitente (arranque en frío, cuotas, `user_content_key`
+// caducado), y normalmente el segundo o tercer intento ya completa. Se reintenta
+// la operación completa, sin tocar la lógica del proxy.
+const DOWNLOAD_TRIES = 3;
+
+// Un único intento de la cadena de estrategias: directa → proxy → alternativas.
+async function attemptDownload(url, status, onProgress) {
+  const errors = [];
+  const preferGas = isGoogleDriveUrl(url) && Boolean(config().gasUrl);
+
+  if (!preferGas) {
+    status('Descargando la ficha…');
+    try {
+      return await tryDirect(url, onProgress);
+    } catch (e) {
+      errors.push('directa: ' + e.message);
+    }
+  }
+
+  if (config().gasUrl) {
+    status(preferGas ? 'Conectando con Google Drive…' : 'Descargando a través del proxy…');
+    try {
+      return await tryGas(url, onProgress);
+    } catch (e) {
+      errors.push('proxy: ' + e.message);
+    }
+  }
+
+  status('Intentando rutas alternativas…');
+  try {
+    return await tryCorsProxies(url, onProgress);
+  } catch (e) {
+    errors.push('alternativas: ' + e.message);
+  }
+
+  const err = new Error(
+    'No se pudo descargar la ficha. Comprueba que el archivo es público ' +
+    '("cualquier persona con el enlace") y que la URL es correcta.\n' +
+    'Detalle: ' + errors.join(' · ')
+  );
+  err.detail = errors;
+  throw err;
+}
+
 // Descarga el ZIP y devuelve sus bytes (Uint8Array).
 // onStatus(texto) y onProgress(recibido, total) son opcionales.
 export async function downloadZip(url, { onStatus, onProgress } = {}) {
@@ -153,39 +200,19 @@ export async function downloadZip(url, { onStatus, onProgress } = {}) {
 
   const status = onStatus || (() => {});
   const task = (async () => {
-    const errors = [];
-    const preferGas = isGoogleDriveUrl(url) && Boolean(config().gasUrl);
-
-    if (!preferGas) {
-      status('Descargando la ficha…');
+    let lastError;
+    for (let intento = 1; intento <= DOWNLOAD_TRIES; intento++) {
       try {
-        return await tryDirect(url, onProgress);
+        return await attemptDownload(url, status, onProgress);
       } catch (e) {
-        errors.push('directa: ' + e.message);
+        lastError = e;
+        if (intento < DOWNLOAD_TRIES) {
+          status('La descarga falló, reintentando…');
+          await sleep(800 * intento);
+        }
       }
     }
-
-    if (config().gasUrl) {
-      status(preferGas ? 'Conectando con Google Drive…' : 'Descargando a través del proxy…');
-      try {
-        return await tryGas(url, onProgress);
-      } catch (e) {
-        errors.push('proxy: ' + e.message);
-      }
-    }
-
-    status('Intentando rutas alternativas…');
-    try {
-      return await tryCorsProxies(url, onProgress);
-    } catch (e) {
-      errors.push('alternativas: ' + e.message);
-    }
-
-    throw new Error(
-      'No se pudo descargar la ficha. Comprueba que el archivo es público ' +
-      '("cualquier persona con el enlace") y que la URL es correcta.\n' +
-      'Detalle: ' + errors.join(' · ')
-    );
+    throw lastError;
   })();
 
   inflightDownloads.set(key, task);
