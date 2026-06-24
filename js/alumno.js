@@ -3,7 +3,7 @@
 // permite abrir un ZIP local o pegar un enlace.
 
 import { el, toast } from './util.js';
-import { toDirectUrl } from './drive.js';
+import { toDirectUrl, isOneDriveUrl } from './drive.js';
 import { downloadZip, fetchRemoteMeta } from './download.js';
 import { importFichaZip } from './zipio.js';
 import { mountPlayer } from './player.js';
@@ -244,6 +244,9 @@ async function main() {
       const { resolveShortToken } = await import('./drive.js');
       zipUrl = await resolveShortToken(shortToken);
     }
+    // OneDrive no permite descarga directa (solo sirve su página web): no se
+    // intenta descargar y se explica el motivo con alternativas.
+    if (isOneDriveUrl(zipUrl)) { showError(t('alumno.onedriveError')); return; }
     const directUrl = toDirectUrl(zipUrl);
     const remoteCacheKey = buildWorksheetCacheKey({ sourceUrl: directUrl });
     const cachedRemote = await getCachedWorksheetRecord(remoteCacheKey);

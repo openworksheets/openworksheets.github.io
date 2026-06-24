@@ -32,7 +32,7 @@ import { exportFichaZip, importFichaZip, newManifest, usedFiles } from './zipio.
 import { exportScormPackage } from './scormexport.js';
 import { exportWebPackage } from './webexport.js';
 import { exportImscpPackage } from './imscpexport.js';
-import { buildShortLink, parseDriveId } from './drive.js';
+import { buildShortLink, parseDriveId, isOneDriveUrl } from './drive.js';
 import { mountPlayer } from './player.js';
 import { t, getLang, setLang, applyI18n, initLangSelector } from './i18n.js';
 import { ICONS } from './icons.js';
@@ -5327,6 +5327,7 @@ $('#btnGenerarEnlace')?.addEventListener('click', async () => {
     toast(t('toast.driveError'), 'error');
     return;
   }
+  if (isOneDriveUrl(url)) { toast(t('toast.onedriveError'), 'error'); return; }
   const btn = $('#btnGenerarEnlace');
   btn.disabled = true;
   toast(t('toast.generating'), 'info');

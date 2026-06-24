@@ -9,6 +9,11 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [Unreleased]
+
+### Añadido
+- **Aviso claro para enlaces de OneDrive**: OneDrive (incluidos los enlaces `1drv.ms` migrados a SharePoint) no permite la descarga directa de archivos —solo sirve su página web—, por lo que la ficha no puede obtenerse ni directamente ni por proxy. Ahora se detecta y se avisa en lugar de fallar con un error genérico: al **generar el enlace del alumnado** (pantalla de inicio y editor) se rechaza la URL de OneDrive con un aviso, y al **abrir una ficha** alojada en OneDrive se muestra un mensaje que explica el motivo y sugiere alojarla en Google Drive, Nextcloud, GitHub o Dropbox. En este último caso ya no se intenta la descarga (que siempre fallaría). Disponible en los 5 idiomas.
+
 ## [1.24.3] — 2026-06-24
 
 ### Corregido

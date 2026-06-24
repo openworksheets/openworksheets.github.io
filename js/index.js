@@ -2,7 +2,7 @@
 // entregas vive ahora en su propia página (entregas.html / js/entregas.js).
 
 import { toast, copyToClipboard } from './util.js';
-import { buildShortLink, parseDriveId } from './drive.js';
+import { buildShortLink, parseDriveId, isOneDriveUrl } from './drive.js';
 import { t, applyI18n, initLangSelector, getLang } from './i18n.js';
 import { typesetMath } from './mathrender.js';
 
@@ -60,6 +60,7 @@ $('#btnGenerar').addEventListener('click', async () => {
     toast(t('toast.driveError'), 'error');
     return;
   }
+  if (isOneDriveUrl(url)) { toast(t('toast.onedriveError'), 'error'); return; }
   const btn = $('#btnGenerar');
   btn.disabled = true;
   toast(t('toast.generating'), 'info');

@@ -36,6 +36,20 @@ function isNextcloudShare(url) {
   return true;
 }
 
+// Detecta enlaces de OneDrive personal (incluidos los migrados a SharePoint, que
+// llegan como 1drv.ms). Estos enlaces NO ofrecen descarga directa: solo sirven la
+// página web de descarga, así que la ficha no puede obtenerse ni directamente ni
+// por proxy. Se usa para avisar al profesorado y evitar intentos de descarga.
+export function isOneDriveUrl(url) {
+  let host = '';
+  try {
+    host = (new URL(url)).hostname.toLowerCase();
+  } catch {
+    return /1drv\.ms|onedrive\.live\.com|onedrive\.com/i.test(url || '');
+  }
+  return /(^|\.)(1drv\.ms|onedrive\.live\.com|onedrive\.com)$/.test(host);
+}
+
 // Normaliza una URL pública a una URL de descarga directa.
 export function toDirectUrl(url) {
   url = (url || '').trim();
