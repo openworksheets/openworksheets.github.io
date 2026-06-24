@@ -10,6 +10,10 @@ function config() {
   return window.OPENWORKSHEETS_CONFIG || { gasUrl: '', corsProxies: [] };
 }
 
+function isGoogleDriveUrl(url) {
+  return /(^https?:\/\/)?(?:[^/]+\.)?(drive\.google\.com|drive\.usercontent\.google\.com)\//i.test(url || '');
+}
+
 function base64ToBytes(b64) {
   const bin = atob(b64);
   const out = new Uint8Array(bin.length);
@@ -118,38 +122,55 @@ async function tryCorsProxies(url, onProgress) {
   throw lastError || new Error('Sin proxies disponibles');
 }
 
+const inflightDownloads = new Map();
+
 // Descarga el ZIP y devuelve sus bytes (Uint8Array).
 // onStatus(texto) y onProgress(recibido, total) son opcionales.
 export async function downloadZip(url, { onStatus, onProgress } = {}) {
+  const key = String(url || '').trim();
+  if (inflightDownloads.has(key)) return inflightDownloads.get(key);
+
   const status = onStatus || (() => {});
-  const errors = [];
+  const task = (async () => {
+    const errors = [];
+    const preferGas = isGoogleDriveUrl(url) && Boolean(config().gasUrl);
 
-  status('Descargando la ficha…');
-  try {
-    return await tryDirect(url, onProgress);
-  } catch (e) {
-    errors.push('directa: ' + e.message);
-  }
-
-  if (config().gasUrl) {
-    status('Descargando a través del proxy…');
-    try {
-      return await tryGas(url, onProgress);
-    } catch (e) {
-      errors.push('proxy: ' + e.message);
+    if (!preferGas) {
+      status('Descargando la ficha…');
+      try {
+        return await tryDirect(url, onProgress);
+      } catch (e) {
+        errors.push('directa: ' + e.message);
+      }
     }
-  }
 
-  status('Intentando rutas alternativas…');
+    if (config().gasUrl) {
+      status(preferGas ? 'Conectando con Google Drive…' : 'Descargando a través del proxy…');
+      try {
+        return await tryGas(url, onProgress);
+      } catch (e) {
+        errors.push('proxy: ' + e.message);
+      }
+    }
+
+    status('Intentando rutas alternativas…');
+    try {
+      return await tryCorsProxies(url, onProgress);
+    } catch (e) {
+      errors.push('alternativas: ' + e.message);
+    }
+
+    throw new Error(
+      'No se pudo descargar la ficha. Comprueba que el archivo es público ' +
+      '("cualquier persona con el enlace") y que la URL es correcta.\n' +
+      'Detalle: ' + errors.join(' · ')
+    );
+  })();
+
+  inflightDownloads.set(key, task);
   try {
-    return await tryCorsProxies(url, onProgress);
-  } catch (e) {
-    errors.push('alternativas: ' + e.message);
+    return await task;
+  } finally {
+    inflightDownloads.delete(key);
   }
-
-  throw new Error(
-    'No se pudo descargar la ficha. Comprueba que el archivo es público ' +
-    '("cualquier persona con el enlace") y que la URL es correcta.\n' +
-    'Detalle: ' + errors.join(' · ')
-  );
 }
