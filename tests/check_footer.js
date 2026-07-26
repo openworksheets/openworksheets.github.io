@@ -17,11 +17,11 @@ const puppeteer = require('puppeteer-core');
     return {
       copy: /Juan José de Haro/.test(pie.textContent),
       agpl: Boolean(pie.querySelector('a[href*="agpl"]')),
-      github: Boolean(pie.querySelector('a[href*="github.com/workpdf"]')),
+      github: Boolean(pie.querySelector('a[href*="github.com/openworksheets"]')),
       issues: Boolean(pie.querySelector('a[href*="issues"]')),
       priv: Boolean(pie.querySelector('.pie-priv summary')),
       metas: Boolean(document.querySelector('meta[name="analytics-site-id"]')),
-      summaryHidden: getComputedStyle(pie.querySelector('[data-analytics-summary]')).display === 'none'
+      sinCifras: !pie.querySelector('[data-analytics-summary], [data-analytics-total], [data-analytics-today]')
     };
   });
   check('© Juan José de Haro', f.copy);
@@ -30,7 +30,7 @@ const puppeteer = require('puppeteer-core');
   check('enlace issues', f.issues);
   check('popover de privacidad', f.priv);
   check('metadatos analytics presentes', f.metas);
-  check('resumen de visitas oculto al público', f.summaryHidden);
+  check('sin cifras de visitas en el pie', f.sinCifras);
 
   // Abrir el popover de privacidad y capturar
   await page.click('footer.pie .pie-priv summary');

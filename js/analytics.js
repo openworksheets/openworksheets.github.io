@@ -1,9 +1,10 @@
 // Contador de visitas con el sistema propio de estadísticas en IONOS.
-// Lee los metadatos analytics-* del HTML, registra la visita en segundo
-// plano (JSONP con timeout) y, si la página tiene el resumen del pie
-// ([data-analytics-summary]), muestra los totales. Una visita por
-// navegador cada 30 minutos; el resto de cargas piden solo el resumen
-// con summary_only=1. Sin IP, sin cookies de analítica.
+// Lee los metadatos analytics-* del HTML y registra la visita en segundo
+// plano (JSONP con timeout). Una visita por navegador cada 30 minutos.
+// Sin IP, sin cookies de analítica.
+//
+// Las cifras no se muestran nunca en la interfaz: se consultan solo desde
+// el panel privado. La respuesta del servidor se descarta.
 (function () {
   'use strict';
 
@@ -44,19 +45,6 @@
     try { window.localStorage.setItem(storageKey, String(Date.now())); } catch (err) {}
   }
 
-  function updateSummary(data) {
-    var box = document.querySelector('[data-analytics-summary]');
-    if (!box) return;
-    var total = parseInt(data && data.total, 10);
-    var today = parseInt(data && data.today, 10);
-    if (isNaN(total) || isNaN(today)) return;
-    var elTotal = box.querySelector('[data-analytics-total]');
-    var elToday = box.querySelector('[data-analytics-today]');
-    if (elTotal) elTotal.textContent = String(total);
-    if (elToday) elToday.textContent = String(today);
-    box.hidden = false;
-  }
-
   function load() {
     var callbackName = '__wpfAnalyticsCb_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
     var script = document.createElement('script');
@@ -81,7 +69,6 @@
 
     window[callbackName] = function (payload) {
       try {
-        updateSummary(payload || {});
         if (countVisit && payload && payload.ok) rememberVisit();
       } finally {
         cleanup();
@@ -97,11 +84,20 @@
 
   if (!shouldTrack()) return;
   var run = function () { window.setTimeout(load, 0); };
-  if (typeof window.requestIdleCallback === 'function') {
-    window.requestIdleCallback(run, { timeout: 2500 });
-  } else if (document.readyState === 'complete') {
-    window.setTimeout(run, 0);
+  // Un <script async> inyectado antes de que se dispare «load» retrasa ese
+  // evento hasta que la peticion termina. Si el servidor de estadisticas se
+  // cuelga, «load» no llegaria a dispararse nunca. Por eso se espera siempre
+  // a «load» antes de programar nada.
+  var programar = function () {
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(run, { timeout: 2500 });
+    } else {
+      window.setTimeout(run, 0);
+    }
+  };
+  if (document.readyState === 'complete') {
+    programar();
   } else {
-    window.addEventListener('load', run, { once: true });
+    window.addEventListener('load', programar, { once: true });
   }
 })();
