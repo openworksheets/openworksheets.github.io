@@ -255,10 +255,26 @@ details.mcp-client { padding: 0; }
 .mcp-client-sum:hover { background: var(--tinta-tenue); }
 details.mcp-client[open] .mcp-client-sum { border-bottom: 1px solid var(--tinta-tenue); border-radius: 8px 8px 0 0; }
 .mcp-client-desc { font-size: 0.84rem; color: var(--tinta-suave); }
-details.mcp-client .mcp-client-head { padding: 10px 14px 0; margin-bottom: 8px; }
-details.mcp-client .mcp-code { margin: 0 14px 14px; }
 
-/* «¿Y si el archivo ya tenía algo?»: la nota y el ejemplo de cómo queda */
-.mcp-merge { margin: 10px 14px 14px; }
-.mcp-merge .mcp-hint { margin-bottom: 6px; }
-.mcp-code-sample { opacity: 0.75; font-size: 0.75rem; }
+/* Los tres casos en que puede estar el archivo de configuración */
+.mcp-client-body { padding: 12px 14px 14px; }
+.mcp-client-body > .mcp-hint { margin-bottom: 8px; }
+.mcp-client-body > .mcp-client-where {
+  display: block;
+  margin: 0 0 12px;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  color: var(--tinta-suave);
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.mcp-case + .mcp-case { margin-top: 14px; }
+.mcp-case-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.mcp-case-label { font-size: 0.84rem; line-height: 1.45; color: var(--tinta); }
+.mcp-case-head .btn { flex-shrink: 0; }

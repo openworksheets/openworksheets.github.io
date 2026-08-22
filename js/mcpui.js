@@ -86,47 +86,55 @@ function forJson(p) {
   return String(p).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
-// Cómo se junta con lo que ya hubiera en el archivo. Es la duda que salta en
-// cuanto el archivo no está vacío: pegar el bloque al final rompe el JSON.
-function mergeExample(p, key = 'mcpServers') {
+// Los tres casos en que se puede encontrar el archivo de configuración. Dar un
+// solo bloque «completo» no basta: en cuanto el archivo tiene algo dentro,
+// pegarlo al final rompe el JSON, y saber dónde va exactamente es justo lo que
+// no se puede adivinar. Cada caso lleva su fragmento, ya listo para pegar.
+function serverEntry(p, indent) {
+  const s = ' '.repeat(indent);
+  return `${s}"openworksheets": {
+${s}  "command": "node",
+${s}  "args": ["${forJson(p)}"]
+${s}}`;
+}
+
+// Archivo vacío: el documento entero.
+function jsonWhole(p, key = 'mcpServers') {
   return `{
   "${key}": {
-    "otro-servidor": { "command": "…" },
-    "openworksheets": {
-      "command": "node",
-      "args": ["${forJson(p)}"]
-    }
+${serverEntry(p, 4)}
   }
 }`;
 }
 
-function json(p, key = 'mcpServers') {
-  return `{
-  "${key}": {
-    "openworksheets": {
-      "command": "node",
-      "args": ["${forJson(p)}"]
-    }
-  }
-}`;
+// Con contenido, pero sin la clave: se añade como una clave más, al principio.
+function jsonSection(p, key = 'mcpServers') {
+  return `  "${key}": {
+${serverEntry(p, 4)}
+  },`;
+}
+
+// Con la clave ya puesta: solo el servidor, dentro de ella.
+function jsonEntry(p) {
+  return serverEntry(p, 4) + ',';
 }
 
 const CLIENTS = [
-  { name: 'Claude Desktop', descKey: 'mcp.c.claudeDesktop', howKey: 'mcp.h.claudeDesktop', merge: 'json', where: CONFIG_PATHS.claude[OS], code: p => json(p) },
+  { name: 'Claude Desktop', descKey: 'mcp.c.claudeDesktop', howKey: 'mcp.h.claudeDesktop', jsonKey: 'mcpServers', where: CONFIG_PATHS.claude[OS] },
   // La app de escritorio de ChatGPT comparte la configuración MCP con Codex CLI
   // en el mismo ordenador, así que el bloque vale para las dos.
   {
     name: 'ChatGPT',
-    descKey: 'mcp.c.chatgpt', howKey: 'mcp.h.chatgpt', merge: 'toml',
+    descKey: 'mcp.c.chatgpt', howKey: 'mcp.h.chatgpt', toml: true,
     where: '~/.codex/config.toml',
     code: p => `[mcp_servers.openworksheets]\ncommand = "node"\nargs = ["${forJson(p)}"]`
   },
-  { name: 'LM Studio', descKey: 'mcp.c.lmstudio', howKey: 'mcp.h.lmstudio', merge: 'json', where: '~/.lmstudio/mcp.json', code: p => json(p) },
+  { name: 'LM Studio', descKey: 'mcp.c.lmstudio', howKey: 'mcp.h.lmstudio', jsonKey: 'mcpServers', where: '~/.lmstudio/mcp.json' },
   // Antigravity usa el mismo archivo en el IDE y en la CLI.
-  { name: 'Antigravity', descKey: 'mcp.c.antigravity', howKey: 'mcp.h.antigravity', merge: 'json', where: '~/.gemini/config/mcp_config.json', code: p => json(p) },
+  { name: 'Antigravity', descKey: 'mcp.c.antigravity', howKey: 'mcp.h.antigravity', jsonKey: 'mcpServers', where: '~/.gemini/config/mcp_config.json' },
   { name: 'Claude Code', descKey: 'mcp.c.claudeCode', howKey: 'mcp.h.claudeCode', where: 'Terminal', code: p => `claude mcp add openworksheets -- node "${p}"` },
-  { name: 'Cursor', descKey: 'mcp.c.cursor', howKey: 'mcp.h.cursor', merge: 'json', where: CONFIG_PATHS.cursor[OS], code: p => json(p) },
-  { name: 'VS Code', descKey: 'mcp.c.vscode', howKey: 'mcp.h.vscode', merge: 'servers', where: '.vscode/mcp.json', code: p => json(p, 'servers') },
+  { name: 'Cursor', descKey: 'mcp.c.cursor', howKey: 'mcp.h.cursor', jsonKey: 'mcpServers', where: CONFIG_PATHS.cursor[OS] },
+  { name: 'VS Code', descKey: 'mcp.c.vscode', howKey: 'mcp.h.vscode', jsonKey: 'servers', where: '.vscode/mcp.json' },
   { nameKey: 'mcp.c.otherName', descKey: 'mcp.c.other', howKey: 'mcp.h.other', where: 'stdio', code: p => `node "${p}"` }
 ];
 
@@ -176,31 +184,40 @@ export function openMcpDialog() {
   });
   const blocks = el('div', { class: 'mcp-clients' });
 
-  // Qué hacer si el archivo ya tenía contenido: en JSON hay que meter el
-  // servidor entre las llaves que ya existen, no pegarlo detrás.
-  function mergeNote(c, p) {
-    if (!c.merge) return null;
-    if (c.merge === 'toml') return el('p', { class: 'mcp-hint mcp-merge' }, t('mcp.mergeToml'));
-    return el('div', { class: 'mcp-merge' },
-      el('p', { class: 'mcp-hint' }, t('mcp.mergeJson')),
-      el('pre', { class: 'mcp-code mcp-code-sample' }, mergeExample(p, c.merge === 'servers' ? 'servers' : 'mcpServers')));
+  // Un bloque de código con su etiqueta y su botón de copiar.
+  function codeCase(label, text) {
+    const pre = el('pre', { class: 'mcp-code' }, text);
+    return el('div', { class: 'mcp-case' },
+      el('div', { class: 'mcp-case-head' },
+        el('span', { class: 'mcp-case-label' }, label),
+        copyButton(() => pre.textContent, t('mcp.copy'))),
+      pre);
   }
 
   function renderClients() {
     const p = (pathInput.value || DEFAULT_PATH).trim();
     blocks.textContent = '';
     for (const c of CLIENTS) {
-      const code = el('pre', { class: 'mcp-code' }, c.code(p));
+      const cuerpo = c.jsonKey
+        // Los tres estados en que puede estar el archivo, cada uno con lo que
+        // hay que pegar y dónde. Sin esto, no hay forma de acertar.
+        ? [
+            codeCase(t('mcp.caseEmpty'), jsonWhole(p, c.jsonKey)),
+            codeCase(t('mcp.caseNoKey', { key: c.jsonKey }), jsonSection(p, c.jsonKey)),
+            codeCase(t('mcp.caseHasKey', { key: c.jsonKey }), jsonEntry(p))
+          ]
+        : [codeCase(c.toml ? t('mcp.caseToml') : t('mcp.caseCmd'), c.code(p))];
+
       blocks.appendChild(el('details', { class: 'mcp-client' },
         el('summary', { class: 'mcp-client-sum' },
           el('span', { class: 'mcp-client-name' }, c.name || t(c.nameKey)),
           el('span', { class: 'mcp-client-desc' }, t(c.descKey))),
-        el('p', { class: 'mcp-hint mcp-client-how' }, t(c.howKey)),
-        el('div', { class: 'mcp-client-head' },
-          el('span', { class: 'mcp-client-where' }, c.where),
-          copyButton(() => code.textContent, t('mcp.copy'))),
-        code,
-        mergeNote(c, p)));
+        el('div', { class: 'mcp-client-body' },
+          el('p', { class: 'mcp-hint mcp-client-how' }, t(c.howKey)),
+          c.where !== 'Terminal' && c.where !== 'stdio'
+            ? el('p', { class: 'mcp-client-where' }, c.where)
+            : null,
+          ...cuerpo)));
     }
   }
 
