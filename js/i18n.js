@@ -234,7 +234,7 @@ const STRINGS = {
     // Crear con IA (copiar/pegar, sin llamadas externas)
 
     // Colocar campos con IA sobre un PDF (servidor MCP local)
-    'mcp.create': 'Colocar campos con IA sobre un PDF…',
+    'mcp.create': 'Colocar campos con IA sobre un PDF (MCP)',
     'mcp.createSub': 'Que tu IA sitúe los campos sobre el documento, en su sitio',
     'mcp.title': 'Colocar campos con IA sobre un PDF (MCP)',
     'mcp.intro': 'Una IA puede abrir tu PDF, leer su texto con las coordenadas de cada línea, colocar los campos encima, comprobar el resultado en una vista previa y guardarte la ficha lista para abrir aquí. Para eso necesita un pequeño programa —el servidor MCP de OpenWorksheets— que se instala una sola vez. Tu documento no se envía a ningún servicio: todo ocurre en tu ordenador.',
@@ -1295,7 +1295,7 @@ const STRINGS = {
     // Create with AI (copy/paste, no external calls)
 
     // Placing fields on a PDF with AI (local MCP server)
-    'mcp.create': 'Place fields on a PDF with AI…',
+    'mcp.create': 'Place fields on a PDF with AI (MCP)',
     'mcp.createSub': 'Let your AI put the fields on the document, right where they belong',
     'mcp.title': 'Placing fields on a PDF with AI (MCP)',
     'mcp.intro': 'An AI can open your PDF, read its text with the coordinates of every line, place the fields on top, check the result on a preview and hand you the worksheet ready to open here. For that it needs a small program —the OpenWorksheets MCP server— set up once. Your document is sent to no service: everything happens on your computer.',
@@ -2324,7 +2324,7 @@ const STRINGS = {
     // Crear amb IA (copiar/enganxar, sense crides externes)
 
     // Col·locar camps amb IA sobre un PDF (servidor MCP local)
-    'mcp.create': 'Col·locar camps amb IA sobre un PDF…',
+    'mcp.create': 'Col·locar camps amb IA sobre un PDF (MCP)',
     'mcp.createSub': 'Que la teva IA situï els camps sobre el document, al seu lloc',
     'mcp.title': 'Col·locar camps amb IA sobre un PDF (MCP)',
     'mcp.intro': 'Una IA pot obrir el teu PDF, llegir-ne el text amb les coordenades de cada línia, col·locar-hi els camps a sobre, comprovar el resultat en una vista prèvia i donar-te la fitxa a punt per obrir aquí. Per fer-ho necessita un petit programa —el servidor MCP d\'OpenWorksheets— que s\'instal·la una sola vegada. El teu document no s\'envia a cap servei: tot passa al teu ordinador.',
@@ -3346,7 +3346,7 @@ const STRINGS = {
     // Crear con IA (copiar/pegar, sen chamadas externas)
 
     // Colocar campos con IA sobre un PDF (servidor MCP local)
-    'mcp.create': 'Colocar campos con IA sobre un PDF…',
+    'mcp.create': 'Colocar campos con IA sobre un PDF (MCP)',
     'mcp.createSub': 'Que a túa IA sitúe os campos sobre o documento, no seu sitio',
     'mcp.title': 'Colocar campos con IA sobre un PDF (MCP)',
     'mcp.intro': 'Unha IA pode abrir o teu PDF, ler o seu texto coas coordenadas de cada liña, colocar os campos enriba, comprobar o resultado nunha vista previa e darche a ficha lista para abrir aquí. Para iso necesita un pequeno programa —o servidor MCP de OpenWorksheets— que se instala unha soa vez. O teu documento non se envía a ningún servizo: todo ocorre no teu computador.',
@@ -4368,7 +4368,7 @@ const STRINGS = {
     // IArekin sortu (kopiatu/itsatsi, kanpoko deirik gabe)
 
     // Eremuak IArekin PDF baten gainean jartzea (MCP zerbitzari lokala)
-    'mcp.create': 'Eremuak IArekin PDF baten gainean jarri…',
+    'mcp.create': 'Eremuak IArekin PDF baten gainean jarri (MCP)',
     'mcp.createSub': 'Zure IAk eremuak dokumentuaren gainean koka ditzala, dagokien lekuan',
     'mcp.title': 'Eremuak IArekin PDF baten gainean jartzea (MCP)',
     'mcp.intro': 'IA batek zure PDFa ireki dezake, haren testua lerro bakoitzaren koordenatuekin irakurri, eremuak gainean jarri, emaitza aurrebista batean egiaztatu eta fitxa hemen irekitzeko prest eman. Horretarako programa txiki bat behar du —OpenWorksheets-en MCP zerbitzaria—, behin bakarrik instalatzen dena. Zure dokumentua ez da inolako zerbitzura bidaltzen: dena zure ordenagailuan gertatzen da.',
