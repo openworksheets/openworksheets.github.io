@@ -227,51 +227,48 @@ export function openMcpDialog() {
   });
   renderClients();
 
-  // Dos caminos distintos, no una secuencia: lo que hay que hacer depende de si
-  // la IA puede ejecutar comandos. Para las que no (Claude Desktop, LM Studio),
-  // el trabajo lo hace la persona, y por eso ahí sí hace falta la descarga.
   // Son ejemplos de lo que se le puede pedir, con nombres inventados: no hay
   // nada que copiar tal cual, así que no llevan botón.
   const example = key => el('pre', { class: 'mcp-code mcp-example' }, t(key));
 
-  // Dos caminos distintos, no una secuencia: lo que hay que hacer depende de si
-  // la IA puede ejecutar comandos. Para las que no (Claude Desktop, ChatGPT de
-  // escritorio, LM Studio), el trabajo lo hace la persona, y por eso ahí sí
-  // hace falta descargar la carpeta.
+  // Dos preguntas, en este orden: si ya está instalado no hay nada que leer de
+  // la instalación, y quien está instalando no necesita todavía los ejemplos.
+  // Todo plegado: se abre lo que toca.
+  const way = (titleKey, ...body) => el('details', { class: 'mcp-way mcp-way-fold' },
+    el('summary', {}, el('h3', { class: 'mcp-way-title' }, t(titleKey))), ...body);
+
   dlg.append(
     closeX,
     el('h2', { class: 'ai-title' }, t('mcp.title')),
     el('p', { class: 'ai-help' }, t('mcp.intro')),
     el('p', { class: 'mcp-note' }, t('mcp.compat')),
 
-    el('div', { class: 'mcp-way' },
-      el('h3', { class: 'mcp-way-title' }, t('mcp.wayAuto')),
-      el('p', { class: 'mcp-hint' }, t('mcp.wayAutoHelp')),
-      promptBox,
-      el('div', { class: 'ai-actions mcp-actions' }, bigCopy)),
+    way('mcp.notInstalled',
+      way('mcp.wayAuto',
+        el('p', { class: 'mcp-hint' }, t('mcp.wayAutoHelp')),
+        promptBox,
+        el('div', { class: 'ai-actions mcp-actions' }, bigCopy)),
 
-    // Plegada: es el camino largo y solo lo recorre quien lo necesita.
-    el('details', { class: 'mcp-way mcp-way-fold' },
-      el('summary', {}, el('h3', { class: 'mcp-way-title' }, t('mcp.wayManual'))),
-      el('p', { class: 'mcp-hint' }, t('mcp.wayManualHelp')),
-      el('ol', { class: 'mcp-substeps' },
-        el('li', {},
-          el('p', { class: 'mcp-hint' }, t('mcp.mStep1')),
-          el('div', { class: 'ai-actions mcp-actions' },
-            btnDownload,
-            el('a', { class: 'mcp-link', href: REPO + '/tree/main/mcp', target: '_blank', rel: 'noopener' }, t('mcp.fromGithub')))),
-        el('li', {}, el('p', { class: 'mcp-hint' }, t('mcp.mStep2'))),
-        el('li', {},
-          el('p', { class: 'mcp-hint' }, t('mcp.mStep3')),
-          el('div', { class: 'ai-field' },
-            el('label', { class: 'ai-label' }, t('mcp.pathLabel')),
-            pathInput),
-          blocks))),
+      way('mcp.wayManual',
+        el('p', { class: 'mcp-hint' }, t('mcp.wayManualHelp')),
+        el('ol', { class: 'mcp-substeps' },
+          el('li', {},
+            el('p', { class: 'mcp-hint' }, t('mcp.mStep1')),
+            el('div', { class: 'ai-actions mcp-actions' },
+              btnDownload,
+              el('a', { class: 'mcp-link', href: REPO + '/tree/main/mcp', target: '_blank', rel: 'noopener' }, t('mcp.fromGithub')))),
+          el('li', {}, el('p', { class: 'mcp-hint' }, t('mcp.mStep2'))),
+          el('li', {},
+            el('p', { class: 'mcp-hint' }, t('mcp.mStep3')),
+            el('div', { class: 'ai-field' },
+              el('label', { class: 'ai-label' }, t('mcp.pathLabel')),
+              pathInput),
+            blocks)))),
 
-    // Lo que se le pide a la IA una vez conectada, con un par de ejemplos de
-    // los ajustes que se le pueden pedir sobre la marcha.
-    el('div', { class: 'mcp-way' },
-      el('h3', { class: 'mcp-way-title' }, t('mcp.finally')),
+    // Con el servidor puesto, el trabajo ya no pasa por aquí: se le habla a la
+    // IA desde su propio programa.
+    way('mcp.installed',
+      el('p', { class: 'mcp-hint' }, t('mcp.usedFrom')),
       el('p', { class: 'mcp-hint' }, t('mcp.finallyBody')),
       example('mcp.ex1'),
       el('p', { class: 'mcp-hint mcp-more' }, t('mcp.moreAsks')),
