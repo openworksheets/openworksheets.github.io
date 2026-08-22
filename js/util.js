@@ -141,11 +141,17 @@ export async function copyToClipboard(text) {
     await navigator.clipboard.writeText(text);
     return true;
   } catch {
+    // Reserva para cuando el navegador no da permiso al portapapeles. El
+    // textarea tiene que colgar del <dialog> abierto, si lo hay: con un diálogo
+    // modal, todo lo demás queda inerte, no se puede seleccionar y la copia
+    // fallaba en silencio (devolvía «copiado» con el portapapeles vacío).
+    const host = document.querySelector('dialog[open]') || document.body;
     const ta = document.createElement('textarea');
     ta.value = text;
     ta.style.position = 'fixed';
     ta.style.opacity = '0';
-    document.body.appendChild(ta);
+    host.appendChild(ta);
+    ta.focus();
     ta.select();
     let ok = false;
     try { ok = document.execCommand('copy'); } catch { /* sin permiso */ }
