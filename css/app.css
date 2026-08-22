@@ -3876,3 +3876,25 @@ input.wpf-gap-input {
 }
 .ed-scorm-icon svg { width: 32px; height: 32px; opacity: 0.7; }
 .ed-scorm-title { font-size: 0.8rem; text-align: center; word-break: break-word; }
+
+/* «Archivo → Nuevo…»: el mismo cuadro de inicio, como diálogo */
+.ed-start-dialog {
+  position: relative;
+  width: min(520px, 94vw);
+  border: 2px solid var(--tinta);
+  border-radius: 12px;
+  background: var(--blanco);
+  color: var(--tinta);
+  padding: 24px;
+}
+.ed-start-dialog::backdrop { background: rgba(29, 44, 66, 0.4); }
+.ed-start-dialog h2 { margin: 0 0 16px; font-size: 1.2rem; text-align: center; padding-right: 28px; }
+.ed-start-dialog .dlg-x {
+  position: absolute;
+  top: 14px; right: 16px;
+  border: none; background: none;
+  font-size: 1.1rem; line-height: 1;
+  cursor: pointer; color: var(--tinta-suave);
+  padding: 4px 8px; border-radius: 6px;
+}
+.ed-start-dialog .dlg-x:hover { background: var(--tinta-tenue); color: var(--tinta); }

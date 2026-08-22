@@ -833,6 +833,31 @@ function movePage(pi, delta) {
 // Sin recuadro de botón; el estilo (hover, separadores) va en el CSS.
 // `key` identifica la opción de forma estable (data-start) para las pruebas y
 // para poder reordenar la lista sin romperlas.
+// Formas de empezar una ficha, en un único sitio: las pinta el cuadro que
+// aparece con el editor vacío y el diálogo de «Archivo → Nuevo…».
+function startChoices() {
+  return [
+    { key: 'pdf',   svg: ICONS.fileText,   title: t('editor.addPdf').replace(/^\+\s*/, ''), sub: t('menu.addPdfSub'),  run: startWithPdf },
+    { key: 'open',  svg: ICONS.folderOpen, title: t('editor.openZip'),  sub: t('menu.openZipSub'), run: startWithZip },
+    { key: 'blank', svg: ICONS.filePlus,   title: t('editor.addBlank'), sub: t('menu.blankSub'),   run: startBlank },
+    { key: 'ai',    svg: ICONS.sparkles,   title: t('ai.create'),       sub: t('ai.createSub'),    run: startWithAi },
+    { key: 'mcp',   svg: ICONS.code,       title: t('mcp.create'),      sub: t('mcp.createSub'),   run: () => openMcpDialog() }
+  ];
+}
+
+// El mismo cuadro, como diálogo, para poder volver a él con una ficha abierta.
+// Cada opción se encarga de avisar si hay cambios sin guardar.
+function openStartDialog() {
+  const dlg = el('dialog', { class: 'ed-start-dialog' });
+  const cerrar = el('button', { type: 'button', class: 'dlg-x', 'aria-label': t('ai.close'), onclick: () => dlg.close() }, '✕');
+  const lista = el('div', { class: 'ed-empty-list' },
+    ...startChoices().map(c => startItem(c.key, c.svg, c.title, c.sub, () => { dlg.close(); c.run(); })));
+  dlg.append(cerrar, el('h2', {}, t('editor.emptyTitle')), lista);
+  document.body.appendChild(dlg);
+  dlg.addEventListener('close', () => dlg.remove());
+  dlg.showModal();
+}
+
 function startItem(key, svg, title, sub, onclick) {
   const ic = el('span', { class: 'ed-start-icon' });
   ic.innerHTML = svg;
@@ -863,16 +888,7 @@ function renderCanvas({ preserveScroll = false } = {}) {
     canvas.appendChild(el('div', { class: 'ed-empty card anim-in' },
       el('h2', {}, t('editor.emptyTitle')),
       el('div', { class: 'ed-empty-list' },
-        startItem('pdf', ICONS.fileText, t('editor.addPdf').replace(/^\+\s*/, ''), t('menu.addPdfSub'), () => {
-          const input = $('#inputPaginas');
-          const handler = e => { addFiles(e.target.files); e.target.value = ''; input.removeEventListener('change', handler); };
-          input.addEventListener('change', handler);
-          input.click();
-        }),
-        startItem('open', ICONS.folderOpen, t('editor.openZip'), t('menu.openZipSub'), () => $('#inputZip').click()),
-        startItem('blank', ICONS.filePlus, t('editor.addBlank'), t('menu.blankSub'), () => addBlankPage(undefined, { newSheet: true })),
-        startItem('ai', ICONS.sparkles, t('ai.create'), t('ai.createSub'), () => openAiDialog({ onImport: createWorksheetFromAi })),
-        startItem('mcp', ICONS.code, t('mcp.create'), t('mcp.createSub'), () => openMcpDialog()))));
+        ...startChoices().map(c => startItem(c.key, c.svg, c.title, c.sub, c.run)))));
     restoreScroll();
     return;
   }
@@ -6035,18 +6051,29 @@ function confirmDiscardCurrent() {
   return !state.dirty || window.confirm(t('editor.confirmReplace'));
 }
 
-fileMenuItem('#miBlank', () => {
+// Formas de empezar una ficha. Son funciones con nombre porque las comparten
+// el menú «Archivo», el cuadro que aparece con el editor vacío y «Nuevo…»:
+// así las tres puertas hacen exactamente lo mismo, confirmación incluida.
+function startBlank() {
   if (!confirmDiscardCurrent()) return;
   resetWorksheet();
   renderCanvas();
   renderPanel();
   refreshPaletteState();
   addBlankPage(undefined, { newSheet: true });
-});
+}
 
-fileMenuItem('#miIA', () => openAiDialog({ onImport: createWorksheetFromAi }));
+function startWithAi() {
+  openAiDialog({ onImport: createWorksheetFromAi });
+}
 
-fileMenuItem('#miAddPdf', () => {
+fileMenuItem('#miBlank', startBlank);
+fileMenuItem('#miIA', startWithAi);
+fileMenuItem('#miMcp', () => openMcpDialog());
+fileMenuItem('#miNuevo', () => openStartDialog());
+
+fileMenuItem('#miAddPdf', startWithPdf);
+function startWithPdf() {
   const input = $('#inputPaginas');
   const handler = async e => {
     const files = Array.from(e.target.files);
@@ -6061,8 +6088,10 @@ fileMenuItem('#miAddPdf', () => {
   };
   input.addEventListener('change', handler);
   input.click();
-});
-fileMenuItem('#miOpenZip', async () => {
+}
+
+fileMenuItem('#miOpenZip', startWithZip);
+async function startWithZip() {
   if (window.showOpenFilePicker) {
     try {
       const [handle] = await window.showOpenFilePicker({
@@ -6078,7 +6107,8 @@ fileMenuItem('#miOpenZip', async () => {
   } else {
     $('#inputZip').click();
   }
-});
+}
+
 // «Exportar a PDF» reutiliza el flujo de impresión: el diálogo del navegador
 // permite elegir «Guardar como PDF» como destino.
 fileMenuItem('#miPdf', printWorksheet);
