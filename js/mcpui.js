@@ -86,6 +86,20 @@ function forJson(p) {
   return String(p).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
+// Cómo se junta con lo que ya hubiera en el archivo. Es la duda que salta en
+// cuanto el archivo no está vacío: pegar el bloque al final rompe el JSON.
+function mergeExample(p, key = 'mcpServers') {
+  return `{
+  "${key}": {
+    "otro-servidor": { "command": "…" },
+    "openworksheets": {
+      "command": "node",
+      "args": ["${forJson(p)}"]
+    }
+  }
+}`;
+}
+
 function json(p, key = 'mcpServers') {
   return `{
   "${key}": {
@@ -98,21 +112,22 @@ function json(p, key = 'mcpServers') {
 }
 
 const CLIENTS = [
-  { name: 'Claude Desktop', descKey: 'mcp.c.claudeDesktop', howKey: 'mcp.h.claudeDesktop', where: CONFIG_PATHS.claude[OS], code: p => json(p) },
+  { name: 'Claude Desktop', descKey: 'mcp.c.claudeDesktop', howKey: 'mcp.h.claudeDesktop', merge: 'json', where: CONFIG_PATHS.claude[OS], code: p => json(p) },
   // La app de escritorio de ChatGPT comparte la configuración MCP con Codex CLI
   // en el mismo ordenador, así que el bloque vale para las dos.
   {
     name: 'ChatGPT',
-    descKey: 'mcp.c.chatgpt', howKey: 'mcp.h.chatgpt',
+    descKey: 'mcp.c.chatgpt', howKey: 'mcp.h.chatgpt', merge: 'toml',
     where: '~/.codex/config.toml',
     code: p => `[mcp_servers.openworksheets]\ncommand = "node"\nargs = ["${forJson(p)}"]`
   },
-  { name: 'LM Studio', descKey: 'mcp.c.lmstudio', howKey: 'mcp.h.lmstudio', where: '~/.lmstudio/mcp.json', code: p => json(p) },
+  { name: 'LM Studio', descKey: 'mcp.c.lmstudio', howKey: 'mcp.h.lmstudio', merge: 'json', where: '~/.lmstudio/mcp.json', code: p => json(p) },
   // Antigravity usa el mismo archivo en el IDE y en la CLI.
-  { name: 'Antigravity', descKey: 'mcp.c.antigravity', howKey: 'mcp.h.antigravity', where: '~/.gemini/config/mcp_config.json', code: p => json(p) },
+  { name: 'Antigravity', descKey: 'mcp.c.antigravity', howKey: 'mcp.h.antigravity', merge: 'json', where: '~/.gemini/config/mcp_config.json', code: p => json(p) },
   { name: 'Claude Code', descKey: 'mcp.c.claudeCode', howKey: 'mcp.h.claudeCode', where: 'Terminal', code: p => `claude mcp add openworksheets -- node "${p}"` },
-  { name: 'Cursor', descKey: 'mcp.c.cursor', howKey: 'mcp.h.cursor', where: CONFIG_PATHS.cursor[OS], code: p => json(p) },
-  { name: 'VS Code', descKey: 'mcp.c.vscode', howKey: 'mcp.h.vscode', where: '.vscode/mcp.json', code: p => json(p, 'servers') }
+  { name: 'Cursor', descKey: 'mcp.c.cursor', howKey: 'mcp.h.cursor', merge: 'json', where: CONFIG_PATHS.cursor[OS], code: p => json(p) },
+  { name: 'VS Code', descKey: 'mcp.c.vscode', howKey: 'mcp.h.vscode', merge: 'servers', where: '.vscode/mcp.json', code: p => json(p, 'servers') },
+  { nameKey: 'mcp.c.otherName', descKey: 'mcp.c.other', howKey: 'mcp.h.other', where: 'stdio', code: p => `node "${p}"` }
 ];
 
 // El encargo es deliberadamente corto: el detalle (requisitos, cómo se registra,
@@ -161,6 +176,16 @@ export function openMcpDialog() {
   });
   const blocks = el('div', { class: 'mcp-clients' });
 
+  // Qué hacer si el archivo ya tenía contenido: en JSON hay que meter el
+  // servidor entre las llaves que ya existen, no pegarlo detrás.
+  function mergeNote(c, p) {
+    if (!c.merge) return null;
+    if (c.merge === 'toml') return el('p', { class: 'mcp-hint mcp-merge' }, t('mcp.mergeToml'));
+    return el('div', { class: 'mcp-merge' },
+      el('p', { class: 'mcp-hint' }, t('mcp.mergeJson')),
+      el('pre', { class: 'mcp-code mcp-code-sample' }, mergeExample(p, c.merge === 'servers' ? 'servers' : 'mcpServers')));
+  }
+
   function renderClients() {
     const p = (pathInput.value || DEFAULT_PATH).trim();
     blocks.textContent = '';
@@ -168,13 +193,14 @@ export function openMcpDialog() {
       const code = el('pre', { class: 'mcp-code' }, c.code(p));
       blocks.appendChild(el('details', { class: 'mcp-client' },
         el('summary', { class: 'mcp-client-sum' },
-          el('span', { class: 'mcp-client-name' }, c.name),
+          el('span', { class: 'mcp-client-name' }, c.name || t(c.nameKey)),
           el('span', { class: 'mcp-client-desc' }, t(c.descKey))),
         el('p', { class: 'mcp-hint mcp-client-how' }, t(c.howKey)),
         el('div', { class: 'mcp-client-head' },
           el('span', { class: 'mcp-client-where' }, c.where),
           copyButton(() => code.textContent, t('mcp.copy'))),
-        code));
+        code,
+        mergeNote(c, p)));
     }
   }
 

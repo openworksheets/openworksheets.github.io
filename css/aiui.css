@@ -257,3 +257,8 @@ details.mcp-client[open] .mcp-client-sum { border-bottom: 1px solid var(--tinta-
 .mcp-client-desc { font-size: 0.84rem; color: var(--tinta-suave); }
 details.mcp-client .mcp-client-head { padding: 10px 14px 0; margin-bottom: 8px; }
 details.mcp-client .mcp-code { margin: 0 14px 14px; }
+
+/* «¿Y si el archivo ya tenía algo?»: la nota y el ejemplo de cómo queda */
+.mcp-merge { margin: 10px 14px 14px; }
+.mcp-merge .mcp-hint { margin-bottom: 6px; }
+.mcp-code-sample { opacity: 0.75; font-size: 0.75rem; }
