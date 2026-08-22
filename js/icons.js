@@ -83,7 +83,7 @@ export const ICONS = {
   // Variante de «sparkles» para el MCP: el destello de la IA sobre un documento
   // que ya tiene contenido. Comparte familia con «Crear con IA» y dice en qué
   // se diferencia: allí se parte de cero, aquí de un PDF.
-  fileSparkles: icon('<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/><path d="M14 2v4a2 2 0 0 0 2 2h2"/><path d="M8 13h4M8 17h6"/><path d="M18.6 1.8 19.8 4.4 22.4 5.6 19.8 6.8 18.6 9.4 17.4 6.8 14.8 5.6 17.4 4.4z" fill="currentColor" stroke="none"/>'),
+  fileSparkles: icon('<path d="M13 6H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8"/><path d="M12 6v4a2 2 0 0 0 2 2h4"/><path d="M8 16h6"/><path d="M17.5 0 19.2 3.3 22.5 5 19.2 6.7 17.5 10 15.8 6.7 12.5 5 15.8 3.3z" fill="currentColor" stroke="none"/>'),
   code:      icon('<path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/>'),
   package:   icon('<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>'),
 };
