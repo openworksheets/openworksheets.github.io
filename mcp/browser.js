@@ -1,5 +1,9 @@
 // Chromium sin interfaz como motor de render del servidor MCP.
 //
+// Se habla con el navegador por CDP con un cliente propio (cdp.js), sin
+// dependencias: así la carpeta funciona recién descomprimida, sin «npm install»
+// ni terminal.
+//
 // Se reutiliza el pdf.js del propio proyecto (vendor/) en lugar de una librería
 // aparte: así el PDF se convierte en páginas exactamente igual que cuando el
 // profesor lo sube al editor, y lo que ve el modelo en la vista previa es lo
@@ -10,7 +14,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const puppeteer = require('puppeteer-core');
+const { launch } = require('./cdp');
 
 // El servidor sirve su propia carpeta: así funciona tanto dentro del repositorio
 // completo como descargado a solas (que es lo normal — la aplicación se usa en
@@ -69,17 +73,11 @@ async function startServer() {
 async function workbench() {
   if (page) return page;
   const port = await startServer();
-  browser = await puppeteer.launch({
-    executablePath: findChromium(),
-    args: ['--no-sandbox', '--disable-gpu'],
-    headless: 'new'
-  });
+  browser = await launch(findChromium());
   page = await browser.newPage();
-  const errors = [];
-  page.on('pageerror', e => errors.push(e.message));
-  await page.goto(`http://127.0.0.1:${port}/workbench.html`, { waitUntil: 'networkidle0' });
+  await page.goto(`http://127.0.0.1:${port}/workbench.html`);
   const ready = await page.evaluate(() => Boolean(window.__owsReady));
-  if (!ready) throw new Error('El banco de trabajo no ha arrancado: ' + errors.join(' | '));
+  if (!ready) throw new Error('El banco de trabajo no ha arrancado: ' + page.errors.join(' | '));
   return page;
 }
 

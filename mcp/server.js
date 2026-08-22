@@ -6,9 +6,9 @@
 //
 // El protocolo MCP se habla directamente sobre stdio (JSON-RPC 2.0, un mensaje
 // JSON por línea). Se implementa aquí en lugar de usar el SDK oficial para no
-// añadir dependencias: OpenWorksheets no tiene proceso de compilación y este
-// servidor mantiene esa misma regla (solo Node y el puppeteer-core que ya se
-// usaba en los tests).
+// añadir dependencias: esta carpeta se descarga suelta y tiene que funcionar
+// recién descomprimida, sin «npm install» ni terminal (quien usa Claude Desktop
+// o LM Studio no tiene por qué abrir una). Solo hacen falta Node y Chrome.
 
 const session = require('./session');
 const { close } = require('./browser');

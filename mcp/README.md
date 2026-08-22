@@ -11,24 +11,33 @@ El profesor solo tiene que decir dónde está el PDF:
 
 ## Instalación
 
-Esta carpeta es autónoma: **no hace falta descargar el resto de la aplicación**,
-que se usa en [openworksheets.github.io](https://openworksheets.github.io). Lleva
-dentro su propia copia de pdf.js y su única dependencia externa es
-`puppeteer-core`.
+> **Si eres la IA que está instalando esto**: no hay nada que compilar ni que
+> instalar dentro de la carpeta —no tiene dependencias—. Basta con descargarla,
+> comprobar que hay **Node 18 o superior** y **Chrome o Chromium**, y registrar
+> el servidor en el cliente MCP que esté usando la persona con la que hablas:
+> transporte **stdio**, nombre **openworksheets**, comando **node** y, como
+> único argumento, la ruta absoluta de `server.js`. Después, comprueba que
+> responde y sigue leyendo: la sección *Cómo trabaja la IA* explica el orden en
+> que conviene usar las herramientas.
 
-Lo normal es que **no lo instales tú**: en la aplicación, *Colocar campos con IA
-sobre un PDF…* da un texto listo para pegarle a la IA, y es ella quien comprueba
-los requisitos, descarga esta carpeta, la instala y se registra sola.
+Esta carpeta es autónoma y **no tiene dependencias**: se descomprime y funciona.
+No hace falta descargar el resto de la aplicación, que se usa en
+[openworksheets.github.io](https://openworksheets.github.io), ni ejecutar
+`npm install`, ni abrir una terminal.
 
 Requisitos: **Node 18 o superior** y **Chromium o Google Chrome** (se busca en
 las rutas habituales; si está en otro sitio, se indica con `OWS_CHROME`).
 
-A mano:
+La vía normal es el propio editor: en el cuadro de opciones de creación,
+*Colocar campos con IA sobre un PDF…* ofrece la descarga en un clic (la
+aplicación empaqueta esta carpeta en el navegador) y, después, el texto que hay
+que pegarle a la IA para que se registre sola.
+
+A mano, sirve cualquiera de estas:
 
 ```bash
 npx -y degit github:openworksheets/openworksheets.github.io/mcp openworksheets-mcp
-cd openworksheets-mcp
-npm install
+# o descargar el ZIP del repositorio y quedarse solo con la carpeta mcp/
 ```
 
 ### Qué programas pueden usarlo
@@ -140,10 +149,11 @@ Esos se añaden a mano en el editor.
 | `session.js` | La ficha en curso: colocar, validar, ajustar, guardar |
 | `fieldspec.js` | Traduce la descripción de la IA al campo real del manifiesto |
 | `browser.js` | Chromium sin interfaz y servidor local para pdf.js |
+| `cdp.js` | Cliente mínimo de WebSocket y del protocolo de Chrome, para no depender de nada |
 | `workbench.html` | Rasterizado del PDF, lectura de coordenadas y vista previa |
 | `zip.js` | Escritura del `.owpkg` (ZIP) sin dependencias |
 | `vendor/` | Copia de pdf.js, la misma que usa la aplicación, para poder funcionar a solas |
-| `package.json` | Declara la única dependencia (`puppeteer-core`) y el ejecutable |
+| `package.json` | Metadatos y ejecutable; no declara dependencias porque no las hay |
 
 ## Prueba
 

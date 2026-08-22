@@ -10,7 +10,7 @@
 // La configuración manual sigue estando, plegada, para quien prefiera hacerla
 // a mano o cuando su herramienta no pueda editarse a sí misma.
 
-import { el, copyToClipboard, toast } from './util.js';
+import { el, copyToClipboard, downloadBlob, toast } from './util.js';
 import { t } from './i18n.js';
 
 const REPO = 'https://github.com/openworksheets/openworksheets.github.io';
@@ -28,6 +28,40 @@ function setReady(v) {
   try { localStorage.setItem(READY_KEY, v ? '1' : '0'); } catch { /* modo privado */ }
 }
 
+// Archivos que componen el servidor. Se descargan de este mismo sitio y se
+// empaquetan en el navegador: así el profesorado obtiene la carpeta lista con
+// un clic, sin pasar por GitHub ni por una terminal.
+const SERVER_FILES = [
+  'server.js', 'session.js', 'fieldspec.js', 'browser.js', 'cdp.js', 'zip.js',
+  'workbench.html', 'package.json', 'README.md',
+  'vendor/pdf.min.js', 'vendor/pdf.worker.min.js'
+];
+
+async function downloadServer(btn) {
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = t('mcp.preparing');
+  try {
+    const zip = new window.JSZip();
+    const folder = zip.folder('openworksheets-mcp');
+    await Promise.all(SERVER_FILES.map(async name => {
+      const res = await fetch(new URL('mcp/' + name, document.baseURI));
+      if (!res.ok) throw new Error(name);
+      folder.file(name, await res.blob());
+    }));
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+    downloadBlob(blob, 'openworksheets-mcp.zip');
+    toast(t('mcp.downloaded'), 'ok');
+  } catch {
+    // Al abrir el editor desde una copia local sin la carpeta mcp/, no hay nada
+    // que empaquetar: se remite al repositorio.
+    toast(t('mcp.downloadFail'), 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
 function osKind() {
   const ua = navigator.userAgent || '';
   if (/Windows/i.test(ua)) return 'win';
@@ -39,9 +73,9 @@ const OS = osKind();
 
 // Ruta de ejemplo del servidor, solo para la sección manual.
 const DEFAULT_PATH = {
-  win: 'C:\\Users\\tu-usuario\\openworksheets-mcp\\server.js',
-  mac: '/Users/tu-usuario/openworksheets-mcp/server.js',
-  linux: '/home/tu-usuario/openworksheets-mcp/server.js'
+  win: 'C:\\Users\\tu-usuario\\Downloads\\openworksheets-mcp\\server.js',
+  mac: '/Users/tu-usuario/Downloads/openworksheets-mcp/server.js',
+  linux: '/home/tu-usuario/Descargas/openworksheets-mcp/server.js'
 }[OS];
 
 const CONFIG_PATHS = {
@@ -81,17 +115,17 @@ const CLIENTS = [
 
 // El encargo que se le pega a la IA. Va en el idioma del profesor salvo los
 // nombres técnicos, que son los mismos en todas partes.
+// El encargo es deliberadamente corto: el detalle (requisitos, cómo se registra,
+// qué herramientas hay y en qué orden se usan) vive en el README de la carpeta,
+// que la IA lee. Repetirlo aquí solo serviría para que envejeciera mal.
 function buildPrompt() {
   return [
-    t('mcp.prompt.intro'),
+    t('mcp.prompt.line1'),
+    REPO + '/tree/main/mcp',
     '',
-    '1. ' + t('mcp.prompt.s1'),
-    '2. ' + t('mcp.prompt.s2', { repo: REPO }),
-    '3. ' + t('mcp.prompt.s3'),
-    '4. ' + t('mcp.prompt.s4'),
-    '5. ' + t('mcp.prompt.s5'),
+    t('mcp.prompt.line2'),
     '',
-    t('mcp.prompt.end')
+    t('mcp.prompt.line3')
   ].join('\n');
 }
 
@@ -112,18 +146,17 @@ export function openMcpDialog() {
 
   const closeX = el('button', { type: 'button', class: 'dlg-x', 'aria-label': t('ai.close'), onclick: () => dlg.close() }, '✕');
 
-  // ---------- Instalación: el encargo que se le pega a la IA ----------
+  // ---------- Paso 1: descargar la carpeta del servidor ----------
+  const btnDownload = el('button', { class: 'btn primary', type: 'button' }, t('mcp.download'));
+  btnDownload.addEventListener('click', () => downloadServer(btnDownload));
+
+  // ---------- Paso 3a: encargo para las IA que ejecutan comandos ----------
   const promptBox = el('pre', { class: 'mcp-code mcp-prompt' }, buildPrompt());
   const bigCopy = copyButton(() => promptBox.textContent, t('mcp.copyPrompt'), () => {
     setReady(true);
-    show('use');
   });
-  bigCopy.classList.add('primary');
 
-  const linkHaveIt = el('button', { class: 'mcp-link', type: 'button' }, t('mcp.haveIt'));
-  linkHaveIt.addEventListener('click', () => { setReady(true); show('use'); });
-
-  // ---------- Configuración manual (plegada, dentro de la instalación) ------
+  // ---------- Paso 3b: configuración a mano, para las que no pueden ----------
   const pathInput = el('input', {
     class: 'ai-input mcp-path', type: 'text', spellcheck: 'false',
     value: saved || DEFAULT_PATH, placeholder: DEFAULT_PATH
@@ -139,7 +172,7 @@ export function openMcpDialog() {
         el('div', { class: 'mcp-client-head' },
           el('span', { class: 'mcp-client-name' }, c.name),
           el('span', { class: 'mcp-client-where' }, c.where),
-          copyButton(() => code.textContent, t('mcp.copy'))),
+          copyButton(() => code.textContent, t('mcp.copy'), () => setReady(true))),
         code));
     }
   }
@@ -149,34 +182,51 @@ export function openMcpDialog() {
   });
   renderClients();
 
-  const step = (n, ...body) => el('li', { class: 'mcp-step' },
-    el('span', { class: 'mcp-step-title' }, t('mcp.step' + n)), ...body);
+  const linkHaveIt = el('button', { class: 'mcp-link', type: 'button' }, t('mcp.haveIt'));
+  linkHaveIt.addEventListener('click', () => { setReady(true); show('use'); });
 
+  // Dos caminos distintos, no una secuencia: lo que hay que hacer depende de si
+  // la IA puede ejecutar comandos. Para las que no (Claude Desktop, LM Studio),
+  // el trabajo lo hace la persona, y por eso ahí sí hace falta la descarga.
   const viewInstall = el('div', { class: 'mcp-view' },
     el('p', { class: 'ai-help' }, t('mcp.intro')),
     el('p', { class: 'mcp-note' }, t('mcp.compat')),
-    el('ol', { class: 'mcp-steps' },
-      step(1,
-        el('p', { class: 'mcp-hint' }, t('mcp.step1Body')),
-        promptBox,
-        el('div', { class: 'ai-actions mcp-actions' }, bigCopy)),
-      step(2,
-        el('p', { class: 'mcp-hint' }, t('mcp.step2Body')),
-        el('pre', { class: 'mcp-code' }, t('mcp.ex1')))),
-    el('details', { class: 'mcp-manual' },
-      el('summary', {}, t('mcp.manualTitle')),
-      el('p', { class: 'mcp-hint' }, t('mcp.manualHelp')),
-      el('div', { class: 'ai-field' },
-        el('label', { class: 'ai-label' }, t('mcp.pathLabel')),
-        pathInput),
-      blocks),
+
+    el('div', { class: 'mcp-way' },
+      el('h3', { class: 'mcp-way-title' }, t('mcp.wayAuto')),
+      el('p', { class: 'mcp-hint' }, t('mcp.wayAutoHelp')),
+      promptBox,
+      el('div', { class: 'ai-actions mcp-actions' }, bigCopy)),
+
+    el('div', { class: 'mcp-way' },
+      el('h3', { class: 'mcp-way-title' }, t('mcp.wayManual')),
+      el('p', { class: 'mcp-hint' }, t('mcp.wayManualHelp')),
+      el('ol', { class: 'mcp-substeps' },
+        el('li', {},
+          el('p', { class: 'mcp-hint' }, t('mcp.mStep1')),
+          el('div', { class: 'ai-actions mcp-actions' },
+            btnDownload,
+            el('a', { class: 'mcp-link', href: REPO + '/tree/main/mcp', target: '_blank', rel: 'noopener' }, t('mcp.fromGithub')))),
+        el('li', {}, el('p', { class: 'mcp-hint' }, t('mcp.mStep2'))),
+        el('li', {},
+          el('p', { class: 'mcp-hint' }, t('mcp.mStep3')),
+          el('div', { class: 'ai-field' },
+            el('label', { class: 'ai-label' }, t('mcp.pathLabel')),
+            pathInput),
+          blocks))),
+
+    el('div', { class: 'mcp-way' },
+      el('h3', { class: 'mcp-way-title' }, t('mcp.finally')),
+      el('p', { class: 'mcp-hint' }, t('mcp.finallyBody')),
+      el('pre', { class: 'mcp-code' }, t('mcp.ex1'))),
+
     el('p', { class: 'mcp-foot' }, linkHaveIt));
 
   // ---------- Uso diario: ya está instalado ----------
   const linkInstall = el('button', { class: 'mcp-link', type: 'button' }, t('mcp.installAgain'));
   linkInstall.addEventListener('click', () => show('install'));
 
-  const example = (key) => {
+  const example = key => {
     const pre = el('pre', { class: 'mcp-code' }, t(key));
     return el('div', { class: 'mcp-example' }, pre, copyButton(() => pre.textContent, t('mcp.copy')));
   };
@@ -196,6 +246,7 @@ export function openMcpDialog() {
     viewUse.hidden = !use;
     viewInstall.hidden = use;
     title.textContent = use ? t('mcp.titleUse') : t('mcp.title');
+    dlg.scrollTop = 0;
   }
 
   dlg.append(closeX, title, viewInstall, viewUse,

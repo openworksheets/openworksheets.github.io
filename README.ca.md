@@ -146,15 +146,16 @@ col·loca els camps, **comprova el resultat en una vista prèvia amb els camps
 dibuixats a sobre** —corregint el que estigui desplaçat— i desa el `.owpkg` que
 després obres amb **Arxiu → Obrir fitxa**.
 
-No cal instal·lar res a mà ni descarregar-se l'aplicació: a l'editor, obre
-«Col·locar camps amb IA sobre un PDF…» i copia el text que apareix. En
-enganxar-lo a la teva IA, és **ella** qui comprova els requisits (Node i Chrome),
-descarrega la carpeta `mcp/` —que és autònoma— i es registra sola. Això és cosa
-d'una sola vegada: a partir d'aquí, el mateix diàleg s'obre ja a «Demanar una
-fitxa a la teva IA», amb la petició a punt per copiar. Funciona amb
-les IA que poden executar programes al teu ordinador: **Claude Desktop, LM
-Studio, Claude Code, Codex CLI, Antigravity CLI, Cursor, VS Code**; ChatGPT i
-Gemini en la versió web no, perquè només admeten connectors remots. Detalls i
+A l'editor, «Col·locar camps amb IA sobre un PDF…» t'hi acompanya, i el camí
+depèn del que pugui fer la teva IA. Si pot executar ordres (Claude Code, Codex
+CLI, Antigravity CLI, Cursor, VS Code), li enganxes una instrucció curta i ella
+sola descarrega i registra el servidor. Si fas servir **Claude Desktop o LM
+Studio**, que no poden, el mateix diàleg et descarrega el servidor amb un clic
+(1,5 MB, empaquetats per la mateixa aplicació) i et dóna la configuració a punt
+per enganxar al seu arxiu, amb la ruta ja posada. **No hi ha res a instal·lar
+dins de la carpeta**: no té dependències. És cosa d'una sola vegada: a partir
+d'aquí el diàleg s'obre a «Demanar una fitxa a la teva IA». ChatGPT i Gemini en
+la versió web no serveixen, perquè només admeten connectors remots. Detalls i
 límits a [`mcp/README.md`](mcp/README.md).
 
 ## Flux de treball

@@ -118,7 +118,7 @@ textarea.ai-input { resize: vertical; }
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;   /* la ruta se recorta antes que empujar el botón abajo */
   margin-bottom: 6px;
 }
 .mcp-client-name { font-weight: 700; }
@@ -229,3 +229,14 @@ textarea.ai-input { resize: vertical; }
 .mcp-example .mcp-code { flex: 1; min-width: 0; }
 .mcp-example .btn { flex-shrink: 0; }
 .mcp-more { margin-top: 20px; }
+
+/* Los dos caminos de instalación (IA con comandos / configuración a mano) */
+.mcp-way {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 2px solid var(--tinta-tenue);
+}
+.mcp-way-title { margin: 0 0 6px; font-size: 1rem; }
+.mcp-substeps { margin: 12px 0 0; padding-left: 20px; }
+.mcp-substeps > li { margin-bottom: 14px; }
+.mcp-substeps > li::marker { font-weight: 700; color: var(--tinta-suave); }

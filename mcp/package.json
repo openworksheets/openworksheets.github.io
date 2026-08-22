@@ -9,9 +9,22 @@
     "url": "https://github.com/openworksheets/openworksheets.github.io.git",
     "directory": "mcp"
   },
-  "bin": { "openworksheets-mcp": "server.js" },
+  "bin": {
+    "openworksheets-mcp": "server.js"
+  },
   "main": "server.js",
-  "files": ["server.js", "session.js", "fieldspec.js", "browser.js", "zip.js", "workbench.html", "vendor/", "README.md"],
-  "engines": { "node": ">=18" },
-  "dependencies": { "puppeteer-core": "^24.0.0" }
+  "files": [
+    "server.js",
+    "session.js",
+    "fieldspec.js",
+    "browser.js",
+    "cdp.js",
+    "zip.js",
+    "workbench.html",
+    "vendor/",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
 }
