@@ -240,3 +240,20 @@ textarea.ai-input { resize: vertical; }
 .mcp-substeps { margin: 12px 0 0; padding-left: 20px; }
 .mcp-substeps > li { margin-bottom: 14px; }
 .mcp-substeps > li::marker { font-weight: 700; color: var(--tinta-suave); }
+
+/* Cada programa, plegado: el usuario abre solo el suyo */
+details.mcp-client { padding: 0; }
+.mcp-client-sum {
+  cursor: pointer;
+  padding: 10px 14px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  border-radius: 8px;
+}
+.mcp-client-sum:hover { background: var(--tinta-tenue); }
+details.mcp-client[open] .mcp-client-sum { border-bottom: 1px solid var(--tinta-tenue); border-radius: 8px 8px 0 0; }
+.mcp-client-desc { font-size: 0.84rem; color: var(--tinta-suave); }
+details.mcp-client .mcp-client-head { padding: 10px 14px 0; margin-bottom: 8px; }
+details.mcp-client .mcp-code { margin: 0 14px 14px; }

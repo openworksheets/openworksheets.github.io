@@ -107,20 +107,21 @@ function json(p, key = 'mcpServers') {
 }
 
 const CLIENTS = [
-  { name: 'Claude Desktop', where: CONFIG_PATHS.claude[OS], code: p => json(p) },
+  { name: 'Claude Desktop', descKey: 'mcp.c.claudeDesktop', howKey: 'mcp.h.claudeDesktop', where: CONFIG_PATHS.claude[OS], code: p => json(p) },
   // La app de escritorio de ChatGPT comparte la configuración MCP con Codex CLI
   // en el mismo ordenador, así que el bloque vale para las dos.
   {
-    name: 'ChatGPT (escritorio) y Codex CLI',
+    name: 'ChatGPT',
+    descKey: 'mcp.c.chatgpt', howKey: 'mcp.h.chatgpt',
     where: '~/.codex/config.toml',
     code: p => `[mcp_servers.openworksheets]\ncommand = "node"\nargs = ["${forJson(p)}"]`
   },
-  { name: 'LM Studio', where: '~/.lmstudio/mcp.json', code: p => json(p) },
+  { name: 'LM Studio', descKey: 'mcp.c.lmstudio', howKey: 'mcp.h.lmstudio', where: '~/.lmstudio/mcp.json', code: p => json(p) },
   // Antigravity usa el mismo archivo en el IDE y en la CLI.
-  { name: 'Antigravity (IDE y CLI)', where: '~/.gemini/config/mcp_config.json', code: p => json(p) },
-  { name: 'Claude Code', where: 'Terminal', code: p => `claude mcp add openworksheets -- node "${p}"` },
-  { name: 'Cursor', where: CONFIG_PATHS.cursor[OS], code: p => json(p) },
-  { name: 'VS Code (GitHub Copilot)', where: '.vscode/mcp.json', code: p => json(p, 'servers') }
+  { name: 'Antigravity', descKey: 'mcp.c.antigravity', howKey: 'mcp.h.antigravity', where: '~/.gemini/config/mcp_config.json', code: p => json(p) },
+  { name: 'Claude Code', descKey: 'mcp.c.claudeCode', howKey: 'mcp.h.claudeCode', where: 'Terminal', code: p => `claude mcp add openworksheets -- node "${p}"` },
+  { name: 'Cursor', descKey: 'mcp.c.cursor', howKey: 'mcp.h.cursor', where: CONFIG_PATHS.cursor[OS], code: p => json(p) },
+  { name: 'VS Code', descKey: 'mcp.c.vscode', howKey: 'mcp.h.vscode', where: '.vscode/mcp.json', code: p => json(p, 'servers') }
 ];
 
 // El encargo es deliberadamente corto: el detalle (requisitos, cómo se registra,
@@ -176,14 +177,18 @@ export function openMcpDialog() {
     blocks.textContent = '';
     for (const c of CLIENTS) {
       const code = el('pre', { class: 'mcp-code' }, c.code(p));
-      blocks.appendChild(el('div', { class: 'mcp-client' },
-        el('div', { class: 'mcp-client-head' },
+      blocks.appendChild(el('details', { class: 'mcp-client' },
+        el('summary', { class: 'mcp-client-sum' },
           el('span', { class: 'mcp-client-name' }, c.name),
+          el('span', { class: 'mcp-client-desc' }, t(c.descKey))),
+        el('p', { class: 'mcp-hint mcp-client-how' }, t(c.howKey)),
+        el('div', { class: 'mcp-client-head' },
           el('span', { class: 'mcp-client-where' }, c.where),
           copyButton(() => code.textContent, t('mcp.copy'), () => setReady(true))),
         code));
     }
   }
+
   pathInput.addEventListener('input', () => {
     try { localStorage.setItem(PATH_KEY, pathInput.value.trim()); } catch { /* modo privado */ }
     renderClients();
