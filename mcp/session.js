@@ -89,8 +89,8 @@ async function openDocument(file) {
   } else if (['.png', '.jpg', '.jpeg', '.webp', '.gif'].includes(ext)) {
     const mime = ext === '.jpg' ? 'jpeg' : ext.slice(1);
     const dataUrl = `data:image/${mime};base64,${buf.toString('base64')}`;
-    const { w, h } = await wb.evaluate(u => window.owsLoadImage(u), dataUrl);
-    addPage({ w, h, dataUrl, ext: ext.slice(1), text: [], rules: [] }, 1);
+    const { w, h, rules } = await wb.evaluate(u => window.owsLoadImage(u), dataUrl);
+    addPage({ w, h, dataUrl, ext: ext.slice(1), text: [], rules }, 1);
   } else {
     throw new Error(`Formato no admitido: ${ext}. Se aceptan PDF e imágenes.`);
   }

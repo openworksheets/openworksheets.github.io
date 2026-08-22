@@ -275,10 +275,20 @@ window.owsRedact = async function (dataUrl, areas, color) {
   return { dataUrl: out, ext, w: canvas.width, h: canvas.height };
 };
 
+// Una imagen no trae capa de texto, pero sí se le pueden buscar las líneas
+// horizontales impresas: en un examen escaneado son justo los huecos donde hay
+// que escribir, y es la única pista automática disponible.
 window.owsLoadImage = async function (dataUrl) {
   const img = new Image();
   await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = dataUrl; });
-  return { w: img.naturalWidth, h: img.naturalHeight };
+  const canvas = document.createElement('canvas');
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, 0, 0);
+  return { w: canvas.width, h: canvas.height, rules: findRules(ctx, canvas.width, canvas.height) };
 };
 
 window.__owsReady = true;
