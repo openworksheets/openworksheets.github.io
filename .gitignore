@@ -1,1 +1,5 @@
 node_modules/
+
+# Informe de revisión de seguridad: es material de trabajo interno y detalla
+# hallazgos aún abiertos, así que no se publica en un repositorio abierto.
+INFORME_REVISION.md
