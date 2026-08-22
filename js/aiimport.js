@@ -41,7 +41,7 @@ const TYPE_SPECS = {
   select:    '{ "type": "select", "prompt": "Enunciado", "options": ["A", "B"], "correct": 1 }',
   essay:     '{ "type": "essay", "prompt": "Consigna de la redacción", "maxWords": 0 }',
   gaps:      '{ "type": "gaps", "text": "El agua hierve a [100] grados y se congela a [0|cero]." }',
-  table:     '{ "type": "table", "prompt": "Enunciado (opcional)", "colHeaders": ["Col1", "Col2"], "rowHeaders": ["Fila1", "Fila2"], "rows": [["c11", "c12"], ["c21", "c22"]] }',
+  table:     '{ "type": "table", "prompt": "Enunciado (opcional)", "colHeaders": ["Col1", "Col2"], "rowHeaders": ["Fila1", "Fila2"], "rows": [["respuesta|alternativa", "c12"], ["c21", "c22"]] }',
   match:     '{ "type": "match", "prompt": "Enunciado", "pairs": [{ "left": "A", "right": "1" }], "distractors": ["sobrante"] }',
   order:     '{ "type": "order", "prompt": "Enunciado", "items": ["Primero", "Segundo", "Tercero"] }'
 };
@@ -59,6 +59,20 @@ export function buildPrompt(opts = {}) {
   const typeList = types.map(id => `  - "${id}": ${t('ai.hint.' + id)}`).join('\n');
   const specList = types.map(id => `  ${TYPE_SPECS[id]}`).join('\n');
 
+  // Un ejemplo completo enseña más que otra regla: fija de una vez la forma del
+  // documento entero, no solo la de cada item por separado.
+  const ejemplo = [
+    '{',
+    `  "title": "${t('ai.p.exTitle')}",`,
+    `  "instructions": "${t('ai.p.exInstr')}",`,
+    '  "items": [',
+    `    { "type": "label", "text": "${t('ai.p.exLabel')}" },`,
+    `    { "type": "single", "prompt": "${t('ai.p.exSingleQ')}", "options": ["${t('ai.p.exSingleA')}", "${t('ai.p.exSingleB')}", "${t('ai.p.exSingleC')}"], "correct": 1 },`,
+    `    { "type": "text", "prompt": "${t('ai.p.exTextQ')}", "answers": ["${t('ai.p.exTextA')}", "${t('ai.p.exTextB')}"] }`,
+    '  ]',
+    '}'
+  ].join('\n');
+
   const lines = [
     t('ai.p.role'),
     '',
@@ -75,6 +89,11 @@ export function buildPrompt(opts = {}) {
     specList,
     '',
     t('ai.p.rules'),
+    '',
+    t('ai.p.quality'),
+    '',
+    t('ai.p.exampleIntro'),
+    ejemplo,
     '',
     '== ' + t('ai.p.assignment') + ' ==',
     topic ? `${t('ai.p.topic')}: ${topic}` : t('ai.p.topicFree'),
@@ -314,7 +333,12 @@ function itemToBlocks(it) {
         showColHeaders: true,
         colHeaders: it.colHeaders.map(String),
         rowHeaders: Array.isArray(it.rowHeaders) ? it.rowHeaders.map(String) : Array.from({ length: rows }, () => ''),
-        cellAnswers: it.rows.map(r => Array.from({ length: cols }, (_, c) => [String(r[c] ?? '')]))
+        // Cada celda admite varias respuestas válidas separadas por «|», igual
+        // que los huecos de «gaps», para no dar por mala una forma correcta.
+        cellAnswers: it.rows.map(r => Array.from({ length: cols }, (_, c) => {
+          const alternativas = String(r[c] ?? '').split('|').map(a => a.trim()).filter(Boolean);
+          return alternativas.length ? alternativas : [''];
+        }))
       });
       blocks.push({ type: 'table', width: 0.84, height: 0.05 + (rows + 1) * 0.038, config: cfg });
       break;

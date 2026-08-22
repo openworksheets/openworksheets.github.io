@@ -9,6 +9,14 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [Unreleased]
+
+### Cambiado
+- **El prompt de «Crear con IA» pide ahora calidad, no solo formato**. Describía con detalle la forma del JSON pero no decía nada sobre cómo debe ser una buena pregunta, y el resultado lo notaba: fichas de un solo tipo de pregunta y opciones incorrectas inverosímiles. Se añaden criterios concretos —variar los tipos, distractores creíbles y del mismo estilo que la respuesta correcta, una única respuesta defendible por pregunta, respuestas cortas en los campos de texto, y usar «essay» una o dos veces como mucho porque no se autocorrige—. Se le indica además que la corrección ya ignora mayúsculas, tildes y espacios de más, de modo que en las respuestas aceptadas ponga sinónimos reales en lugar de la misma palabra con y sin acento. Incluye también un **ejemplo completo de respuesta**, que fija la forma del conjunto mejor que otra regla, y aclara que el número de preguntas pedido no cuenta los textos fijos («label»). De paso deja de exigir que la respuesta llegue sin bloque de código: el importador ya los admitía.
+
+### Añadido
+- **Varias respuestas válidas por celda en las tablas creadas con IA**: en el tipo `table`, cada celda admite ahora alternativas separadas por `|` (`"lumínica|luminosa"`), como ya ocurría en los huecos de `gaps`. Antes solo se aceptaba una forma exacta y una respuesta correcta escrita de otra manera se daba por mala.
+
 ## [1.25.0] — 2026-08-22
 
 ### Añadido
