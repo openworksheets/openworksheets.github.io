@@ -11,6 +11,9 @@ Las versiones publicadas también están en la página de
 
 ## [Unreleased]
 
+### Cambiado
+- **Las dos opciones de IA dicen de qué parten y qué cuestan**. Sus nombres y descripciones contaban el procedimiento («Generar un prompt, pegar la respuesta…») en lugar de la diferencia entre ellas, que es lo único que necesita saber quien elige. Ahora son **«Crear una ficha con IA…»** —*Partiendo de un tema: la IA inventa las preguntas. Solo copiar y pegar*— y **«Convertir un PDF con IA (MCP)»** —*Partiendo de un PDF tuyo: la IA coloca los campos encima. Hay que instalar un programa*—: los verbos distinguen el punto de partida, las descripciones se leen en paralelo y avisan de que una no requiere instalar nada y la otra sí.
+
 ### Corregido
 - **«Archivo → Nuevo…» duplicaba el cuadro de inicio**: con el editor vacío, el cuadro *Empieza tu ficha* ya está en el lienzo, y la opción del menú abría una copia encima. Ahora esa opción aparece desactivada mientras no haya ninguna ficha abierta, explicando por qué al pasar el ratón.
 

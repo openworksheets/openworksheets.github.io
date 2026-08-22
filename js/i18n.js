@@ -237,8 +237,8 @@ const STRINGS = {
     // Crear con IA (copiar/pegar, sin llamadas externas)
 
     // Colocar campos con IA sobre un PDF (servidor MCP local)
-    'mcp.create': 'Colocar campos con IA sobre un PDF (MCP)',
-    'mcp.createSub': 'Que tu IA sitúe los campos sobre el documento, en su sitio',
+    'mcp.create': 'Convertir un PDF con IA (MCP)',
+    'mcp.createSub': 'Partiendo de un PDF tuyo: la IA coloca los campos encima. Hay que instalar un programa',
     'mcp.title': 'Colocar campos con IA sobre un PDF (MCP)',
     'mcp.intro': 'Una IA puede abrir tu PDF, colocar los campos encima, comprobar el resultado en una vista previa y guardarte la ficha lista para abrir aquí. Para eso necesita un pequeño programa —el servidor MCP de OpenWorksheets— que se instala una sola vez. Tu documento no se envía a ningún servicio: todo ocurre en tu ordenador.',
     'mcp.compat': 'Las versiones web de ChatGPT y Gemini no sirven para esto: solo admiten conectores remotos, no programas instalados en tu ordenador.',
@@ -291,8 +291,8 @@ const STRINGS = {
     'mcp.caseCmd': 'Ejecuta esto:',
     'mcp.copy': 'Copiar',
     'mcp.copied': 'Copiado al portapapeles.',
-    'ai.create': 'Crear con IA…',
-    'ai.createSub': 'Generar un prompt, pegar la respuesta de tu IA e importarla',
+    'ai.create': 'Crear una ficha con IA…',
+    'ai.createSub': 'Partiendo de un tema: la IA inventa las preguntas. Solo copiar y pegar',
     'ai.title': 'Crear una ficha con ayuda de IA',
     'ai.close': 'Cerrar',
     'ai.step1Help': 'Rellena estos datos y OpenWorksheets generará un prompt. No se hace ninguna conexión externa: tú lo copias, lo pegas en el chat de la IA que prefieras y traes su respuesta.',
@@ -1315,8 +1315,8 @@ const STRINGS = {
     // Create with AI (copy/paste, no external calls)
 
     // Placing fields on a PDF with AI (local MCP server)
-    'mcp.create': 'Place fields on a PDF with AI (MCP)',
-    'mcp.createSub': 'Let your AI put the fields on the document, right where they belong',
+    'mcp.create': 'Turn a PDF into a worksheet with AI (MCP)',
+    'mcp.createSub': 'Starting from a PDF of yours: the AI places the fields on it. Needs a program installed',
     'mcp.title': 'Placing fields on a PDF with AI (MCP)',
     'mcp.intro': 'An AI can open your PDF, place the fields on top, check the result on a preview and hand you the worksheet ready to open here. For that it needs a small program —the OpenWorksheets MCP server— set up once. Your document is sent to no service: everything happens on your computer.',
     'mcp.compat': 'The web versions of ChatGPT and Gemini will not do for this: they only accept remote connectors, not programs installed on your computer.',
@@ -1369,8 +1369,8 @@ const STRINGS = {
     'mcp.caseCmd': 'Run this:',
     'mcp.copy': 'Copy',
     'mcp.copied': 'Copied to the clipboard.',
-    'ai.create': 'Create with AI…',
-    'ai.createSub': 'Generate a prompt, paste your AI\'s answer and import it',
+    'ai.create': 'Create a worksheet with AI…',
+    'ai.createSub': 'Starting from a topic: the AI makes up the questions. Just copy and paste',
     'ai.title': 'Create a worksheet with AI assistance',
     'ai.close': 'Close',
     'ai.step1Help': 'Fill in these details and OpenWorksheets will generate a prompt. No external connection is made: you copy it, paste it into the AI chat you prefer and bring back its answer.',
@@ -2361,8 +2361,8 @@ const STRINGS = {
     // Crear amb IA (copiar/enganxar, sense crides externes)
 
     // Col·locar camps amb IA sobre un PDF (servidor MCP local)
-    'mcp.create': 'Col·locar camps amb IA sobre un PDF (MCP)',
-    'mcp.createSub': 'Que la teva IA situï els camps sobre el document, al seu lloc',
+    'mcp.create': 'Convertir un PDF amb IA (MCP)',
+    'mcp.createSub': 'Partint d\'un PDF teu: la IA hi col·loca els camps a sobre. Cal instal·lar un programa',
     'mcp.title': 'Col·locar camps amb IA sobre un PDF (MCP)',
     'mcp.intro': 'Una IA pot obrir el teu PDF, col·locar-hi els camps a sobre, comprovar el resultat en una vista prèvia i donar-te la fitxa a punt per obrir aquí. Per fer-ho necessita un petit programa —el servidor MCP d\'OpenWorksheets— que s\'instal·la una sola vegada. El teu document no s\'envia a cap servei: tot passa al teu ordinador.',
     'mcp.compat': 'Les versions web de ChatGPT i Gemini no serveixen per a això: només admeten connectors remots, no programes instal·lats al teu ordinador.',
@@ -2415,8 +2415,8 @@ const STRINGS = {
     'mcp.caseCmd': 'Executa això:',
     'mcp.copy': 'Copiar',
     'mcp.copied': 'Copiat al porta-retalls.',
-    'ai.create': 'Crear amb IA…',
-    'ai.createSub': 'Generar un prompt, enganxar la resposta de la teva IA i importar-la',
+    'ai.create': 'Crear una fitxa amb IA…',
+    'ai.createSub': 'Partint d\'un tema: la IA inventa les preguntes. Només copiar i enganxar',
     'ai.title': 'Crear una fitxa amb ajuda d\'IA',
     'ai.close': 'Tancar',
     'ai.step1Help': 'Omple aquestes dades i OpenWorksheets generarà un prompt. No es fa cap connexió externa: el copies, l\'enganxes al xat de la IA que prefereixis i en portes la resposta.',
@@ -3400,8 +3400,8 @@ const STRINGS = {
     // Crear con IA (copiar/pegar, sen chamadas externas)
 
     // Colocar campos con IA sobre un PDF (servidor MCP local)
-    'mcp.create': 'Colocar campos con IA sobre un PDF (MCP)',
-    'mcp.createSub': 'Que a túa IA sitúe os campos sobre o documento, no seu sitio',
+    'mcp.create': 'Converter un PDF con IA (MCP)',
+    'mcp.createSub': 'Partindo dun PDF teu: a IA coloca os campos enriba. Hai que instalar un programa',
     'mcp.title': 'Colocar campos con IA sobre un PDF (MCP)',
     'mcp.intro': 'Unha IA pode abrir o teu PDF, colocar os campos enriba, comprobar o resultado nunha vista previa e darche a ficha lista para abrir aquí. Para iso necesita un pequeno programa —o servidor MCP de OpenWorksheets— que se instala unha soa vez. O teu documento non se envía a ningún servizo: todo ocorre no teu computador.',
     'mcp.compat': 'As versións web de ChatGPT e Gemini non serven para isto: só admiten conectores remotos, non programas instalados no teu computador.',
@@ -3454,8 +3454,8 @@ const STRINGS = {
     'mcp.caseCmd': 'Executa isto:',
     'mcp.copy': 'Copiar',
     'mcp.copied': 'Copiado ao portapapeis.',
-    'ai.create': 'Crear con IA…',
-    'ai.createSub': 'Xerar un prompt, pegar a resposta da túa IA e importala',
+    'ai.create': 'Crear unha ficha con IA…',
+    'ai.createSub': 'Partindo dun tema: a IA inventa as preguntas. Só copiar e pegar',
     'ai.title': 'Crear unha ficha con axuda de IA',
     'ai.close': 'Pechar',
     'ai.step1Help': 'Enche estes datos e OpenWorksheets xerará un prompt. Non se fai ningunha conexión externa: ti cópialo, pégalo no chat da IA que prefiras e traes a súa resposta.',
@@ -4439,8 +4439,8 @@ const STRINGS = {
     // IArekin sortu (kopiatu/itsatsi, kanpoko deirik gabe)
 
     // Eremuak IArekin PDF baten gainean jartzea (MCP zerbitzari lokala)
-    'mcp.create': 'Eremuak IArekin PDF baten gainean jarri (MCP)',
-    'mcp.createSub': 'Zure IAk eremuak dokumentuaren gainean koka ditzala, dagokien lekuan',
+    'mcp.create': 'Bihurtu PDF bat IArekin (MCP)',
+    'mcp.createSub': 'Zure PDF batetik abiatuta: IAk eremuak gainean jartzen ditu. Programa bat instalatu behar da',
     'mcp.title': 'Eremuak IArekin PDF baten gainean jartzea (MCP)',
     'mcp.intro': 'IA batek zure PDFa ireki dezake, eremuak gainean jarri, emaitza aurrebista batean egiaztatu eta fitxa hemen irekitzeko prest eman. Horretarako programa txiki bat behar du —OpenWorksheets-en MCP zerbitzaria—, behin bakarrik instalatzen dena. Zure dokumentua ez da inolako zerbitzura bidaltzen: dena zure ordenagailuan gertatzen da.',
     'mcp.compat': 'ChatGPTren eta Geminiren web bertsioek ez dute honetarako balio: urruneko konektoreak baino ez dituzte onartzen, ez zure ordenagailuan instalatutako programak.',
@@ -4493,8 +4493,8 @@ const STRINGS = {
     'mcp.caseCmd': 'Exekutatu hau:',
     'mcp.copy': 'Kopiatu',
     'mcp.copied': 'Arbelera kopiatu da.',
-    'ai.create': 'IArekin sortu…',
-    'ai.createSub': 'Sortu prompt bat, itsatsi zure IAren erantzuna eta inportatu',
+    'ai.create': 'Sortu fitxa bat IArekin…',
+    'ai.createSub': 'Gai batetik abiatuta: IAk galderak asmatzen ditu. Kopiatu eta itsatsi besterik ez',
     'ai.title': 'Sortu fitxa bat IAren laguntzarekin',
     'ai.close': 'Itxi',
     'ai.step1Help': 'Bete datu hauek eta OpenWorksheets-ek prompt bat sortuko du. Ez da kanpoko konexiorik egiten: zuk kopiatu, nahiago duzun IAren txatera itsatsi eta erantzuna ekartzen duzu.',
