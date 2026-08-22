@@ -14,6 +14,10 @@ import { el, copyToClipboard, downloadBlob, toast } from './util.js';
 import { t } from './i18n.js';
 
 const REPO = 'https://github.com/openworksheets/openworksheets.github.io';
+// Descarga directa del servidor publicada en la última versión. GitHub no
+// permite descargar una subcarpeta, así que enlazar a mcp/ dejaba al profesor
+// en una página sin botón que pulsar.
+const ZIP_URL = REPO + '/releases/latest/download/openworksheets-mcp.zip';
 const PATH_KEY = 'ows.mcpPath';
 // El servidor corre en el ordenador del profesor, sin contacto con esta página:
 // no hay forma de detectar si está instalado. Se recuerda que ya se pasó por la
@@ -256,7 +260,7 @@ export function openMcpDialog() {
             el('p', { class: 'mcp-hint' }, t('mcp.mStep1')),
             el('div', { class: 'ai-actions mcp-actions' },
               btnDownload,
-              el('a', { class: 'mcp-link', href: REPO + '/tree/main/mcp', target: '_blank', rel: 'noopener' }, t('mcp.fromGithub')))),
+              el('a', { class: 'mcp-link', href: ZIP_URL, rel: 'noopener' }, t('mcp.fromGithub')))),
           el('li', {}, el('p', { class: 'mcp-hint' }, t('mcp.mStep2'))),
           el('li', {},
             el('p', { class: 'mcp-hint' }, t('mcp.mStep3')),

@@ -73,9 +73,19 @@ que pegarle a la IA para que se registre sola.
 A mano, sirve cualquiera de estas:
 
 ```bash
+# Descarga directa de la última versión publicada (sin git ni npm)
+curl -L -o openworksheets-mcp.zip \
+  https://github.com/openworksheets/openworksheets.github.io/releases/latest/download/openworksheets-mcp.zip
+unzip openworksheets-mcp.zip
+
+# O la carpeta del repositorio, que es siempre lo más reciente
 npx -y degit github:openworksheets/openworksheets.github.io/mcp openworksheets-mcp
-# o descargar el ZIP del repositorio y quedarse solo con la carpeta mcp/
 ```
+
+El ZIP de la release es una foto de esa versión; entre una versión y la
+siguiente, la carpeta `mcp/` del repositorio puede llevar correcciones que aún
+no estén en él. Al publicar una versión nueva hay que regenerar ese adjunto si
+algo de `mcp/` ha cambiado.
 
 ### Qué programas pueden usarlo
 
