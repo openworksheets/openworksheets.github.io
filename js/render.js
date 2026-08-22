@@ -147,11 +147,21 @@ function buildRichSelect({ options, ariaLabel, className = '', placeholder = '' 
   let open = false;
   const optionBtns = [];
 
+  // Cada campo es un elemento posicionado con z-index propio, así que crea su
+  // contexto de apilamiento: el z-index del menú solo compite dentro de su
+  // campo y, entre campos, gana el último del DOM. Sin esto, el desplegable de
+  // una fila queda tapado por el campo de la fila siguiente. Se eleva el campo
+  // entero mientras el menú está abierto.
+  function liftField(on) {
+    root.closest('.wpf-field')?.classList.toggle('is-select-open', on);
+  }
+
   function closeMenu() {
     if (!open) return;
     open = false;
     root.classList.remove('is-open');
     root.setAttribute('aria-expanded', 'false');
+    liftField(false);
   }
 
   function openMenu() {
@@ -159,6 +169,7 @@ function buildRichSelect({ options, ariaLabel, className = '', placeholder = '' 
     open = true;
     root.classList.add('is-open');
     root.setAttribute('aria-expanded', 'true');
+    liftField(true);
   }
 
   function renderValue(labelNode) {

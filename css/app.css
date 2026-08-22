@@ -2473,6 +2473,10 @@ body.resizing-col { cursor: col-resize; }
      ficha (--ficha-font), con la predeterminada como último recurso. */
   font-family: var(--field-font, var(--ficha-font, var(--cuerpo)));
 }
+/* Campo con su desplegable abierto: por encima de los demás, para que la lista
+   de opciones no quede debajo de los campos que van después en el documento. */
+.wpf-field.is-select-open { z-index: 20; }
+
 .wpf-field input, .wpf-field select, .wpf-field button {
   font-family: inherit;
   font-size: inherit;
