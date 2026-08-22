@@ -841,7 +841,8 @@ function startChoices() {
     { key: 'open',  svg: ICONS.folderOpen, title: t('editor.openZip'),  sub: t('menu.openZipSub'), run: startWithZip },
     { key: 'blank', svg: ICONS.filePlus,   title: t('editor.addBlank'), sub: t('menu.blankSub'),   run: startBlank },
     { key: 'ai',    svg: ICONS.sparkles,   title: t('ai.create'),       sub: t('ai.createSub'),    run: startWithAi },
-    { key: 'mcp',   svg: ICONS.code,       title: t('mcp.create'),      sub: t('mcp.createSub'),   run: () => openMcpDialog() }
+    // Variante del icono de «Crear con IA»: misma familia, pero sobre un documento
+    { key: 'mcp',   svg: ICONS.fileSparkles, title: t('mcp.create'),    sub: t('mcp.createSub'),   run: () => openMcpDialog() }
   ];
 }
 

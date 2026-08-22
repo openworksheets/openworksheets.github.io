@@ -80,6 +80,10 @@ export const ICONS = {
   volume:    icon('<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19.364 18.364a9 9 0 0 0 0-12.728"/>'),
   mic:       icon('<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>'),
   messageSquare: icon('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'),
+  // Variante de «sparkles» para el MCP: el destello de la IA sobre un documento
+  // que ya tiene contenido. Comparte familia con «Crear con IA» y dice en qué
+  // se diferencia: allí se parte de cero, aquí de un PDF.
+  fileSparkles: icon('<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/><path d="M14 2v4a2 2 0 0 0 2 2h2"/><path d="M8 13h4M8 17h6"/><path d="M18.2 2.4 19 4.4 21 5.2 19 6 18.2 8 17.4 6 15.4 5.2 17.4 4.4z"/>'),
   code:      icon('<path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/>'),
   package:   icon('<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>'),
 };
