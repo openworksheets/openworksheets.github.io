@@ -139,6 +139,7 @@ const GROUP = {
   text: 'answer', number: 'answer', formula: 'answer', essay: 'answer', gaps: 'answer',
   single: 'choose', multi: 'choose', select: 'choose', truefalse: 'choose',
   match: 'relate', order: 'relate', dragdrop: 'relate',
+  textboxes: 'answer', table: 'answer', record: 'answer', checkbox: 'choose',
   label: 'decor', cover: 'decor'
 };
 
@@ -193,7 +194,11 @@ window.owsCompose = async function (bgDataUrl, fields, opts = {}) {
     // etiquetas. Las zonas de destino están en otra parte de la página, así que
     // se dibujan aparte —a trazos y con la respuesta esperada— o la vista previa
     // no serviría para comprobar lo único que importa: dónde caen las zonas.
-    (f.config?.zones || []).forEach((z, k) => {
+    // Los tipos con geometría múltiple (zonas de arrastre, huecos, casillas)
+    // llevan sus cajas fuera del rectángulo del campo: se dibujan aparte, o la
+    // vista previa no serviría para comprobar lo único que importa.
+    const cajas = f.config?.zones || f.config?.boxes || [];
+    cajas.forEach((z, k) => {
       const zx = z.rect.x * W, zy = z.rect.y * H, zw = z.rect.w * W, zh = z.rect.h * H;
       ctx.save();
       ctx.setLineDash([6, 4]);
@@ -204,7 +209,7 @@ window.owsCompose = async function (bgDataUrl, fields, opts = {}) {
       ctx.strokeRect(zx, zy, zw, zh);
       ctx.setLineDash([]);
       // Etiqueta «1a», «1b»… con la respuesta que espera esa zona.
-      const zt = `${i + 1}${String.fromCharCode(97 + k)} ${z.answers?.[0] || '—'}`;
+      const zt = `${i + 1}${String.fromCharCode(97 + k)}${z.answers?.[0] ? ' ' + z.answers[0] : ''}`;
       ctx.font = `${Math.round(th * 0.7)}px sans-serif`;
       const zw2 = ctx.measureText(zt).width + 8;
       const zty = zy - th >= 0 ? zy - th : zy + zh;
@@ -249,6 +254,26 @@ function drawGrid(ctx, W, H) {
   }
   ctx.restore();
 }
+
+// Borrado de verdad: pinta sobre la imagen de la página y devuelve la nueva.
+// A diferencia del campo «tapar zona», que dibuja una capa encima en el visor,
+// aquí el contenido desaparece del archivo: es lo que hace falta cuando lo que
+// se oculta es la solución.
+window.owsRedact = async function (dataUrl, areas, color) {
+  const img = new Image();
+  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = dataUrl; });
+  const canvas = document.createElement('canvas');
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0);
+  ctx.fillStyle = color || '#ffffff';
+  for (const a of areas) {
+    ctx.fillRect(a.x * canvas.width, a.y * canvas.height, a.w * canvas.width, a.h * canvas.height);
+  }
+  const { dataUrl: out, ext } = await toBlobDataUrl(canvas);
+  return { dataUrl: out, ext, w: canvas.width, h: canvas.height };
+};
 
 window.owsLoadImage = async function (dataUrl) {
   const img = new Image();

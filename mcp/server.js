@@ -57,6 +57,21 @@ const FIELD_SPEC = {
       }
     },
     distractors: { type: 'array', items: { type: 'string' }, description: 'match y dragdrop: elementos sobrantes, que no corresponden a ninguna zona ni pareja.' },
+    boxes: {
+      type: 'array',
+      description: 'textboxes: los huecos, [{ rect, answers: ["respuesta"] }]. checkbox: las casillas, [{ rect, correct: true }]. El "rect" del campo puede omitirse: se deduce de las cajas.',
+      items: { type: 'object' }
+    },
+    rows: {
+      type: 'array',
+      description: 'table: filas de respuestas, una lista por fila. Cada celda admite varias respuestas válidas separadas por "|" o como lista. essay: número de líneas del cuadro.',
+      items: {}
+    },
+    colHeaders: { type: 'array', items: { type: 'string' }, description: 'table: encabezados de columna.' },
+    rowHeaders: { type: 'array', items: { type: 'string' }, description: 'table: encabezados de fila.' },
+    examples: { type: 'array', description: 'table: celdas ya rellenas como ejemplo, misma forma que rows con true/false.', items: {} },
+    scoreMode: { type: 'string', description: 'record: "manual" (lo puntúa el profesor) o "participation" (grabar algo da los puntos).' },
+    maxSec: { type: 'integer', description: 'record: duración máxima de la grabación, en segundos.' },
     color: { type: 'string' },
     bold: { type: 'boolean' },
     align: { type: 'string' }
@@ -162,6 +177,20 @@ const TOOLS = [
     run: a => session.listFields(a.page)
   },
   {
+    name: 'redact_areas',
+    description: 'Borra zonas de una página pintando sobre la propia imagen de fondo: útil para quitar las soluciones impresas o cualquier cosa que el alumnado no deba ver. A diferencia del campo decorativo "cover", que solo tapa en pantalla, aquí el contenido desaparece del archivo y no se puede recuperar abriendo el paquete.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        page: { type: 'integer' },
+        areas: { type: 'array', items: RECT, description: 'Zonas a borrar, en fracciones de la página.' },
+        color: { type: 'string', description: 'Color con el que se pinta encima (blanco por defecto).' }
+      },
+      required: ['page', 'areas']
+    },
+    run: a => session.redact(a.page, a.areas, a.color)
+  },
+  {
     name: 'set_worksheet_info',
     description: 'Fija el título, el autor, las instrucciones para el alumnado y el idioma de la ficha.',
     inputSchema: {
@@ -198,7 +227,8 @@ const INSTRUCTIONS = [
   '  4. preview_page y MIRA la imagen: comprueba que cada campo está donde debe y no tapa texto.',
   '     En «arrastrar a zonas», las zonas de destino salen a trazos con la respuesta que esperan.',
   '  5. adjust_field lo que esté desplazado, y vuelve a previsualizar.',
-  '  6. set_worksheet_info y save_worksheet.',
+  '  6. redact_areas si hay soluciones impresas u otras zonas que deban desaparecer.',
+  '  7. set_worksheet_info y save_worksheet.',
   '',
   'Todas las coordenadas van en fracciones de la página (0–1), con el origen arriba a la izquierda.'
 ].join('\n');

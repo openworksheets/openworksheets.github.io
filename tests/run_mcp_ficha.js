@@ -75,7 +75,7 @@ function checkVendorCopies() {
   srv.stdin.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n');
 
   const tools = (await rpc('tools/list', {})).result.tools;
-  check('lista de herramientas', tools.length === 9, tools.map(t => t.name).join(', '));
+  check('lista de herramientas', tools.length === 10, tools.map(t => t.name).join(', '));
 
   const doc = (await call('open_document', { path: PDF })).json;
   check('abre el documento', doc.pages.length >= 1, `${doc.pages.length} página(s)`);
@@ -126,6 +126,51 @@ function checkVendorCopies() {
   } catch (e) { zonaMal = /se sale de la página/.test(e.message); }
   check('rechaza una zona fuera de la página', zonaMal);
 
+  // Tipos con varias cajas: el rectángulo del campo se deduce de ellas.
+  const tb = (await call('place_fields', { fields: [{
+    page: 1, type: 'textboxes', points: 2,
+    boxes: [
+      { rect: { x: 0.06, y: 0.30, w: 0.12, h: 0.03 }, answers: ['uno'] },
+      { rect: { x: 0.24, y: 0.30, w: 0.12, h: 0.03 }, answers: ['dos'] }
+    ]
+  }] })).json;
+  check('coloca «huecos en documento» sin rect propio',
+    tb.placed[0].boxes?.length === 2 && tb.placed[0].rect.x === 0.06,
+    JSON.stringify(tb.placed[0].rect));
+
+  const cbx = (await call('place_fields', { fields: [{
+    page: 1, type: 'checkbox', points: 1,
+    boxes: [{ rect: { x: 0.06, y: 0.36, w: 0.02, h: 0.02 }, correct: true },
+            { rect: { x: 0.10, y: 0.36, w: 0.02, h: 0.02 } }]
+  }] })).json;
+  check('coloca casillas y marca la correcta', cbx.placed[0].boxes?.length === 2);
+
+  const tab = (await call('place_fields', { fields: [{
+    page: 1, type: 'table', points: 2, rect: { x: 0.06, y: 0.42, w: 0.4, h: 0.1 },
+    colHeaders: ['A', 'B'], rows: [['uno|1', 'dos']]
+  }] })).json;
+  const tabCfg = (await call('list_fields', { page: 1 })).json.fields.find(f => f.type === 'table').config;
+  check('coloca una tabla con alternativas por celda',
+    tabCfg.rows === 1 && tabCfg.cols === 2 && tabCfg.cellAnswers[0][0].length === 2,
+    tabCfg.cellAnswers[0][0].join(' / '));
+
+  await call('place_fields', { fields: [{
+    page: 1, type: 'record', points: 1, rect: { x: 0.5, y: 0.42, w: 0.3, h: 0.08 },
+    scoreMode: 'participation', maxSec: 45
+  }] });
+  const recCfg = (await call('list_fields', { page: 1 })).json.fields.find(f => f.type === 'record').config;
+  check('coloca una grabación de voz', recCfg.scoreMode === 'participation' && recCfg.maxSec === 45);
+
+  // Borrado real sobre la imagen de fondo
+  const red = (await call('redact_areas', { page: 1, areas: [{ x: 0.1, y: 0.1, w: 0.3, h: 0.05 }] })).json;
+  check('borra un área de la página', red.borradas === 1 && red.image.startsWith('pages/'),
+    `texto eliminado del análisis: ${red.textoEliminado}`);
+
+  let fueraDePagina = false;
+  try { await call('redact_areas', { page: 1, areas: [{ x: 0.9, y: 0.1, w: 0.3, h: 0.05 }] }); }
+  catch (e) { fueraDePagina = /se sale de la página/.test(e.message); }
+  check('rechaza borrar fuera de la página', fueraDePagina);
+
   const pv = await call('preview_page', { page: 1 });
   check('devuelve la vista previa', Boolean(pv.image), pv.image ? `${Math.round(pv.image.data.length / 1365)} KB de PNG` : 'sin imagen');
 
@@ -134,7 +179,7 @@ function checkVendorCopies() {
   check('ajusta un campo', adj.rect.x === 0.1);
 
   const del = (await call('remove_fields', { ids: [first] })).json;
-  check('borra un campo', del.removed.length === 1 && del.totalFields === fields.length);
+  check('borra un campo', del.removed.length === 1 && del.totalFields === fields.length + 4);
 
   await call('set_worksheet_info', { title: 'Ficha de prueba MCP', lang: 'es' });
   const saved = (await call('save_worksheet', { path: path.join(OUT, 'prueba') })).json;

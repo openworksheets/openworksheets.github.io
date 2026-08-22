@@ -105,6 +105,99 @@ const TYPES = {
     build: s => ({ items: asList(s.items).map(String) }),
     check: c => c.items.length >= 2 ? null : 'necesita al menos dos elementos'
   },
+  // Huecos sobre el propio documento: cada hueco es un recuadro colocado encima
+  // de la línea impresa. Es el compañero natural de los huecos que detecta
+  // read_layout (rachas de guiones bajos y líneas para escribir).
+  textboxes: {
+    label: 'huecos para escribir marcados sobre el documento (cada hueco lleva su rect y sus respuestas)',
+    defRect: { w: 0.12, h: 0.03 },
+    build: s => ({
+      boxes: asList(s.boxes).map(b => ({
+        id: subId('tb'),
+        rect: b?.rect,
+        answers: asList(b?.answers, b?.answer).map(String).filter(a => a.trim())
+      })),
+      ignoreCase: s.ignoreCase !== false,
+      ignoreAccents: s.ignoreAccents !== false,
+      collapseSpaces: s.collapseSpaces !== false
+    }),
+    check: c => {
+      if (!c.boxes.length) return 'no tiene ningún hueco';
+      const vacíos = c.boxes.filter(b => !b.answers.length).length;
+      return vacíos ? `${vacíos} hueco(s) sin respuesta: no se podrán acertar` : null;
+    }
+  },
+  // Casillas dibujadas libremente sobre el documento (para marcar la opción
+  // correcta en un cuestionario impreso, por ejemplo).
+  checkbox: {
+    label: 'casillas para marcar sobre el documento (cada casilla lleva su rect y si es correcta)',
+    defRect: { w: 0.035, h: 0.025 },
+    build: s => {
+      const boxes = asList(s.boxes).map(b => ({ id: subId('cb'), rect: b?.rect, correcta: Boolean(b?.correct) }));
+      const correct = boxes.filter(b => b.correcta).map(b => b.id);
+      return {
+        boxes: boxes.map(({ id, rect }) => ({ id, rect })),
+        multiple: s.multiple != null ? Boolean(s.multiple) : correct.length > 1,
+        correct,
+        partial: Boolean(s.partial)
+      };
+    },
+    check: c => {
+      if (!c.boxes.length) return 'no tiene ninguna casilla';
+      return c.correct.length ? null : 'ninguna casilla está marcada como correcta';
+    }
+  },
+  // Tabla que rellena el alumnado. Se describe por filas de respuestas, como se
+  // leería en el papel; las opciones de corrección se completan aquí.
+  table: {
+    label: 'tabla editable (colHeaders, rowHeaders y rows con las respuestas de cada celda)',
+    defRect: { w: 0.42, h: 0.2 },
+    build: s => {
+      const filas = asList(s.rows).map(f => asList(f));
+      const rows = Math.max(1, filas.length);
+      const cols = Math.max(1, ...filas.map(f => f.length), asList(s.colHeaders).length);
+      const colHeaders = Array.from({ length: cols }, (_, c) => String(asList(s.colHeaders)[c] ?? ''));
+      const rowHeaders = Array.from({ length: rows }, (_, r) => String(asList(s.rowHeaders)[r] ?? ''));
+      // Cada celda admite varias respuestas válidas: se acepta "a|b" o una lista.
+      const cellAnswers = Array.from({ length: rows }, (_, r) =>
+        Array.from({ length: cols }, (_, c) => {
+          const v = filas[r]?.[c];
+          const lista = Array.isArray(v) ? v : String(v ?? '').split('|');
+          const limpias = lista.map(x => String(x).trim()).filter(Boolean);
+          return limpias.length ? limpias : [''];
+        }));
+      const examples = Array.from({ length: rows }, (_, r) =>
+        Array.from({ length: cols }, (_, c) => Boolean(asList(s.examples)[r]?.[c])));
+      return {
+        rows, cols, rowHeaders, colHeaders,
+        cells: cellAnswers.map(f => f.map(a => a[0] ?? '')),
+        cellAnswers, examples,
+        cellTypes: Array.from({ length: rows }, () => Array.from({ length: cols }, () => 'text')),
+        cellTolerance: Array.from({ length: rows }, () => Array.from({ length: cols }, () => 0)),
+        cellSelect: Array.from({ length: rows }, () => Array.from({ length: cols }, () => false)),
+        cellCorrect: Array.from({ length: rows }, () => Array.from({ length: cols }, () => 0)),
+        correctMode: ['cell', 'row', 'col'].includes(s.correctMode) ? s.correctMode : 'cell',
+        showColHeaders: s.showColHeaders !== false && colHeaders.some(h => h.trim()),
+        showRowHeaders: s.showRowHeaders !== false && rowHeaders.some(h => h.trim()),
+        ignoreCase: s.ignoreCase !== false,
+        ignoreAccents: s.ignoreAccents !== false,
+        collapseSpaces: s.collapseSpaces !== false
+      };
+    },
+    check: c => c.cellAnswers.flat().some(a => a.some(x => x.trim()))
+      ? null : 'ninguna celda tiene respuesta: no se corregirá'
+  },
+  // Grabación de voz. Por defecto la puntúa el profesor al revisar la entrega.
+  record: {
+    label: 'grabación de voz (la puntúa el profesor, salvo scoreMode "participation")',
+    defRect: { w: 0.4, h: 0.1 },
+    build: s => ({
+      scoreMode: s.scoreMode === 'participation' ? 'participation' : 'manual',
+      maxSec: Math.max(5, parseInt(s.maxSec, 10) || 30),
+      prompt: String(s.prompt || ''),
+      promptBold: true, promptColor: '', promptAlign: 'left', promptScale: 1
+    })
+  },
   // Arrastrar a zonas: el rectángulo del campo es la BANDEJA de donde parten las
   // etiquetas, y cada zona es un destino dibujado aparte sobre el documento.
   // Solo el modo «etiquetas escritas»: el modo «recortar del PDF» exige marcar
@@ -150,10 +243,11 @@ const TYPES = {
   }
 };
 
-let zoneSeq = 0;
-function zoneId() {
-  return 'z' + Math.random().toString(36).slice(2, 8) + (zoneSeq++).toString(36);
+let subSeq = 0;
+function subId(prefijo) {
+  return prefijo + Math.random().toString(36).slice(2, 8) + (subSeq++).toString(36);
 }
+const zoneId = () => subId('z');
 
 function asList(...vals) {
   for (const v of vals) {

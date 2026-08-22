@@ -248,6 +248,23 @@ function checkRect(rect, pageNo, type) {
   return warnings;
 }
 
+// «Huecos en documento» y «Casillas» colocan sus cajas sobre la página; el
+// rectángulo del campo es solo un ancla que no se ve. Si no viene, se deduce
+// de las cajas para no obligar a inventarlo.
+const BOXED = { textboxes: 'boxes', checkbox: 'boxes', dragdrop: 'zones' };
+
+function inferRect(spec) {
+  if (spec.rect) return spec.rect;
+  const cajas = Array.isArray(spec[BOXED[spec.type]]) ? spec[BOXED[spec.type]] : [];
+  const rects = cajas.map(c => c?.rect).filter(r => r && Number.isFinite(r.x));
+  if (!rects.length) return spec.rect;
+  const x = Math.min(...rects.map(r => r.x));
+  const y = Math.min(...rects.map(r => r.y));
+  const x2 = Math.max(...rects.map(r => r.x + r.w));
+  const y2 = Math.max(...rects.map(r => r.y + r.h));
+  return { x, y, w: Math.max(MIN_W, x2 - x), h: Math.max(MIN_H, y2 - y) };
+}
+
 function placeFields(specs) {
   const st = require_();
   if (!Array.isArray(specs) || !specs.length) throw new Error('No se ha indicado ningún campo.');
@@ -258,17 +275,18 @@ function placeFields(specs) {
     const dónde = ` (campo ${i + 1} de ${specs.length})`;
     if (!st.manifest.pages[pageNo - 1]) throw new Error(`La página ${pageNo} no existe${dónde}.`);
     if (!isType(spec.type)) throw new Error(`Tipo de campo desconocido: "${spec.type}"${dónde}.`);
-    const rect = round4(spec.rect || {});
+    const rect = round4(inferRect(spec) || {});
     try {
       checkRect(rect, pageNo, spec.type);
-      // «Arrastrar a zonas» lleva, además del rectángulo de la bandeja, el de
-      // cada zona de destino: se validan igual, o el campo saldría roto.
-      if (spec.type === 'dragdrop') {
-        const zonas = Array.isArray(spec.zones) ? spec.zones : [];
-        if (!zonas.length) throw new Error('«Arrastrar a zonas» necesita al menos una zona de destino (zones).');
-        zonas.forEach((z, k) => {
-          if (!z || !z.rect) throw new Error(`La zona ${k + 1} no tiene rect.`);
-          checkRect(round4(z.rect), pageNo, 'dragdrop-zone');
+      // Los tipos con geometría múltiple llevan, además del rectángulo del
+      // campo, el de cada caja: se validan igual, o el campo saldría roto.
+      const clave = BOXED[spec.type];
+      if (clave) {
+        const cajas = Array.isArray(spec[clave]) ? spec[clave] : [];
+        if (!cajas.length) throw new Error(`Este tipo necesita al menos un elemento en «${clave}».`);
+        cajas.forEach((c, k) => {
+          if (!c || !c.rect) throw new Error(`El elemento ${k + 1} de «${clave}» no tiene rect.`);
+          checkRect(round4(c.rect), pageNo, spec.type + '-box');
         });
       }
     } catch (e) { throw new Error(e.message.replace(/\.$/, '') + dónde + '.'); }
@@ -282,15 +300,19 @@ function placeFields(specs) {
     // Las zonas de destino se revisan una a una: sus avisos también le importan
     // a quien coloca los campos, no solo los de la bandeja.
     const wz = [];
-    (field.config.zones || []).forEach((z, k) => {
-      z.rect = round4(z.rect);
-      checkRect(z.rect, pageNo, 'dragdrop-zone').forEach(w => wz.push(`zona ${k + 1} (${z.answers[0] || 'sin respuesta'}): ${w}`));
+    const cajas = field.config.zones || field.config.boxes || [];
+    cajas.forEach((c, k) => {
+      if (!c.rect) return;
+      c.rect = round4(c.rect);
+      checkRect(c.rect, pageNo, field.type + '-box')
+        .forEach(w => wz.push(`${field.config.zones ? 'zona' : 'casilla'} ${k + 1}${c.answers?.[0] ? ` (${c.answers[0]})` : ''}: ${w}`));
     });
     st.manifest.pages[pageNo - 1].fields.push(field);
     results.push({
       id: field.id, page: pageNo, type: field.type, rect, points: field.points,
       warnings: [...warnings, ...w2, ...wz],
-      ...(field.config.zones ? { zones: field.config.zones.map(z => ({ id: z.id, rect: z.rect, answers: z.answers })) } : {})
+      ...(field.config.zones ? { zones: field.config.zones.map(z => ({ id: z.id, rect: z.rect, answers: z.answers })) } : {}),
+      ...(field.config.boxes ? { boxes: field.config.boxes.map(b => ({ id: b.id, rect: b.rect, answers: b.answers })) } : {})
     });
   }
   return { placed: results, totalFields: countFields(), totalPoints: totalPoints() };
@@ -392,6 +414,41 @@ async function preview(n, opts = {}) {
   };
 }
 
+// Borra zonas de la página pintando sobre la propia imagen de fondo. El campo
+// «cover» solo tapa en el visor: el contenido sigue dentro del paquete y se ve
+// abriendo la imagen. Esto lo elimina de verdad, que es lo que hace falta para
+// las soluciones impresas.
+async function redact(n, areas, color) {
+  const p = page(n);
+  if (!Array.isArray(areas) || !areas.length) throw new Error('No se ha indicado ninguna zona que borrar.');
+  const limpias = areas.map((a, i) => {
+    const r = round4(a || {});
+    for (const k of ['x', 'y', 'w', 'h']) {
+      if (!Number.isFinite(r[k])) throw new Error(`La zona ${i + 1} no tiene ${k}.`);
+    }
+    if (r.x < 0 || r.y < 0 || r.x + r.w > 1.001 || r.y + r.h > 1.001) {
+      throw new Error(`La zona ${i + 1} se sale de la página.`);
+    }
+    return r;
+  });
+
+  const wb = await workbench();
+  const res = await wb.evaluate((u, a, c) => window.owsRedact(u, a, c), p.dataUrl, limpias, color || '#ffffff');
+
+  // La imagen cambia de contenido pero conserva su nombre dentro del paquete.
+  state.files.set(p.image, dataUrlToBuffer(res.dataUrl));
+  p.dataUrl = res.dataUrl;
+  // El texto tapado ya no está en la página: se descarta también de lo leído,
+  // para que no se proponga como enunciado ni como candidato a hueco.
+  const dentro = it => limpias.some(a =>
+    it.rect.x + it.rect.w / 2 >= a.x && it.rect.x + it.rect.w / 2 <= a.x + a.w &&
+    it.rect.y + it.rect.h / 2 >= a.y && it.rect.y + it.rect.h / 2 <= a.y + a.h);
+  const antes = p.text.length;
+  p.text = p.text.filter(it => !dentro(it));
+
+  return { page: n, borradas: limpias.length, textoEliminado: antes - p.text.length, image: p.image };
+}
+
 function setMeta(meta = {}) {
   const st = require_();
   for (const k of ['title', 'author', 'instructions', 'lang']) {
@@ -419,5 +476,5 @@ function save(file) {
 
 module.exports = {
   openDocument, readLayout, placeFields, adjustField, removeFields,
-  listFields, preview, setMeta, save, reset
+  listFields, preview, redact, setMeta, save, reset
 };

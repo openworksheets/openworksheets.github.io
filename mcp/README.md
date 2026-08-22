@@ -142,9 +142,14 @@ que no hay que pensar en píxeles ni en la resolución del PDF.
 ## Tipos de campo que puede colocar
 
 `text` (respuesta corta), `number`, `formula`, `essay`, `single`, `multi`,
-`select`, `truefalse`, `gaps`, `match`, `order`, `dragdrop` (arrastrar a zonas),
-y los decorativos `label` y `cover` (tapar una zona: útil cuando el PDF ya trae
-impresa la solución o un «Sí / No» que el campo debe sustituir).
+`select`, `truefalse`, `gaps`, `table`, `record`, `match`, `order`, y los que
+se dibujan sobre el documento: `textboxes` (huecos), `checkbox` (casillas) y
+`dragdrop` (arrastrar a zonas). Más los decorativos `label` y `cover`.
+
+`textboxes` y `checkbox` funcionan como `dragdrop`: sus cajas van en `boxes`,
+cada una con su `rect`, y el `rect` del campo puede omitirse porque se deduce de
+ellas. `textboxes` es el compañero natural de los huecos que devuelve
+`read_layout`.
 
 `dragdrop` es el único con dos niveles de coordenadas, y conviene tenerlo claro:
 el `rect` del campo es la **bandeja** de donde parten las etiquetas (va en un
@@ -163,9 +168,21 @@ continua y las zonas a trazos, cada una con la respuesta que espera.
 ```
 
 Quedan fuera, de momento, el modo «recortar del PDF» de arrastrar a zonas (que
-exige marcar trozos de imagen de la página), unir con flechas, los huecos sobre
-el documento y los que cargan paquetes externos (SCORM, contenido incrustado).
-Esos se añaden a mano en el editor.
+exige marcar trozos de imagen de la página), unir con flechas, los que cargan
+paquetes externos o medios (SCORM, contenido incrustado, imagen, vídeo, audio) y
+las formas de dibujo. Esos se añaden a mano en el editor.
+
+## Tapar o borrar
+
+Hay dos formas de ocultar algo del documento, y no son intercambiables:
+
+- El campo decorativo **`cover`** dibuja un rectángulo opaco **en el visor**. El
+  contenido sigue en la imagen de fondo dentro del `.owpkg`: sirve para sustituir
+  un «Sí / No» impreso por un desplegable, no para esconder nada.
+- La herramienta **`redact_areas`** pinta sobre la propia imagen de la página, así
+  que lo tapado **desaparece del archivo**. Es la que hay que usar con las
+  soluciones impresas. Descarta además ese texto del análisis de la página, para
+  que no se proponga después como enunciado.
 
 ## Límites que conviene conocer
 
