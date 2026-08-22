@@ -80,10 +80,12 @@ export const ICONS = {
   volume:    icon('<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19.364 18.364a9 9 0 0 0 0-12.728"/>'),
   mic:       icon('<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>'),
   messageSquare: icon('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'),
-  // Variante de «sparkles» para el MCP: el destello de la IA sobre un documento
-  // que ya tiene contenido. Comparte familia con «Crear con IA» y dice en qué
-  // se diferencia: allí se parte de cero, aquí de un PDF.
-  fileSparkles: icon('<path d="M13 6H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8"/><path d="M12 6v4a2 2 0 0 0 2 2h4"/><path d="M8 16h6"/><path d="M17.5 0 19.2 3.3 22.5 5 19.2 6.7 17.5 10 15.8 6.7 12.5 5 15.8 3.3z" fill="currentColor" stroke="none"/>'),
+  // Variante de «sparkles» para el MCP: el destello de la IA junto a un
+  // documento. Comparte familia con «Crear con IA» y dice en qué se diferencia:
+  // allí se parte de cero, aquí de un PDF. Las dos formas van separadas en
+  // diagonal —papel abajo, destello arriba— porque a tamaño de menú, si se
+  // tocan o si el destello es pequeño, todo se convierte en una mancha.
+  fileSparkles: icon('<path d="M12 9H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-7"/><path d="M11 9v3a2 2 0 0 0 2 2h3"/><path d="M6 18h6"/><path d="M18.5 0 20.2 3.3 23.5 5 20.2 6.7 18.5 10 16.8 6.7 13.5 5 16.8 3.3z" fill="currentColor" stroke="none"/>'),
   code:      icon('<path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/>'),
   package:   icon('<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>'),
 };
