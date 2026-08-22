@@ -148,14 +148,15 @@ després obres amb **Arxiu → Obrir fitxa**.
 
 A l'editor, «Col·locar camps amb IA sobre un PDF…» t'hi acompanya, i el camí
 depèn del que pugui fer la teva IA. Si pot executar ordres (Claude Code, Codex
-CLI, Antigravity CLI, Cursor, VS Code), li enganxes una instrucció curta i ella
-sola descarrega i registra el servidor. Si fas servir **Claude Desktop o LM
-Studio**, que no poden, el mateix diàleg et descarrega el servidor amb un clic
+CLI, Antigravity, Cursor, VS Code), li enganxes una instrucció curta i ella
+sola descarrega i registra el servidor. Si fas servir **Claude Desktop, l'aplicació
+d'escriptori de ChatGPT o LM Studio**, que no poden, el mateix diàleg et descarrega el servidor amb un clic
 (1,5 MB, empaquetats per la mateixa aplicació) i et dóna la configuració a punt
 per enganxar al seu arxiu, amb la ruta ja posada. **No hi ha res a instal·lar
 dins de la carpeta**: no té dependències. És cosa d'una sola vegada: a partir
-d'aquí el diàleg s'obre a «Demanar una fitxa a la teva IA». ChatGPT i Gemini en
-la versió web no serveixen, perquè només admeten connectors remots. Detalls i
+d'aquí el diàleg s'obre a «Demanar una fitxa a la teva IA». ChatGPT i Gemini **en
+la versió web** no serveixen, perquè només admeten connectors remots; les seves
+aplicacions d'escriptori sí. Detalls i
 límits a [`mcp/README.md`](mcp/README.md).
 
 ## Flux de treball

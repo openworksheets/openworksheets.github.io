@@ -42,18 +42,18 @@ npx -y degit github:openworksheets/openworksheets.github.io/mcp openworksheets-m
 
 ### Qué programas pueden usarlo
 
-Es un servidor **local**, del tipo que la IA arranca en el ordenador
-(transporte `stdio`). Eso deja fuera a las IA que solo aceptan conectores
-remotos por HTTP: **ChatGPT y Gemini en su versión web o de escritorio no
-pueden usarlo**; para esas dos hay que ir a su versión de terminal.
+Es un servidor **local**, del tipo que el programa arranca en el ordenador
+(transporte `stdio`). Eso deja fuera a las herramientas que solo aceptan
+conectores remotos por HTTP: **ChatGPT y Gemini en su versión web no pueden
+usarlo**. Sus aplicaciones de escritorio, en cambio, sí.
 
 | Programa | Dónde se configura |
 |---|---|
-| **Claude Desktop** | Ajustes → Desarrollador → Editar configuración (`claude_desktop_config.json`) |
-| **LM Studio** | Panel derecho → Program → Install → Edit `mcp.json` |
+| **Claude Desktop** | Menú Claude → Ajustes → Desarrollador → Editar configuración. macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`; Windows: `%APPDATA%\Claude\claude_desktop_config.json`; Linux: `~/.config/Claude/claude_desktop_config.json` |
+| **ChatGPT (escritorio)** y **Codex CLI** | `~/.codex/config.toml` — comparten la misma configuración MCP en el mismo ordenador |
+| **LM Studio** | Panel derecho → Program → Install → Edit `mcp.json` (`~/.lmstudio/mcp.json`) |
+| **Antigravity** (IDE y CLI) | `~/.gemini/config/mcp_config.json`, o por proyecto en `.agents/mcp_config.json`. En el IDE: menú «…» del panel del agente → MCP Servers → Manage MCP Servers → View raw config |
 | Claude Code | `claude mcp add openworksheets -- node /ruta/openworksheets-mcp/server.js` |
-| Codex CLI (ChatGPT) | `~/.codex/config.toml` |
-| Antigravity CLI | `~/.antigravity/settings.json` (antes Gemini CLI, `~/.gemini/settings.json`) |
 | Cursor | `~/.cursor/mcp.json` |
 | VS Code (GitHub Copilot) | `.vscode/mcp.json`, con la clave `servers` |
 
@@ -73,7 +73,7 @@ Los que usan JSON llevan todos la misma forma:
 En Windows, las barras invertidas de la ruta van dobladas dentro del JSON:
 `"C:\\Users\\nombre\\openworksheets-mcp\\server.js"`.
 
-Y en TOML (Codex CLI):
+Y en TOML (ChatGPT de escritorio y Codex CLI):
 
 ```toml
 [mcp_servers.openworksheets]

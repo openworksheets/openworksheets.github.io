@@ -105,16 +105,21 @@ function json(p, key = 'mcpServers') {
 
 const CLIENTS = [
   { name: 'Claude Desktop', where: CONFIG_PATHS.claude[OS], code: p => json(p) },
-  { name: 'LM Studio', where: 'mcp.json', code: p => json(p) },
+  // La app de escritorio de ChatGPT comparte la configuración MCP con Codex CLI
+  // en el mismo ordenador, así que el bloque vale para las dos.
+  {
+    name: 'ChatGPT (escritorio) y Codex CLI',
+    where: '~/.codex/config.toml',
+    code: p => `[mcp_servers.openworksheets]\ncommand = "node"\nargs = ["${forJson(p)}"]`
+  },
+  { name: 'LM Studio', where: '~/.lmstudio/mcp.json', code: p => json(p) },
+  // Antigravity usa el mismo archivo en el IDE y en la CLI.
+  { name: 'Antigravity (IDE y CLI)', where: '~/.gemini/config/mcp_config.json', code: p => json(p) },
   { name: 'Claude Code', where: 'Terminal', code: p => `claude mcp add openworksheets -- node "${p}"` },
-  { name: 'Codex CLI  (ChatGPT)', where: '~/.codex/config.toml', code: p => `[mcp_servers.openworksheets]\ncommand = "node"\nargs = ["${forJson(p)}"]` },
-  { name: 'Antigravity CLI', where: '~/.antigravity/settings.json  ·  ~/.gemini/settings.json', code: p => json(p) },
   { name: 'Cursor', where: CONFIG_PATHS.cursor[OS], code: p => json(p) },
   { name: 'VS Code (GitHub Copilot)', where: '.vscode/mcp.json', code: p => json(p, 'servers') }
 ];
 
-// El encargo que se le pega a la IA. Va en el idioma del profesor salvo los
-// nombres técnicos, que son los mismos en todas partes.
 // El encargo es deliberadamente corto: el detalle (requisitos, cómo se registra,
 // qué herramientas hay y en qué orden se usan) vive en el README de la carpeta,
 // que la IA lee. Repetirlo aquí solo serviría para que envejeciera mal.
