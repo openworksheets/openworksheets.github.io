@@ -285,3 +285,8 @@ details.mcp-client[open] .mcp-client-sum { border-bottom: 1px solid var(--tinta-
 }
 .mcp-way-fold > summary .mcp-way-title { display: inline; }
 .mcp-way-fold[open] > summary { margin-bottom: 6px; }
+
+/* Los dos caminos cuelgan de «Si no has instalado el MCP»: una sangría y un
+   título algo menor bastan para que se lea la jerarquía */
+.mcp-way-fold .mcp-way-fold { margin-left: 20px; }
+.mcp-way-fold .mcp-way-fold > summary .mcp-way-title { font-size: 0.94rem; }
