@@ -79,6 +79,13 @@ const FIELD_SPEC = {
   required: ['page', 'type', 'rect']
 };
 
+// Igual que FIELD_SPEC pero sin la geometría: en add_questions la calcula el
+// servidor, y pedirla solo invitaría a inventar coordenadas.
+const FIELD_SPEC_SIN_RECT = (() => {
+  const { page, rect, ...resto } = FIELD_SPEC.properties;
+  return { type: 'object', properties: { prompt: { type: 'string', description: 'Enunciado de la pregunta.' }, ...resto }, required: ['type'] };
+})();
+
 const TOOLS = [
   {
     name: 'open_document',
@@ -89,6 +96,51 @@ const TOOLS = [
       required: ['path']
     },
     run: a => session.openDocument(a.path)
+  },
+  {
+    name: 'create_worksheet',
+    description: 'Empieza una ficha nueva en blanco, sin partir de ningún documento: para cuando hay que inventar las preguntas en lugar de colocarlas sobre un PDF. Después, add_questions las va colocando solas.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Título de la ficha.' },
+        instructions: { type: 'string', description: 'Instrucciones generales para el alumnado.' },
+        pages: { type: 'integer', description: 'Páginas en blanco iniciales (1 por defecto; se añaden más solas si hacen falta).' },
+        size: { type: 'string', description: 'Tamaño de página: "a4" (por defecto), "a4h" (apaisada) o "letter".' }
+      }
+    },
+    run: a => session.createWorksheet(a)
+  },
+  {
+    name: 'add_questions',
+    description: [
+      'Añade preguntas una detrás de otra, colocándolas solas: enunciado, campo de respuesta, separación y salto de página cuando hace falta. Es la forma de crear una ficha desde cero, sin calcular coordenadas.',
+      '',
+      'Cada pregunta lleva su "type", su "prompt" (el enunciado) y su respuesta, con la misma forma que en place_fields, pero SIN "rect".',
+      '',
+      'Para que la ficha sirva en clase:',
+      '- Varía los tipos: una ficha entera de opción única evalúa poco.',
+      '- En "single" y "multi", que las opciones incorrectas sean creíbles y del mismo estilo y longitud que la correcta. Nada de opciones absurdas ni de «todas las anteriores».',
+      '- Cada pregunta debe tener una única respuesta defendible.',
+      '- En "text", "number" y "formula", pide respuestas de una a tres palabras o un valor: una frase larga es imposible de acertar literalmente.',
+      '- En "answers" pon solo sinónimos reales; la corrección ya ignora mayúsculas, tildes y espacios de más.',
+      '- Usa "essay" una o dos veces como mucho: no se autocorrige y lo puntúa el profesor.',
+      '- Enunciados breves y claros, del nivel pedido, sin repetir ideas.',
+      '',
+      'Al terminar, mira preview_page para comprobar cómo ha quedado.'
+    ].join('\n'),
+    inputSchema: {
+      type: 'object',
+      properties: {
+        items: {
+          type: 'array',
+          description: 'Las preguntas, en el orden en que deben aparecer. Un item de tipo "label" sirve de título o de separador de sección.',
+          items: FIELD_SPEC_SIN_RECT
+        }
+      },
+      required: ['items']
+    },
+    run: a => session.addQuestions(a.items || [])
   },
   {
     name: 'read_layout',
@@ -221,7 +273,8 @@ const INSTRUCTIONS = [
   'Convierte PDFs e imágenes en fichas interactivas de OpenWorksheets colocando campos de respuesta sobre el documento.',
   '',
   'Orden de trabajo recomendado:',
-  '  1. open_document con la ruta del PDF.',
+  '  1. open_document con la ruta del PDF o de la imagen. Si la ficha no parte de ningún',
+  '     documento, create_worksheet y luego add_questions, que las coloca solas.',
   '  2. read_layout de cada página para ver el texto y sus coordenadas.',
   '  3. place_fields con los campos de esa página.',
   '  4. preview_page y MIRA la imagen: comprueba que cada campo está donde debe y no tapa texto.',

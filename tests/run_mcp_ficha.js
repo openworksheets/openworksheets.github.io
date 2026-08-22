@@ -75,7 +75,24 @@ function checkVendorCopies() {
   srv.stdin.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n');
 
   const tools = (await rpc('tools/list', {})).result.tools;
-  check('lista de herramientas', tools.length === 10, tools.map(t => t.name).join(', '));
+  check('lista de herramientas', tools.length === 12, tools.map(t => t.name).join(', '));
+
+  // Ficha desde cero: sin documento debajo y con las preguntas colocándose solas
+  const enBlanco = (await call('create_worksheet', { title: 'Prueba en blanco', size: 'a4' })).json;
+  check('crea una ficha en blanco', enBlanco.pages.length === 1 && enBlanco.pages[0].w === 1600);
+  const puestas = (await call('add_questions', { items: [
+    { type: 'label', text: 'Sección' },
+    { type: 'text', prompt: '¿Pregunta corta?', answers: ['sí'] },
+    { type: 'single', prompt: '¿Opción?', options: ['a', 'b', 'c'], correct: 2 },
+    { type: 'essay', prompt: 'Explica algo', rows: 6 }
+  ] })).json;
+  // Cuatro items: el «label» va solo, y las otras tres llevan enunciado y campo
+  check('coloca las preguntas solas', puestas.placed.length === 7, `${puestas.placed.length} campos, enunciados incluidos`);
+  const sinSolape = puestas.placed.every((f, i, todos) =>
+    todos.slice(i + 1).every(o => o.page !== f.page || o.rect.y >= f.rect.y + f.rect.h - 0.001 || f.rect.y >= o.rect.y + o.rect.h - 0.001));
+  check('no se solapan entre sí', sinSolape);
+  check('todo dentro de la página', puestas.placed.every(f => f.rect.y + f.rect.h <= 0.96));
+
 
   const doc = (await call('open_document', { path: PDF })).json;
   check('abre el documento', doc.pages.length >= 1, `${doc.pages.length} página(s)`);

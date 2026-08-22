@@ -255,6 +255,20 @@ function drawGrid(ctx, W, H) {
   ctx.restore();
 }
 
+// Página en blanco, para las fichas que no parten de ningún documento. Se
+// genera aquí, como imagen, porque el resto del programa —vista previa,
+// coordenadas, empaquetado— ya trabaja con páginas que son imágenes.
+window.owsBlankPage = async function (w, h, color) {
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = color || '#ffffff';
+  ctx.fillRect(0, 0, w, h);
+  const { dataUrl, ext } = await toBlobDataUrl(canvas);
+  return { dataUrl, ext, w, h };
+};
+
 // Borrado de verdad: pinta sobre la imagen de la página y devuelve la nueva.
 // A diferencia del campo «tapar zona», que dibuja una capa encima en el visor,
 // aquí el contenido desaparece del archivo: es lo que hace falta cuando lo que

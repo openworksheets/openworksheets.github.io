@@ -114,6 +114,45 @@ function addPage(r, n) {
   state.pages.push({ image, w: r.w, h: r.h, dataUrl: r.dataUrl, text: r.text || [], rules: r.rules || [] });
 }
 
+// Tamaños de página, en píxeles, con el mismo ancho que usa el editor al
+// rasterizar un PDF para que todo case.
+const PAGE_SIZES = {
+  a4: { w: 1600, h: 2263 },
+  a4h: { w: 2263, h: 1600 },   // apaisada
+  letter: { w: 1600, h: 2071 }
+};
+
+// Ficha que no parte de ningún documento: hojas en blanco sobre las que colocar
+// las preguntas. Lo demás funciona igual que con un PDF.
+async function createWorksheet({ title = '', pages = 1, size = 'a4', instructions = '' } = {}) {
+  const medida = PAGE_SIZES[String(size).toLowerCase()] || PAGE_SIZES.a4;
+  const cuantas = Math.max(1, Math.min(20, parseInt(pages, 10) || 1));
+  const wb = await workbench();
+
+  state = { source: '', manifest: newManifest(title), files: new Map(), pages: [] };
+  if (instructions) state.manifest.instructions = String(instructions);
+
+  for (let n = 1; n <= cuantas; n++) {
+    const r = await wb.evaluate((w, h) => window.owsBlankPage(w, h, '#ffffff'), medida.w, medida.h);
+    addPage({ ...r, text: [], rules: [] }, n);
+  }
+  return {
+    title: state.manifest.title,
+    pages: state.pages.map((p, i) => ({ page: i + 1, w: p.w, h: p.h })),
+    aviso: 'Ficha en blanco. Usa add_questions para que las preguntas se coloquen solas, o place_fields si prefieres indicar tú las coordenadas.'
+  };
+}
+
+// Añade una página más en blanco, del tamaño de la última.
+async function addBlankPage() {
+  const st = require_();
+  const ultima = st.pages[st.pages.length - 1];
+  const wb = await workbench();
+  const r = await wb.evaluate((w, h) => window.owsBlankPage(w, h, '#ffffff'), ultima.w, ultima.h);
+  addPage({ ...r, text: [], rules: [] }, st.pages.length + 1);
+  return st.pages.length;
+}
+
 // ---------------------------------------------------------------------------
 // Leer el documento
 // ---------------------------------------------------------------------------
@@ -395,6 +434,104 @@ function totalPoints() {
 }
 
 // ---------------------------------------------------------------------------
+// Colocación automática
+// ---------------------------------------------------------------------------
+//
+// Para las fichas que no parten de un documento no hay dónde encajar los campos:
+// se apilan. Aquí se calcula ese apilado —enunciado, campo, separación, salto de
+// página— y luego se colocan por la vía de siempre, con sus validaciones.
+
+const MARGEN_X = 0.06;
+const ANCHO = 1 - MARGEN_X * 2;
+const MARGEN_ARRIBA = 0.05;
+const MARGEN_ABAJO = 0.95;
+const SEPARACION = 0.018;
+const ALTO_LINEA = 0.019;          // una línea de texto de enunciado
+const CARACTERES_POR_LINEA = 95;   // a lo ancho de la página, tamaño normal
+
+function altoTexto(texto, ancho = ANCHO) {
+  const porLinea = Math.max(20, Math.round(CARACTERES_POR_LINEA * (ancho / ANCHO)));
+  const lineas = Math.max(1, Math.ceil(String(texto || '').length / porLinea));
+  return lineas * ALTO_LINEA;
+}
+
+// Alto que necesita cada tipo de campo, ya sin contar el enunciado.
+function altoCampo(spec) {
+  const n = (lista, def = 0) => (Array.isArray(spec[lista]) ? spec[lista].length : def);
+  switch (spec.type) {
+    case 'essay': return Math.max(0.1, (parseInt(spec.rows, 10) || 4) * 0.028);
+    // Las alturas salen de medir los campos ya renderizados en el visor: con
+    // valores «por si acaso» la ficha queda llena de huecos.
+    case 'single':
+    case 'multi': return Math.max(0.05, n('options', 3) * 0.017 + 0.016);
+    case 'truefalse': return 0.045;
+    case 'select': return 0.04;
+    case 'record': return 0.09;
+    case 'formula': return 0.05;
+    case 'gaps': return altoTexto(spec.text) + 0.03;
+    case 'order': return Math.max(0.055, n('items', 3) * 0.024 + 0.01);
+    case 'match': return Math.max(0.07, n('pairs', 2) * 0.032);
+    case 'table': return 0.05 + (n('rows', 2) + 1) * 0.038;
+    case 'label': return altoTexto(spec.text);
+    case 'number': return 0.038;
+    default: return 0.038;   // text y demás campos de una línea
+  }
+}
+
+// Ancho del campo: los de una línea no necesitan toda la página.
+function anchoCampo(spec) {
+  if (['text', 'formula'].includes(spec.type)) return 0.5;
+  if (spec.type === 'number' || spec.type === 'select') return 0.3;
+  if (spec.type === 'truefalse') return 0.34;
+  return ANCHO;
+}
+
+// Coloca una lista de preguntas descritas como en el prompt de «Crear con IA»:
+// cada una con su enunciado y su respuesta, sin coordenadas.
+async function addQuestions(items) {
+  const st = require_();
+  if (!Array.isArray(items) || !items.length) throw new Error('No se ha indicado ninguna pregunta.');
+
+  // Se continúa por debajo de lo que ya haya en la última página.
+  let pagina = st.manifest.pages.length;
+  let y = MARGEN_ARRIBA;
+  const ocupados = st.manifest.pages[pagina - 1]?.fields || [];
+  if (ocupados.length) y = Math.max(...ocupados.map(f => f.rect.y + f.rect.h)) + SEPARACION * 2;
+
+  const specs = [];
+  for (const item of items) {
+    if (!isType(item.type)) throw new Error(`Tipo de pregunta desconocido: "${item.type}".`);
+    const enunciado = item.type === 'label' ? '' : String(item.prompt || '');
+    const hEnunciado = enunciado ? altoTexto(enunciado) : 0;
+    const hCampo = altoCampo(item);
+    const total = hEnunciado + (enunciado ? 0.006 : 0) + hCampo;
+
+    // Si no cabe entera, empieza en una página nueva (creándola si hace falta).
+    if (y + total > MARGEN_ABAJO) {
+      pagina += 1;
+      if (pagina > st.manifest.pages.length) await addBlankPage();
+      y = MARGEN_ARRIBA;
+    }
+
+    if (enunciado) {
+      specs.push({ page: pagina, type: 'label', text: enunciado, bold: true,
+                   rect: { x: MARGEN_X, y, w: ANCHO, h: hEnunciado } });
+      y += hEnunciado + 0.006;
+    }
+    const { prompt, ...resto } = item;
+    specs.push({ ...resto, page: pagina, rect: { x: MARGEN_X, y, w: anchoCampo(item), h: hCampo } });
+    y += hCampo + SEPARACION;
+  }
+
+  const res = placeFields(specs);
+  return {
+    ...res,
+    paginas: st.manifest.pages.length,
+    aviso: 'Mira preview_page de cada página para comprobar cómo ha quedado; con adjust_field puedes recolocar lo que no encaje.'
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Vista previa y guardado
 // ---------------------------------------------------------------------------
 
@@ -475,6 +612,7 @@ function save(file) {
 }
 
 module.exports = {
-  openDocument, readLayout, placeFields, adjustField, removeFields,
+  openDocument, createWorksheet, addBlankPage, addQuestions,
+  readLayout, placeFields, adjustField, removeFields,
   listFields, preview, redact, setMeta, save, reset
 };

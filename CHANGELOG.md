@@ -11,6 +11,9 @@ Las versiones publicadas también están en la página de
 
 ## [Unreleased]
 
+### Añadido
+- **El servidor MCP también crea fichas desde cero**, sin partir de ningún documento: `create_worksheet` abre una ficha en blanco (A4, apaisada o carta) y `add_questions` coloca las preguntas solas —enunciado, campo de respuesta, separación y salto de página cuando hace falta—, de modo que la IA describe qué quiere preguntar y no tiene que calcular coordenadas. Es lo mismo que ofrece el prompt de *Crear una ficha con IA*, pero sin copiar y pegar y con el formato validado por el servidor: si la IA se equivoca lo sabe al momento y se corrige, en lugar de que el error aparezca al pegar el JSON. Los criterios de calidad —variar los tipos, distractores creíbles, respuestas cortas— viajan ahora en la descripción de la herramienta, así que el profesorado no tiene que pegar nada. Las dos vías se pueden mezclar: partir de un PDF y añadirle preguntas nuevas al final.
+
 ### Cambiado
 - **Las dos opciones de IA dicen de qué parten y qué cuestan**. Sus nombres y descripciones contaban el procedimiento («Generar un prompt, pegar la respuesta…») en lugar de la diferencia entre ellas, que es lo único que necesita saber quien elige. Ahora son **«Crear una ficha con IA (prompt)»** —*Partiendo de un tema: la IA inventa las preguntas. Solo copiar y pegar*— y **«Convertir un PDF o imagen con IA (MCP)»** —*Partiendo de un documento que ya tienes: la IA coloca los campos encima. Hay que instalar un programa*—: los verbos distinguen el punto de partida, las descripciones se leen en paralelo y avisan de que una no requiere instalar nada y la otra sí.
 

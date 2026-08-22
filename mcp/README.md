@@ -130,6 +130,20 @@ command = "node"
 args = ["/ruta/a/openworksheets-mcp/server.js"]
 ```
 
+## Dos formas de hacer una ficha
+
+- **Sobre un documento**: `open_document` con un PDF o una imagen, y los campos
+  se colocan encima, cada uno en su sitio. Es el caso para el que nació esto.
+- **Desde cero**: `create_worksheet` abre una ficha en blanco y `add_questions`
+  va colocando las preguntas solas —enunciado, campo, separación y salto de
+  página cuando hace falta—, sin calcular coordenadas. Equivale a lo que hace el
+  prompt de *Crear una ficha con IA* de la aplicación, pero sin copiar y pegar y
+  con el formato validado por el servidor: si algo viene mal, la IA lo sabe al
+  momento y se corrige.
+
+Las dos se pueden mezclar en la misma ficha: partir de un PDF y añadir preguntas
+nuevas al final.
+
 ## Cómo trabaja la IA
 
 1. `open_document` — convierte el PDF en las páginas de fondo de una ficha nueva
