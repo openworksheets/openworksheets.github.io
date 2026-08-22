@@ -237,10 +237,10 @@ const STRINGS = {
     // Crear con IA (copiar/pegar, sin llamadas externas)
 
     // Colocar campos con IA sobre un PDF (servidor MCP local)
-    'mcp.create': 'Convertir un PDF con IA (MCP)',
-    'mcp.createSub': 'Partiendo de un PDF tuyo: la IA coloca los campos encima. Hay que instalar un programa',
-    'mcp.title': 'Colocar campos con IA sobre un PDF (MCP)',
-    'mcp.intro': 'Una IA puede abrir tu PDF, colocar los campos encima, comprobar el resultado en una vista previa y guardarte la ficha lista para abrir aquí. Para eso necesita un pequeño programa —el servidor MCP de OpenWorksheets— que se instala una sola vez. Tu documento no se envía a ningún servicio: todo ocurre en tu ordenador.',
+    'mcp.create': 'Convertir un PDF o imagen con IA (MCP)',
+    'mcp.createSub': 'Partiendo de un documento que ya tienes: la IA coloca los campos encima. Hay que instalar un programa',
+    'mcp.title': 'Convertir un PDF o imagen con IA (MCP)',
+    'mcp.intro': 'Una IA puede abrir tu PDF —o una imagen escaneada—, colocar los campos encima, comprobar el resultado en una vista previa y guardarte la ficha lista para abrir aquí. Para eso necesita un pequeño programa —el servidor MCP de OpenWorksheets— que se instala una sola vez. Tu documento no se envía a ningún servicio: todo ocurre en tu ordenador.',
     'mcp.compat': 'Las versiones web de ChatGPT y Gemini no sirven para esto: solo admiten conectores remotos, no programas instalados en tu ordenador.',
     'mcp.download': 'Descargar el servidor',
     'mcp.preparing': 'Preparando…',
@@ -1315,10 +1315,10 @@ const STRINGS = {
     // Create with AI (copy/paste, no external calls)
 
     // Placing fields on a PDF with AI (local MCP server)
-    'mcp.create': 'Turn a PDF into a worksheet with AI (MCP)',
-    'mcp.createSub': 'Starting from a PDF of yours: the AI places the fields on it. Needs a program installed',
-    'mcp.title': 'Placing fields on a PDF with AI (MCP)',
-    'mcp.intro': 'An AI can open your PDF, place the fields on top, check the result on a preview and hand you the worksheet ready to open here. For that it needs a small program —the OpenWorksheets MCP server— set up once. Your document is sent to no service: everything happens on your computer.',
+    'mcp.create': 'Turn a PDF or image into a worksheet with AI (MCP)',
+    'mcp.createSub': 'Starting from a document you already have: the AI places the fields on it. Needs a program installed',
+    'mcp.title': 'Turning a PDF or image into a worksheet with AI (MCP)',
+    'mcp.intro': 'An AI can open your PDF —or a scanned image—, place the fields on top, check the result on a preview and hand you the worksheet ready to open here. For that it needs a small program —the OpenWorksheets MCP server— set up once. Your document is sent to no service: everything happens on your computer.',
     'mcp.compat': 'The web versions of ChatGPT and Gemini will not do for this: they only accept remote connectors, not programs installed on your computer.',
     'mcp.download': 'Download the server',
     'mcp.preparing': 'Preparing…',
@@ -2361,10 +2361,10 @@ const STRINGS = {
     // Crear amb IA (copiar/enganxar, sense crides externes)
 
     // Col·locar camps amb IA sobre un PDF (servidor MCP local)
-    'mcp.create': 'Convertir un PDF amb IA (MCP)',
-    'mcp.createSub': 'Partint d\'un PDF teu: la IA hi col·loca els camps a sobre. Cal instal·lar un programa',
-    'mcp.title': 'Col·locar camps amb IA sobre un PDF (MCP)',
-    'mcp.intro': 'Una IA pot obrir el teu PDF, col·locar-hi els camps a sobre, comprovar el resultat en una vista prèvia i donar-te la fitxa a punt per obrir aquí. Per fer-ho necessita un petit programa —el servidor MCP d\'OpenWorksheets— que s\'instal·la una sola vegada. El teu document no s\'envia a cap servei: tot passa al teu ordinador.',
+    'mcp.create': 'Convertir un PDF o imatge amb IA (MCP)',
+    'mcp.createSub': 'Partint d\'un document que ja tens: la IA hi col·loca els camps a sobre. Cal instal·lar un programa',
+    'mcp.title': 'Convertir un PDF o imatge amb IA (MCP)',
+    'mcp.intro': 'Una IA pot obrir el teu PDF —o una imatge escanejada—, col·locar-hi els camps a sobre, comprovar el resultat en una vista prèvia i donar-te la fitxa a punt per obrir aquí. Per fer-ho necessita un petit programa —el servidor MCP d\'OpenWorksheets— que s\'instal·la una sola vegada. El teu document no s\'envia a cap servei: tot passa al teu ordinador.',
     'mcp.compat': 'Les versions web de ChatGPT i Gemini no serveixen per a això: només admeten connectors remots, no programes instal·lats al teu ordinador.',
     'mcp.download': 'Descarregar el servidor',
     'mcp.preparing': 'Preparant…',
@@ -3400,10 +3400,10 @@ const STRINGS = {
     // Crear con IA (copiar/pegar, sen chamadas externas)
 
     // Colocar campos con IA sobre un PDF (servidor MCP local)
-    'mcp.create': 'Converter un PDF con IA (MCP)',
-    'mcp.createSub': 'Partindo dun PDF teu: a IA coloca os campos enriba. Hai que instalar un programa',
-    'mcp.title': 'Colocar campos con IA sobre un PDF (MCP)',
-    'mcp.intro': 'Unha IA pode abrir o teu PDF, colocar os campos enriba, comprobar o resultado nunha vista previa e darche a ficha lista para abrir aquí. Para iso necesita un pequeno programa —o servidor MCP de OpenWorksheets— que se instala unha soa vez. O teu documento non se envía a ningún servizo: todo ocorre no teu computador.',
+    'mcp.create': 'Converter un PDF ou imaxe con IA (MCP)',
+    'mcp.createSub': 'Partindo dun documento que xa tes: a IA coloca os campos enriba. Hai que instalar un programa',
+    'mcp.title': 'Converter un PDF ou imaxe con IA (MCP)',
+    'mcp.intro': 'Unha IA pode abrir o teu PDF —ou unha imaxe escaneada—, colocar os campos enriba, comprobar o resultado nunha vista previa e darche a ficha lista para abrir aquí. Para iso necesita un pequeno programa —o servidor MCP de OpenWorksheets— que se instala unha soa vez. O teu documento non se envía a ningún servizo: todo ocorre no teu computador.',
     'mcp.compat': 'As versións web de ChatGPT e Gemini non serven para isto: só admiten conectores remotos, non programas instalados no teu computador.',
     'mcp.download': 'Descargar o servidor',
     'mcp.preparing': 'Preparando…',
@@ -4439,10 +4439,10 @@ const STRINGS = {
     // IArekin sortu (kopiatu/itsatsi, kanpoko deirik gabe)
 
     // Eremuak IArekin PDF baten gainean jartzea (MCP zerbitzari lokala)
-    'mcp.create': 'Bihurtu PDF bat IArekin (MCP)',
-    'mcp.createSub': 'Zure PDF batetik abiatuta: IAk eremuak gainean jartzen ditu. Programa bat instalatu behar da',
-    'mcp.title': 'Eremuak IArekin PDF baten gainean jartzea (MCP)',
-    'mcp.intro': 'IA batek zure PDFa ireki dezake, eremuak gainean jarri, emaitza aurrebista batean egiaztatu eta fitxa hemen irekitzeko prest eman. Horretarako programa txiki bat behar du —OpenWorksheets-en MCP zerbitzaria—, behin bakarrik instalatzen dena. Zure dokumentua ez da inolako zerbitzura bidaltzen: dena zure ordenagailuan gertatzen da.',
+    'mcp.create': 'Bihurtu PDF edo irudi bat IArekin (MCP)',
+    'mcp.createSub': 'Jada duzun dokumentu batetik abiatuta: IAk eremuak gainean jartzen ditu. Programa bat instalatu behar da',
+    'mcp.title': 'PDF edo irudi bat IArekin bihurtzea (MCP)',
+    'mcp.intro': 'IA batek zure PDFa —edo eskaneatutako irudi bat— ireki dezake, eremuak gainean jarri, emaitza aurrebista batean egiaztatu eta fitxa hemen irekitzeko prest eman. Horretarako programa txiki bat behar du —OpenWorksheets-en MCP zerbitzaria—, behin bakarrik instalatzen dena. Zure dokumentua ez da inolako zerbitzura bidaltzen: dena zure ordenagailuan gertatzen da.',
     'mcp.compat': 'ChatGPTren eta Geminiren web bertsioek ez dute honetarako balio: urruneko konektoreak baino ez dituzte onartzen, ez zure ordenagailuan instalatutako programak.',
     'mcp.download': 'Deskargatu zerbitzaria',
     'mcp.preparing': 'Prestatzen…',
