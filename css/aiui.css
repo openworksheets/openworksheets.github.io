@@ -225,9 +225,7 @@ textarea.ai-input { resize: vertical; }
 .mcp-link:hover { color: var(--tinta); }
 .mcp-foot { margin: 22px 0 0; text-align: center; }
 
-.mcp-example { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
-.mcp-example .mcp-code { flex: 1; min-width: 0; }
-.mcp-example .btn { flex-shrink: 0; }
+.mcp-example { margin-bottom: 10px; }
 .mcp-more { margin-top: 20px; }
 
 /* Los dos caminos de instalación (IA con comandos / configuración a mano) */
@@ -287,7 +285,3 @@ details.mcp-client[open] .mcp-client-sum { border-bottom: 1px solid var(--tinta-
 }
 .mcp-way-fold > summary .mcp-way-title { display: inline; }
 .mcp-way-fold[open] > summary { margin-bottom: 6px; }
-
-/* El «Cerrar» del diálogo MCP, alineado con el resto del contenido y no
-   debajo de la columna de botones «Copiar» */
-.mcp-dialog > .ai-actions { justify-content: flex-start; }

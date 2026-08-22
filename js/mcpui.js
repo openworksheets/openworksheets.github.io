@@ -230,10 +230,9 @@ export function openMcpDialog() {
   // Dos caminos distintos, no una secuencia: lo que hay que hacer depende de si
   // la IA puede ejecutar comandos. Para las que no (Claude Desktop, LM Studio),
   // el trabajo lo hace la persona, y por eso ahí sí hace falta la descarga.
-  const example = key => {
-    const pre = el('pre', { class: 'mcp-code' }, t(key));
-    return el('div', { class: 'mcp-example' }, pre, copyButton(() => pre.textContent, t('mcp.copy')));
-  };
+  // Son ejemplos de lo que se le puede pedir, con nombres inventados: no hay
+  // nada que copiar tal cual, así que no llevan botón.
+  const example = key => el('pre', { class: 'mcp-code mcp-example' }, t(key));
 
   // Dos caminos distintos, no una secuencia: lo que hay que hacer depende de si
   // la IA puede ejecutar comandos. Para las que no (Claude Desktop, ChatGPT de
