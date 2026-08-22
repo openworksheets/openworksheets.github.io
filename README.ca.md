@@ -131,6 +131,32 @@ OpenWorksheets pot generar una fitxa completa automàticament a partir d'un form
 
 També pots inserir pàgines generades amb IA en una fitxa ja començada usant el botó **«+ IA»** que apareix entre pàgines.
 
+### Col·locar els camps sobre un PDF amb ajuda d'una IA (servidor MCP)
+
+El flux anterior crea la fitxa des de zero, sobre pàgines en blanc. Si el que
+tens és **un PDF ja fet** i vols que la IA hi col·loqui els camps a sobre, al
+seu lloc, OpenWorksheets inclou un **servidor MCP** (`mcp/`) que pots connectar
+a Claude o a qualsevol client compatible. Només cal indicar-li on és l'arxiu:
+
+> «Converteix en fitxa interactiva el PDF ~/Baixades/energia.pdf»
+
+La IA obre el document, en llegeix el text amb les coordenades de cada línia,
+detecta els buits impresos (ratlles de guions baixos i línies per escriure),
+col·loca els camps, **comprova el resultat en una vista prèvia amb els camps
+dibuixats a sobre** —corregint el que estigui desplaçat— i desa el `.owpkg` que
+després obres amb **Arxiu → Obrir fitxa**.
+
+No cal instal·lar res a mà ni descarregar-se l'aplicació: a l'editor, obre
+«Col·locar camps amb IA sobre un PDF…» i copia el text que apareix. En
+enganxar-lo a la teva IA, és **ella** qui comprova els requisits (Node i Chrome),
+descarrega la carpeta `mcp/` —que és autònoma— i es registra sola. Això és cosa
+d'una sola vegada: a partir d'aquí, el mateix diàleg s'obre ja a «Demanar una
+fitxa a la teva IA», amb la petició a punt per copiar. Funciona amb
+les IA que poden executar programes al teu ordinador: **Claude Desktop, LM
+Studio, Claude Code, Codex CLI, Antigravity CLI, Cursor, VS Code**; ChatGPT i
+Gemini en la versió web no, perquè només admeten connectors remots. Detalls i
+límits a [`mcp/README.md`](mcp/README.md).
+
 ## Flux de treball
 
 1. **Crear:** el professorat puja un PDF o imatge, o comença amb un full en blanc, col·loca els camps i configura les respostes correctes i la puntuació a l'editor.

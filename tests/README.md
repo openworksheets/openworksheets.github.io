@@ -25,6 +25,11 @@ pantalla y termina con `__TEST_OK__` o `__TEST_FAIL__`.
   flechas» en el visor respecto a la imagen de fondo (tolerancia < 1 px).
 - `test_imgfield.html` — el campo imagen decorativa ocupa exactamente la caja
   dibujada (altura fija, no la proporción natural de la imagen).
+- `run_mcp_ficha.js` — servidor MCP (`mcp/server.js`): habla el protocolo por
+  stdio como lo haría una IA y recorre el circuito completo (abrir un PDF, leer
+  sus coordenadas, colocar campos, previsualizar, ajustar, borrar y guardar el
+  `.owpkg`). Con un PDF propio: `node tests/run_mcp_ficha.js ruta/al.pdf`.
+  Necesita Chromium; no necesita el servidor del puerto 8765.
 - `run_ampos_editor.js` — script de puppeteer aparte: dibuja con el ratón las
   áreas de un par de «Unir con flechas» en el editor real y comprueba que el
   overlay y la vista previa coinciden al píxel

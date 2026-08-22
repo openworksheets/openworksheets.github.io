@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<title>OpenWorksheets MCP — banco de trabajo</title>
+<!--
+  Página interna del servidor MCP. No la abre ningún usuario: la carga Chromium
+  sin interfaz para hacer las tres cosas que necesitan un navegador de verdad:
+    1) rasterizar el PDF con pdf.js, exactamente igual que hace el editor
+       (js/pdfimport.js), para que la ficha resultante sea idéntica a la que
+       saldría subiendo el PDF a mano;
+    2) leer la capa de texto con sus coordenadas;
+    3) componer la vista previa (fondo + campos dibujados encima).
+-->
+<script src="vendor/pdf.min.js"></script>
+<script>
+const TARGET_WIDTH = 1600; // mismo ancho que js/pdfimport.js
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdf.worker.min.js';
+
+let doc = null;
+
+window.owsOpenPdf = async function (b64) {
+  const data = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  doc = await pdfjsLib.getDocument({ data }).promise;
+  return { pages: doc.numPages };
+};
+
+function toBlobDataUrl(canvas) {
+  return new Promise(resolve => {
+    canvas.toBlob(blob => {
+      if (blob && blob.type === 'image/webp') return read(blob, 'webp');
+      canvas.toBlob(b2 => read(b2, 'jpg'), 'image/jpeg', 0.88);
+    }, 'image/webp', 0.85);
+    function read(blob, ext) {
+      const fr = new FileReader();
+      fr.onload = () => resolve({ dataUrl: fr.result, ext });
+      fr.readAsDataURL(blob);
+    }
+  });
+}
+
+// Rasteriza una página y devuelve la imagen de fondo más el análisis del
+// documento: texto con coordenadas y líneas horizontales impresas (que en las
+// fichas en papel son, casi siempre, el hueco donde hay que escribir).
+window.owsRenderPage = async function (n) {
+  const page = await doc.getPage(n);
+  const base = page.getViewport({ scale: 1 });
+  const scale = Math.min(3, TARGET_WIDTH / base.width);
+  const viewport = page.getViewport({ scale });
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(viewport.width);
+  canvas.height = Math.round(viewport.height);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  await page.render({ canvasContext: ctx, viewport }).promise;
+
+  const img = await toBlobDataUrl(canvas);
+  const text = await readText(page, base);
+  const rules = findRules(ctx, canvas.width, canvas.height);
+  return { w: canvas.width, h: canvas.height, ...img, text, rules };
+};
+
+// Texto con rectángulos normalizados (0–1 sobre la página).
+async function readText(page, viewport) {
+  const content = await page.getTextContent();
+  const W = viewport.width, H = viewport.height;
+  const items = [];
+  for (const it of content.items) {
+    const str = it.str;
+    if (!str || !str.trim()) continue;
+    const tx = pdfjsLib.Util.transform(viewport.transform, it.transform);
+    const h = Math.hypot(tx[2], tx[3]);
+    const w = it.width;
+    // tx[5] es la línea base; el alto de la caja se reparte por encima de ella
+    // dejando algo de hueco para los descendentes (g, p, j).
+    const top = tx[5] - h * 0.8;
+    items.push({
+      str,
+      rect: round4({ x: tx[4] / W, y: top / H, w: w / W, h: h / H })
+    });
+  }
+  return items;
+}
+
+// Rachas horizontales de píxeles oscuros: líneas de puntos suspensivos, reglas
+// para escribir, bordes de tabla o de recuadro. Se devuelven todas y es quien
+// llama (el modelo) quien decide cuáles son huecos de respuesta.
+function findRules(ctx, W, H) {
+  const data = ctx.getImageData(0, 0, W, H).data;
+  const minRun = Math.round(W * 0.04);
+  const dark = (x, y) => {
+    const i = (y * W + x) * 4;
+    return (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114) < 160;
+  };
+  const found = [];
+  for (let y = 0; y < H; y++) {
+    let run = 0;
+    for (let x = 0; x <= W; x++) {
+      // Se toleran huecos de 1 px para no partir las líneas con antialiasing.
+      const on = x < W && (dark(x, y) || (x + 1 < W && dark(x + 1, y)));
+      if (on) { run++; continue; }
+      if (run >= minRun) found.push({ y, x0: x - run, x1: x - 1, len: run });
+      run = 0;
+    }
+  }
+  // Una línea gruesa aparece en varias filas seguidas: se fusionan.
+  const merged = [];
+  for (const r of found.sort((a, b) => a.y - b.y || a.x0 - b.x0)) {
+    const prev = merged.find(m => Math.abs(m.y1 - r.y) <= 2 && Math.abs(m.x0 - r.x0) < W * 0.02 && Math.abs(m.x1 - r.x1) < W * 0.02);
+    if (prev) { prev.y1 = r.y; continue; }
+    merged.push({ y0: r.y, y1: r.y, x0: r.x0, x1: r.x1 });
+  }
+  return merged.map(m => round4({
+    x: m.x0 / W,
+    y: m.y0 / H,
+    w: (m.x1 - m.x0) / W,
+    h: Math.max(1, m.y1 - m.y0) / H
+  }));
+}
+
+function round4(r) {
+  const f = v => Math.round(v * 10000) / 10000;
+  return { x: f(r.x), y: f(r.y), w: f(r.w), h: f(r.h) };
+}
+
+// ---------------------------------------------------------------------------
+// Vista previa: el fondo de la página con los campos dibujados encima, cada uno
+// numerado. Es lo que el modelo mira para comprobar que los campos han caído
+// donde debían antes de guardar la ficha.
+// ---------------------------------------------------------------------------
+const COLORS = {
+  answer: '#2563eb',  // escribir
+  choose: '#7c3aed',  // elegir
+  relate: '#0d9488',  // relacionar
+  decor:  '#9ca3af'
+};
+const GROUP = {
+  text: 'answer', number: 'answer', formula: 'answer', essay: 'answer', gaps: 'answer',
+  single: 'choose', multi: 'choose', select: 'choose', truefalse: 'choose',
+  match: 'relate', order: 'relate', dragdrop: 'relate',
+  label: 'decor', cover: 'decor'
+};
+
+window.owsCompose = async function (bgDataUrl, fields, opts = {}) {
+  const bg = new Image();
+  await new Promise((res, rej) => { bg.onload = res; bg.onerror = rej; bg.src = bgDataUrl; });
+  const maxW = opts.width || 1100;
+  const scale = Math.min(1, maxW / bg.width);
+  const W = Math.round(bg.width * scale), H = Math.round(bg.height * scale);
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(bg, 0, 0, W, H);
+
+  if (opts.grid) drawGrid(ctx, W, H);
+
+  // Los decorativos se pintan tal como se verán (el «tapar zona» oculta de
+  // verdad lo que hay debajo): si no, la vista previa mentiría justo en lo que
+  // sirven para arreglar.
+  fields.forEach(f => {
+    const x = f.rect.x * W, y = f.rect.y * H, w = f.rect.w * W, h = f.rect.h * H;
+    if (f.type === 'cover') {
+      ctx.save();
+      ctx.globalAlpha = f.config?.opacity == null ? 1 : Number(f.config.opacity);
+      ctx.fillStyle = f.config?.color || '#ffffff';
+      ctx.fillRect(x, y, w, h);
+      ctx.restore();
+    } else if (f.type === 'label') {
+      ctx.save();
+      ctx.fillStyle = f.config?.color || '#1d2c42';
+      ctx.font = `${f.config?.bold ? 'bold ' : ''}${Math.round(h * 0.75)}px sans-serif`;
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = f.config?.align === 'center' ? 'center' : f.config?.align === 'right' ? 'right' : 'left';
+      const tx = f.config?.align === 'center' ? x + w / 2 : f.config?.align === 'right' ? x + w : x;
+      ctx.fillText(String(f.config?.text || ''), tx, y + h / 2);
+      ctx.restore();
+    }
+  });
+
+  const th = Math.max(12, Math.round(W / 75));
+  ctx.font = `bold ${Math.round(th * 0.78)}px sans-serif`;
+  ctx.textBaseline = 'top';
+  fields.forEach((f, i) => {
+    const color = COLORS[GROUP[f.type] || 'decor'];
+    const x = f.rect.x * W, y = f.rect.y * H, w = f.rect.w * W, h = f.rect.h * H;
+    ctx.fillStyle = color + '26';
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, w, h);
+    // «Arrastrar a zonas»: el rectángulo del campo es solo la bandeja de
+    // etiquetas. Las zonas de destino están en otra parte de la página, así que
+    // se dibujan aparte —a trazos y con la respuesta esperada— o la vista previa
+    // no serviría para comprobar lo único que importa: dónde caen las zonas.
+    (f.config?.zones || []).forEach((z, k) => {
+      const zx = z.rect.x * W, zy = z.rect.y * H, zw = z.rect.w * W, zh = z.rect.h * H;
+      ctx.save();
+      ctx.setLineDash([6, 4]);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.fillStyle = color + '1a';
+      ctx.fillRect(zx, zy, zw, zh);
+      ctx.strokeRect(zx, zy, zw, zh);
+      ctx.setLineDash([]);
+      // Etiqueta «1a», «1b»… con la respuesta que espera esa zona.
+      const zt = `${i + 1}${String.fromCharCode(97 + k)} ${z.answers?.[0] || '—'}`;
+      ctx.font = `${Math.round(th * 0.7)}px sans-serif`;
+      const zw2 = ctx.measureText(zt).width + 8;
+      const zty = zy - th >= 0 ? zy - th : zy + zh;
+      ctx.fillStyle = color;
+      ctx.fillRect(zx, zty, zw2, th);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(zt, zx + 4, zty + th * 0.12);
+      ctx.restore();
+      ctx.font = `bold ${Math.round(th * 0.78)}px sans-serif`;
+    });
+
+    // Chapa con el número de campo, en la esquina superior derecha y por fuera
+    // del rectángulo: dentro taparía justo lo que hay que comprobar.
+    const tag = String(i + 1);
+    const tw = Math.max(th, ctx.measureText(tag).width + 8);
+    const tx = Math.min(W - tw, x + w - tw / 2);
+    const ty = y - th >= 0 ? y - th : y + h;
+    ctx.fillStyle = color;
+    ctx.fillRect(tx, ty, tw, th);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(tag, tx + (tw - ctx.measureText(tag).width) / 2, ty + th * 0.12);
+  });
+
+  return canvas.toDataURL('image/png');
+};
+
+// Rejilla de décimas con sus coordenadas escritas: sirve para estimar
+// posiciones a ojo cuando el PDF es un escaneo y no hay capa de texto.
+function drawGrid(ctx, W, H) {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(220,38,38,.45)';
+  ctx.fillStyle = 'rgba(220,38,38,.9)';
+  ctx.lineWidth = 1;
+  ctx.font = `${Math.max(10, Math.round(W / 90))}px sans-serif`;
+  ctx.textBaseline = 'top';
+  for (let i = 1; i < 10; i++) {
+    const x = (i / 10) * W, y = (i / 10) * H;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    ctx.fillText('x=' + (i / 10).toFixed(1), x + 2, 2);
+    ctx.fillText('y=' + (i / 10).toFixed(1), 2, y + 2);
+  }
+  ctx.restore();
+}
+
+window.owsLoadImage = async function (dataUrl) {
+  const img = new Image();
+  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = dataUrl; });
+  return { w: img.naturalWidth, h: img.naturalHeight };
+};
+
+window.__owsReady = true;
+</script>

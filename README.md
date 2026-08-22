@@ -131,6 +131,32 @@ OpenWorksheets can generate a complete worksheet automatically from a form you f
 
 You can also insert AI-generated pages into an existing worksheet using the **«+ AI»** button between pages.
 
+### Placing fields on a PDF with AI help (MCP server)
+
+The flow above builds a worksheet from scratch, on blank pages. If you already
+have **a finished PDF** and want the AI to place the fields on top of it, in the
+right spot, OpenWorksheets ships an **MCP server** (`mcp/`) you can connect to
+Claude or any compatible client. Just tell it where the file is:
+
+> "Turn ~/Downloads/energy.pdf into an interactive worksheet"
+
+The AI opens the document, reads its text with the coordinates of every line,
+detects the printed blanks (underscore runs and writing rules), places the
+fields, **checks the result on a preview with the fields drawn on top** —fixing
+whatever is misplaced— and saves the `.owpkg` you then open with **File → Open
+worksheet**.
+
+Nothing has to be installed by hand, and the app itself is never downloaded: in
+the editor, open "Place fields on a PDF with AI…" and copy the text it shows.
+Paste it to your AI and **it** checks the requirements (Node and Chrome),
+downloads the `mcp/` folder —which is self-contained— and registers itself. That
+is a one-off: from then on the same dialog opens straight into "Asking your AI
+for a worksheet", with the request ready to copy. It
+works with AIs that can run programs on your computer: **Claude Desktop, LM
+Studio, Claude Code, Codex CLI, Antigravity CLI, Cursor, VS Code**; ChatGPT and
+Gemini on the web cannot, as they only accept remote connectors. Details and
+limitations in [`mcp/README.md`](mcp/README.md).
+
 ## Workflow
 
 1. **Create:** the teacher uploads a PDF or image, or starts with a blank page, places the fields, and configures the correct answers and scoring in the editor.

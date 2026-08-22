@@ -131,6 +131,16 @@ OpenWorksheets puede generar una ficha completa automáticamente a partir de un 
 
 También puedes insertar páginas generadas con IA en una ficha ya comenzada usando el botón **«+ IA»** que aparece entre páginas.
 
+### Colocar los campos sobre un PDF con ayuda de una IA (servidor MCP)
+
+El flujo anterior crea la ficha desde cero, sobre páginas en blanco. Si lo que tienes es **un PDF ya hecho** y quieres que la IA coloque los campos encima, en su sitio, OpenWorksheets incluye un **servidor MCP** (`mcp/`) que puedes conectar a Claude o a cualquier cliente compatible. Basta con indicarle dónde está el archivo:
+
+> «Convierte en ficha interactiva el PDF ~/Descargas/energia.pdf»
+
+La IA abre el documento, lee su texto con las coordenadas de cada línea, detecta los huecos impresos (guiones bajos y líneas para escribir), coloca los campos, **comprueba el resultado en una vista previa con los campos dibujados encima** —corrigiendo lo que esté desplazado— y guarda el `.owpkg` que después abres con **Archivo → Abrir ficha**.
+
+No hay que instalar nada a mano ni descargarse la aplicación: en el editor, abre «Colocar campos con IA sobre un PDF…» y copia el texto que aparece. Al pegárselo a tu IA, es **ella** quien comprueba los requisitos (Node y Chrome), descarga la carpeta `mcp/` —que es autónoma— y se registra sola. Eso es cosa de una sola vez: a partir de ahí, el mismo diálogo se abre ya en «Pedirle una ficha a tu IA», con la petición lista para copiar. Funciona con las IA que pueden ejecutar programas en tu ordenador: **Claude Desktop, LM Studio, Claude Code, Codex CLI, Antigravity CLI, Cursor, VS Code**; ChatGPT y Gemini en su versión web no, porque solo admiten conectores remotos. Detalles y límites en [`mcp/README.md`](mcp/README.md).
+
 ## Flujo de trabajo
 
 1. **Crear:** el profesorado sube un PDF o imagen, o empieza con una hoja en blanco, coloca los campos y configura las respuestas correctas y la puntuación en el editor.

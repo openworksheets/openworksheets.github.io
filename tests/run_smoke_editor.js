@@ -35,11 +35,11 @@ const puppeteer = require('puppeteer-core');
   open = await page.$$eval('.ed-group-tools.open', ns => ns.length);
   check('abrir grupo «write»', open === 1);
 
-  // Añadir hoja en blanco (no esperamos img.fondo: depende del entorno)
-  await page.evaluate(() => {
-    const btns = [...document.querySelectorAll('.ed-empty button')];
-    btns[btns.length - 1].click(); // último = «Hoja en blanco»
-  });
+  // Añadir hoja en blanco (no esperamos img.fondo: depende del entorno).
+  // Se busca por data-start, no por posición: la lista de opciones crece.
+  const startKeys = await page.$$eval('.ed-start-item', ns => ns.map(n => n.dataset.start));
+  check('opciones del cuadro de inicio', startKeys.join(',') === 'pdf,open,blank,ai,mcp', startKeys.join(','));
+  await page.click('.ed-start-item[data-start="blank"]');
   await new Promise(r => setTimeout(r, 400));
   const pages = await page.$$eval('.wpf-page', ns => ns.length);
   check('se crea una página', pages >= 1);

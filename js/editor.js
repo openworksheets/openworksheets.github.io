@@ -42,6 +42,7 @@ import { state, urls, fileUrl, markDirty, onDirty } from './editor-state.js';
 import { takeFile } from './filehandoff.js';
 import { layoutFields } from './aiimport.js';
 import { openAiDialog } from './aiui.js';
+import { openMcpDialog } from './mcpui.js';
 
 applyI18n();
 function refreshEditorTexts() {
@@ -830,10 +831,12 @@ function movePage(pi, delta) {
 
 // Fila de la pantalla inicial: icono + título (peso normal) + subtítulo gris.
 // Sin recuadro de botón; el estilo (hover, separadores) va en el CSS.
-function startItem(svg, title, sub, onclick) {
+// `key` identifica la opción de forma estable (data-start) para las pruebas y
+// para poder reordenar la lista sin romperlas.
+function startItem(key, svg, title, sub, onclick) {
   const ic = el('span', { class: 'ed-start-icon' });
   ic.innerHTML = svg;
-  return el('button', { class: 'ed-start-item', type: 'button', onclick },
+  return el('button', { class: 'ed-start-item', type: 'button', dataset: { start: key }, onclick },
     ic,
     el('span', { class: 'ed-start-text' },
       el('span', { class: 'ed-start-title' }, title),
@@ -860,15 +863,16 @@ function renderCanvas({ preserveScroll = false } = {}) {
     canvas.appendChild(el('div', { class: 'ed-empty card anim-in' },
       el('h2', {}, t('editor.emptyTitle')),
       el('div', { class: 'ed-empty-list' },
-        startItem(ICONS.fileText, t('editor.addPdf').replace(/^\+\s*/, ''), t('menu.addPdfSub'), () => {
+        startItem('pdf', ICONS.fileText, t('editor.addPdf').replace(/^\+\s*/, ''), t('menu.addPdfSub'), () => {
           const input = $('#inputPaginas');
           const handler = e => { addFiles(e.target.files); e.target.value = ''; input.removeEventListener('change', handler); };
           input.addEventListener('change', handler);
           input.click();
         }),
-        startItem(ICONS.folderOpen, t('editor.openZip'), t('menu.openZipSub'), () => $('#inputZip').click()),
-        startItem(ICONS.filePlus, t('editor.addBlank'), t('menu.blankSub'), () => addBlankPage(undefined, { newSheet: true })),
-        startItem(ICONS.sparkles, t('ai.create'), t('ai.createSub'), () => openAiDialog({ onImport: createWorksheetFromAi })))));
+        startItem('open', ICONS.folderOpen, t('editor.openZip'), t('menu.openZipSub'), () => $('#inputZip').click()),
+        startItem('blank', ICONS.filePlus, t('editor.addBlank'), t('menu.blankSub'), () => addBlankPage(undefined, { newSheet: true })),
+        startItem('ai', ICONS.sparkles, t('ai.create'), t('ai.createSub'), () => openAiDialog({ onImport: createWorksheetFromAi })),
+        startItem('mcp', ICONS.code, t('mcp.create'), t('mcp.createSub'), () => openMcpDialog()))));
     restoreScroll();
     return;
   }

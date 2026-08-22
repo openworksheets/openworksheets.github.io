@@ -1,0 +1,279 @@
+#!/usr/bin/env node
+// Servidor MCP de OpenWorksheets: permite que una IA convierta un PDF (o una
+// imagen) en una ficha interactiva colocando los campos de respuesta sobre el
+// documento, comprobando el resultado con una vista previa y guardando el
+// paquete .owpkg que el profesor abre después en el editor.
+//
+// El protocolo MCP se habla directamente sobre stdio (JSON-RPC 2.0, un mensaje
+// JSON por línea). Se implementa aquí en lugar de usar el SDK oficial para no
+// añadir dependencias: OpenWorksheets no tiene proceso de compilación y este
+// servidor mantiene esa misma regla (solo Node y el puppeteer-core que ya se
+// usaba en los tests).
+
+const session = require('./session');
+const { close } = require('./browser');
+const { typeList } = require('./fieldspec');
+
+const PROTOCOL = '2024-11-05';
+
+const RECT = {
+  type: 'object',
+  description: 'Rectángulo en fracciones de la página (0–1), origen arriba a la izquierda.',
+  properties: {
+    x: { type: 'number' }, y: { type: 'number' },
+    w: { type: 'number' }, h: { type: 'number' }
+  },
+  required: ['x', 'y', 'w', 'h']
+};
+
+const FIELD_SPEC = {
+  type: 'object',
+  properties: {
+    page: { type: 'integer', description: 'Página, empezando por 1.' },
+    type: { type: 'string', description: 'Tipo de campo. ' + typeList().join('; ') },
+    rect: RECT,
+    points: { type: 'number', description: 'Puntos del campo (1 por defecto).' },
+    noScore: { type: 'boolean', description: 'El campo se responde pero no puntúa.' },
+    answers: { type: 'array', items: { type: 'string' }, description: 'text/formula: respuestas aceptadas (la primera es la de referencia).' },
+    answer: { description: 'number: valor correcto.' },
+    tolerance: { type: 'number', description: 'number: margen de error admitido.' },
+    options: { type: 'array', items: { type: 'string' }, description: 'single/multi/select: opciones.' },
+    correct: { description: 'single/select: índice correcto. multi: lista de índices. truefalse: true/false.' },
+    partial: { type: 'boolean', description: 'multi: puntuar parcialmente los aciertos.' },
+    labels: { type: 'array', items: { type: 'string' }, description: 'truefalse: etiquetas de los dos botones.' },
+    prompt: { type: 'string', description: 'essay: consigna que se muestra sobre el cuadro de escritura.' },
+    maxWords: { type: 'integer', description: 'essay: límite de palabras (0 = sin límite).' },
+    rows: { type: 'integer', description: 'essay: altura del cuadro en líneas.' },
+    text: { type: 'string', description: 'gaps: texto con los huecos entre corchetes, admitiendo alternativas: "El agua hierve a [100] grados y se congela a [0|cero]." — label: el texto que se escribe.' },
+    items: { type: 'array', items: { type: 'string' }, description: 'order: elementos ya en el orden correcto.' },
+    pairs: { type: 'array', description: 'match: parejas [{left, right}].', items: { type: 'object' } },
+    zones: {
+      type: 'array',
+      description: 'dragdrop: zonas de destino sobre el documento, [{ rect: {x,y,w,h}, answers: ["etiqueta correcta"] }]. Ojo: en este tipo el "rect" del campo es la BANDEJA de donde parten las etiquetas (colócala en un hueco libre), y cada zona lleva su propio rect donde hay que soltarlas.',
+      items: {
+        type: 'object',
+        properties: { rect: RECT, answers: { type: 'array', items: { type: 'string' } } },
+        required: ['rect', 'answers']
+      }
+    },
+    distractors: { type: 'array', items: { type: 'string' }, description: 'match y dragdrop: elementos sobrantes, que no corresponden a ninguna zona ni pareja.' },
+    color: { type: 'string' },
+    bold: { type: 'boolean' },
+    align: { type: 'string' }
+  },
+  required: ['page', 'type', 'rect']
+};
+
+const TOOLS = [
+  {
+    name: 'open_document',
+    description: 'Abre un PDF o una imagen y lo convierte en las páginas de fondo de una ficha nueva. Es el primer paso: descarta la ficha que hubiera en curso. Devuelve el número de páginas y si cada una tiene capa de texto.',
+    inputSchema: {
+      type: 'object',
+      properties: { path: { type: 'string', description: 'Ruta del archivo PDF o de imagen en el ordenador del profesor.' } },
+      required: ['path']
+    },
+    run: a => session.openDocument(a.path)
+  },
+  {
+    name: 'read_layout',
+    description: 'Lee una página: sus líneas de texto con las coordenadas de cada una y los candidatos a hueco de respuesta (rachas de guiones bajos y líneas horizontales impresas). Úsalo para saber dónde colocar cada campo antes de place_fields.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        page: { type: 'integer', description: 'Página, empezando por 1.' },
+        raw: { type: 'boolean', description: 'Devolver también cada fragmento de texto suelto, sin agrupar en líneas.' }
+      },
+      required: ['page']
+    },
+    run: a => session.readLayout(a.page, { raw: a.raw })
+  },
+  {
+    name: 'place_fields',
+    description: 'Coloca uno o varios campos de respuesta sobre el documento. Avisa (sin bloquear) si un campo se solapa con otro o tapa texto impreso. Después conviene mirar preview_page para comprobar que han caído en su sitio.',
+    inputSchema: {
+      type: 'object',
+      properties: { fields: { type: 'array', items: FIELD_SPEC } },
+      required: ['fields']
+    },
+    run: a => session.placeFields(a.fields || [])
+  },
+  {
+    name: 'preview_page',
+    description: 'Devuelve la imagen de una página con los campos dibujados y numerados encima. Es la comprobación de que lo que se ve es lo que se espera: míralo antes de guardar y corrige con adjust_field lo que esté desplazado.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        page: { type: 'integer' },
+        grid: { type: 'boolean', description: 'Superponer una rejilla con las coordenadas: ayuda a situar campos cuando la página no tiene capa de texto.' },
+        width: { type: 'integer', description: 'Ancho de la imagen en píxeles (1100 por defecto).' }
+      },
+      required: ['page']
+    },
+    run: async a => {
+      const { base64, legend } = await session.preview(a.page, a);
+      return {
+        content: [
+          { type: 'image', data: base64, mimeType: 'image/png' },
+          { type: 'text', text: legend.length ? 'Campos:\n' + legend.join('\n') : 'La página todavía no tiene ningún campo.' }
+        ]
+      };
+    }
+  },
+  {
+    name: 'adjust_field',
+    description: 'Corrige un campo ya colocado: su posición y tamaño (rect), sus puntos o su contenido (respuestas, opciones…).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Identificador devuelto por place_fields o list_fields.' },
+        rect: RECT,
+        points: { type: 'number' },
+        answers: { type: 'array', items: { type: 'string' } },
+        answer: {}, tolerance: { type: 'number' },
+        options: { type: 'array', items: { type: 'string' } },
+        correct: {}, text: { type: 'string' }, prompt: { type: 'string' },
+        items: { type: 'array', items: { type: 'string' } },
+        pairs: { type: 'array', items: { type: 'object' } },
+        zones: { type: 'array', items: { type: 'object' }, description: 'dragdrop: sustituye todas las zonas de destino.' },
+        distractors: { type: 'array', items: { type: 'string' } }
+      },
+      required: ['id']
+    },
+    run: a => { const { id, ...patch } = a; return session.adjustField(id, patch); }
+  },
+  {
+    name: 'remove_fields',
+    description: 'Borra campos por su identificador.',
+    inputSchema: {
+      type: 'object',
+      properties: { ids: { type: 'array', items: { type: 'string' } } },
+      required: ['ids']
+    },
+    run: a => session.removeFields(a.ids || [])
+  },
+  {
+    name: 'list_fields',
+    description: 'Lista los campos colocados, con su posición y su configuración completa. Sin página, los de toda la ficha.',
+    inputSchema: {
+      type: 'object',
+      properties: { page: { type: 'integer' } }
+    },
+    run: a => session.listFields(a.page)
+  },
+  {
+    name: 'set_worksheet_info',
+    description: 'Fija el título, el autor, las instrucciones para el alumnado y el idioma de la ficha.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        author: { type: 'string' },
+        instructions: { type: 'string' },
+        lang: { type: 'string', description: 'Código de idioma: es, ca, en, eu…' },
+        settings: { type: 'object', description: 'Ajustes del manifiesto (showScore, showCorrection, shuffle, maxAttempts…).' }
+      }
+    },
+    run: a => session.setMeta(a)
+  },
+  {
+    name: 'save_worksheet',
+    description: 'Guarda la ficha como paquete .owpkg, que el profesor abre desde OpenWorksheets con «Archivo → Abrir ficha».',
+    inputSchema: {
+      type: 'object',
+      properties: { path: { type: 'string', description: 'Ruta de destino. Se le añade .owpkg si falta.' } },
+      required: ['path']
+    },
+    run: a => session.save(a.path)
+  }
+];
+
+const INSTRUCTIONS = [
+  'Convierte PDFs e imágenes en fichas interactivas de OpenWorksheets colocando campos de respuesta sobre el documento.',
+  '',
+  'Orden de trabajo recomendado:',
+  '  1. open_document con la ruta del PDF.',
+  '  2. read_layout de cada página para ver el texto y sus coordenadas.',
+  '  3. place_fields con los campos de esa página.',
+  '  4. preview_page y MIRA la imagen: comprueba que cada campo está donde debe y no tapa texto.',
+  '     En «arrastrar a zonas», las zonas de destino salen a trazos con la respuesta que esperan.',
+  '  5. adjust_field lo que esté desplazado, y vuelve a previsualizar.',
+  '  6. set_worksheet_info y save_worksheet.',
+  '',
+  'Todas las coordenadas van en fracciones de la página (0–1), con el origen arriba a la izquierda.'
+].join('\n');
+
+// ---------------------------------------------------------------------------
+// Transporte
+// ---------------------------------------------------------------------------
+
+function send(msg) {
+  process.stdout.write(JSON.stringify(msg) + '\n');
+}
+
+function reply(id, result) {
+  if (id != null) send({ jsonrpc: '2.0', id, result });
+}
+
+function fail(id, message, code = -32603) {
+  if (id != null) send({ jsonrpc: '2.0', id, error: { code, message } });
+}
+
+async function handle(msg) {
+  const { id, method, params = {} } = msg;
+  switch (method) {
+    case 'initialize':
+      return reply(id, {
+        protocolVersion: PROTOCOL,
+        capabilities: { tools: {} },
+        serverInfo: { name: 'openworksheets', version: '1.0.0' },
+        instructions: INSTRUCTIONS
+      });
+    case 'ping':
+      return reply(id, {});
+    case 'notifications/initialized':
+    case 'notifications/cancelled':
+      return;
+    case 'tools/list':
+      return reply(id, {
+        tools: TOOLS.map(({ name, description, inputSchema }) => ({ name, description, inputSchema }))
+      });
+    case 'tools/call': {
+      const tool = TOOLS.find(t => t.name === params.name);
+      if (!tool) return fail(id, `Herramienta desconocida: ${params.name}`, -32601);
+      try {
+        const out = await tool.run(params.arguments || {});
+        // Una herramienta puede devolver ya el «content» de MCP (la vista previa
+        // devuelve una imagen); el resto devuelve datos y se serializan a JSON.
+        if (out && out.content) return reply(id, out);
+        return reply(id, { content: [{ type: 'text', text: JSON.stringify(out, null, 2) }] });
+      } catch (e) {
+        // Los errores de uso se devuelven como resultado con isError, no como
+        // error de protocolo: así el modelo los lee y puede corregirse solo.
+        return reply(id, { isError: true, content: [{ type: 'text', text: 'Error: ' + e.message }] });
+      }
+    }
+    default:
+      return fail(id, `Método no soportado: ${method}`, -32601);
+  }
+}
+
+let buffer = '';
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', chunk => {
+  buffer += chunk;
+  let nl;
+  while ((nl = buffer.indexOf('\n')) >= 0) {
+    const line = buffer.slice(0, nl).trim();
+    buffer = buffer.slice(nl + 1);
+    if (!line) continue;
+    let msg;
+    try { msg = JSON.parse(line); } catch { continue; }
+    handle(msg).catch(e => fail(msg.id, e.message));
+  }
+});
+
+process.stdin.on('end', async () => { await close(); process.exit(0); });
+for (const sig of ['SIGINT', 'SIGTERM']) {
+  process.on(sig, async () => { await close(); process.exit(0); });
+}
