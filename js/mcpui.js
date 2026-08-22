@@ -72,10 +72,13 @@ function osKind() {
 const OS = osKind();
 
 // Ruta de ejemplo del servidor, solo para la sección manual.
+// Ruta de ejemplo: se propone Documentos, no Descargas. La carpeta tiene que
+// quedarse donde esté (el servidor se ejecuta desde ahí cada vez), y Descargas
+// es justo la que se vacía de vez en cuando.
 const DEFAULT_PATH = {
-  win: 'C:\\Users\\tu-usuario\\Downloads\\openworksheets-mcp\\server.js',
-  mac: '/Users/tu-usuario/Downloads/openworksheets-mcp/server.js',
-  linux: '/home/tu-usuario/Descargas/openworksheets-mcp/server.js'
+  win: 'C:\\Users\\tu-usuario\\Documents\\openworksheets-mcp\\server.js',
+  mac: '/Users/tu-usuario/Documents/openworksheets-mcp/server.js',
+  linux: '/home/tu-usuario/Documentos/openworksheets-mcp/server.js'
 }[OS];
 
 const CONFIG_PATHS = {

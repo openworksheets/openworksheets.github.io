@@ -28,6 +28,12 @@ No hace falta descargar el resto de la aplicación, que se usa en
 Requisitos: **Node 18 o superior** y **Chromium o Google Chrome** (se busca en
 las rutas habituales; si está en otro sitio, se indica con `OWS_CHROME`).
 
+La carpeta hay que dejarla donde se descomprima: el cliente MCP guarda la ruta
+de `server.js` y lo ejecuta desde ahí cada vez. Si se mueve o se borra, deja de
+funcionar y hay que volver a apuntar la ruta en la configuración. Por eso
+conviene elegir un sitio estable (la carpeta personal o Documentos) antes que
+Descargas.
+
 La vía normal es el propio editor: en el cuadro de opciones de creación,
 *Colocar campos con IA sobre un PDF…* ofrece la descarga en un clic (la
 aplicación empaqueta esta carpeta en el navegador) y, después, el texto que hay
