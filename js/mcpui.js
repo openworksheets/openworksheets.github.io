@@ -19,15 +19,6 @@ const PATH_KEY = 'ows.mcpPath';
 // no hay forma de detectar si está instalado. Se recuerda que ya se pasó por la
 // instalación —al copiar las instrucciones o al decirlo a mano— para no repetir
 // ese paso cada vez; siempre se puede volver a él.
-const READY_KEY = 'ows.mcpReady';
-
-function isReady() {
-  try { return localStorage.getItem(READY_KEY) === '1'; } catch { return false; }
-}
-function setReady(v) {
-  try { localStorage.setItem(READY_KEY, v ? '1' : '0'); } catch { /* modo privado */ }
-}
-
 // Archivos que componen el servidor. Se descargan de este mismo sitio y se
 // empaquetan en el navegador: así el profesorado obtiene la carpeta lista con
 // un clic, sin pasar por GitHub ni por una terminal.
@@ -161,9 +152,7 @@ export function openMcpDialog() {
 
   // ---------- Paso 3a: encargo para las IA que ejecutan comandos ----------
   const promptBox = el('pre', { class: 'mcp-code mcp-prompt' }, buildPrompt());
-  const bigCopy = copyButton(() => promptBox.textContent, t('mcp.copyPrompt'), () => {
-    setReady(true);
-  });
+  const bigCopy = copyButton(() => promptBox.textContent, t('mcp.copyPrompt'));
 
   // ---------- Paso 3b: configuración a mano, para las que no pueden ----------
   const pathInput = el('input', {
@@ -184,7 +173,7 @@ export function openMcpDialog() {
         el('p', { class: 'mcp-hint mcp-client-how' }, t(c.howKey)),
         el('div', { class: 'mcp-client-head' },
           el('span', { class: 'mcp-client-where' }, c.where),
-          copyButton(() => code.textContent, t('mcp.copy'), () => setReady(true))),
+          copyButton(() => code.textContent, t('mcp.copy'))),
         code));
     }
   }
@@ -195,13 +184,21 @@ export function openMcpDialog() {
   });
   renderClients();
 
-  const linkHaveIt = el('button', { class: 'mcp-link', type: 'button' }, t('mcp.haveIt'));
-  linkHaveIt.addEventListener('click', () => { setReady(true); show('use'); });
-
   // Dos caminos distintos, no una secuencia: lo que hay que hacer depende de si
   // la IA puede ejecutar comandos. Para las que no (Claude Desktop, LM Studio),
   // el trabajo lo hace la persona, y por eso ahí sí hace falta la descarga.
-  const viewInstall = el('div', { class: 'mcp-view' },
+  const example = key => {
+    const pre = el('pre', { class: 'mcp-code' }, t(key));
+    return el('div', { class: 'mcp-example' }, pre, copyButton(() => pre.textContent, t('mcp.copy')));
+  };
+
+  // Dos caminos distintos, no una secuencia: lo que hay que hacer depende de si
+  // la IA puede ejecutar comandos. Para las que no (Claude Desktop, ChatGPT de
+  // escritorio, LM Studio), el trabajo lo hace la persona, y por eso ahí sí
+  // hace falta descargar la carpeta.
+  dlg.append(
+    closeX,
+    el('h2', { class: 'ai-title' }, t('mcp.title')),
     el('p', { class: 'ai-help' }, t('mcp.intro')),
     el('p', { class: 'mcp-note' }, t('mcp.compat')),
 
@@ -228,45 +225,18 @@ export function openMcpDialog() {
             pathInput),
           blocks))),
 
+    // Lo que se le pide a la IA una vez conectada, con un par de ejemplos de
+    // los ajustes que se le pueden pedir sobre la marcha.
     el('div', { class: 'mcp-way' },
       el('h3', { class: 'mcp-way-title' }, t('mcp.finally')),
       el('p', { class: 'mcp-hint' }, t('mcp.finallyBody')),
-      el('pre', { class: 'mcp-code' }, t('mcp.ex1'))),
+      example('mcp.ex1'),
+      el('p', { class: 'mcp-hint mcp-more' }, t('mcp.moreAsks')),
+      example('mcp.ex2'),
+      example('mcp.ex3')),
 
-    el('p', { class: 'mcp-foot' }, linkHaveIt));
-
-  // ---------- Uso diario: ya está instalado ----------
-  const linkInstall = el('button', { class: 'mcp-link', type: 'button' }, t('mcp.installAgain'));
-  linkInstall.addEventListener('click', () => show('install'));
-
-  const example = key => {
-    const pre = el('pre', { class: 'mcp-code' }, t(key));
-    return el('div', { class: 'mcp-example' }, pre, copyButton(() => pre.textContent, t('mcp.copy')));
-  };
-
-  const viewUse = el('div', { class: 'mcp-view', hidden: '' },
-    el('p', { class: 'ai-help' }, t('mcp.readyIntro')),
-    example('mcp.ex1'),
-    el('p', { class: 'mcp-hint mcp-more' }, t('mcp.moreAsks')),
-    example('mcp.ex2'),
-    example('mcp.ex3'),
-    el('p', { class: 'mcp-foot' }, linkInstall));
-
-  const title = el('h2', { class: 'ai-title' });
-
-  function show(which) {
-    const use = which === 'use';
-    viewUse.hidden = !use;
-    viewInstall.hidden = use;
-    title.textContent = use ? t('mcp.titleUse') : t('mcp.title');
-    dlg.scrollTop = 0;
-  }
-
-  dlg.append(closeX, title, viewInstall, viewUse,
     el('div', { class: 'ai-actions' },
       el('button', { class: 'btn', type: 'button', onclick: () => dlg.close() }, t('ai.close'))));
-
-  show(isReady() ? 'use' : 'install');
 
   document.body.appendChild(dlg);
   dlg.addEventListener('close', () => dlg.remove());
