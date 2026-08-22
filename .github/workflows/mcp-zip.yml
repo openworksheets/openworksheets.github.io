@@ -1,0 +1,58 @@
+# Adjunta el servidor MCP a cada versión publicada.
+#
+# El diálogo de la aplicación enlaza a
+# releases/latest/download/openworksheets-mcp.zip, que devuelve 404 si la última
+# release no lleva ese adjunto: hacerlo a mano significa que un despiste rompe
+# el enlace en silencio. De ahí que lo haga sola.
+name: Servidor MCP en la release
+
+on:
+  release:
+    types: [published]
+  # Permite regenerarlo a mano sobre una release ya publicada.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Etiqueta de la release (por ejemplo, v1.25.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  empaquetar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preparar la carpeta
+        run: |
+          mkdir -p dist/openworksheets-mcp
+          cp -r mcp/. dist/openworksheets-mcp/
+          # Lo que no forma parte de lo que se descarga
+          rm -rf dist/openworksheets-mcp/node_modules \
+                 dist/openworksheets-mcp/.gitignore \
+                 dist/openworksheets-mcp/package-lock.json
+
+      - name: Comprobar que está completo y sin errores de sintaxis
+        run: |
+          cd dist/openworksheets-mcp
+          for f in server.js session.js fieldspec.js browser.js cdp.js chrome.js zip.js; do
+            test -f "$f" || { echo "Falta $f"; exit 1; }
+            node --check "$f"
+          done
+          test -f workbench.html || { echo "Falta workbench.html"; exit 1; }
+          test -f vendor/pdf.min.js || { echo "Falta vendor/pdf.min.js"; exit 1; }
+          test -f vendor/pdf.worker.min.js || { echo "Falta vendor/pdf.worker.min.js"; exit 1; }
+          # La copia de pdf.js debe ser la misma que usa la aplicación
+          cmp vendor/pdf.min.js ../../vendor/pdf.min.js
+          cmp vendor/pdf.worker.min.js ../../vendor/pdf.worker.min.js
+
+      - name: Empaquetar
+        run: cd dist && zip -q -r ../openworksheets-mcp.zip openworksheets-mcp
+
+      - name: Adjuntar a la release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: gh release upload "$TAG" openworksheets-mcp.zip --clobber

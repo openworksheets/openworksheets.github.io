@@ -84,8 +84,10 @@ npx -y degit github:openworksheets/openworksheets.github.io/mcp openworksheets-m
 
 El ZIP de la release es una foto de esa versión; entre una versión y la
 siguiente, la carpeta `mcp/` del repositorio puede llevar correcciones que aún
-no estén en él. Al publicar una versión nueva hay que regenerar ese adjunto si
-algo de `mcp/` ha cambiado.
+no estén en él. Ese adjunto lo genera sola la acción
+`.github/workflows/mcp-zip.yml` al publicar cada versión —si faltara, el enlace
+`releases/latest/download/…` devolvería 404—, y puede regenerarse a mano sobre
+una release ya publicada ejecutando esa acción con su etiqueta.
 
 ### Qué programas pueden usarlo
 
