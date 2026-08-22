@@ -9,6 +9,11 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.27.2] — 2026-08-22
+
+### Corregido
+- **El aviso de «Copiado al portapapeles» salía por detrás del diálogo**. Los cuadros de diálogo del editor son `<dialog>` modales, que el navegador dibuja en una capa aparte por encima de todo lo demás, así que el aviso quedaba tapado justo cuando más falta hacía: al copiar las instrucciones para la IA o el enlace de la ficha. Ahora el aviso vive también en esa capa superior y se ve siempre encima.
+
 ## [1.27.1] — 2026-08-22
 
 ### Corregido

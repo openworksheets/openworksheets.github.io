@@ -1142,7 +1142,12 @@ tr.cl-flagged td:first-child { box-shadow: inset 4px 0 0 var(--rojo); }
 .wpf-toast {
   position: fixed;
   left: 50%;
+  right: auto;
+  top: auto;
   bottom: 26px;
+  margin: 0;
+  border: 0;
+  overflow: visible;
   transform: translate(-50%, 20px);
   background: var(--tinta);
   color: var(--papel);

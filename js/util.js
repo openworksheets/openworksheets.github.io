@@ -161,18 +161,37 @@ export async function copyToClipboard(text) {
 }
 
 let toastTimer = null;
+let toastHideTimer = null;
 export function toast(msg, kind = 'info') {
   let el = document.querySelector('.wpf-toast');
   if (!el) {
     el = document.createElement('div');
     el.className = 'wpf-toast';
+    el.setAttribute('popover', 'manual');
     document.body.appendChild(el);
   }
   el.textContent = msg;
   el.dataset.kind = kind;
+  // Como popover vive en la capa superior: así se ve por encima de los
+  // <dialog> modales, que si no lo taparían pase lo que pase con z-index.
+  clearTimeout(toastHideTimer);
+  if (typeof el.showPopover === 'function') {
+    if (!el.hasAttribute('popover')) el.setAttribute('popover', 'manual');
+    try { el.hidePopover(); } catch { /* no estaba abierto */ }
+    el.classList.remove('show');
+    try { el.showPopover(); } catch { /* navegador sin soporte */ }
+  }
+  void el.offsetWidth; // reflow: si no, no hay transición al reaparecer
   el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+  toastTimer = setTimeout(() => {
+    el.classList.remove('show');
+    toastHideTimer = setTimeout(() => {
+      if (typeof el.hidePopover === 'function') {
+        try { el.hidePopover(); } catch { /* ya cerrado */ }
+      }
+    }, 250);
+  }, 3500);
 }
 
 export function el(tag, attrs = {}, ...children) {
