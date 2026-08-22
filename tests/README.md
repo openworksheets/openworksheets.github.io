@@ -25,6 +25,11 @@ pantalla y termina con `__TEST_OK__` o `__TEST_FAIL__`.
   flechas» en el visor respecto a la imagen de fondo (tolerancia < 1 px).
 - `test_imgfield.html` — el campo imagen decorativa ocupa exactamente la caja
   dibujada (altura fija, no la proporción natural de la imagen).
+- `run_chrome_detect.js` — búsqueda del navegador que usa el servidor MCP
+  (`mcp/chrome.js`): simula las variables de entorno y las rutas de Windows,
+  macOS y Linux, de modo que la detección de cada sistema se comprueba desde
+  cualquier ordenador. No necesita navegador ni servidor
+  (`node tests/run_chrome_detect.js`).
 - `run_mcp_ficha.js` — servidor MCP (`mcp/server.js`): habla el protocolo por
   stdio como lo haría una IA y recorre el circuito completo (abrir un PDF, leer
   sus coordenadas, colocar campos, previsualizar, ajustar, borrar y guardar el

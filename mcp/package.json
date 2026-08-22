@@ -19,6 +19,7 @@
     "fieldspec.js",
     "browser.js",
     "cdp.js",
+    "chrome.js",
     "zip.js",
     "workbench.html",
     "vendor/",

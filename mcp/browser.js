@@ -15,6 +15,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { launch } = require('./cdp');
+const { findChrome } = require('./chrome');
 
 // El servidor sirve su propia carpeta: así funciona tanto dentro del repositorio
 // completo como descargado a solas (que es lo normal — la aplicación se usa en
@@ -30,22 +31,6 @@ const MIME = {
   '.webp': 'image/webp',
   '.jpg': 'image/jpeg'
 };
-
-function findChromium() {
-  const candidates = [
-    process.env.OWS_CHROME,
-    process.env.CHROME_PATH,
-    '/usr/bin/chromium',
-    '/usr/bin/chromium-browser',
-    '/usr/bin/google-chrome',
-    '/usr/bin/google-chrome-stable',
-    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
-  ].filter(Boolean);
-  for (const c of candidates) {
-    try { fs.accessSync(c, fs.constants.X_OK); return c; } catch { /* siguiente */ }
-  }
-  throw new Error('No se ha encontrado Chromium. Instálalo o define OWS_CHROME con su ruta.');
-}
 
 let server = null;
 let browser = null;
@@ -73,7 +58,7 @@ async function startServer() {
 async function workbench() {
   if (page) return page;
   const port = await startServer();
-  browser = await launch(findChromium());
+  browser = await launch(findChrome());
   page = await browser.newPage();
   await page.goto(`http://127.0.0.1:${port}/workbench.html`);
   const ready = await page.evaluate(() => Boolean(window.__owsReady));

@@ -25,8 +25,39 @@ No hace falta descargar el resto de la aplicación, que se usa en
 [openworksheets.github.io](https://openworksheets.github.io), ni ejecutar
 `npm install`, ni abrir una terminal.
 
-Requisitos: **Node 18 o superior** y **Chromium o Google Chrome** (se busca en
-las rutas habituales; si está en otro sitio, se indica con `OWS_CHROME`).
+Requisitos: **Node 18 o superior** y un navegador basado en Chromium —**Google
+Chrome, Chromium o Microsoft Edge**—, que se busca solo.
+
+### Qué navegador se usa y cómo se busca
+
+Solo se le pide hablar el protocolo CDP, así que sirve cualquiera de los tres.
+Se busca en este orden:
+
+1. La variable `OWS_CHROME`, si está definida. Si apunta a algo que no existe,
+   el servidor lo dice en lugar de seguir buscando por su cuenta.
+2. La variable `CHROME_PATH`.
+3. Los ejecutables alcanzables desde el `PATH` (en Windows, probando las
+   extensiones de `PATHEXT`).
+4. Las rutas habituales de instalación:
+   - **Windows**: Chrome, Chrome Beta, Chrome Dev, Chrome Canary, Chromium y
+     Edge, bajo `%PROGRAMFILES%`, `%PROGRAMFILES(X86)%` y `%LOCALAPPDATA%`.
+   - **macOS**: los mismos en `/Applications` y en la carpeta `Applications`
+     del usuario.
+   - **Linux**: `/usr/bin/google-chrome`, `google-chrome-stable`, `chromium`,
+     `chromium-browser`, `/snap/bin/chromium`, `microsoft-edge` y
+     `/opt/google/chrome/chrome`.
+
+Si el navegador está en otro sitio, se indica su ruta completa —la del
+ejecutable, no la de la carpeta— en `OWS_CHROME`:
+
+```bash
+# Windows (en la configuración del cliente MCP, dentro de "env")
+OWS_CHROME=C:\Program Files\Google\Chrome\Application\chrome.exe
+# macOS
+OWS_CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+# Linux
+OWS_CHROME=/usr/bin/google-chrome
+```
 
 La carpeta hay que dejarla donde se descomprima: el cliente MCP guarda la ruta
 de `server.js` y lo ejecuta desde ahí cada vez. Si se mueve o se borra, deja de
@@ -156,6 +187,7 @@ Esos se añaden a mano en el editor.
 | `fieldspec.js` | Traduce la descripción de la IA al campo real del manifiesto |
 | `browser.js` | Chromium sin interfaz y servidor local para pdf.js |
 | `cdp.js` | Cliente mínimo de WebSocket y del protocolo de Chrome, para no depender de nada |
+| `chrome.js` | Búsqueda del navegador en Windows, macOS y Linux |
 | `workbench.html` | Rasterizado del PDF, lectura de coordenadas y vista previa |
 | `zip.js` | Escritura del `.owpkg` (ZIP) sin dependencias |
 | `vendor/` | Copia de pdf.js, la misma que usa la aplicación, para poder funcionar a solas |
@@ -167,7 +199,14 @@ Esos se añaden a mano en el editor.
 node tests/run_mcp_ficha.js [ruta-del-pdf]
 ```
 
-Recorre el circuito completo hablando el protocolo real por stdio. Vive en el
+Recorre el circuito completo hablando el protocolo real por stdio. La búsqueda
+del navegador tiene su propia prueba, que simula las variables de entorno de
+cada sistema (y por tanto comprueba la detección de Windows desde cualquier
+ordenador):
+
+```bash
+node tests/run_chrome_detect.js
+``` Vive en el
 repositorio de la aplicación, no en esta carpeta; para probar una copia
 descargada a solas se le indica con `OWS_MCP_SERVER`:
 
