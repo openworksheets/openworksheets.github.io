@@ -9,6 +9,11 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [Unreleased]
+
+### Corregido
+- **«Archivo → Nuevo…» duplicaba el cuadro de inicio**: con el editor vacío, el cuadro *Empieza tu ficha* ya está en el lienzo, y la opción del menú abría una copia encima. Ahora esa opción aparece desactivada mientras no haya ninguna ficha abierta, explicando por qué al pasar el ratón.
+
 ## [1.26.0] — 2026-08-22
 
 ### Cambiado

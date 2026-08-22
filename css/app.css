@@ -325,6 +325,9 @@ body.embed-mode .topbar { display: none; }
 .topbar-menu-item:focus-visible { background: var(--ambar-claro); outline: none; }
 .topbar-menu-sep { height: 1px; margin: 5px 8px; background: var(--tinta-tenue); }
 .topbar-menu-item--primary { color: var(--rojo); font-weight: 600; }
+/* Opción que ahora mismo no aplica (p. ej. «Nuevo…» con el editor ya vacío) */
+.topbar-menu-item:disabled { opacity: 0.4; cursor: default; }
+.topbar-menu-item:disabled:hover { background: none; }
 .topbar-menu-item--primary:hover,
 .topbar-menu-item--primary:focus-visible { background: var(--rojo-claro); }
 .topbar-menu-item--workflow {

@@ -5945,6 +5945,12 @@ function closeFileMenu() {
 function openFileMenu() {
   closeEditMenu();
   closeUtilMenu();
+  // Con el editor vacío, el cuadro «Empieza tu ficha» ya está en el lienzo:
+  // abrirlo otra vez como diálogo solo lo duplicaría.
+  const sinFicha = !state.manifest.pages.length;
+  const miNuevo = $('#miNuevo');
+  miNuevo.disabled = sinFicha;
+  miNuevo.title = sinFicha ? t('menu.newAlready') : '';
   menuArchivoList.hidden = false;
   btnArchivo.setAttribute('aria-expanded', 'true');
   document.addEventListener('click', onDocClickFileMenu, true);
