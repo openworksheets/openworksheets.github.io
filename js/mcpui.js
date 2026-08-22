@@ -277,7 +277,10 @@ export function openMcpDialog() {
       example('mcp.ex1'),
       el('p', { class: 'mcp-hint mcp-more' }, t('mcp.moreAsks')),
       example('mcp.ex2'),
-      example('mcp.ex3')),
+      example('mcp.ex3'),
+      // Actualizar es otra cosa que se le pide a la IA, no algo que se haga aquí
+      el('p', { class: 'mcp-hint mcp-more' }, t('mcp.updateAsk')),
+      example('mcp.ex4')),
 
     el('div', { class: 'ai-actions' },
       el('button', { class: 'btn', type: 'button', onclick: () => dlg.close() }, t('ai.close'))));

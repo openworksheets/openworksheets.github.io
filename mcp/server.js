@@ -11,6 +11,7 @@
 // o LM Studio no tiene por qué abrir una). Solo hacen falta Node y Chrome.
 
 const session = require('./session');
+const { version: VERSION } = require('./package.json');
 const { close } = require('./browser');
 const { typeList } = require('./fieldspec');
 
@@ -283,7 +284,11 @@ const INSTRUCTIONS = [
   '  6. redact_areas si hay soluciones impresas u otras zonas que deban desaparecer.',
   '  7. set_worksheet_info y save_worksheet.',
   '',
-  'Todas las coordenadas van en fracciones de la página (0–1), con el origen arriba a la izquierda.'
+  'Todas las coordenadas van en fracciones de la página (0–1), con el origen arriba a la izquierda.',
+  '',
+  'Versión de este servidor: ' + VERSION + '. Si el profesor pregunta si está al día, la última publicada',
+  'aparece en https://github.com/openworksheets/openworksheets.github.io/releases y se actualiza',
+  'descargando otra vez la carpeta encima de la que ya tiene.'
 ].join('\n');
 
 // ---------------------------------------------------------------------------
@@ -309,7 +314,7 @@ async function handle(msg) {
       return reply(id, {
         protocolVersion: PROTOCOL,
         capabilities: { tools: {} },
-        serverInfo: { name: 'openworksheets', version: '1.0.0' },
+        serverInfo: { name: 'openworksheets', version: VERSION },
         instructions: INSTRUCTIONS
       });
     case 'ping':

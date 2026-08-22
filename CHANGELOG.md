@@ -9,6 +9,11 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [Unreleased]
+
+### Corregido
+- **El servidor MCP anunciaba siempre la versión «1.0.0»**, de modo que no había forma de saber qué se tenía instalado ni si estaba al día. Ahora dice la suya al conectarse, y la carpeta `mcp/` comparte la versión de la aplicación. El diálogo y `mcp/README.md` explican además cómo actualizarlo: se descarga otra vez encima de la carpeta que ya está —la configuración del cliente no cambia, porque apunta a la misma ruta— y se reinicia el programa de IA. También se puede pedir a la propia IA que lo haga.
+
 ## [1.27.0] — 2026-08-22
 
 ### Añadido

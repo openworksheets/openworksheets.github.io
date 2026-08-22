@@ -1,6 +1,6 @@
 {
   "name": "openworksheets-mcp",
-  "version": "1.0.0",
+  "version": "1.27.0",
   "description": "Servidor MCP de OpenWorksheets: convierte un PDF en una ficha interactiva colocando los campos de respuesta sobre el documento.",
   "license": "GPL-3.0-or-later",
   "homepage": "https://openworksheets.github.io",

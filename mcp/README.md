@@ -89,6 +89,27 @@ no estén en él. Ese adjunto lo genera sola la acción
 `releases/latest/download/…` devolvería 404—, y puede regenerarse a mano sobre
 una release ya publicada ejecutando esa acción con su etiqueta.
 
+### Actualizarlo
+
+El servidor dice su versión al conectarse (`serverInfo.version`), así que basta
+con preguntárselo a la IA: *«¿qué versión del servidor de OpenWorksheets
+tengo?»*. La última publicada está en
+[releases](https://github.com/openworksheets/openworksheets.github.io/releases).
+
+Para ponerlo al día se descarga otra vez **encima de la carpeta que ya está**,
+sin tocar la configuración del cliente, que apunta a la misma ruta:
+
+```bash
+cd /ruta/donde/esté/openworksheets-mcp
+curl -L -o /tmp/ows-mcp.zip \
+  https://github.com/openworksheets/openworksheets.github.io/releases/latest/download/openworksheets-mcp.zip
+unzip -o -j /tmp/ows-mcp.zip 'openworksheets-mcp/*' -d .
+```
+
+O, si se instaló con degit, `npx -y degit --force github:openworksheets/openworksheets.github.io/mcp openworksheets-mcp`.
+Después hay que reiniciar el programa de IA (o abrir una sesión nueva) para que
+vuelva a arrancar el servidor.
+
 ### Qué programas pueden usarlo
 
 Es un servidor **local**, del tipo que el programa arranca en el ordenador
