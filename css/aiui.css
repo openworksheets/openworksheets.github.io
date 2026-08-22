@@ -287,3 +287,7 @@ details.mcp-client[open] .mcp-client-sum { border-bottom: 1px solid var(--tinta-
 }
 .mcp-way-fold > summary .mcp-way-title { display: inline; }
 .mcp-way-fold[open] > summary { margin-bottom: 6px; }
+
+/* El «Cerrar» del diálogo MCP, alineado con el resto del contenido y no
+   debajo de la columna de botones «Copiar» */
+.mcp-dialog > .ai-actions { justify-content: flex-start; }
