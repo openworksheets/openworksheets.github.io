@@ -278,3 +278,12 @@ details.mcp-client[open] .mcp-client-sum { border-bottom: 1px solid var(--tinta-
 }
 .mcp-case-label { font-size: 0.84rem; line-height: 1.45; color: var(--tinta); }
 .mcp-case-head .btn { flex-shrink: 0; }
+
+/* La configuración manual, plegada: es el camino largo */
+.mcp-way-fold > summary {
+  cursor: pointer;
+  list-style-position: outside;
+  padding: 2px 0;
+}
+.mcp-way-fold > summary .mcp-way-title { display: inline; }
+.mcp-way-fold[open] > summary { margin-bottom: 6px; }

@@ -251,8 +251,9 @@ export function openMcpDialog() {
       promptBox,
       el('div', { class: 'ai-actions mcp-actions' }, bigCopy)),
 
-    el('div', { class: 'mcp-way' },
-      el('h3', { class: 'mcp-way-title' }, t('mcp.wayManual')),
+    // Plegada: es el camino largo y solo lo recorre quien lo necesita.
+    el('details', { class: 'mcp-way mcp-way-fold' },
+      el('summary', {}, el('h3', { class: 'mcp-way-title' }, t('mcp.wayManual'))),
       el('p', { class: 'mcp-hint' }, t('mcp.wayManualHelp')),
       el('ol', { class: 'mcp-substeps' },
         el('li', {},
