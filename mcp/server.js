@@ -90,7 +90,11 @@ const FIELD_SPEC_SIN_RECT = (() => {
 const TOOLS = [
   {
     name: 'open_document',
-    description: 'Abre un PDF o una imagen y lo convierte en las páginas de fondo de una ficha nueva. Es el primer paso: descarta la ficha que hubiera en curso. Devuelve el número de páginas y si cada una tiene capa de texto.',
+    description: [
+      'Abre un PDF o una imagen QUE YA TIENE EL PROFESOR y lo convierte en las páginas de fondo de una ficha nueva. Descarta la ficha que hubiera en curso. Devuelve el número de páginas y si cada una tiene capa de texto.',
+      '',
+      'Solo para documentos que aporta el profesor. NO generes tú un PDF, una imagen ni un HTML con las preguntas para abrirlo aquí: lo que abras se convierte en imagen de fondo y sus enunciados dejan de ser editables en el editor (el profesor solo podría tocar las respuestas). Si las preguntas las inventas tú, usa create_worksheet + add_questions.'
+    ].join('\n'),
     inputSchema: {
       type: 'object',
       properties: { path: { type: 'string', description: 'Ruta del archivo PDF o de imagen en el ordenador del profesor.' } },
@@ -100,7 +104,11 @@ const TOOLS = [
   },
   {
     name: 'create_worksheet',
-    description: 'Empieza una ficha nueva en blanco, sin partir de ningún documento: para cuando hay que inventar las preguntas en lugar de colocarlas sobre un PDF. Después, add_questions las va colocando solas.',
+    description: [
+      'Empieza una ficha nueva en blanco, sin partir de ningún documento: es la vía correcta siempre que las preguntas las inventes tú en lugar de colocarlas sobre un documento del profesor. Después, add_questions las va colocando solas.',
+      '',
+      'Así cada enunciado queda como un campo de texto del editor, que el profesor puede reescribir, mover o borrar. Fabricar un PDF o una imagen con las preguntas y abrirlo con open_document deja los enunciados incrustados en el fondo y ya no se pueden editar.'
+    ].join('\n'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -117,7 +125,7 @@ const TOOLS = [
     description: [
       'Añade preguntas una detrás de otra, colocándolas solas: enunciado, campo de respuesta, separación y salto de página cuando hace falta. Es la forma de crear una ficha desde cero, sin calcular coordenadas.',
       '',
-      'Cada pregunta lleva su "type", su "prompt" (el enunciado) y su respuesta, con la misma forma que en place_fields, pero SIN "rect".',
+      'Cada pregunta lleva su "type", su "prompt" (el enunciado) y su respuesta, con la misma forma que en place_fields, pero SIN "rect". El enunciado se coloca como un campo de texto del editor, así que el profesor puede reescribirlo después.',
       '',
       'Para que la ficha sirva en clase:',
       '- Varía los tipos: una ficha entera de opción única evalúa poco.',
@@ -271,11 +279,19 @@ const TOOLS = [
 ];
 
 const INSTRUCTIONS = [
-  'Convierte PDFs e imágenes en fichas interactivas de OpenWorksheets colocando campos de respuesta sobre el documento.',
+  'Crea fichas interactivas de OpenWorksheets: partiendo de un PDF o una imagen del profesor, o desde cero.',
   '',
-  'Orden de trabajo recomendado:',
-  '  1. open_document con la ruta del PDF o de la imagen. Si la ficha no parte de ningún',
-  '     documento, create_worksheet y luego add_questions, que las coloca solas.',
+  'Antes de nada, decide por dónde empezar:',
+  '  - El profesor aporta un PDF o una imagen  ->  open_document y coloca los campos encima.',
+  '  - Las preguntas las escribes tú           ->  create_worksheet y luego add_questions.',
+  '',
+  'Nunca fabriques un PDF, una imagen o un HTML con las preguntas para abrirlo con open_document.',
+  'Lo que se abre pasa a ser la imagen de fondo de la página: sus enunciados quedan incrustados y el',
+  'profesor ya no puede editarlos ni moverlos, solo tocar las respuestas. Con add_questions cada',
+  'enunciado es un campo de texto normal del editor, y eso es lo que espera el profesorado.',
+  '',
+  'Orden de trabajo con un documento del profesor:',
+  '  1. open_document con la ruta del PDF o de la imagen.',
   '  2. read_layout de cada página para ver el texto y sus coordenadas.',
   '  3. place_fields con los campos de esa página.',
   '  4. preview_page y MIRA la imagen: comprueba que cada campo está donde debe y no tapa texto.',
@@ -283,6 +299,9 @@ const INSTRUCTIONS = [
   '  5. adjust_field lo que esté desplazado, y vuelve a previsualizar.',
   '  6. redact_areas si hay soluciones impresas u otras zonas que deban desaparecer.',
   '  7. set_worksheet_info y save_worksheet.',
+  '',
+  'Orden de trabajo sin documento: create_worksheet, add_questions, preview_page para mirar cómo ha',
+  'quedado, adjust_field lo que no encaje, set_worksheet_info y save_worksheet.',
   '',
   'Todas las coordenadas van en fracciones de la página (0–1), con el origen arriba a la izquierda.',
   '',

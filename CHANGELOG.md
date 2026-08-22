@@ -9,6 +9,11 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.27.3] — 2026-08-22
+
+### Corregido
+- **Al pedir una ficha desde cero, el MCP acababa incrustando las preguntas en la imagen de fondo**. Aunque el profesor no aportara ningún documento, la IA se fabricaba un PDF con los enunciados y lo abría con `open_document`, porque las instrucciones del servidor empezaban por ahí («Convierte PDFs e imágenes…») y ponían ese paso el primero. El resultado era una ficha en la que solo se podían tocar las respuestas: los enunciados eran píxeles del fondo, imposibles de reescribir, mover o borrar en el editor. Ahora el servidor dice desde la primera línea que hay dos caminos y cuál toca en cada caso, y advierte explícitamente de que no debe fabricarse un documento para abrirlo. Con `create_worksheet` + `add_questions`, cada enunciado se coloca como un campo **Texto** del editor, editable como cualquier otro.
+
 ## [1.27.2] — 2026-08-22
 
 ### Corregido
