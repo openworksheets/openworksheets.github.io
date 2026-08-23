@@ -9,6 +9,12 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.28.2] — 2026-08-23
+
+### Cambiado
+- **El diálogo del MCP dice desde dónde se instala en ChatGPT y en Claude de escritorio**. Tenerlas instaladas no basta: el chat de siempre no toca el ordenador. Hay que pedírselo desde su pestaña de código —Codex en ChatGPT y Claude Code en Claude—, que es la parte que puede trabajar con archivos y programas. Como Claude, por esa vía, sí se registra el servidor solo, deja de aparecer entre los que acaban pidiendo que pegues un texto a mano: ahí queda solo LM Studio.
+
+
 ## [1.28.1] — 2026-08-23
 
 ### Cambiado

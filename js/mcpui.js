@@ -71,6 +71,9 @@ export function openMcpDialog() {
       // Lo primero, porque descarta de entrada a quien lo intente desde el
       // navegador: el MCP es un programa local y la web de la IA no lo alcanza.
       el('p', { class: 'mcp-hint' }, t('mcp.notWeb')),
+      // Y aun teniéndolas instaladas, ChatGPT y Claude solo llegan al ordenador
+      // desde su pestaña de código (Codex y Claude Code): el chat de siempre no.
+      el('p', { class: 'mcp-hint' }, t('mcp.desktopCode')),
       el('p', { class: 'mcp-hint' }, t('mcp.askAiHelp')),
       promptBox,
       el('div', { class: 'ai-actions mcp-actions' }, bigCopy),
