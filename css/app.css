@@ -552,8 +552,14 @@ textarea { resize: vertical; min-height: 70px; }
   font-size: 0.95rem;
   line-height: 1.5;
 }
-/* Los banners que llevan a alguna parte: el botón, debajo del texto. */
-.home-feature-banner .banner-btn { margin-top: 12px; }
+/* Los banners que llevan a alguna parte: el botón va debajo del texto, y en
+   tamaño menor que los de las tarjetas, que son la acción principal. */
+.home-feature-banner .banner-btn {
+  margin-top: 12px;
+  font-size: 0.82rem;
+  padding: 6px 12px;
+  border-width: 1.5px;
+}
 @media (max-width: 600px) {
   .home-feature-banner {
     flex-direction: column;

@@ -9,6 +9,12 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.30.1] — 2026-08-23
+
+### Cambiado
+- **El botón del banner del MCP, más pequeño**. Salía del tamaño de los botones de las tarjetas de la portada, que son la acción principal de la página, y en un banner informativo pesaba más de lo que le toca. Ahora es un botón menor: letra algo más pequeña, menos relleno y borde más fino.
+
+
 ## [1.30.0] — 2026-08-23
 
 ### Añadido
