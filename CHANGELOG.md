@@ -9,6 +9,12 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.29.2] — 2026-08-23
+
+### Cambiado
+- **El diálogo del MCP ya no promete una privacidad que no da**. Decía que «tu documento no se envía a ningún servicio: todo ocurre en tu ordenador», y eso solo es verdad a medias: el archivo, en efecto, no se sube a ninguna web de conversión —lo abre el propio ordenador—, pero para colocar los campos la IA necesita el texto de las páginas, y para comprobar el resultado necesita mirar la vista previa. Las dos cosas viajan a los servidores de quien preste el servicio, igual que si se le pegara el documento en el chat. Solo con un modelo local no sale nada, y eso es minoría. El texto lo dice ahora tal cual, en los cinco idiomas: quien trabaje con material que no deba salir del centro merece saberlo antes de instalar nada.
+
+
 ## [1.29.1] — 2026-08-23
 
 ### Cambiado
