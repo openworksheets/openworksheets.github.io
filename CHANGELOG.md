@@ -9,6 +9,12 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.28.1] — 2026-08-23
+
+### Cambiado
+- **El diálogo del MCP avisa de que no se puede instalar desde la web de la IA**. En «Si no has instalado el MCP» faltaba lo primero que hay que saber: el servidor es un programa que vive en tu ordenador, así que hace falta una IA instalada ahí (Claude Desktop, la aplicación de escritorio de ChatGPT, LM Studio, Claude Code, Codex CLI…). Desde la versión web de cualquiera de ellas el navegador no puede instalar ni registrar nada, y quien lo intentara así se quedaba atascado sin entender por qué. Ahora se dice al principio de la sección, en los cinco idiomas.
+
+
 ## [1.28.0] — 2026-08-23
 
 ### Cambiado

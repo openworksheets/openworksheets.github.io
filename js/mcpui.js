@@ -68,6 +68,9 @@ export function openMcpDialog() {
     el('p', { class: 'mcp-note' }, t('mcp.compat')),
 
     way('mcp.notInstalled',
+      // Lo primero, porque descarta de entrada a quien lo intente desde el
+      // navegador: el MCP es un programa local y la web de la IA no lo alcanza.
+      el('p', { class: 'mcp-hint' }, t('mcp.notWeb')),
       el('p', { class: 'mcp-hint' }, t('mcp.askAiHelp')),
       promptBox,
       el('div', { class: 'ai-actions mcp-actions' }, bigCopy),
