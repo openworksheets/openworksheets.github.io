@@ -9,6 +9,12 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.29.3] — 2026-08-23
+
+### Corregido
+- **La página de características decía que el MCP solo sirve para convertir un documento**. Su tarjeta se titulaba «Desde un PDF o una imagen» y describía el circuito como si empezara siempre con un archivo del profesor, cuando desde la versión 1.27 el servidor también escribe la ficha entera desde cero sobre hojas en blanco, que es justo lo que le ahorra a quien no parte de ningún material. Ahora la tarjeta se titula «Desde un PDF, una imagen o desde cero» y el paso segundo cuenta las dos vías. La entradilla tampoco separaba bien los dos caminos —los repartía por el punto de partida, cuando los dos pueden partir de un tema—: lo que de verdad los distingue es si hay que instalar algo. Y la nota de privacidad decía que «el documento permanece bajo tu control», la misma promesa de más que ya se corrigió en el diálogo del editor: el archivo no se sube a ningún servicio, pero la IA sí ve el contenido de las páginas. En los cinco idiomas.
+
+
 ## [1.29.2] — 2026-08-23
 
 ### Cambiado
