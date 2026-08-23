@@ -146,18 +146,18 @@ col·loca els camps, **comprova el resultat en una vista prèvia amb els camps
 dibuixats a sobre** —corregint el que estigui desplaçat— i desa el `.owpkg` que
 després obres amb **Arxiu → Obrir fitxa**.
 
-A l'editor, «Col·locar camps amb IA sobre un PDF…» t'hi acompanya, i el camí
-depèn del que pugui fer la teva IA. Si pot executar ordres (Claude Code, Codex
-CLI, Antigravity, Cursor, VS Code), li enganxes una instrucció curta i ella
-sola descarrega i registra el servidor. Si fas servir **Claude Desktop, l'aplicació
-d'escriptori de ChatGPT o LM Studio**, que no poden, el mateix diàleg et descarrega el servidor amb un clic
-(2 MB, empaquetats per la mateixa aplicació) i et dóna la configuració a punt
-per enganxar al seu arxiu, amb la ruta ja posada. **No hi ha res a instal·lar
-dins de la carpeta**: no té dependències. És cosa d'una sola vegada: a partir
-d'aquí el diàleg s'obre a «Demanar una fitxa a la teva IA». ChatGPT i Gemini **en
-la versió web** no serveixen, perquè només admeten connectors remots; les seves
-aplicacions d'escriptori sí. Detalls i
-límits a [`mcp/README.md`](mcp/README.md).
+A l'editor, «Crear o convertir fitxes amb IA (MCP)» ho resumeix en una
+pantalla: **instal·lar-lo és cosa de la teva IA**. Copies les instruccions que
+hi ha, les enganxes al seu xat i ella descarrega el servidor, el registra i
+comprova que respon —així treballen Claude Code, Codex CLI, l'aplicació
+d'escriptori de ChatGPT, Antigravity, Cursor i VS Code—. Claude Desktop i LM
+Studio no poden tocar la seva pròpia configuració, així que al final et
+demanaran que enganxis un text en un fitxer: te'l donen ja escrit i et diuen on
+va. Només calen **Node.js 18 o superior i Chrome, Chromium o Edge**, i **no hi
+ha res a instal·lar dins de la carpeta**: no té dependències. És cosa d'una
+sola vegada. ChatGPT i Gemini **en la versió web** no serveixen, perquè
+només admeten connectors remots; les seves aplicacions d'escriptori sí. Detalls
+i límits a [`mcp/README.md`](mcp/README.md).
 
 ## Flux de treball
 

@@ -102,38 +102,8 @@ textarea.ai-input { resize: vertical; }
 .ed-start-title { font-size: 0.96rem; font-weight: 500; color: var(--tinta); }
 .ed-start-sub { font-size: 0.8rem; color: var(--tinta-suave); }
 
-/* Dialog «Colocar campos con IA sobre un PDF (MCP)» */
+/* Diálogo «Crear o convertir fichas con IA (MCP)» */
 .mcp-dialog { width: min(760px, 94vw); }
-
-.mcp-clients { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; margin-top: 18px; }
-
-.mcp-client {
-  min-width: 0;               /* sin esto, el <pre> ancho estira la tarjeta */
-  border: 2px solid var(--tinta-tenue);
-  border-radius: 10px;
-  padding: 12px 14px;
-}
-
-.mcp-client-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: nowrap;   /* la ruta se recorta antes que empujar el botón abajo */
-  margin-bottom: 6px;
-}
-.mcp-client-name { font-weight: 700; }
-.mcp-client-where {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-family: ui-monospace, Menlo, Consolas, monospace;
-  font-size: 0.78rem;
-  color: var(--tinta-suave);
-  /* Una ruta larga se recorta antes que empujar el botón a otra línea. */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.mcp-client-head .btn { flex-shrink: 0; }
 
 .mcp-hint { margin: 0 0 8px; font-size: 0.85rem; color: var(--tinta-suave); line-height: 1.45; }
 
@@ -153,7 +123,6 @@ textarea.ai-input { resize: vertical; }
   overflow-wrap: anywhere;
 }
 
-/* Pasos numerados del diálogo MCP */
 .mcp-note {
   margin: 0 0 18px;
   padding: 10px 12px;
@@ -165,31 +134,6 @@ textarea.ai-input { resize: vertical; }
   color: var(--tinta-suave);
 }
 
-.mcp-steps { margin: 0; padding: 0; list-style: none; counter-reset: mcp; }
-.mcp-step {
-  counter-increment: mcp;
-  position: relative;
-  padding: 0 0 20px 40px;
-  border-left: 2px solid var(--tinta-tenue);
-  margin-left: 13px;
-}
-.mcp-step:last-child { border-left-color: transparent; padding-bottom: 0; }
-.mcp-step::before {
-  content: counter(mcp);
-  position: absolute;
-  left: -14px; top: 0;
-  width: 26px; height: 26px;
-  border-radius: 50%;
-  background: var(--tinta);
-  color: var(--blanco);
-  font-weight: 700;
-  font-size: 0.85rem;
-  display: grid;
-  place-items: center;
-}
-.mcp-step-title { display: block; font-weight: 700; margin-bottom: 6px; }
-.mcp-path { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.82rem; }
-
 .mcp-prompt {
   max-height: 260px;
   overflow-y: auto;
@@ -197,87 +141,17 @@ textarea.ai-input { resize: vertical; }
 }
 .mcp-actions { margin-top: 10px; justify-content: flex-start; }
 
-.mcp-manual {
-  margin-top: 24px;
-  border-top: 2px solid var(--tinta-tenue);
-  padding-top: 14px;
-}
-.mcp-manual > summary {
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.9rem;
-  padding: 4px 0;
-}
-.mcp-manual[open] > summary { margin-bottom: 8px; }
-
-
-/* Enlace de texto para cambiar entre «instalar» y «pedir la ficha» */
-.mcp-link {
-  border: 0;
-  background: none;
-  padding: 0;
-  font: inherit;
-  font-size: 0.86rem;
-  color: var(--tinta-suave);
-  text-decoration: underline;
-  cursor: pointer;
-}
-.mcp-link:hover { color: var(--tinta); }
-.mcp-foot { margin: 22px 0 0; text-align: center; }
-
 .mcp-example { margin-bottom: 10px; }
 .mcp-more { margin-top: 20px; }
 
-/* Los dos caminos de instalación (IA con comandos / configuración a mano) */
+/* Los dos apartados del diálogo, plegados */
 .mcp-way {
   margin-top: 22px;
   padding-top: 16px;
   border-top: 2px solid var(--tinta-tenue);
 }
 .mcp-way-title { margin: 0 0 6px; font-size: 1rem; }
-.mcp-substeps { margin: 12px 0 0; padding-left: 20px; }
-.mcp-substeps > li { margin-bottom: 14px; }
-.mcp-substeps > li::marker { font-weight: 700; color: var(--tinta-suave); }
-
-/* Cada programa, plegado: el usuario abre solo el suyo */
-details.mcp-client { padding: 0; }
-.mcp-client-sum {
-  cursor: pointer;
-  padding: 10px 14px;
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  flex-wrap: wrap;
-  border-radius: 8px;
-}
-.mcp-client-sum:hover { background: var(--tinta-tenue); }
-details.mcp-client[open] .mcp-client-sum { border-bottom: 1px solid var(--tinta-tenue); border-radius: 8px 8px 0 0; }
-.mcp-client-desc { font-size: 0.84rem; color: var(--tinta-suave); }
-
-/* Los tres casos en que puede estar el archivo de configuración */
-.mcp-client-body { padding: 12px 14px 14px; }
-.mcp-client-body > .mcp-hint { margin-bottom: 8px; }
-.mcp-client-body > .mcp-client-where {
-  display: block;
-  margin: 0 0 12px;
-  font-family: ui-monospace, Menlo, Consolas, monospace;
-  font-size: 0.78rem;
-  color: var(--tinta-suave);
-  overflow-wrap: anywhere;
-  white-space: normal;
-}
-.mcp-case + .mcp-case { margin-top: 14px; }
-.mcp-case-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 6px;
-}
-.mcp-case-label { font-size: 0.84rem; line-height: 1.45; color: var(--tinta); }
-.mcp-case-head .btn { flex-shrink: 0; }
-
-/* La configuración manual, plegada: es el camino largo */
+/* Cada apartado, plegado: se abre el que toca */
 .mcp-way-fold > summary {
   cursor: pointer;
   list-style-position: outside;
@@ -285,8 +159,3 @@ details.mcp-client[open] .mcp-client-sum { border-bottom: 1px solid var(--tinta-
 }
 .mcp-way-fold > summary .mcp-way-title { display: inline; }
 .mcp-way-fold[open] > summary { margin-bottom: 6px; }
-
-/* Los dos caminos cuelgan de «Si no has instalado el MCP»: una sangría y un
-   título algo menor bastan para que se lea la jerarquía */
-.mcp-way-fold .mcp-way-fold { margin-left: 20px; }
-.mcp-way-fold .mcp-way-fold > summary .mcp-way-title { font-size: 0.94rem; }

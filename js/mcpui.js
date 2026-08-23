@@ -1,168 +1,21 @@
-// Diálogo «Colocar campos con IA sobre un PDF (MCP)».
+// Diálogo «Crear o convertir fichas con IA (MCP)».
 //
 // El profesorado usa OpenWorksheets desde la web: nadie se descarga el sitio.
 // Lo único que hay que instalar es el servidor MCP (la carpeta mcp/ del
-// repositorio), y de eso se encarga la propia IA. Por eso lo que ofrece este
-// diálogo, en primer lugar, no es una configuración que copiar en un archivo,
-// sino un ENCARGO que copiar y pegarle a la IA: ella comprueba los requisitos,
-// descarga la carpeta, instala su única dependencia y se registra sola.
+// repositorio), y de eso se encarga la propia IA. Por eso este diálogo no da
+// configuraciones que copiar en archivos, sino un ENCARGO que copiar y pegarle
+// a la IA: ella comprueba los requisitos, descarga la carpeta y se registra.
 //
-// La configuración manual sigue estando, plegada, para quien prefiera hacerla
-// a mano o cuando su herramienta no pueda editarse a sí misma.
+// Antes había aquí una lista de configuraciones programa por programa, con los
+// tres estados en que podía estar cada archivo. Ya no hace falta: los clientes
+// se registran solos cuando se les pide, y los que no pueden tocar su propia
+// configuración (Claude Desktop, LM Studio) le dan al usuario el texto exacto
+// que hay que pegar y dónde. Aquella lista solo servía para envejecer mal.
 
-import { el, copyToClipboard, downloadBlob, toast } from './util.js';
+import { el, copyToClipboard, toast } from './util.js';
 import { t } from './i18n.js';
 
 const REPO = 'https://github.com/openworksheets/openworksheets.github.io';
-// Descarga directa del servidor publicada en la última versión. GitHub no
-// permite descargar una subcarpeta, así que enlazar a mcp/ dejaba al profesor
-// en una página sin botón que pulsar.
-const ZIP_URL = REPO + '/releases/latest/download/openworksheets-mcp.zip';
-const PATH_KEY = 'ows.mcpPath';
-// El servidor corre en el ordenador del profesor, sin contacto con esta página:
-// no hay forma de detectar si está instalado. Se recuerda que ya se pasó por la
-// instalación —al copiar las instrucciones o al decirlo a mano— para no repetir
-// ese paso cada vez; siempre se puede volver a él.
-// Archivos que componen el servidor. Se descargan de este mismo sitio y se
-// empaquetan en el navegador: así el profesorado obtiene la carpeta lista con
-// un clic, sin pasar por GitHub ni por una terminal.
-const SERVER_FILES = [
-  'server.js', 'session.js', 'fieldspec.js', 'browser.js', 'cdp.js', 'chrome.js', 'zip.js',
-  'workbench.html', 'render.html', 'package.json', 'README.md',
-  'vendor/pdf.min.js', 'vendor/pdf.worker.min.js'
-];
-// La vista previa del servidor monta la ficha con el visor real del alumnado
-// (render.html carga app/js/player.js), así que el paquete lleva dentro una
-// copia de la aplicación. Sin ella la vista previa vuelve al dibujo aproximado
-// de los campos, que es justo lo que hacía que la IA diera por tapado lo que no
-// lo estaba. Son los módulos que necesita el visor, no la aplicación entera.
-const APP_FILES = [
-  'css/app.css',
-  'fonts/opendyslexic-400.woff2',
-  'fonts/opendyslexic-700.woff2',
-  'js/player.js', 'js/render.js', 'js/fieldtypes.js', 'js/grading.js', 'js/util.js',
-  'js/i18n.js', 'js/icons.js', 'js/fonts.js', 'js/markdown.js', 'js/mathrender.js',
-  'js/edicuatex.js', 'js/entrega.js', 'js/scorm.js', 'js/scormhost.js',
-  'js/submissionCrypto.js'
-];
-// MathJax lo pide mathrender.js como vendor/… relativo al documento, así que va
-// junto al resto de vendor/ del servidor y no dentro de app/.
-const APP_VENDOR = ['vendor/mathjax-tex-svg.js'];
-
-async function downloadServer(btn) {
-  const original = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = t('mcp.preparing');
-  try {
-    const zip = new window.JSZip();
-    const folder = zip.folder('openworksheets-mcp');
-    const partes = [
-      ...SERVER_FILES.map(name => ({ url: 'mcp/' + name, dest: name })),
-      ...APP_FILES.map(name => ({ url: name, dest: 'app/' + name })),
-      ...APP_VENDOR.map(name => ({ url: name, dest: name }))
-    ];
-    await Promise.all(partes.map(async ({ url, dest }) => {
-      const res = await fetch(new URL(url, document.baseURI));
-      if (!res.ok) throw new Error(dest);
-      folder.file(dest, await res.blob());
-    }));
-    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
-    downloadBlob(blob, 'openworksheets-mcp.zip');
-    toast(t('mcp.downloaded'), 'ok');
-  } catch {
-    // Al abrir el editor desde una copia local sin la carpeta mcp/, no hay nada
-    // que empaquetar: se remite al repositorio.
-    toast(t('mcp.downloadFail'), 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = original;
-  }
-}
-
-function osKind() {
-  const ua = navigator.userAgent || '';
-  if (/Windows/i.test(ua)) return 'win';
-  if (/Mac OS X|Macintosh/i.test(ua)) return 'mac';
-  return 'linux';
-}
-
-const OS = osKind();
-
-// Ruta de ejemplo del servidor, solo para la sección manual.
-// Ruta de ejemplo: se propone Documentos, no Descargas. La carpeta tiene que
-// quedarse donde esté (el servidor se ejecuta desde ahí cada vez), y Descargas
-// es justo la que se vacía de vez en cuando.
-const DEFAULT_PATH = {
-  win: 'C:\\Users\\tu-usuario\\Documents\\openworksheets-mcp\\server.js',
-  mac: '/Users/tu-usuario/Documents/openworksheets-mcp/server.js',
-  linux: '/home/tu-usuario/Documentos/openworksheets-mcp/server.js'
-}[OS];
-
-const CONFIG_PATHS = {
-  claude: {
-    win: '%APPDATA%\\Claude\\claude_desktop_config.json',
-    mac: '~/Library/Application Support/Claude/claude_desktop_config.json',
-    linux: '~/.config/Claude/claude_desktop_config.json'
-  },
-  cursor: { win: '%USERPROFILE%\\.cursor\\mcp.json', mac: '~/.cursor/mcp.json', linux: '~/.cursor/mcp.json' }
-};
-
-// En Windows las barras invertidas van dobladas dentro de JSON.
-function forJson(p) {
-  return String(p).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-}
-
-// Los tres casos en que se puede encontrar el archivo de configuración. Dar un
-// solo bloque «completo» no basta: en cuanto el archivo tiene algo dentro,
-// pegarlo al final rompe el JSON, y saber dónde va exactamente es justo lo que
-// no se puede adivinar. Cada caso lleva su fragmento, ya listo para pegar.
-function serverEntry(p, indent) {
-  const s = ' '.repeat(indent);
-  return `${s}"openworksheets": {
-${s}  "command": "node",
-${s}  "args": ["${forJson(p)}"]
-${s}}`;
-}
-
-// Archivo vacío: el documento entero.
-function jsonWhole(p, key = 'mcpServers') {
-  return `{
-  "${key}": {
-${serverEntry(p, 4)}
-  }
-}`;
-}
-
-// Con contenido, pero sin la clave: se añade como una clave más, al principio.
-function jsonSection(p, key = 'mcpServers') {
-  return `  "${key}": {
-${serverEntry(p, 4)}
-  },`;
-}
-
-// Con la clave ya puesta: solo el servidor, dentro de ella.
-function jsonEntry(p) {
-  return serverEntry(p, 4) + ',';
-}
-
-const CLIENTS = [
-  { name: 'Claude Desktop', descKey: 'mcp.c.claudeDesktop', howKey: 'mcp.h.claudeDesktop', jsonKey: 'mcpServers', where: CONFIG_PATHS.claude[OS] },
-  // La app de escritorio de ChatGPT comparte la configuración MCP con Codex CLI
-  // en el mismo ordenador, así que el bloque vale para las dos.
-  {
-    name: 'ChatGPT',
-    descKey: 'mcp.c.chatgpt', howKey: 'mcp.h.chatgpt', toml: true,
-    where: '~/.codex/config.toml',
-    code: p => `[mcp_servers.openworksheets]\ncommand = "node"\nargs = ["${forJson(p)}"]`
-  },
-  { name: 'LM Studio', descKey: 'mcp.c.lmstudio', howKey: 'mcp.h.lmstudio', jsonKey: 'mcpServers', where: '~/.lmstudio/mcp.json' },
-  // Antigravity usa el mismo archivo en el IDE y en la CLI.
-  { name: 'Antigravity', descKey: 'mcp.c.antigravity', howKey: 'mcp.h.antigravity', jsonKey: 'mcpServers', where: '~/.gemini/config/mcp_config.json' },
-  { name: 'Claude Code', descKey: 'mcp.c.claudeCode', howKey: 'mcp.h.claudeCode', where: 'Terminal', code: p => `claude mcp add openworksheets -- node "${p}"` },
-  { name: 'Cursor', descKey: 'mcp.c.cursor', howKey: 'mcp.h.cursor', jsonKey: 'mcpServers', where: CONFIG_PATHS.cursor[OS] },
-  { name: 'VS Code', descKey: 'mcp.c.vscode', howKey: 'mcp.h.vscode', jsonKey: 'servers', where: '.vscode/mcp.json' },
-  { nameKey: 'mcp.c.otherName', descKey: 'mcp.c.other', howKey: 'mcp.h.other', where: 'stdio', code: p => `node "${p}"` }
-];
 
 // El encargo es deliberadamente corto: el detalle (requisitos, cómo se registra,
 // qué herramientas hay y en qué orden se usan) vive en el README de la carpeta,
@@ -191,67 +44,12 @@ function copyButton(getText, label, after) {
 
 export function openMcpDialog() {
   const dlg = el('dialog', { class: 'ai-dialog mcp-dialog' });
-  const saved = (() => { try { return localStorage.getItem(PATH_KEY) || ''; } catch { return ''; } })();
 
   const closeX = el('button', { type: 'button', class: 'dlg-x', 'aria-label': t('ai.close'), onclick: () => dlg.close() }, '✕');
 
-  // ---------- Paso 1: descargar la carpeta del servidor ----------
-  const btnDownload = el('button', { class: 'btn primary', type: 'button' }, t('mcp.download'));
-  btnDownload.addEventListener('click', () => downloadServer(btnDownload));
-
-  // ---------- Paso 3a: encargo para las IA que ejecutan comandos ----------
+  // ---------- El encargo: lo que se le pega a la IA ----------
   const promptBox = el('pre', { class: 'mcp-code mcp-prompt' }, buildPrompt());
   const bigCopy = copyButton(() => promptBox.textContent, t('mcp.copyPrompt'));
-
-  // ---------- Paso 3b: configuración a mano, para las que no pueden ----------
-  const pathInput = el('input', {
-    class: 'ai-input mcp-path', type: 'text', spellcheck: 'false',
-    value: saved || DEFAULT_PATH, placeholder: DEFAULT_PATH
-  });
-  const blocks = el('div', { class: 'mcp-clients' });
-
-  // Un bloque de código con su etiqueta y su botón de copiar.
-  function codeCase(label, text) {
-    const pre = el('pre', { class: 'mcp-code' }, text);
-    return el('div', { class: 'mcp-case' },
-      el('div', { class: 'mcp-case-head' },
-        el('span', { class: 'mcp-case-label' }, label),
-        copyButton(() => pre.textContent, t('mcp.copy'))),
-      pre);
-  }
-
-  function renderClients() {
-    const p = (pathInput.value || DEFAULT_PATH).trim();
-    blocks.textContent = '';
-    for (const c of CLIENTS) {
-      const cuerpo = c.jsonKey
-        // Los tres estados en que puede estar el archivo, cada uno con lo que
-        // hay que pegar y dónde. Sin esto, no hay forma de acertar.
-        ? [
-            codeCase(t('mcp.caseEmpty'), jsonWhole(p, c.jsonKey)),
-            codeCase(t('mcp.caseNoKey', { key: c.jsonKey }), jsonSection(p, c.jsonKey)),
-            codeCase(t('mcp.caseHasKey', { key: c.jsonKey }), jsonEntry(p))
-          ]
-        : [codeCase(c.toml ? t('mcp.caseToml') : t('mcp.caseCmd'), c.code(p))];
-
-      blocks.appendChild(el('details', { class: 'mcp-client' },
-        el('summary', { class: 'mcp-client-sum' },
-          el('span', { class: 'mcp-client-name' }, c.name || t(c.nameKey)),
-          el('span', { class: 'mcp-client-desc' }, t(c.descKey))),
-        el('div', { class: 'mcp-client-body' },
-          el('p', { class: 'mcp-hint mcp-client-how' }, t(c.howKey)),
-          c.where !== 'Terminal' && c.where !== 'stdio'
-            ? el('p', { class: 'mcp-client-where' }, c.where)
-            : null,
-          ...cuerpo)));
-    }
-  }
-
-  pathInput.addEventListener('input', () => {
-    try { localStorage.setItem(PATH_KEY, pathInput.value.trim()); } catch { /* modo privado */ }
-    renderClients();
-  });
-  renderClients();
 
   // Son ejemplos de lo que se le puede pedir, con nombres inventados: no hay
   // nada que copiar tal cual, así que no llevan botón.
@@ -270,26 +68,10 @@ export function openMcpDialog() {
     el('p', { class: 'mcp-note' }, t('mcp.compat')),
 
     way('mcp.notInstalled',
-      way('mcp.wayAuto',
-        el('p', { class: 'mcp-hint' }, t('mcp.wayAutoHelp')),
-        promptBox,
-        el('div', { class: 'ai-actions mcp-actions' }, bigCopy)),
-
-      way('mcp.wayManual',
-        el('p', { class: 'mcp-hint' }, t('mcp.wayManualHelp')),
-        el('ol', { class: 'mcp-substeps' },
-          el('li', {},
-            el('p', { class: 'mcp-hint' }, t('mcp.mStep1')),
-            el('div', { class: 'ai-actions mcp-actions' },
-              btnDownload,
-              el('a', { class: 'mcp-link', href: ZIP_URL, rel: 'noopener' }, t('mcp.fromGithub')))),
-          el('li', {}, el('p', { class: 'mcp-hint' }, t('mcp.mStep2'))),
-          el('li', {},
-            el('p', { class: 'mcp-hint' }, t('mcp.mStep3')),
-            el('div', { class: 'ai-field' },
-              el('label', { class: 'ai-label' }, t('mcp.pathLabel')),
-              pathInput),
-            blocks)))),
+      el('p', { class: 'mcp-hint' }, t('mcp.askAiHelp')),
+      promptBox,
+      el('div', { class: 'ai-actions mcp-actions' }, bigCopy),
+      el('p', { class: 'mcp-hint mcp-more' }, t('mcp.needs'))),
 
     // Con el servidor puesto, el trabajo ya no pasa por aquí: se le habla a la
     // IA desde su propio programa.
@@ -297,8 +79,8 @@ export function openMcpDialog() {
       el('p', { class: 'mcp-hint' }, t('mcp.usedFrom')),
       el('p', { class: 'mcp-hint' }, t('mcp.finallyBody')),
       example('mcp.ex1'),
-      el('p', { class: 'mcp-hint mcp-more' }, t('mcp.moreAsks')),
       example('mcp.ex2'),
+      el('p', { class: 'mcp-hint mcp-more' }, t('mcp.moreAsks')),
       example('mcp.ex3'),
       // Actualizar es otra cosa que se le pide a la IA, no algo que se haga aquí
       el('p', { class: 'mcp-hint mcp-more' }, t('mcp.updateAsk')),

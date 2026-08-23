@@ -146,17 +146,16 @@ fields, **checks the result on a preview with the fields drawn on top** —fixin
 whatever is misplaced— and saves the `.owpkg` you then open with **File → Open
 worksheet**.
 
-In the editor, "Place fields on a PDF with AI…" walks you through it, and the
-path depends on what your AI can do. If it can run commands (Claude Code, Codex
-CLI, Antigravity, Cursor, VS Code), you paste it a short instruction and it
-downloads and registers the server on its own. If you use **Claude Desktop, the
-ChatGPT desktop app or LM Studio**, which cannot, the same dialog downloads the server for you in one
-click (2 MB, packed by the app itself) and hands you the configuration to
-paste into its file, with the path already filled in. **There is nothing to
-install inside the folder** — it has no dependencies. It is a one-off: from then
-on the dialog opens straight into "Asking your AI for a worksheet". ChatGPT and
-Gemini **on the web** will not work, as they only accept remote connectors;
-their desktop apps do. Details
+In the editor, "Creating or converting worksheets with AI (MCP)" sums it up in
+one screen: **installing it is your AI's job**. You copy the instructions shown
+there, paste them into its chat, and it downloads the server, registers it and
+checks that it answers — that is how Claude Code, Codex CLI, the ChatGPT desktop
+app, Antigravity, Cursor and VS Code work. Claude Desktop and LM Studio cannot
+touch their own configuration, so at the end they ask you to paste a snippet
+into a file: they write it for you and tell you where it goes. All you need is
+**Node.js 18 or later and Chrome, Chromium or Edge**, and **there is nothing to
+install inside the folder** — it has no dependencies. It is a one-off. ChatGPT and Gemini **on the web** will not work, as they only accept
+remote connectors; their desktop apps do. Details
 and limitations in [`mcp/README.md`](mcp/README.md).
 
 ## Workflow

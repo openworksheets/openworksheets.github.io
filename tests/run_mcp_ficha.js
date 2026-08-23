@@ -58,32 +58,6 @@ const check = (name, ok, extra) => {
 // la usa el profesorado). Esa copia debe ser la misma que la de la aplicación:
 // si alguien actualiza vendor/ y se olvida de mcp/vendor/, el MCP generaría
 // páginas distintas de las del editor.
-// El navegador empaqueta el servidor para descargarlo (js/mcpui.js) con una
-// lista de archivos escrita a mano. La vista previa monta el visor real del
-// alumnado, así que esa lista tiene que llevar todos los módulos que importa
-// js/player.js: si alguien añade uno y no lo apunta ahí, el servidor descargado
-// desde la aplicación se queda sin visor y vuelve al dibujo aproximado.
-function checkPackerList() {
-  const raíz = path.join(__dirname, '..');
-  const mcpui = path.join(raíz, 'js', 'mcpui.js');
-  if (!fs.existsSync(mcpui)) return;
-  const declarados = new Set(
-    (fs.readFileSync(mcpui, 'utf8').match(/const APP_FILES = \[[^\]]*\]/s) || [''])[0]
-      .match(/'js\/[^']+'/g)?.map(x => x.slice(1, -1)) || []
-  );
-  const vistos = new Set();
-  (function walk(f) {
-    if (vistos.has(f)) return;
-    vistos.add(f);
-    for (const m of fs.readFileSync(f, 'utf8').matchAll(/from '(\.\/[^']+)'/g)) {
-      const dep = path.join(path.dirname(f), m[1]);
-      if (fs.existsSync(dep)) walk(dep);
-    }
-  })(path.join(raíz, 'js', 'player.js'));
-  const faltan = [...vistos].map(f => 'js/' + path.basename(f)).filter(n => !declarados.has(n));
-  check('js/mcpui.js empaqueta todos los módulos del visor', faltan.length === 0, faltan.join(', ') || `${declarados.size} módulos`);
-}
-
 function checkVendorCopies() {
   const hash = f => crypto.createHash('sha1').update(fs.readFileSync(f)).digest('hex');
   for (const name of ['pdf.min.js', 'pdf.worker.min.js']) {
@@ -96,7 +70,6 @@ function checkVendorCopies() {
 
 (async () => {
   checkVendorCopies();
-  checkPackerList();
   const init = await rpc('initialize', { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 'test', version: '1' } });
   check('initialize responde', init.result?.serverInfo?.name === 'openworksheets');
   srv.stdin.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n');
