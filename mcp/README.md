@@ -175,9 +175,14 @@ nuevas al final.
    horizontales impresas.
 3. `place_fields` — coloca los campos. Avisa si uno se solapa con otro o tapa
    texto impreso, pero no bloquea: a veces tapar es lo que se busca.
-4. `preview_page` — devuelve la página con los campos dibujados y numerados
-   encima. **Este es el paso que hace fiable el resultado**: la IA mira la
-   imagen y comprueba que cada campo ha caído donde debía.
+4. `preview_page` — devuelve la captura de la página **montada con el visor
+   real del alumnado** (`js/player.js`), con el contorno y el número de cada
+   campo añadidos encima para poder nombrarlos (`marks: false` los quita).
+   **Este es el paso que hace fiable el resultado**: la IA mira la imagen y
+   comprueba que cada campo ha caído donde debía y que no queda a la vista nada
+   que deba desaparecer. Como es la ficha de verdad y no un dibujo, un campo
+   ocupa lo que ocupa: si el rectángulo es más alto que el campo —en las
+   opciones, por ejemplo—, se ve lo que asoma por debajo.
 5. `adjust_field` / `remove_fields` — corrige lo que esté desplazado.
 6. `set_worksheet_info` y `save_worksheet` — título, autor, instrucciones y
    guardado del `.owpkg`.
@@ -252,7 +257,9 @@ Hay dos formas de ocultar algo del documento, y no son intercambiables:
 | `browser.js` | Chromium sin interfaz y servidor local para pdf.js |
 | `cdp.js` | Cliente mínimo de WebSocket y del protocolo de Chrome, para no depender de nada |
 | `chrome.js` | Búsqueda del navegador en Windows, macOS y Linux |
-| `workbench.html` | Rasterizado del PDF, lectura de coordenadas y vista previa |
+| `workbench.html` | Rasterizado del PDF, lectura de coordenadas y vista previa de reserva |
+| `render.html` | Monta la ficha con el visor real del alumnado para la vista previa |
+| `app/` | Copia de la aplicación (`js/`, `css/`, `fonts/`) que usa `render.html`. La añade la release; dentro del repositorio se usan los archivos del proyecto |
 | `zip.js` | Escritura del `.owpkg` (ZIP) sin dependencias |
 | `vendor/` | Copia de pdf.js, la misma que usa la aplicación, para poder funcionar a solas |
 | `package.json` | Metadatos y ejecutable; no declara dependencias porque no las hay |

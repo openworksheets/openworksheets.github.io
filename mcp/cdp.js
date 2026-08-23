@@ -240,6 +240,27 @@ class Page {
     }
     return res.result?.value;
   }
+
+  // Captura una zona de la página tal y como se ve. `clip` va en píxeles CSS
+  // ({ x, y, width, height, scale }); captureBeyondViewport permite recortar
+  // más allá de lo que cabe en la ventana, que es lo normal con una página A4.
+  async screenshot(clip) {
+    const res = await this.conn.send('Page.captureScreenshot', {
+      format: 'png',
+      captureBeyondViewport: true,
+      ...(clip ? { clip: { scale: 1, ...clip } } : {})
+    }, this.sessionId);
+    return res.data;
+  }
+
+  // Tamaño de la ventana para el render. Sin esto el navegador sin interfaz usa
+  // 800x600 y la ficha se maqueta a un ancho que no es el que se va a capturar.
+  async setViewport(width, height) {
+    await this.conn.send('Emulation.setDeviceMetricsOverride', {
+      width: Math.round(width), height: Math.round(height),
+      deviceScaleFactor: 1, mobile: false
+    }, this.sessionId);
+  }
 }
 
 class Browser {

@@ -27,10 +27,27 @@ const PATH_KEY = 'ows.mcpPath';
 // empaquetan en el navegador: así el profesorado obtiene la carpeta lista con
 // un clic, sin pasar por GitHub ni por una terminal.
 const SERVER_FILES = [
-  'server.js', 'session.js', 'fieldspec.js', 'browser.js', 'cdp.js', 'zip.js',
-  'workbench.html', 'package.json', 'README.md',
+  'server.js', 'session.js', 'fieldspec.js', 'browser.js', 'cdp.js', 'chrome.js', 'zip.js',
+  'workbench.html', 'render.html', 'package.json', 'README.md',
   'vendor/pdf.min.js', 'vendor/pdf.worker.min.js'
 ];
+// La vista previa del servidor monta la ficha con el visor real del alumnado
+// (render.html carga app/js/player.js), así que el paquete lleva dentro una
+// copia de la aplicación. Sin ella la vista previa vuelve al dibujo aproximado
+// de los campos, que es justo lo que hacía que la IA diera por tapado lo que no
+// lo estaba. Son los módulos que necesita el visor, no la aplicación entera.
+const APP_FILES = [
+  'css/app.css',
+  'fonts/opendyslexic-400.woff2',
+  'fonts/opendyslexic-700.woff2',
+  'js/player.js', 'js/render.js', 'js/fieldtypes.js', 'js/grading.js', 'js/util.js',
+  'js/i18n.js', 'js/icons.js', 'js/fonts.js', 'js/markdown.js', 'js/mathrender.js',
+  'js/edicuatex.js', 'js/entrega.js', 'js/scorm.js', 'js/scormhost.js',
+  'js/submissionCrypto.js'
+];
+// MathJax lo pide mathrender.js como vendor/… relativo al documento, así que va
+// junto al resto de vendor/ del servidor y no dentro de app/.
+const APP_VENDOR = ['vendor/mathjax-tex-svg.js'];
 
 async function downloadServer(btn) {
   const original = btn.textContent;
@@ -39,10 +56,15 @@ async function downloadServer(btn) {
   try {
     const zip = new window.JSZip();
     const folder = zip.folder('openworksheets-mcp');
-    await Promise.all(SERVER_FILES.map(async name => {
-      const res = await fetch(new URL('mcp/' + name, document.baseURI));
-      if (!res.ok) throw new Error(name);
-      folder.file(name, await res.blob());
+    const partes = [
+      ...SERVER_FILES.map(name => ({ url: 'mcp/' + name, dest: name })),
+      ...APP_FILES.map(name => ({ url: name, dest: 'app/' + name })),
+      ...APP_VENDOR.map(name => ({ url: name, dest: name }))
+    ];
+    await Promise.all(partes.map(async ({ url, dest }) => {
+      const res = await fetch(new URL(url, document.baseURI));
+      if (!res.ok) throw new Error(dest);
+      folder.file(dest, await res.blob());
     }));
     const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
     downloadBlob(blob, 'openworksheets-mcp.zip');

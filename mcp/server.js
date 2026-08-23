@@ -176,22 +176,30 @@ const TOOLS = [
   },
   {
     name: 'preview_page',
-    description: 'Devuelve la imagen de una página con los campos dibujados y numerados encima. Es la comprobación de que lo que se ve es lo que se espera: míralo antes de guardar y corrige con adjust_field lo que esté desplazado.',
+    description: 'Devuelve la captura de una página tal y como la verá el alumnado: la ficha montada con el visor real, no un dibujo aproximado. Encima solo se añaden el contorno y el número de cada campo, para poder nombrarlos. Es la comprobación de que lo que se ve es lo que se espera: míralo antes de guardar, fíjate en lo que queda a la vista (un campo no siempre tapa todo su rectángulo: las soluciones impresas hay que quitarlas con redact_areas) y corrige con adjust_field lo que esté desplazado.',
     inputSchema: {
       type: 'object',
       properties: {
         page: { type: 'integer' },
         grid: { type: 'boolean', description: 'Superponer una rejilla con las coordenadas: ayuda a situar campos cuando la página no tiene capa de texto.' },
-        width: { type: 'integer', description: 'Ancho de la imagen en píxeles (1100 por defecto).' }
+        width: { type: 'integer', description: 'Ancho de la imagen en píxeles (1100 por defecto).' },
+        marks: { type: 'boolean', description: 'Dibujar el contorno y el número de cada campo (sí por defecto). Con false se ve la ficha exactamente como el alumnado, sin nada superpuesto: útil para comprobar qué queda a la vista.' }
       },
       required: ['page']
     },
     run: async a => {
-      const { base64, legend } = await session.preview(a.page, a);
+      const { base64, legend, real, error } = await session.preview(a.page, a);
+      const notas = [];
+      notas.push(legend.length ? 'Campos:\n' + legend.join('\n') : 'La página todavía no tiene ningún campo.');
+      if (!real) {
+        notas.push('Aviso: esta imagen no es el visor real, sino un dibujo aproximado de los campos' +
+          (error ? ` (${error})` : ' (falta la carpeta app/ del paquete)') +
+          '. Un campo puede tapar menos de lo que aquí parece.');
+      }
       return {
         content: [
           { type: 'image', data: base64, mimeType: 'image/png' },
-          { type: 'text', text: legend.length ? 'Campos:\n' + legend.join('\n') : 'La página todavía no tiene ningún campo.' }
+          { type: 'text', text: notas.join('\n\n') }
         ]
       };
     }
@@ -294,7 +302,9 @@ const INSTRUCTIONS = [
   '  1. open_document con la ruta del PDF o de la imagen.',
   '  2. read_layout de cada página para ver el texto y sus coordenadas.',
   '  3. place_fields con los campos de esa página.',
-  '  4. preview_page y MIRA la imagen: comprueba que cada campo está donde debe y no tapa texto.',
+  '  4. preview_page y MIRA la imagen: es la ficha montada con el visor del alumnado, así que lo que ahí',
+  '     se ve es lo que verá quien la haga. Comprueba que cada campo está donde debe, que no tapa texto y',
+  '     que no queda a la vista nada que deba desaparecer.',
   '     En «arrastrar a zonas», las zonas de destino salen a trazos con la respuesta que esperan.',
   '  5. adjust_field lo que esté desplazado, y vuelve a previsualizar.',
   '  6. redact_areas si hay soluciones impresas u otras zonas que deban desaparecer.',

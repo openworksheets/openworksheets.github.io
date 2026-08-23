@@ -9,7 +9,9 @@
        (js/pdfimport.js), para que la ficha resultante sea idéntica a la que
        saldría subiendo el PDF a mano;
     2) leer la capa de texto con sus coordenadas;
-    3) componer la vista previa (fondo + campos dibujados encima).
+    3) componer la vista previa de reserva (fondo + campos dibujados encima),
+       que solo se usa si falta la copia de la aplicación con la que render.html
+       monta la ficha de verdad.
 -->
 <script src="vendor/pdf.min.js"></script>
 <script>
@@ -125,9 +127,11 @@ function round4(r) {
 }
 
 // ---------------------------------------------------------------------------
-// Vista previa: el fondo de la página con los campos dibujados encima, cada uno
-// numerado. Es lo que el modelo mira para comprobar que los campos han caído
-// donde debían antes de guardar la ficha.
+// Vista previa de reserva: el fondo de la página con los campos dibujados
+// encima, cada uno numerado. Es una imitación —dibuja el rectángulo entero de
+// cada campo, cuando en la ficha real muchos ocupan menos—, así que solo se usa
+// si no está la copia de la aplicación que necesita render.html para montar el
+// visor del alumnado, o si ese visor falla.
 // ---------------------------------------------------------------------------
 const COLORS = {
   answer: '#2563eb',  // escribir

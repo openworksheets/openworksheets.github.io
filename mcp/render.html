@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<title>OpenWorksheets MCP — visor</title>
+<link rel="stylesheet" href="app/css/app.css">
+<!--
+  Página interna del servidor MCP. No la abre ningún usuario: la carga Chromium
+  sin interfaz para montar la ficha con el visor real del alumnado
+  (app/js/player.js) y hacerle una captura.
+
+  La vista previa dibujada del banco de trabajo pintaba rectángulos de colores
+  sobre la imagen del PDF: servía para comprobar la posición, pero mentía sobre
+  lo que se ve y lo que no —un campo de opciones no tapa todo su rectángulo, y
+  la solución impresa debajo seguía a la vista en la ficha de verdad aunque en
+  la previa pareciera cubierta—. Montando el visor real no hay nada que imitar.
+-->
+<style>
+  /* El ancho de la página manda: los campos se dimensionan en cqw sobre ella. */
+  html, body { margin: 0; padding: 0; background: #fff; }
+  #app { padding: 0; }
+  .al-doc { width: var(--ows-doc-w, 900px) !important; max-width: none !important; padding: 12px !important; margin: 0 !important; }
+  /* Las marcas de la vista previa: contorno del campo y su número, por fuera
+     del rectángulo para no tapar justo lo que hay que comprobar. */
+  .ows-mark { position: absolute; box-sizing: border-box; border: 2px solid currentColor; border-radius: 3px; pointer-events: none; z-index: 50; }
+  .ows-mark.zona { border-style: dashed; }
+  .ows-tag {
+    position: absolute; z-index: 51; pointer-events: none;
+    color: #fff;
+    font: 700 12px/1.25 system-ui, sans-serif; padding: 1px 5px; border-radius: 3px; white-space: nowrap;
+  }
+  .ows-grid { position: absolute; inset: 0; z-index: 49; pointer-events: none; }
+</style>
+<div id="app"></div>
+<script type="module">
+import { mountPlayer } from './app/js/player.js';
+
+const COLORS = {
+  answer: '#2563eb',  // escribir
+  choose: '#7c3aed',  // elegir
+  relate: '#0d9488',  // relacionar
+  decor:  '#9ca3af'
+};
+const GROUP = {
+  text: 'answer', number: 'answer', formula: 'answer', essay: 'answer', gaps: 'answer',
+  single: 'choose', multi: 'choose', select: 'choose', truefalse: 'choose',
+  match: 'relate', order: 'relate', dragdrop: 'relate',
+  textboxes: 'answer', table: 'answer', record: 'answer', checkbox: 'choose',
+  label: 'decor', cover: 'decor', image: 'decor', video: 'decor', audio: 'decor'
+};
+
+async function toBlob(dataUrl) {
+  return (await fetch(dataUrl)).blob();
+}
+
+// Todo lo que esté fijado a la ventana (barra de progreso, botones del visor)
+// sobra en la captura y, al capturar más allá de la ventana, se pintaría encima
+// de la propia página.
+function hideFixed() {
+  document.querySelectorAll('body *').forEach(n => {
+    if (getComputedStyle(n).position === 'fixed') n.style.display = 'none';
+  });
+}
+
+function mark(pageEl, fields) {
+  const W = pageEl.clientWidth, H = pageEl.clientHeight;
+  const put = (rect, color, texto, dashed) => {
+    const x = rect.x * W, y = rect.y * H, w = rect.w * W, h = rect.h * H;
+    const box = document.createElement('div');
+    box.className = 'ows-mark' + (dashed ? ' zona' : '');
+    box.style.cssText += `left:${x}px;top:${y}px;width:${w}px;height:${h}px;color:${color}`;
+    pageEl.appendChild(box);
+    const tag = document.createElement('div');
+    tag.className = 'ows-tag';
+    tag.style.background = color;
+    tag.textContent = texto;
+    pageEl.appendChild(tag);
+    // Encima del campo si cabe; si no, justo debajo.
+    tag.style.left = Math.max(0, Math.min(W - tag.offsetWidth, x + w - tag.offsetWidth / 2)) + 'px';
+    tag.style.top = (y - tag.offsetHeight >= 0 ? y - tag.offsetHeight : y + h) + 'px';
+  };
+  fields.forEach((f, i) => {
+    const color = COLORS[GROUP[f.type] || 'decor'];
+    put(f.rect, color, String(i + 1), false);
+    // Los tipos con geometría múltiple (zonas de arrastre, huecos, casillas)
+    // llevan sus cajas fuera del rectángulo del campo: se marcan aparte con la
+    // respuesta que esperan.
+    const cajas = f.config?.zones || f.config?.boxes || [];
+    cajas.forEach((z, k) => {
+      if (!z.rect) return;
+      put(z.rect, color, `${i + 1}${String.fromCharCode(97 + k)}${z.answers?.[0] ? ' ' + z.answers[0] : ''}`, true);
+    });
+  });
+}
+
+// Rejilla de décimas con sus coordenadas: sirve para situar campos a ojo cuando
+// la página es un escaneo y no tiene capa de texto.
+function grid(pageEl) {
+  const W = pageEl.clientWidth, H = pageEl.clientHeight;
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('class', 'ows-grid');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const línea = (x1, y1, x2, y2) => {
+    const l = document.createElementNS(ns, 'line');
+    l.setAttribute('x1', x1); l.setAttribute('y1', y1);
+    l.setAttribute('x2', x2); l.setAttribute('y2', y2);
+    l.setAttribute('stroke', 'rgba(220,38,38,.45)');
+    svg.appendChild(l);
+  };
+  const texto = (x, y, s) => {
+    const t = document.createElementNS(ns, 'text');
+    t.setAttribute('x', x); t.setAttribute('y', y);
+    t.setAttribute('fill', 'rgba(220,38,38,.9)');
+    t.setAttribute('font-size', '11');
+    t.setAttribute('font-family', 'system-ui, sans-serif');
+    t.textContent = s;
+    svg.appendChild(t);
+  };
+  for (let i = 1; i < 10; i++) {
+    línea(W * i / 10, 0, W * i / 10, H);
+    línea(0, H * i / 10, W, H * i / 10);
+    texto(W * i / 10 + 2, 12, '0.' + i);
+    texto(2, H * i / 10 - 2, '0.' + i);
+  }
+  pageEl.appendChild(svg);
+}
+
+// Monta la ficha y devuelve el rectángulo de la página en píxeles de la
+// ventana, para que el servidor recorte ahí la captura.
+window.owsRenderReal = async function (manifest, archivos, opts = {}) {
+  document.documentElement.style.setProperty('--ows-doc-w', (opts.width || 1100) + 24 + 'px');
+  const app = document.getElementById('app');
+  app.textContent = '';
+  const files = new Map();
+  for (const [nombre, dataUrl] of Object.entries(archivos || {})) files.set(nombre, await toBlob(dataUrl));
+
+  mountPlayer(app, { manifest, files }, { preview: true });
+
+  const pageEl = app.querySelector('.wpf-page');
+  if (!pageEl) throw new Error('El visor no ha pintado la página.');
+
+  // Esperar a la imagen de fondo, a las tipografías y a un par de fotogramas:
+  // sin esto se captura la ficha a medio componer.
+  const img = pageEl.querySelector('img.fondo');
+  if (img && !img.complete) await new Promise(r => { img.onload = r; img.onerror = r; });
+  try { await document.fonts.ready; } catch { /* da igual */ }
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+  hideFixed();
+  if (opts.grid) grid(pageEl);
+  if (opts.marks !== false) mark(pageEl, manifest.pages[0].fields || []);
+  await new Promise(r => requestAnimationFrame(r));
+
+  const r = pageEl.getBoundingClientRect();
+  return {
+    x: r.left + window.scrollX, y: r.top + window.scrollY,
+    width: r.width, height: r.height,
+    docHeight: document.documentElement.scrollHeight
+  };
+};
+
+window.__owsViewerReady = true;
+</script>
+</html>

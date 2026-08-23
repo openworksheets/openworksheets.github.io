@@ -151,7 +151,7 @@ path depends on what your AI can do. If it can run commands (Claude Code, Codex
 CLI, Antigravity, Cursor, VS Code), you paste it a short instruction and it
 downloads and registers the server on its own. If you use **Claude Desktop, the
 ChatGPT desktop app or LM Studio**, which cannot, the same dialog downloads the server for you in one
-click (1.5 MB, packed by the app itself) and hands you the configuration to
+click (2 MB, packed by the app itself) and hands you the configuration to
 paste into its file, with the path already filled in. **There is nothing to
 install inside the folder** — it has no dependencies. It is a one-off: from then
 on the dialog opens straight into "Asking your AI for a worksheet". ChatGPT and

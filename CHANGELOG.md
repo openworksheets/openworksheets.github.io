@@ -9,6 +9,14 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.28.0] — 2026-08-23
+
+### Corregido
+- **La descarga del servidor MCP desde la aplicación salía sin `chrome.js`**. El archivo se separó de `browser.js` al arreglar la búsqueda del navegador en Windows, pero la lista de archivos que empaqueta el navegador (`js/mcpui.js`) no se actualizó: quien descargaba la carpeta desde el diálogo del editor —el camino de Claude Desktop, ChatGPT de escritorio y LM Studio— se encontraba con un servidor que fallaba al abrir el primer PDF. El ZIP de la release, que se arma aparte, sí lo llevaba. Una prueba nueva comprueba que esa lista está completa.
+
+### Cambiado
+- **La vista previa del MCP es ahora la ficha de verdad, no un dibujo de los campos**. `preview_page` componía la imagen pintando rectángulos de colores sobre la página del PDF, y eso hacía que la IA diera por tapado lo que no lo estaba: un campo de opciones o una tabla ocupan solo lo que ocupa su contenido, así que si el rectángulo era más alto, la solución impresa debajo seguía viéndose en la ficha aunque en la vista previa pareciera cubierta. Ahora el servidor monta la página con el visor real del alumnado (`js/player.js`) en su Chromium sin interfaz y captura el resultado: lo que la IA mira es exactamente lo que verá quien haga la ficha, con sus campos, sus tipografías y sus tamaños reales. Encima solo se añaden el contorno y el número de cada campo para poder nombrarlos, y con `marks: false` se ve la página sin nada superpuesto. Si faltara la copia de la aplicación, la vista previa vuelve al dibujo de antes y lo dice en el aviso. La carpeta que se descarga desde el editor pasa de 1,5 a 2 MB: dentro va ahora `app/`, con los módulos del visor y sus estilos.
+
 ## [1.27.3] — 2026-08-22
 
 ### Corregido

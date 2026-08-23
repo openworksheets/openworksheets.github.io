@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { workbench } = require('./browser');
+const { workbench, viewer, hasApp } = require('./browser');
 const { makeZip } = require('./zip');
 const { isType, buildField } = require('./fieldspec');
 
@@ -535,7 +535,80 @@ async function addQuestions(items) {
 // Vista previa y guardado
 // ---------------------------------------------------------------------------
 
+// Mime de los archivos incrustados en el paquete, para reconstruirlos como
+// data: URL dentro del visor.
+const MIME_EXT = {
+  webp: 'image/webp', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif',
+  mp3: 'audio/mpeg', ogg: 'audio/ogg', wav: 'audio/wav', mp4: 'video/mp4', webm: 'video/webm'
+};
+
+function fileDataUrl(nombre) {
+  const buf = state.files.get(nombre);
+  if (!buf) return null;
+  const ext = path.extname(nombre).slice(1).toLowerCase();
+  return `data:${MIME_EXT[ext] || 'application/octet-stream'};base64,${buf.toString('base64')}`;
+}
+
+// Archivos que necesita una página para verse entera: su imagen de fondo y lo
+// que referencien sus campos (imágenes, audio, vídeo).
+function pageFiles(p, mp) {
+  const out = { [p.image]: p.dataUrl };
+  const añadir = nombre => {
+    if (!nombre || out[nombre]) return;
+    const url = fileDataUrl(nombre);
+    if (url) out[nombre] = url;
+  };
+  añadir(mp.bgFile);
+  for (const f of mp.fields) añadir(f.config?.src);
+  return out;
+}
+
+function legendOf(fields) {
+  return fields.map((f, i) => `${i + 1}. ${f.type} (${f.id}) — ${f.noScore ? 'sin nota' : f.points + ' pt'}`);
+}
+
+// Vista previa: la ficha montada con el visor real del alumnado (js/player.js)
+// y capturada tal cual. No se imita ningún campo —eso es lo que hacía antes el
+// banco de trabajo, y mentía: un campo de opciones no tapa todo su rectángulo,
+// así que una solución impresa debajo seguía viéndose en la ficha aunque en la
+// vista previa pareciera cubierta—. Encima solo van el contorno y el número de
+// cada campo, para poder nombrarlos; con marks:false, ni eso.
 async function preview(n, opts = {}) {
+  const st = require_();
+  const p = page(n);
+  const mp = st.manifest.pages[n - 1];
+  const legend = legendOf(mp.fields);
+  const width = opts.width || 1100;
+
+  if (hasApp()) {
+    try {
+      const v = await viewer();
+      await v.setViewport(width + 80, 1400);
+      const rect = await v.evaluate(
+        (m, files, o) => window.owsRenderReal(m, files, o),
+        { ...st.manifest, pages: [mp] }, pageFiles(p, mp),
+        { width, grid: Boolean(opts.grid), marks: opts.marks !== false }
+      );
+      const base64 = await v.screenshot({
+        x: Math.max(0, Math.floor(rect.x - 2)),
+        y: Math.max(0, Math.floor(rect.y - 2)),
+        width: Math.ceil(rect.width + 4),
+        height: Math.ceil(rect.height + 4)
+      });
+      return { base64, legend, real: true };
+    } catch (e) {
+      // Si el visor falla se sigue con la vista previa dibujada: es peor, pero
+      // vale más que quedarse sin ninguna.
+      return { ...(await composed(n, opts)), legend, real: false, error: e.message };
+    }
+  }
+  return { ...(await composed(n, opts)), legend, real: false };
+}
+
+// Vista previa de reserva: el fondo de la página con los campos dibujados
+// encima. Solo se usa si falta la copia de la aplicación (carpeta app/) o si el
+// visor real ha fallado.
+async function composed(n, opts = {}) {
   const p = page(n);
   const fields = state.manifest.pages[n - 1].fields;
   const wb = await workbench();
@@ -545,10 +618,7 @@ async function preview(n, opts = {}) {
     fields.map(f => ({ type: f.type, rect: f.rect, config: f.config })),
     { grid: Boolean(opts.grid), width: opts.width || 1100 }
   );
-  return {
-    base64: dataUrl.slice(dataUrl.indexOf(',') + 1),
-    legend: fields.map((f, i) => `${i + 1}. ${f.type} (${f.id}) — ${f.noScore ? 'sin nota' : f.points + ' pt'}`)
-  };
+  return { base64: dataUrl.slice(dataUrl.indexOf(',') + 1) };
 }
 
 // Borra zonas de la página pintando sobre la propia imagen de fondo. El campo

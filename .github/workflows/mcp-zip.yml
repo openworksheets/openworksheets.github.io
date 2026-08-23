@@ -33,6 +33,13 @@ jobs:
           rm -rf dist/openworksheets-mcp/node_modules \
                  dist/openworksheets-mcp/.gitignore \
                  dist/openworksheets-mcp/package-lock.json
+          # La aplicación, para que la vista previa del MCP sea el visor real del
+          # alumnado (render.html monta app/js/player.js). Se copia aquí en vez de
+          # tenerla duplicada en el repositorio: así no puede desincronizarse.
+          mkdir -p dist/openworksheets-mcp/app
+          cp -r js css fonts dist/openworksheets-mcp/app/
+          # MathJax lo pide mathrender.js como vendor/… relativo al documento.
+          cp vendor/mathjax-tex-svg.js dist/openworksheets-mcp/vendor/
 
       - name: Comprobar que está completo y sin errores de sintaxis
         run: |
@@ -42,6 +49,12 @@ jobs:
             node --check "$f"
           done
           test -f workbench.html || { echo "Falta workbench.html"; exit 1; }
+          test -f render.html || { echo "Falta render.html"; exit 1; }
+          # Sin la copia de la aplicación la vista previa deja de ser el visor
+          # real y vuelve al dibujo aproximado: eso no debe salir en una release.
+          test -f app/js/player.js || { echo "Falta app/js/player.js"; exit 1; }
+          test -f app/css/app.css || { echo "Falta app/css/app.css"; exit 1; }
+          test -f vendor/mathjax-tex-svg.js || { echo "Falta vendor/mathjax-tex-svg.js"; exit 1; }
           test -f vendor/pdf.min.js || { echo "Falta vendor/pdf.min.js"; exit 1; }
           test -f vendor/pdf.worker.min.js || { echo "Falta vendor/pdf.worker.min.js"; exit 1; }
           # La copia de pdf.js debe ser la misma que usa la aplicación
