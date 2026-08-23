@@ -5190,7 +5190,7 @@ function openSettings(afterSave, initialTab = 'basic') {
   $('#ajBarajar').checked = Boolean(state.manifest.settings.shuffle);
   $('#ajFormulaBtn').checked = state.manifest.settings.showFormulaButton !== false;
   $('#ajIntentos').value = String(state.manifest.settings.maxAttempts || 0);
-  $('#ajCifrarEntregas').checked = state.manifest.settings.encryptSubmissions !== false;
+  $('#ajCifrarEntregas').checked = state.manifest.settings.encryptSubmissions === true;
   $('#ajSecurityMeter').checked = state.manifest.settings.securityMeter !== false;
   $('#ajCryptoPassword').value = state.submissionCryptoPassword;
   updateCryptoSettingsUi();
@@ -5475,7 +5475,7 @@ async function prepareExportManifest(retry) {
   }
   state.manifest.lang = getLang();
   let exportManifest = JSON.parse(JSON.stringify(state.manifest));
-  if (exportManifest.settings?.encryptSubmissions !== false) {
+  if (exportManifest.settings?.encryptSubmissions === true) {
     if (!state.submissionCryptoPassword) {
       toast(t('crypto.passwordRequired'), 'error');
       openSettings(retry, 'security');
@@ -6332,7 +6332,7 @@ function updateSecurityMeter() {
   if (state.manifest.settings?.securityMeter === false) { secMeterEl.hidden = true; return; }
   secMeterEl.hidden = false;
   const hasAccess = !!(state.manifest.access?.password || '').trim();
-  const hasCrypto = state.manifest.settings?.encryptSubmissions !== false
+  const hasCrypto = state.manifest.settings?.encryptSubmissions === true
     && (!!(state.submissionCryptoPassword || '').trim() || !!state.manifest.submissionCrypto);
   const level = (hasAccess ? 1 : 0) + (hasCrypto ? 2 : 0); // 0..3 (alumno=1, profesor=2)
   const levelName = t('sec.level.' + ['none', 'low', 'medium', 'high'][level]);

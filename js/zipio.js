@@ -100,7 +100,7 @@ export function newManifest() {
       keepFullscreen: false,
       focusMode: 'free',
       focusMaxIncidents: 0,
-      encryptSubmissions: true,
+      encryptSubmissions: false,
       fontFamily: 'atkinson',
       scorm: { statusMode: 'score', masteryScore: 50 }
     },

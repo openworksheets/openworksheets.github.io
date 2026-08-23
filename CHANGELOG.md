@@ -9,6 +9,12 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.29.0] — 2026-08-23
+
+### Cambiado
+- **El cifrado de la entrega ya no viene activado de fábrica**. Venía marcado y sin contraseña, que es la única combinación que no puede ser: al aceptar Ajustes se pedía la contraseña de cifrado y el diálogo no se dejaba cerrar, se hubiera abierto para cambiar el título, para poner un límite de tiempo o para lo que fuera. Ahora la casilla nace desmarcada y se activa a conciencia, que es cuando toca escribir la contraseña; el aviso de qué se pierde sin cifrado queda a la vista desde el principio, redactado como lo que es —un estado— y no como una decisión que acabaras de tomar. Las fichas que ya lo tenían activado lo conservan, porque lo llevan escrito en su manifiesto. Las fichas nuevas del editor y las que crea el servidor MCP salen sin cifrar hasta que se diga lo contrario.
+
+
 ## [1.28.2] — 2026-08-23
 
 ### Cambiado
