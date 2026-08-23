@@ -9,6 +9,12 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.30.0] — 2026-08-23
+
+### Añadido
+- **La página de inicio cuenta que existe el servidor MCP**. Era lo más nuevo de la aplicación y solo se veía entrando en el editor y abriendo el menú Archivo: quien llegaba a openworksheets.github.io no se enteraba de que su IA puede hacerle la ficha entera. Ahora hay un banner encima del de fórmulas, con la misma forma que él para no meter ruido en una portada que ya tiene sus tres tarjetas numeradas: dice en tres frases lo que hace el servidor —abre tu PDF o tu imagen, coloca los campos, comprueba la vista previa y guarda la ficha, o la escribe entera sobre un tema— y avisa de que se instala una sola vez y de que lo instala la propia IA. El botón lleva a `editor.html?mcp=1`, que abre directamente el diálogo con las instrucciones de instalación, en lugar de repetirlas en la portada.
+
+
 ## [1.29.3] — 2026-08-23
 
 ### Corregido

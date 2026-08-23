@@ -6557,6 +6557,10 @@ updateSecurityMeter();
   }
 })();
 
+// El banner del MCP de la portada trae aquí con ?mcp=1: la instalación se
+// explica en su diálogo, que vive en el editor y no en la página de inicio.
+if (new URLSearchParams(location.search).has('mcp')) openMcpDialog();
+
 // Apertura de una ficha elegida en la portada (botón «Abrir ficha»): allí no se
 // puede pasar el archivo directamente, así que llega guardado y lo recogemos.
 (async function openHandoffFile() {

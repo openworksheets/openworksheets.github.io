@@ -552,6 +552,8 @@ textarea { resize: vertical; min-height: 70px; }
   font-size: 0.95rem;
   line-height: 1.5;
 }
+/* Los banners que llevan a alguna parte: el botón, debajo del texto. */
+.home-feature-banner .banner-btn { margin-top: 12px; }
 @media (max-width: 600px) {
   .home-feature-banner {
     flex-direction: column;
