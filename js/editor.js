@@ -5948,8 +5948,12 @@ function openFileMenu() {
   // Con el editor vacío, el cuadro «Empieza tu ficha» ya está en el lienzo:
   // abrirlo otra vez como diálogo solo lo duplicaría.
   const sinFicha = !state.manifest.pages.length;
+  // Y en gris, arriba del todo, ocupaba el mejor sitio del menú sin hacer nada:
+  // mejor que no esté, junto con el separador que lo acompaña.
   const miNuevo = $('#miNuevo');
   miNuevo.disabled = sinFicha;
+  miNuevo.hidden = sinFicha;
+  $('#sepNuevo').hidden = sinFicha;
   miNuevo.title = sinFicha ? t('menu.newAlready') : '';
   menuArchivoList.hidden = false;
   btnArchivo.setAttribute('aria-expanded', 'true');

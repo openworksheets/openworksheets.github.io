@@ -9,6 +9,12 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.29.1] — 2026-08-23
+
+### Cambiado
+- **El menú Archivo, más limpio y más corto**. Tenía tres maneras de agrupar a la vez —separadores, cajas de color y negrita— y las cajas caían casi donde ya había un separador, así que decían dos veces lo mismo; además envolvían cada opción por su cuenta, no el grupo, con lo que «Abrir PDF» y «Abrir ficha» parecían dos botones sueltos dentro del menú y la columna se partía. Las opciones más usadas destacan ahora solo con el peso del título. Los subtítulos pasan a un gris que se queda detrás, en vez del azul que competía con el título. El menú se ensancha para que ningún subtítulo caiga en tres líneas y el del MCP se acorta: entre eso y lo demás, el menú pasa de unos 715 px de alto a 549, que ya no es casi la ventana entera. «Nuevo…» se esconde cuando no aplica —con el editor vacío el cuadro «Empieza tu ficha» ya está en el lienzo— en lugar de quedarse en gris ocupando el sitio de arriba del todo. Y «Guardar ficha como…» estrena icono propio: llevaba el mismo disquete que «Guardar ficha» y no distinguía nada.
+
+
 ## [1.29.0] — 2026-08-23
 
 ### Cambiado

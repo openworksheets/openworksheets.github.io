@@ -238,7 +238,7 @@ const STRINGS = {
 
     // Colocar campos con IA sobre un PDF (servidor MCP local)
     'mcp.create': 'Crear o convertir fichas con IA (MCP)',
-    'mcp.createSub': 'Desde un tema, un PDF o una imagen, y con vista previa. Hay que instalar un programa',
+    'mcp.createSub': 'Desde un tema, un PDF o una imagen. Hay que instalar un programa',
     'mcp.title': 'Crear o convertir fichas con IA (MCP)',
     'mcp.intro': 'Con el servidor MCP, tu IA hace la ficha entera sin que tengas que copiar ni pegar nada: puede partir de un PDF o una imagen tuyos —colocando los campos encima, cada uno en su sitio— o inventar las preguntas desde cero sobre hojas en blanco. En los dos casos comprueba el resultado en una vista previa antes de guardarte la ficha. Es un pequeño programa que se instala una sola vez, y tu documento no se envía a ningún servicio: todo ocurre en tu ordenador.',
     'mcp.compat': 'Las versiones web de ChatGPT y Gemini no sirven para esto: solo admiten conectores remotos, no programas instalados en tu ordenador.',
@@ -1286,7 +1286,7 @@ const STRINGS = {
 
     // Placing fields on a PDF with AI (local MCP server)
     'mcp.create': 'Create or convert worksheets with AI (MCP)',
-    'mcp.createSub': 'From a topic, a PDF or an image, with a preview. Needs a program installed',
+    'mcp.createSub': 'From a topic, a PDF or an image. Needs a program installed',
     'mcp.title': 'Creating or converting worksheets with AI (MCP)',
     'mcp.intro': 'With the MCP server your AI makes the whole worksheet without any copying and pasting: it can start from a PDF or image of yours —placing the fields on top, each one in its place— or make up the questions from scratch on blank pages. Either way it checks the result on a preview before handing you the worksheet. It is a small program installed once, and your document is sent to no service: everything happens on your computer.',
     'mcp.compat': 'The web versions of ChatGPT and Gemini will not do for this: they only accept remote connectors, not programs installed on your computer.',
@@ -2302,7 +2302,7 @@ const STRINGS = {
 
     // Col·locar camps amb IA sobre un PDF (servidor MCP local)
     'mcp.create': 'Crear o convertir fitxes amb IA (MCP)',
-    'mcp.createSub': 'Des d\'un tema, un PDF o una imatge, i amb vista prèvia. Cal instal·lar un programa',
+    'mcp.createSub': 'Des d\'un tema, un PDF o una imatge. Cal instal·lar un programa',
     'mcp.title': 'Crear o convertir fitxes amb IA (MCP)',
     'mcp.intro': 'Amb el servidor MCP, la teva IA fa la fitxa sencera sense que hagis de copiar ni enganxar res: pot partir d\'un PDF o una imatge teus —col·locant-hi els camps a sobre, cadascun al seu lloc— o inventar les preguntes des de zero sobre fulls en blanc. En tots dos casos comprova el resultat en una vista prèvia abans de desar-te la fitxa. És un petit programa que s\'instal·la una sola vegada, i el teu document no s\'envia a cap servei: tot passa al teu ordinador.',
     'mcp.compat': 'Les versions web de ChatGPT i Gemini no serveixen per a això: només admeten connectors remots, no programes instal·lats al teu ordinador.',
@@ -3311,7 +3311,7 @@ const STRINGS = {
 
     // Colocar campos con IA sobre un PDF (servidor MCP local)
     'mcp.create': 'Crear ou converter fichas con IA (MCP)',
-    'mcp.createSub': 'Desde un tema, un PDF ou unha imaxe, e con vista previa. Hai que instalar un programa',
+    'mcp.createSub': 'Desde un tema, un PDF ou unha imaxe. Hai que instalar un programa',
     'mcp.title': 'Crear ou converter fichas con IA (MCP)',
     'mcp.intro': 'Co servidor MCP, a túa IA fai a ficha enteira sen que teñas que copiar nin pegar nada: pode partir dun PDF ou dunha imaxe teus —colocando os campos enriba, cada un no seu sitio— ou inventar as preguntas desde cero sobre follas en branco. Nos dous casos comproba o resultado nunha vista previa antes de gardarche a ficha. É un pequeno programa que se instala unha soa vez, e o teu documento non se envía a ningún servizo: todo ocorre no teu computador.',
     'mcp.compat': 'As versións web de ChatGPT e Gemini non serven para isto: só admiten conectores remotos, non programas instalados no teu computador.',
@@ -4320,7 +4320,7 @@ const STRINGS = {
 
     // Eremuak IArekin PDF baten gainean jartzea (MCP zerbitzari lokala)
     'mcp.create': 'Sortu edo bihurtu fitxak IArekin (MCP)',
-    'mcp.createSub': 'Gai batetik, PDF batetik edo irudi batetik, aurrebistarekin. Programa bat instalatu behar da',
+    'mcp.createSub': 'Gai batetik, PDF batetik edo irudi batetik. Programa bat instalatu behar da',
     'mcp.title': 'Fitxak IArekin sortzea edo bihurtzea (MCP)',
     'mcp.intro': 'MCP zerbitzariarekin, zure IAk fitxa osoa egiten du zuk ezer kopiatu eta itsatsi gabe: zure PDF edo irudi batetik abia daiteke —eremuak gainean jarriz, bakoitza bere lekuan— edo galderak hutsetik asma ditzake orri zurietan. Bi kasuetan emaitza aurrebista batean egiaztatzen du fitxa gorde aurretik. Behin bakarrik instalatzen den programa txiki bat da, eta zure dokumentua ez da inolako zerbitzura bidaltzen: dena zure ordenagailuan gertatzen da.',
     'mcp.compat': 'ChatGPTren eta Geminiren web bertsioek ez dute honetarako balio: urruneko konektoreak baino ez dituzte onartzen, ez zure ordenagailuan instalatutako programak.',

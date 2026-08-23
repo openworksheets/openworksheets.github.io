@@ -28,6 +28,7 @@
   --blanco: #fffdf8;
   --tinta: #1d2c42;
   --tinta-suave: #4a5870;
+  --tinta-apagada: #5b6472;
   --tinta-tenue: rgba(29, 44, 66, 0.18);
   --rojo: #c63d2c;
   --rojo-oscuro: #a32f21;
@@ -53,6 +54,7 @@
     --blanco: #252b3b;
     --tinta: #ece4d4;
     --tinta-suave: #9aaabe;
+    --tinta-apagada: #98a0ac;
     --tinta-tenue: rgba(236, 228, 212, 0.15);
     --rojo: #d44f3c;
     --rojo-oscuro: #b33828;
@@ -75,6 +77,7 @@
   --blanco: #252b3b;
   --tinta: #ece4d4;
   --tinta-suave: #9aaabe;
+  --tinta-apagada: #98a0ac;
   --tinta-tenue: rgba(236, 228, 212, 0.15);
   --rojo: #d44f3c;
   --rojo-oscuro: #b33828;
@@ -291,8 +294,8 @@ body.embed-mode .topbar { display: none; }
   top: calc(100% + 6px);
   left: 0;
   z-index: 60;
-  min-width: 288px;
-  max-width: 340px;
+  min-width: 340px;
+  max-width: 360px;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -326,24 +329,18 @@ body.embed-mode .topbar { display: none; }
 .topbar-menu-sep { height: 1px; margin: 5px 8px; background: var(--tinta-tenue); }
 .topbar-menu-item--primary { color: var(--rojo); font-weight: 600; }
 /* Opción que ahora mismo no aplica (p. ej. «Nuevo…» con el editor ya vacío) */
+.topbar-menu-item[hidden] { display: none; }
 .topbar-menu-item:disabled { opacity: 0.4; cursor: default; }
 .topbar-menu-item:disabled:hover { background: none; }
 .topbar-menu-item--primary:hover,
 .topbar-menu-item--primary:focus-visible { background: var(--rojo-claro); }
-.topbar-menu-item--workflow {
-  background: color-mix(in srgb, var(--azul-claro) 58%, transparent);
-  box-shadow: inset 0 0 0 1px var(--tinta-tenue);
-}
-.topbar-menu-item--workflow:hover,
-.topbar-menu-item--workflow:focus-visible {
-  background: color-mix(in srgb, var(--azul-claro) 70%, var(--ambar-claro));
-}
+/* Las opciones que más se usan destacan solo con el peso del título: la caja
+   con fondo propio competía con los separadores y partía la columna del menú. */
 .topbar-menu-item--workflow .mi-title { font-weight: 700; }
-.topbar-menu-item--workflow .mi-sub { color: var(--tinta); opacity: 0.82; }
 /* Opción de menú con título + subtítulo descriptivo en dos líneas. */
 .topbar-menu-item { align-items: flex-start; }
 .mi-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.mi-sub { font-size: 0.76rem; font-weight: 400; line-height: 1.25; color: var(--tinta-suave); }
+.mi-sub { font-size: 0.76rem; font-weight: 400; line-height: 1.25; color: var(--tinta-apagada); }
 .topbar-menu-item--primary .mi-sub { color: var(--rojo); opacity: 0.8; }
 .topbar-submenu-wrap { position: relative; }
 .topbar-submenu-trigger { justify-content: flex-start; }
