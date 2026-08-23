@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title data-i18n="feat.title">Características · OpenWorksheets</title>
-  <meta name="description" content="Qué puedes hacer con OpenWorksheets: tipos de pregunta, corrección automática, exportación, entregas, seguridad y más.">
+  <meta name="description" content="Qué puedes hacer con OpenWorksheets: creación con IA y MCP local, tipos de pregunta, corrección automática, exportación, entregas y seguridad.">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/app.css">
   <link rel="stylesheet" href="css/caracteristicas.css">
@@ -58,6 +58,14 @@
         </div>
         <h2 data-i18n="feat.s3.title">Corrección automática flexible</h2>
         <div data-i18n-html="feat.s3.body"><p>La mayoría de tipos se autocorrigen al instante.</p><ul><li>Varias respuestas correctas por pregunta</li><li>Ignorar mayúsculas, tildes o espacios</li><li>Tolerancia numérica</li><li>Corrección de tablas por celda, fila o columna</li></ul></div>
+      </article>
+
+      <article class="feat-card feat-card-ai anim-in">
+        <div class="feat-card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>
+        </div>
+        <h2 data-i18n="feat.s12.title">Dos formas de crear fichas con IA</h2>
+        <div data-i18n-html="feat.s12.body"><p class="feat-ai-intro">Elige el flujo según tu punto de partida: inventar una ficha sobre un tema o convertir un documento que ya tienes.</p><div class="feat-ai-paths"><section class="feat-ai-path"><div class="feat-ai-path-head"><span class="feat-ai-badge">Sin instalar nada</span><h3>Desde un tema o unas indicaciones</h3></div><p>Para crear contenido nuevo con cualquier chat de IA.</p><ol><li>Indicas el tema, el nivel, el idioma y los tipos de pregunta.</li><li>OpenWorksheets prepara un prompt estructurado para pegarlo en la IA que prefieras.</li><li>Pegas su respuesta de vuelta: la aplicación la valida, coloca los campos y deja toda la ficha editable.</li></ol><p class="feat-ai-note">OpenWorksheets no se conecta a la IA ni necesita claves de API.</p></section><section class="feat-ai-path"><div class="feat-ai-path-head"><span class="feat-ai-badge">MCP local</span><h3>Desde un PDF o una imagen</h3></div><p>Para convertir material existente sin calcular coordenadas ni copiar y pegar resultados.</p><ol><li>Instalas una sola vez el servidor MCP en una aplicación de IA compatible.</li><li>Le indicas el archivo: lee su distribución y coloca encima los campos autocorregibles.</li><li>Comprueba la ficha con el visor real del alumnado, corrige la posición de los campos y guarda el paquete <code>.owpkg</code>.</li></ol><p class="feat-ai-note">Es opcional y requiere Node.js 18 y Chrome, Chromium o Edge. El MCP se ejecuta en tu ordenador y el documento permanece bajo tu control.</p></section></div></div>
       </article>
 
       <article class="feat-card anim-in">
@@ -122,14 +130,6 @@
         </div>
         <h2 data-i18n="feat.s11.title">Software libre</h2>
         <div data-i18n-html="feat.s11.body"><ul><li>Gratuito y auditable</li><li>Licencia AGPLv3</li><li>Sin instalaciones ni cuentas obligatorias</li><li>Adaptable y reutilizable</li></ul></div>
-      </article>
-
-      <article class="feat-card anim-in">
-        <div class="feat-card-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>
-        </div>
-        <h2 data-i18n="feat.s12.title">Creación de fichas con IA</h2>
-        <div data-i18n-html="feat.s12.body"><p>OpenWorksheets puede generar automáticamente una ficha completa a partir de un formulario que rellenas tú. El proceso es sencillo y no requiere cuenta ni API externa.</p><ul><li>Rellenas el formulario: tema, nivel, número de preguntas, idioma y tipos de campo</li><li>OWS genera un prompt estructurado que puedes pegar en cualquier chat de IA</li><li>Pegas la respuesta de la IA directamente en OWS, que la valida e importa como ficha lista para editar</li></ul></div>
       </article>
 
       <article class="feat-card anim-in">
