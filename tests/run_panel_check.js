@@ -24,10 +24,7 @@ const puppeteer = require('puppeteer-core');
   const check = (name, ok) => { if (!ok) fails++; console.log(`${name}: ${ok ? 'OK' : 'MAL'}`); };
 
   // Hoja en blanco
-  await page.evaluate(() => {
-    const btns = [...document.querySelectorAll('.ed-empty button')];
-    btns[btns.length - 1].click();
-  });
+  await page.click('.ed-empty [data-start="blank"]');
   await new Promise(r => setTimeout(r, 400));
 
   async function createAndSelect(group, type) {

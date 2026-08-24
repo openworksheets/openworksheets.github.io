@@ -139,6 +139,11 @@ El flujo anterior crea la ficha desde cero, sobre páginas en blanco. Si lo que 
 
 La IA abre el documento, lee su texto con las coordenadas de cada línea, detecta los huecos impresos (guiones bajos y líneas para escribir), coloca los campos, **comprueba el resultado en una vista previa con los campos dibujados encima** —corrigiendo lo que esté desplazado— y guarda el `.owpkg` que después abres con **Archivo → Abrir ficha**.
 
+El mismo servidor también puede crear la ficha desde cero. En ese caso aplica
+un tema visual accesible con fondo, tipografía, cabecera, separadores y tarjetas
+para agrupar las preguntas. La IA también puede colocar directamente texto,
+líneas, flechas, rectángulos, elipses y polígonos, todos editables después en OWS.
+
 En el editor, «Crear o convertir fichas con IA (MCP)» lo resume en una pantalla: **instalarlo es cosa de tu propia IA**. Copias las instrucciones que hay ahí, se las pegas en su chat y ella descarga el servidor, lo registra y comprueba que responde —así trabajan Claude Code, Codex CLI, la aplicación de escritorio de ChatGPT, Antigravity, Cursor y VS Code—. Claude Desktop y LM Studio no pueden tocar su propia configuración, así que al final te pedirán que pegues un texto en un archivo: te lo dan ya escrito y te dicen dónde va. Solo hacen falta **Node.js 18 o superior y Chrome, Chromium o Edge**, y **no hay nada que instalar dentro de la carpeta** —no tiene dependencias—. Es cosa de una sola vez. ChatGPT y Gemini **en su versión web** no sirven, porque solo admiten conectores remotos; sus aplicaciones de escritorio sí. Detalles y límites en [`mcp/README.md`](mcp/README.md).
 
 ## Flujo de trabajo

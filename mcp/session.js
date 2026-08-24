@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const { workbench, viewer, hasApp } = require('./browser');
 const { makeZip } = require('./zip');
-const { isType, buildField } = require('./fieldspec');
+const { TYPES, isType, buildField } = require('./fieldspec');
 
 const FORMAT = 'workpdf-ficha';
 const FORMAT_VERSION = 1;
@@ -122,6 +122,69 @@ const PAGE_SIZES = {
   letter: { w: 1600, h: 2071 }
 };
 
+// Temas sobrios y con contraste suficiente para una ficha que se lee tanto en
+// pantalla como impresa. apply_design admite personalizar la paleta, pero parte
+// de estos valores seguros y corrige un color de texto que resulte ilegible.
+const DESIGN_THEMES = {
+  clean:      { accent: '#315b7d', paper: '#fbfdff', text: '#19324a', card: '#e7f0f7', fontFamily: 'atkinson' },
+  science:    { accent: '#1f6f5f', paper: '#f7fbf9', text: '#173f38', card: '#dcefe9', fontFamily: 'andika' },
+  math:       { accent: '#315aa8', paper: '#f7f9fd', text: '#1f365f', card: '#e2eaf8', fontFamily: 'lexend' },
+  warm:       { accent: '#9a4f32', paper: '#fffaf5', text: '#533326', card: '#f4e5d7', fontFamily: 'nunito' },
+  accessible: { accent: '#153e75', paper: '#ffffff', text: '#111827', card: '#e7f0fa', fontFamily: 'opendyslexic' }
+};
+const FONT_IDS = new Set(['atkinson', 'lexend', 'opendyslexic', 'andika', 'patrick', 'nunito', 'lora', 'mono']);
+
+function hexColor(value, fallback, warnings, name) {
+  if (value == null || value === '') return fallback;
+  const v = String(value).trim();
+  if (/^#[0-9a-f]{6}$/i.test(v)) return v.toLowerCase();
+  warnings.push(`${name} no es un color #RRGGBB válido; se usa ${fallback}.`);
+  return fallback;
+}
+
+function luminance(hex) {
+  const rgb = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255)
+    .map(v => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+  return rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722;
+}
+
+function contrast(a, b) {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+function readableOn(bg, preferred = '#ffffff') {
+  const alternatives = [preferred, '#ffffff', '#111827'];
+  return alternatives.sort((a, b) => contrast(b, bg) - contrast(a, bg))[0];
+}
+
+function normalizedDesign(opts = {}) {
+  const warnings = [];
+  const name = Object.prototype.hasOwnProperty.call(DESIGN_THEMES, opts.theme) ? opts.theme : 'clean';
+  if (opts.theme && opts.theme !== name) warnings.push(`Tema desconocido "${opts.theme}"; se usa "clean".`);
+  const base = DESIGN_THEMES[name];
+  const paper = hexColor(opts.paperColor, base.paper, warnings, 'paperColor');
+  let text = hexColor(opts.textColor, base.text, warnings, 'textColor');
+  if (contrast(text, paper) < 4.5) {
+    const corrected = readableOn(paper, base.text);
+    warnings.push(`El color de texto no alcanzaba contraste 4.5:1 sobre la hoja; se corrige a ${corrected}.`);
+    text = corrected;
+  }
+  const fontFamily = FONT_IDS.has(opts.fontFamily) ? opts.fontFamily : base.fontFamily;
+  if (opts.fontFamily && opts.fontFamily !== fontFamily) warnings.push(`Tipografía desconocida "${opts.fontFamily}"; se usa "${fontFamily}".`);
+  return {
+    name,
+    accent: hexColor(opts.accentColor, base.accent, warnings, 'accentColor'),
+    paper,
+    text,
+    card: hexColor(opts.cardColor, base.card, warnings, 'cardColor'),
+    fontFamily,
+    cards: opts.cards !== false,
+    header: opts.header !== false,
+    warnings
+  };
+}
+
 // Ficha que no parte de ningún documento: hojas en blanco sobre las que colocar
 // las preguntas. Lo demás funciona igual que con un PDF.
 async function createWorksheet({ title = '', pages = 1, size = 'a4', instructions = '' } = {}) {
@@ -135,6 +198,7 @@ async function createWorksheet({ title = '', pages = 1, size = 'a4', instruction
   for (let n = 1; n <= cuantas; n++) {
     const r = await wb.evaluate((w, h) => window.owsBlankPage(w, h, '#ffffff'), medida.w, medida.h);
     addPage({ ...r, text: [], rules: [] }, n);
+    Object.assign(state.manifest.pages[n - 1], { bgColor: '#ffffff', blank: true });
   }
   return {
     title: state.manifest.title,
@@ -148,9 +212,197 @@ async function addBlankPage() {
   const st = require_();
   const ultima = st.pages[st.pages.length - 1];
   const wb = await workbench();
-  const r = await wb.evaluate((w, h) => window.owsBlankPage(w, h, '#ffffff'), ultima.w, ultima.h);
+  const color = st.design?.paper || '#ffffff';
+  const r = await wb.evaluate((w, h, c) => window.owsBlankPage(w, h, c), ultima.w, ultima.h, color);
   addPage({ ...r, text: [], rules: [] }, st.pages.length + 1);
+  Object.assign(st.manifest.pages.at(-1), { bgColor: color, blank: true });
+  if (st.design) addBaseDecorations(st.manifest.pages.length);
   return st.pages.length;
+}
+
+// ---------------------------------------------------------------------------
+// Diseño visual
+// ---------------------------------------------------------------------------
+
+function isThemeField(field) {
+  return String(field?.designRole || '').startsWith('mcp-theme-');
+}
+
+function contentFields(pageManifest) {
+  return pageManifest.fields.filter(f => !isThemeField(f));
+}
+
+// Los campos del tema se insertan antes del contenido: como todos los campos
+// comparten la misma capa, esto deja tarjetas y formas siempre por detrás de
+// preguntas, botones y cuadros de respuesta.
+function addThemeField(pageNo, spec, role) {
+  const mp = state.manifest.pages[pageNo - 1];
+  const { field } = buildField({ ...spec, page: pageNo }, uid('fd'));
+  field.designRole = `mcp-theme-${role}`;
+  const firstContent = mp.fields.findIndex(f => !isThemeField(f));
+  mp.fields.splice(firstContent < 0 ? mp.fields.length : firstContent, 0, field);
+  return field;
+}
+
+function removeThemeFields(role = '') {
+  const prefix = `mcp-theme-${role}`;
+  for (const p of state.manifest.pages) {
+    p.fields = p.fields.filter(f => role ? !String(f.designRole || '').startsWith(prefix) : !isThemeField(f));
+  }
+}
+
+function pageContentTop(pageNo) {
+  const d = state.design;
+  if (!d) return MARGEN_ARRIBA;
+  const fields = contentFields(state.manifest.pages[pageNo - 1]);
+  const headerFits = pageNo === 1 && d.header && state.manifest.title &&
+    (!fields.length || Math.min(...fields.map(f => f.rect.y)) >= 0.105);
+  return headerFits ? 0.105 : 0.055;
+}
+
+function addBaseDecorations(pageNo) {
+  const d = state.design;
+  if (!d) return 0;
+  const mp = state.manifest.pages[pageNo - 1];
+  const fields = contentFields(mp);
+  const firstY = fields.length ? Math.min(...fields.map(f => f.rect.y)) : 1;
+  const headerFits = pageNo === 1 && d.header && state.manifest.title && firstY >= 0.105;
+  let count = 0;
+
+  // Marca lateral y pie: dan continuidad entre páginas sin invadir la zona de
+  // trabajo. Son rectángulos nativos y siguen siendo editables en OWS.
+  addThemeField(pageNo, {
+    type: 'rect', rect: { x: 0.025, y: 0.04, w: 0.006, h: 0.91 },
+    noStroke: true, fill: d.accent, fillOpacity: 0.9
+  }, 'accent');
+  count++;
+
+  if (headerFits) {
+    addThemeField(pageNo, {
+      type: 'rect', rect: { x: 0.04, y: 0.024, w: 0.925, h: 0.062 },
+      noStroke: true, fill: d.accent, fillOpacity: 1, borderRadius: 16
+    }, 'header');
+    addThemeField(pageNo, {
+      type: 'label', rect: { x: 0.062, y: 0.039, w: 0.88, h: 0.032 },
+      text: state.manifest.title, color: readableOn(d.accent), bold: true,
+      align: 'left', fontScale: 1.45, fontFamily: d.fontFamily
+    }, 'header-title');
+    count += 2;
+  } else {
+    addThemeField(pageNo, {
+      type: 'rect', rect: { x: 0.04, y: 0.022, w: 0.925, h: 0.008 },
+      noStroke: true, fill: d.accent, fillOpacity: 0.9, borderRadius: 12
+    }, 'header-line');
+    count++;
+  }
+
+  addThemeField(pageNo, {
+    type: 'label', rect: { x: 0.88, y: 0.967, w: 0.075, h: 0.015 },
+    text: String(pageNo), color: d.accent, bold: true, align: 'right',
+    fontScale: 0.72, fontFamily: d.fontFamily
+  }, 'page-number');
+  return count + 1;
+}
+
+function styleContentFields() {
+  const d = state.design;
+  if (!d) return;
+  state.manifest.settings.fontFamily = d.fontFamily;
+  for (const mp of state.manifest.pages) {
+    const fields = contentFields(mp);
+    for (let i = 0; i < fields.length; i++) {
+      const f = fields[i];
+      if (f.type === 'label') {
+        const section = Boolean(f.config?.section) || fields[i + 1]?.type === 'label' || !f.config?.bold;
+        f.config.color = section ? d.accent : d.text;
+        f.config.bold = true;
+        f.fontScale = section ? 1.28 : 1.04;
+        f.fontFamily = d.fontFamily;
+      } else if (!TYPES[f.type]?.decor) {
+        f.config.bg = '#ffffff';
+        f.config.bgOpacity = 0.96;
+        f.config.fgColor = d.text;
+      }
+    }
+  }
+}
+
+function addQuestionCards() {
+  removeThemeFields('card');
+  removeThemeFields('section-line');
+  const d = state.design;
+  if (!d || state.source) return 0;
+  let added = 0;
+  state.manifest.pages.forEach((mp, pi) => {
+    const fields = contentFields(mp);
+    for (const section of fields.filter(f => f.type === 'label' && f.config?.section)) {
+      addThemeField(pi + 1, {
+        type: 'line', rect: {
+          x: section.rect.x,
+          y: Math.min(0.95, section.rect.y + section.rect.h + 0.003),
+          w: Math.min(0.88, 0.96 - section.rect.x), h: 0.012
+        },
+        color: d.accent, width: 1.5, style: 'solid', dir: 'h', heads: 'none'
+      }, 'section-line');
+      added++;
+    }
+    if (!d.cards) return;
+    for (let i = 0; i < fields.length - 1; i++) {
+      const prompt = fields[i], answer = fields[i + 1];
+      if (prompt.type !== 'label' || !prompt.config?.bold || prompt.config?.section || TYPES[answer.type]?.decor) continue;
+      const y = Math.max(0.036, prompt.rect.y - 0.008);
+      const bottom = Math.min(0.956, answer.rect.y + answer.rect.h + 0.009);
+      if (bottom - y < MIN_H) continue;
+      addThemeField(pi + 1, {
+        type: 'rect', rect: { x: 0.047, y, w: 0.91, h: bottom - y },
+        color: d.accent, width: 1, style: 'solid', fill: d.card,
+        fillOpacity: 0.62, borderRadius: 7
+      }, 'card');
+      added++;
+      i++; // la respuesta ya forma parte de esta tarjeta
+    }
+  });
+  return added;
+}
+
+async function repaintBlankPages(color) {
+  const wb = await workbench();
+  for (let i = 0; i < state.pages.length; i++) {
+    const p = state.pages[i];
+    const r = await wb.evaluate((w, h, c) => window.owsBlankPage(w, h, c), p.w, p.h, color);
+    p.dataUrl = r.dataUrl;
+    state.files.set(p.image, dataUrlToBuffer(r.dataUrl));
+    Object.assign(state.manifest.pages[i], { bgColor: color, blank: true });
+  }
+}
+
+async function applyDesign(opts = {}) {
+  const st = require_();
+  const design = normalizedDesign(opts);
+  removeThemeFields();
+  st.design = design;
+  st.manifest.settings.fontFamily = design.fontFamily;
+
+  // Solo las hojas creadas por el MCP son fondos lisos reemplazables. Sobre un
+  // PDF o imagen se conserva intacto el material que aportó el profesor.
+  if (!st.source) await repaintBlankPages(design.paper);
+  styleContentFields();
+  let decorations = 0;
+  if (!st.source) {
+    for (let n = 1; n <= st.manifest.pages.length; n++) decorations += addBaseDecorations(n);
+    decorations += addQuestionCards();
+  }
+
+  const warnings = [...design.warnings];
+  if (st.source) warnings.push('Se conserva el diseño del documento original: no se cambia su fondo ni se añaden tarjetas sobre el texto impreso.');
+  return {
+    theme: design.name,
+    palette: { accent: design.accent, paper: design.paper, text: design.text, card: design.card },
+    fontFamily: design.fontFamily,
+    cards: design.cards && !st.source,
+    decorations,
+    warnings
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -276,7 +528,7 @@ function checkRect(rect, pageNo, type) {
   }
   // Un campo de respuesta encima de texto impreso lo deja ilegible. El aviso no
   // bloquea: a veces es justo lo que se busca (tapar la solución impresa).
-  if (type !== 'cover' && type !== 'label') {
+  if (!TYPES[type]?.decor) {
     for (const it of p.text) {
       if (overlap(r, it.rect) > 0.45) {
         warnings.push(`tapa el texto impreso «${it.str.trim().slice(0, 40)}»`);
@@ -379,18 +631,33 @@ function adjustField(id, patch) {
     field.rect = rect;
   }
   if (patch.points != null) field.points = Number(patch.points);
+  if (patch.fontScale != null) field.fontScale = Math.max(0.1, Number(patch.fontScale) || 1);
+  if (patch.fontFamily != null) {
+    if (patch.fontFamily) field.fontFamily = String(patch.fontFamily);
+    else delete field.fontFamily;
+  }
+  if (patch.rotate != null) {
+    const rotate = Number(patch.rotate) || 0;
+    if (rotate) field.rotate = rotate;
+    else delete field.rotate;
+  }
   if (patch.type && patch.type !== field.type) throw new Error('No se puede cambiar el tipo: borra el campo y crea otro.');
   // El resto de claves (answers, options, correct…) se reinterpretan con el
   // constructor del tipo, para no dejar el config a medias.
   const semantic = { ...patch };
   delete semantic.rect; delete semantic.points; delete semantic.type;
+  delete semantic.fontScale; delete semantic.fontFamily; delete semantic.rotate;
   if (Object.keys(semantic).length) {
     const merged = { type: field.type, rect: field.rect, points: field.points, ...fromConfig(field), ...semantic };
     const rebuilt = buildField(merged, field.id);
     field.config = rebuilt.field.config;
     warnings = [...warnings, ...rebuilt.warnings];
   }
-  return { id, page: pageNo, type: field.type, rect: field.rect, points: field.points, config: field.config, warnings };
+  return {
+    id, page: pageNo, type: field.type, rect: field.rect, points: field.points,
+    fontScale: field.fontScale, fontFamily: field.fontFamily, rotate: field.rotate,
+    config: field.config, warnings
+  };
 }
 
 // Los campos guardan su config ya expandida; para reconstruirla al editar basta
@@ -418,7 +685,11 @@ function listFields(n) {
   pages.forEach((p, i) => {
     const pageNo = n || i + 1;
     for (const f of p.fields) {
-      out.push({ id: f.id, page: pageNo, type: f.type, rect: f.rect, points: f.points, config: f.config });
+      out.push({
+        id: f.id, page: pageNo, type: f.type, rect: f.rect, points: f.points,
+        fontScale: f.fontScale, fontFamily: f.fontFamily, rotate: f.rotate,
+        designRole: f.designRole, config: f.config
+      });
     }
   });
   return { fields: out, totalFields: countFields(), totalPoints: totalPoints() };
@@ -494,8 +765,8 @@ async function addQuestions(items) {
 
   // Se continúa por debajo de lo que ya haya en la última página.
   let pagina = st.manifest.pages.length;
-  let y = MARGEN_ARRIBA;
-  const ocupados = st.manifest.pages[pagina - 1]?.fields || [];
+  let y = pageContentTop(pagina);
+  const ocupados = contentFields(st.manifest.pages[pagina - 1]);
   if (ocupados.length) y = Math.max(...ocupados.map(f => f.rect.y + f.rect.h)) + SEPARACION * 2;
 
   const specs = [];
@@ -510,23 +781,34 @@ async function addQuestions(items) {
     if (y + total > MARGEN_ABAJO) {
       pagina += 1;
       if (pagina > st.manifest.pages.length) await addBlankPage();
-      y = MARGEN_ARRIBA;
+      y = pageContentTop(pagina);
     }
 
     if (enunciado) {
       specs.push({ page: pagina, type: 'label', text: enunciado, bold: true,
+                   color: st.design?.text, fontScale: st.design ? 1.04 : 1,
+                   fontFamily: st.design?.fontFamily,
                    rect: { x: MARGEN_X, y, w: ANCHO, h: hEnunciado } });
       y += hEnunciado + 0.006;
     }
     const { prompt, ...resto } = item;
-    specs.push({ ...resto, page: pagina, rect: { x: MARGEN_X, y, w: anchoCampo(item), h: hCampo } });
+    const themed = st.design ? {
+      fontFamily: st.design.fontFamily,
+      ...(item.type === 'label'
+        ? { color: st.design.accent, bold: true, fontScale: 1.28, section: true }
+        : { bg: '#ffffff', bgOpacity: 0.96, fgColor: st.design.text })
+    } : {};
+    specs.push({ ...resto, ...themed, page: pagina, rect: { x: MARGEN_X, y, w: anchoCampo(item), h: hCampo } });
     y += hCampo + SEPARACION;
   }
 
   const res = placeFields(specs);
+  styleContentFields();
+  const decorationsAdded = addQuestionCards();
   return {
     ...res,
     paginas: st.manifest.pages.length,
+    decorationsAdded,
     aviso: 'Mira preview_page de cada página para comprobar cómo ha quedado; con adjust_field puedes recolocar lo que no encaje.'
   };
 }
@@ -564,7 +846,8 @@ function pageFiles(p, mp) {
 }
 
 function legendOf(fields) {
-  return fields.map((f, i) => `${i + 1}. ${f.type} (${f.id}) — ${f.noScore ? 'sin nota' : f.points + ' pt'}`);
+  return fields.filter(f => !isThemeField(f))
+    .map((f, i) => `${i + 1}. ${f.type} (${f.id}) — ${f.noScore ? 'sin nota' : f.points + ' pt'}`);
 }
 
 // Vista previa: la ficha montada con el visor real del alumnado (js/player.js)
@@ -587,7 +870,13 @@ async function preview(n, opts = {}) {
       const rect = await v.evaluate(
         (m, files, o) => window.owsRenderReal(m, files, o),
         { ...st.manifest, pages: [mp] }, pageFiles(p, mp),
-        { width, grid: Boolean(opts.grid), marks: opts.marks !== false }
+        {
+          width, grid: Boolean(opts.grid), marks: opts.marks !== false,
+          // La decoración automática ya se ve por sí misma. Marcar también
+          // cada tarjeta, franja y número llenaría la vista de etiquetas y
+          // ocultaría justo la jerarquía visual que se quiere comprobar.
+          markFields: mp.fields.filter(f => !isThemeField(f))
+        }
       );
       const base64 = await v.screenshot({
         x: Math.max(0, Math.floor(rect.x - 2)),
@@ -661,6 +950,12 @@ function setMeta(meta = {}) {
   for (const k of ['title', 'author', 'instructions', 'lang']) {
     if (meta[k] != null) st.manifest[k] = String(meta[k]);
   }
+  if (meta.title != null && st.design) {
+    for (const p of st.manifest.pages) {
+      const title = p.fields.find(f => f.designRole === 'mcp-theme-header-title');
+      if (title) title.config.text = st.manifest.title;
+    }
+  }
   if (meta.settings) Object.assign(st.manifest.settings, meta.settings);
   return { title: st.manifest.title, author: st.manifest.author, instructions: st.manifest.instructions, lang: st.manifest.lang, settings: st.manifest.settings };
 }
@@ -682,7 +977,7 @@ function save(file) {
 }
 
 module.exports = {
-  openDocument, createWorksheet, addBlankPage, addQuestions,
+  openDocument, createWorksheet, addBlankPage, addQuestions, applyDesign,
   readLayout, placeFields, adjustField, removeFields,
   listFields, preview, redact, setMeta, save, reset
 };

@@ -146,6 +146,11 @@ fields, **checks the result on a preview with the fields drawn on top** —fixin
 whatever is misplaced— and saves the `.owpkg` you then open with **File → Open
 worksheet**.
 
+The same server can also create a worksheet from scratch. In that case it can
+apply an accessible visual theme with page colour, typography, a header,
+separators and cards that group questions. The AI can also place editable text,
+lines, arrows, rectangles, ellipses and polygons directly on the worksheet.
+
 In the editor, "Creating or converting worksheets with AI (MCP)" sums it up in
 one screen: **installing it is your AI's job**. You copy the instructions shown
 there, paste them into its chat, and it downloads the server, registers it and

@@ -2957,21 +2957,21 @@ body.resizing-col { cursor: col-resize; }
 .image-change-btn svg { width: 16px; height: 16px; flex-shrink: 0; vertical-align: middle; }
 /* Formas de dibujo (línea, flecha, rectángulo, elipse) */
 .wpf-shape { display: block; width: 100%; height: 100%; overflow: visible; }
-.wpf-field-line, .wpf-field-arrow, .wpf-field-rect, .wpf-field-ellipse { pointer-events: none; }
+.wpf-field-line, .wpf-field-arrow, .wpf-field-rect, .wpf-field-ellipse, .wpf-field-polygon { pointer-events: none; }
 /* Editor: formas */
-.ed-field-line, .ed-field-arrow, .ed-field-rect, .ed-field-ellipse {
+.ed-field-line, .ed-field-arrow, .ed-field-rect, .ed-field-ellipse, .ed-field-polygon {
   background: transparent;
   border-style: dashed;
   border-color: var(--tinta-tenue);
   overflow: visible;
 }
 .ed-field .wpf-shape { position: absolute; inset: 0; pointer-events: none; }
-.ed-field-line .chip, .ed-field-arrow .chip, .ed-field-rect .chip, .ed-field-ellipse .chip {
+.ed-field-line .chip, .ed-field-arrow .chip, .ed-field-rect .chip, .ed-field-ellipse .chip, .ed-field-polygon .chip {
   opacity: 0;
   transition: opacity 0.15s;
 }
-.ed-field-line:hover .chip, .ed-field-arrow:hover .chip, .ed-field-rect:hover .chip, .ed-field-ellipse:hover .chip,
-.ed-field-line.selected .chip, .ed-field-arrow.selected .chip, .ed-field-rect.selected .chip, .ed-field-ellipse.selected .chip {
+.ed-field-line:hover .chip, .ed-field-arrow:hover .chip, .ed-field-rect:hover .chip, .ed-field-ellipse:hover .chip, .ed-field-polygon:hover .chip,
+.ed-field-line.selected .chip, .ed-field-arrow.selected .chip, .ed-field-rect.selected .chip, .ed-field-ellipse.selected .chip, .ed-field-polygon.selected .chip {
   opacity: 1;
 }
 /* Editor: campo imagen */

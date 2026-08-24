@@ -162,8 +162,26 @@ args = ["/ruta/a/openworksheets-mcp/server.js"]
   con el formato validado por el servidor: si algo viene mal, la IA lo sabe al
   momento y se corrige.
 
+En las fichas creadas desde cero, `apply_design` aplica un sistema visual
+completo con las herramientas nativas de OpenWorksheets: fondo, tipografía,
+cabecera, jerarquía de títulos, separadores, numeración y tarjetas suaves para
+agrupar preguntas. Incluye cinco temas con buen contraste (`clean`, `science`,
+`math`, `warm` y `accessible`) y permite personalizar su paleta. Conviene
+llamarlo entre `create_worksheet` y `add_questions`, para que el colocador reserve
+la cabecera y las páginas nuevas hereden el mismo diseño. También funciona si ya
+hay preguntas.
+
+Sobre un PDF o una imagen aportados por el profesor, `apply_design` conserva el
+fondo y evita dibujar tarjetas que podrían tapar el documento original. Las
+formas se pueden colocar expresamente con `place_fields` cuando realmente hagan
+falta.
+
 Las dos se pueden mezclar en la misma ficha: partir de un PDF y añadir preguntas
 nuevas al final.
+
+Para crear desde cero, el orden recomendado es `create_worksheet`,
+`apply_design`, `add_questions`, `preview_page`, los ajustes necesarios y
+`save_worksheet`.
 
 ## Cómo trabaja la IA
 
@@ -196,7 +214,8 @@ que no hay que pensar en píxeles ni en la resolución del PDF.
 `text` (respuesta corta), `number`, `formula`, `essay`, `single`, `multi`,
 `select`, `truefalse`, `gaps`, `table`, `record`, `match`, `order`, y los que
 se dibujan sobre el documento: `textboxes` (huecos), `checkbox` (casillas) y
-`dragdrop` (arrastrar a zonas). Más los decorativos `label` y `cover`.
+`dragdrop` (arrastrar a zonas). Más los decorativos `label`, `cover`, `line`,
+`rect`, `ellipse` y `polygon`.
 
 `textboxes` y `checkbox` funcionan como `dragdrop`: sus cajas van en `boxes`,
 cada una con su `rect`, y el `rect` del campo puede omitirse porque se deduce de
@@ -220,9 +239,15 @@ continua y las zonas a trazos, cada una con la respuesta que espera.
 ```
 
 Quedan fuera, de momento, el modo «recortar del PDF» de arrastrar a zonas (que
-exige marcar trozos de imagen de la página), unir con flechas, los que cargan
-paquetes externos o medios (SCORM, contenido incrustado, imagen, vídeo, audio) y
-las formas de dibujo. Esos se añaden a mano en el editor.
+exige marcar trozos de imagen de la página), unir elementos como pregunta con
+flechas y los que cargan paquetes externos o medios (SCORM, contenido
+incrustado, imagen, vídeo y audio). Esos se añaden a mano en el editor.
+
+Las formas admiten los mismos rasgos principales que en el editor: color,
+grosor y estilo de trazo; relleno y opacidad; esquinas redondeadas; flechas con
+una o dos puntas; y giro. Los campos con texto admiten además tamaño y tipografía
+propios. Para una ficha completa suele ser preferible `apply_design`, que aplica
+estas posibilidades con una composición consistente y sin saturar la página.
 
 ## Tapar o borrar
 

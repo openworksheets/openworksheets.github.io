@@ -31,9 +31,10 @@ pantalla y termina con `__TEST_OK__` o `__TEST_FAIL__`.
   cualquier ordenador. No necesita navegador ni servidor
   (`node tests/run_chrome_detect.js`).
 - `run_mcp_ficha.js` — servidor MCP (`mcp/server.js`): habla el protocolo por
-  stdio como lo haría una IA y recorre el circuito completo (abrir un PDF, leer
-  sus coordenadas, colocar campos, previsualizar, ajustar, borrar y guardar el
-  `.owpkg`). Con un PDF propio: `node tests/run_mcp_ficha.js ruta/al.pdf`.
+  stdio como lo haría una IA y recorre el circuito completo (crear desde cero,
+  aplicar un tema visual, colocar formas, abrir un PDF, leer sus coordenadas,
+  colocar campos, previsualizar, ajustar, borrar y guardar el `.owpkg`). Con un
+  PDF propio: `node tests/run_mcp_ficha.js ruta/al.pdf`.
   Necesita Chromium; no necesita el servidor del puerto 8765.
 - `run_ampos_editor.js` — script de puppeteer aparte: dibuja con el ratón las
   áreas de un par de «Unir con flechas» en el editor real y comprueba que el

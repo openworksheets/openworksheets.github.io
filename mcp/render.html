@@ -148,7 +148,7 @@ window.owsRenderReal = async function (manifest, archivos, opts = {}) {
 
   hideFixed();
   if (opts.grid) grid(pageEl);
-  if (opts.marks !== false) mark(pageEl, manifest.pages[0].fields || []);
+  if (opts.marks !== false) mark(pageEl, opts.markFields || manifest.pages[0].fields || []);
   await new Promise(r => requestAnimationFrame(r));
 
   const r = pageEl.getBoundingClientRect();

@@ -7,10 +7,10 @@
 // el editor (js/fieldtypes.js). Es el mismo principio que ya aplica
 // js/aiimport.js, pero conservando la posición sobre el documento.
 
-// Tipos admitidos en esta primera versión: los que ocupan un rectángulo y se
-// entienden solos. Quedan fuera los que exigen colocar varios elementos
-// relacionados en 2D (arrastrar a zonas, unir con flechas, huecos sobre el
-// documento) y los que cargan paquetes externos (SCORM, embed).
+// Tipos que la IA puede describir de forma semántica. Además de las preguntas,
+// se incluyen los elementos de diseño que no necesitan cargar un archivo: texto,
+// tapado, líneas y formas. Los medios y paquetes externos siguen fuera porque
+// exigen importar, validar y empaquetar recursos binarios.
 const TYPES = {
   text: {
     label: 'respuesta corta escrita',
@@ -232,7 +232,8 @@ const TYPES = {
       text: String(s.text || ''),
       color: String(s.color || '#1d2c42'),
       bold: Boolean(s.bold),
-      align: ['left', 'center', 'right'].includes(s.align) ? s.align : 'left'
+      align: ['left', 'center', 'right'].includes(s.align) ? s.align : 'left',
+      ...(s.section ? { section: true } : {})
     })
   },
   cover: {
@@ -240,6 +241,63 @@ const TYPES = {
     decor: true,
     defRect: { w: 0.25, h: 0.05 },
     build: s => ({ color: String(s.color || '#ffffff'), opacity: s.opacity == null ? 1 : Number(s.opacity) })
+  },
+  line: {
+    label: 'línea o flecha decorativa (no puntúa)',
+    decor: true,
+    defRect: { w: 0.25, h: 0.02 },
+    build: s => ({
+      color: String(s.color || '#1d2c42'),
+      width: Math.max(0.5, Number(s.width) || 2),
+      style: ['solid', 'dashed', 'dotted'].includes(s.style) ? s.style : 'solid',
+      dir: ['h', 'v', 'd1', 'd2'].includes(s.dir) ? s.dir : 'h',
+      heads: ['none', 'end', 'both'].includes(s.heads) ? s.heads : 'none',
+      invert: Boolean(s.invert)
+    })
+  },
+  rect: {
+    label: 'rectángulo decorativo, con borde y/o relleno (no puntúa)',
+    decor: true,
+    defRect: { w: 0.25, h: 0.12 },
+    build: s => ({
+      color: String(s.color || '#1d2c42'),
+      width: Math.max(0.5, Number(s.width) || 2),
+      style: ['solid', 'dashed', 'dotted'].includes(s.style) ? s.style : 'solid',
+      noStroke: Boolean(s.noStroke),
+      fill: String(s.fill || ''),
+      fillOpacity: s.fillOpacity == null ? 1 : Math.max(0, Math.min(1, Number(s.fillOpacity))),
+      borderRadius: Math.max(0, Math.min(50, Number(s.borderRadius) || 0)),
+      square: Boolean(s.square)
+    })
+  },
+  ellipse: {
+    label: 'elipse o círculo decorativo, con borde y/o relleno (no puntúa)',
+    decor: true,
+    defRect: { w: 0.2, h: 0.12 },
+    build: s => ({
+      color: String(s.color || '#1d2c42'),
+      width: Math.max(0.5, Number(s.width) || 2),
+      style: ['solid', 'dashed', 'dotted'].includes(s.style) ? s.style : 'solid',
+      noStroke: Boolean(s.noStroke),
+      fill: String(s.fill || ''),
+      fillOpacity: s.fillOpacity == null ? 1 : Math.max(0, Math.min(1, Number(s.fillOpacity))),
+      circle: Boolean(s.circle)
+    })
+  },
+  polygon: {
+    label: 'polígono decorativo de 3 a 20 lados (no puntúa)',
+    decor: true,
+    defRect: { w: 0.18, h: 0.18 },
+    build: s => ({
+      sides: Math.max(3, Math.min(20, parseInt(s.sides, 10) || 5)),
+      color: String(s.color || '#1d2c42'),
+      width: Math.max(0.5, Number(s.width) || 2),
+      style: ['solid', 'dashed', 'dotted'].includes(s.style) ? s.style : 'solid',
+      noStroke: Boolean(s.noStroke),
+      fill: String(s.fill || ''),
+      fillOpacity: s.fillOpacity == null ? 1 : Math.max(0, Math.min(1, Number(s.fillOpacity))),
+      regular: s.regular !== false
+    })
   }
 };
 
@@ -277,6 +335,11 @@ function isType(type) {
 function buildField(spec, id) {
   const def = TYPES[spec.type];
   const config = def.build(spec);
+  // Fondo y color comunes a los campos de respuesta. Los constructores de cada
+  // tipo no tienen que repetirlos, pero el visor los entiende en todos ellos.
+  if (spec.bg) config.bg = String(spec.bg);
+  if (spec.bgOpacity != null) config.bgOpacity = Math.max(0, Math.min(1, Number(spec.bgOpacity)));
+  if (spec.fgColor) config.fgColor = String(spec.fgColor);
   const warnings = [];
   const problem = def.check ? def.check(config) : null;
   if (problem) warnings.push(problem);
@@ -289,6 +352,8 @@ function buildField(spec, id) {
     fontScale: Number(spec.fontScale) || 1,
     config
   };
+  if (spec.fontFamily) field.fontFamily = String(spec.fontFamily);
+  if (Number.isFinite(Number(spec.rotate)) && Number(spec.rotate) !== 0) field.rotate = Number(spec.rotate);
   if (!def.decor && spec.noScore) {
     field.noScore = true;
     field.points = 0;

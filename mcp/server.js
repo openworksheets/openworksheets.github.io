@@ -73,9 +73,29 @@ const FIELD_SPEC = {
     examples: { type: 'array', description: 'table: celdas ya rellenas como ejemplo, misma forma que rows con true/false.', items: {} },
     scoreMode: { type: 'string', description: 'record: "manual" (lo puntúa el profesor) o "participation" (grabar algo da los puntos).' },
     maxSec: { type: 'integer', description: 'record: duración máxima de la grabación, en segundos.' },
-    color: { type: 'string' },
-    bold: { type: 'boolean' },
-    align: { type: 'string' }
+    color: { type: 'string', description: 'label/cover/formas: color del texto, tapado o borde, en formato CSS.' },
+    bold: { type: 'boolean', description: 'label: texto en negrita.' },
+    align: { type: 'string', description: 'label: "left", "center" o "right".' },
+    fontScale: { type: 'number', description: 'Multiplicador del tamaño de letra (1 por defecto).' },
+    fontFamily: { type: 'string', description: 'Fuente propia del campo: atkinson, lexend, opendyslexic, andika, patrick, nunito, lora o mono.' },
+    rotate: { type: 'number', description: 'label/formas: giro en grados.' },
+    bg: { type: 'string', description: 'Campos de respuesta: color de fondo.' },
+    bgOpacity: { type: 'number', description: 'Campos de respuesta: opacidad del fondo, de 0 a 1.' },
+    fgColor: { type: 'string', description: 'Campos de respuesta: color de texto.' },
+    opacity: { type: 'number', description: 'cover: opacidad de 0 a 1.' },
+    width: { type: 'number', description: 'Formas: grosor del trazo en píxeles.' },
+    style: { type: 'string', description: 'Formas: "solid", "dashed" o "dotted".' },
+    dir: { type: 'string', description: 'line: "h", "v", "d1" o "d2".' },
+    heads: { type: 'string', description: 'line: "none", "end" o "both".' },
+    invert: { type: 'boolean', description: 'line: invierte una flecha de una punta.' },
+    noStroke: { type: 'boolean', description: 'rect/ellipse/polygon: forma sin borde.' },
+    fill: { type: 'string', description: 'rect/ellipse/polygon: color de relleno; vacío significa sin relleno.' },
+    fillOpacity: { type: 'number', description: 'rect/ellipse/polygon: opacidad del relleno, de 0 a 1.' },
+    borderRadius: { type: 'number', description: 'rect: redondeo de esquinas, de 0 a 50.' },
+    square: { type: 'boolean', description: 'rect: conservar forma cuadrada.' },
+    circle: { type: 'boolean', description: 'ellipse: conservar forma circular.' },
+    sides: { type: 'integer', description: 'polygon: número de lados, de 3 a 20.' },
+    regular: { type: 'boolean', description: 'polygon: conservar las proporciones regulares.' }
   },
   required: ['page', 'type', 'rect']
 };
@@ -152,6 +172,30 @@ const TOOLS = [
     run: a => session.addQuestions(a.items || [])
   },
   {
+    name: 'apply_design',
+    description: [
+      'Aplica a la ficha un diseño coherente y accesible usando las herramientas nativas de OWS: tipografía, fondo, cabecera, jerarquía de textos, separadores y tarjetas suaves para agrupar preguntas.',
+      '',
+      'En fichas creadas desde cero, conviene llamarla DESPUÉS de create_worksheet y ANTES de add_questions: así el colocador reserva el espacio de la cabecera y hereda el tema en las páginas nuevas. Si ya hay preguntas, también puede aplicarse: estiliza lo existente y añade las tarjetas por detrás sin tapar los campos.',
+      '',
+      'Los temas mantienen buen contraste y una decoración contenida. En un PDF aportado por el profesor no cambia el fondo ni dibuja tarjetas sobre el documento; limita el cambio a tipografía y textos añadidos para respetar su diseño original.'
+    ].join('\n'),
+    inputSchema: {
+      type: 'object',
+      properties: {
+        theme: { type: 'string', description: 'Tema: "clean", "science", "math", "warm" o "accessible".' },
+        accentColor: { type: 'string', description: 'Color principal opcional (#RRGGBB).' },
+        paperColor: { type: 'string', description: 'Color de la hoja opcional (#RRGGBB).' },
+        textColor: { type: 'string', description: 'Color del texto opcional (#RRGGBB); se corrige si no tiene contraste suficiente.' },
+        cardColor: { type: 'string', description: 'Color de las tarjetas opcional (#RRGGBB).' },
+        fontFamily: { type: 'string', description: 'atkinson, lexend, opendyslexic, andika, patrick, nunito, lora o mono.' },
+        cards: { type: 'boolean', description: 'Agrupar visualmente las preguntas en tarjetas suaves (sí por defecto).' },
+        header: { type: 'boolean', description: 'Añadir cabecera con el título cuando haya sitio (sí por defecto).' }
+      }
+    },
+    run: a => session.applyDesign(a)
+  },
+  {
     name: 'read_layout',
     description: 'Lee una página: sus líneas de texto con las coordenadas de cada una y los candidatos a hueco de respuesta (rachas de guiones bajos y líneas horizontales impresas). Úsalo para saber dónde colocar cada campo antes de place_fields.',
     inputSchema: {
@@ -166,7 +210,7 @@ const TOOLS = [
   },
   {
     name: 'place_fields',
-    description: 'Coloca uno o varios campos de respuesta sobre el documento. Avisa (sin bloquear) si un campo se solapa con otro o tapa texto impreso. Después conviene mirar preview_page para comprobar que han caído en su sitio.',
+    description: 'Coloca uno o varios campos de respuesta o elementos de diseño sobre la página. Avisa (sin bloquear) si un campo se solapa con otro o tapa texto impreso. Después conviene mirar preview_page para comprobar que han caído en su sitio.',
     inputSchema: {
       type: 'object',
       properties: { fields: { type: 'array', items: FIELD_SPEC } },
@@ -220,7 +264,15 @@ const TOOLS = [
         items: { type: 'array', items: { type: 'string' } },
         pairs: { type: 'array', items: { type: 'object' } },
         zones: { type: 'array', items: { type: 'object' }, description: 'dragdrop: sustituye todas las zonas de destino.' },
-        distractors: { type: 'array', items: { type: 'string' } }
+        distractors: { type: 'array', items: { type: 'string' } },
+        color: { type: 'string' }, bold: { type: 'boolean' }, align: { type: 'string' },
+        fontScale: { type: 'number' }, fontFamily: { type: 'string' }, rotate: { type: 'number' },
+        bg: { type: 'string' }, bgOpacity: { type: 'number' }, fgColor: { type: 'string' },
+        opacity: { type: 'number' }, width: { type: 'number' }, style: { type: 'string' },
+        dir: { type: 'string' }, heads: { type: 'string' }, invert: { type: 'boolean' },
+        noStroke: { type: 'boolean' }, fill: { type: 'string' }, fillOpacity: { type: 'number' },
+        borderRadius: { type: 'number' }, square: { type: 'boolean' }, circle: { type: 'boolean' },
+        sides: { type: 'integer' }, regular: { type: 'boolean' }
       },
       required: ['id']
     },
@@ -310,8 +362,10 @@ const INSTRUCTIONS = [
   '  6. redact_areas si hay soluciones impresas u otras zonas que deban desaparecer.',
   '  7. set_worksheet_info y save_worksheet.',
   '',
-  'Orden de trabajo sin documento: create_worksheet, add_questions, preview_page para mirar cómo ha',
-  'quedado, adjust_field lo que no encaje, set_worksheet_info y save_worksheet.',
+  'Orden de trabajo sin documento: create_worksheet, apply_design, add_questions, preview_page para',
+  'mirar cómo ha quedado, adjust_field lo que no encaje, set_worksheet_info y save_worksheet.',
+  'Usa apply_design salvo que el profesor pida expresamente una ficha sin decoración. El diseño debe',
+  'ayudar a leer y agrupar; no añadas formas gratuitas que distraigan de las preguntas.',
   '',
   'Todas las coordenadas van en fracciones de la página (0–1), con el origen arriba a la izquierda.',
   '',

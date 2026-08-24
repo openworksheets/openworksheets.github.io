@@ -146,6 +146,11 @@ col·loca els camps, **comprova el resultat en una vista prèvia amb els camps
 dibuixats a sobre** —corregint el que estigui desplaçat— i desa el `.owpkg` que
 després obres amb **Arxiu → Obrir fitxa**.
 
+El mateix servidor també pot crear la fitxa des de zero. En aquest cas aplica
+un tema visual accessible amb fons, tipografia, capçalera, separadors i targetes
+per agrupar les preguntes. La IA també pot col·locar directament text, línies,
+fletxes, rectangles, el·lipses i polígons, tots editables després a OWS.
+
 A l'editor, «Crear o convertir fitxes amb IA (MCP)» ho resumeix en una
 pantalla: **instal·lar-lo és cosa de la teva IA**. Copies les instruccions que
 hi ha, les enganxes al seu xat i ella descarrega el servidor, el registra i

@@ -9,6 +9,16 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.31.0] — 2026-08-24
+
+### Añadido
+- **El servidor MCP diseña las fichas creadas desde cero**. La nueva herramienta `apply_design` aplica un sistema visual editable con fondo, tipografía, cabecera, numeración, separadores y tarjetas para agrupar preguntas. Incluye cinco temas con buen contraste (`clean`, `science`, `math`, `warm` y `accessible`), admite paletas personalizadas y corrige automáticamente un color de texto que no alcance contraste 4.5:1. En PDFs e imágenes conserva el diseño original para no tapar el material aportado.
+- **Formas nativas desde la IA**. `place_fields` y `adjust_field` admiten ahora líneas, flechas, rectángulos, elipses y polígonos, con color, relleno, opacidad, grosor, estilo de trazo, puntas, giro y esquinas redondeadas. También se exponen tamaño, tipografía y colores de los campos con texto.
+
+### Cambiado
+- **La vista previa distingue contenido y decoración automática**. La ficha se renderiza completa, pero las marcas numeradas no rodean cada tarjeta, franja o número de página, para que la IA pueda valorar la jerarquía visual sin una nube de etiquetas superpuestas.
+
+
 ## [1.30.1] — 2026-08-23
 
 ### Cambiado

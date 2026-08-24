@@ -75,11 +75,14 @@ function checkVendorCopies() {
   srv.stdin.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n');
 
   const tools = (await rpc('tools/list', {})).result.tools;
-  check('lista de herramientas', tools.length === 12, tools.map(t => t.name).join(', '));
+  check('lista de herramientas', tools.length === 13 && tools.some(t => t.name === 'apply_design'), tools.map(t => t.name).join(', '));
 
   // Ficha desde cero: sin documento debajo y con las preguntas colocándose solas
   const enBlanco = (await call('create_worksheet', { title: 'Prueba en blanco', size: 'a4' })).json;
   check('crea una ficha en blanco', enBlanco.pages.length === 1 && enBlanco.pages[0].w === 1600);
+  const design = (await call('apply_design', { theme: 'science' })).json;
+  check('aplica un tema visual', design.theme === 'science' && design.decorations >= 4 && design.fontFamily === 'andika',
+    `${design.decorations} elementos decorativos`);
   const puestas = (await call('add_questions', { items: [
     { type: 'label', text: 'Sección' },
     { type: 'text', prompt: '¿Pregunta corta?', answers: ['sí'] },
@@ -88,11 +91,30 @@ function checkVendorCopies() {
   ] })).json;
   // Cuatro items: el «label» va solo, y las otras tres llevan enunciado y campo
   check('coloca las preguntas solas', puestas.placed.length === 7, `${puestas.placed.length} campos, enunciados incluidos`);
+  check('añade tarjetas y separadores', puestas.decorationsAdded === 4, `${puestas.decorationsAdded} elementos`);
   const sinSolape = puestas.placed.every((f, i, todos) =>
     todos.slice(i + 1).every(o => o.page !== f.page || o.rect.y >= f.rect.y + f.rect.h - 0.001 || f.rect.y >= o.rect.y + o.rect.h - 0.001));
   check('no se solapan entre sí', sinSolape);
   check('todo dentro de la página', puestas.placed.every(f => f.rect.y + f.rect.h <= 0.96));
 
+  const designFields = (await call('list_fields', { page: 1 })).json.fields;
+  const header = designFields.find(f => f.designRole === 'mcp-theme-header');
+  check('la cabecera usa formas nativas de OWS', header?.type === 'rect' && header.config.fill === '#1f6f5f');
+  const shape = (await call('place_fields', { fields: [{
+    page: 1, type: 'line', rect: { x: 0.62, y: 0.93, w: 0.28, h: 0.02 },
+    color: '#1f6f5f', width: 3, style: 'dashed', heads: 'end'
+  }] })).json;
+  check('permite colocar líneas y flechas', shape.placed[0].type === 'line');
+  const shapeCfg = (await call('list_fields', { page: 1 })).json.fields.find(f => f.id === shape.placed[0].id).config;
+  check('conserva el estilo de la forma', shapeCfg.heads === 'end' && shapeCfg.style === 'dashed' && shapeCfg.width === 3);
+
+  const redesign = (await call('apply_design', { theme: 'accessible', textColor: '#ffffff', paperColor: '#ffffff' })).json;
+  const redesignedFields = (await call('list_fields', { page: 1 })).json.fields;
+  check('corrige una paleta sin contraste', redesign.warnings.some(w => /contraste 4\.5:1/.test(w)));
+  check('reaplica el tema sin duplicar tarjetas',
+    redesignedFields.filter(f => f.designRole === 'mcp-theme-card').length === 3);
+  const section = redesignedFields.find(f => f.type === 'label' && f.config.section);
+  check('conserva la jerarquía de sección al cambiar de tema', section?.fontScale === 1.28 && section.config.color === '#153e75');
 
   const doc = (await call('open_document', { path: PDF })).json;
   check('abre el documento', doc.pages.length >= 1, `${doc.pages.length} página(s)`);
