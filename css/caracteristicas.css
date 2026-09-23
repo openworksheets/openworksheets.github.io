@@ -109,12 +109,18 @@
   padding: 2px 8px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--rojo) 12%, var(--blanco));
-  color: var(--rojo);
+  /* El rojo de la marca no llega a 4.5:1 sobre este fondo; se usa el oscuro. */
+  color: var(--rojo-oscuro);
   font-size: 0.72rem;
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
 }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .feat-ai-badge { color: #ec8a7a; }
+}
+:root[data-theme='dark'] .feat-ai-badge { color: #ec8a7a; }
 
 .feat-card-ai .feat-ai-path ol {
   margin: 10px 0 12px;

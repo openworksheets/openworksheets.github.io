@@ -132,7 +132,8 @@ function buildRichSelect({ options, ariaLabel, className = '', placeholder = '' 
     class: `${className} wpf-richselect`.trim(),
     role: 'combobox',
     'aria-haspopup': 'listbox',
-    'aria-expanded': 'false'
+    'aria-expanded': 'false',
+    'aria-label': ariaLabel
   });
   const btn = el('button', {
     type: 'button',
@@ -1566,7 +1567,10 @@ const renderers = {
       const url = tokenImgUrl(label);
       if (url) {
         const img = document.createElement('img');
-        img.src = url; img.alt = crops ? '' : label; img.className = 'wpf-token-img';
+        // Un recorte del documento no tiene texto propio: se nombra por su
+        // posición en el orden barajado, que no delata la respuesta.
+        img.src = url; img.className = 'wpf-token-img';
+        img.alt = crops ? t('render.cropPiece', { n: tokenOrder.indexOf(tokens.indexOf(label)) + 1 }) : label;
         return img;
       }
       return document.createTextNode(label);
@@ -1919,6 +1923,7 @@ const renderers = {
           dot.classList.toggle('am-dot-active', id === pendingFrom);
           dot.classList.toggle('am-dot-connected',
             connections.some(c => c.from === id || c.to === id));
+          dot.closest('[tabindex]')?.setAttribute('aria-pressed', String(id === pendingFrom));
         });
       }
 
@@ -1955,6 +1960,8 @@ const renderers = {
         hs.appendChild(dot);
         dotMap.set(item.id, dot);
         hs.addEventListener('click', e => { e.stopPropagation(); handleHotspotClick(item); });
+        amKeyboard(hs, item, (item.side === 'left' ? leftItems : rightItems).indexOf(item),
+          () => handleHotspotClick(item));
         page.appendChild(hs);
       });
 
@@ -2058,6 +2065,7 @@ const renderers = {
         dot.classList.toggle('am-dot-active', id === pendingFrom);
         dot.classList.toggle('am-dot-connected',
           connections.some(c => c.from === id || c.to === id));
+        dot.closest('[tabindex]')?.setAttribute('aria-pressed', String(id === pendingFrom));
       });
     }
 
@@ -2093,6 +2101,8 @@ const renderers = {
       div.appendChild(dot);
       dotMap.set(item.id, dot);
       dot.addEventListener('click', e => { e.stopPropagation(); handleDotClick(item); });
+      amKeyboard(dot, item, (item.side === 'left' ? leftItems : rightItems).indexOf(item),
+        () => handleDotClick(item));
       return div;
     }
 
@@ -2135,6 +2145,21 @@ const renderers = {
     };
   }
 };
+
+// «Unir con flechas» también se maneja con el teclado: cada elemento entra en
+// el orden de tabulación e Intro o Espacio hacen lo mismo que el clic.
+function amKeyboard(node, item, index, onActivate) {
+  node.setAttribute('tabindex', '0');
+  node.setAttribute('role', 'button');
+  node.setAttribute('aria-label', item.label ||
+    t(item.side === 'left' ? 'render.amLeftN' : 'render.amRightN', { n: index + 1 }));
+  node.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    e.stopPropagation();
+    onActivate();
+  });
+}
 
 // Opción única: radios con barajado opcional.
 function choiceList(field, root, ctx) {

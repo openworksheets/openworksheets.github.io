@@ -125,9 +125,9 @@ function showError(message) {
 function askWorksheetPassword(ficha) {
   return new Promise(resolve => {
     root.textContent = '';
-    const pass = el('input', { type: 'password', autocomplete: 'off', required: '' });
+    const pass = el('input', { type: 'password', id: 'alFichaClave', autocomplete: 'off', required: '' });
     const form = el('form', {},
-      el('label', { class: 'f-label' }, t('player.passwordLabel')),
+      el('label', { class: 'f-label', for: 'alFichaClave' }, t('player.passwordLabel')),
       pass,
       el('div', { style: 'margin-top:18px;text-align:center' },
         el('button', { class: 'btn primary', type: 'submit' }, t('player.startBtn'))));
@@ -183,9 +183,9 @@ function showOpener() {
     }
   });
 
-  const urlInput = el('input', { type: 'url', placeholder: t('alumno.urlPlaceholder') });
+  const urlInput = el('input', { type: 'url', id: 'alEnlace', placeholder: t('alumno.urlPlaceholder') });
   const form = el('form', {},
-    el('label', { class: 'f-label' }, t('alumno.linkLabel')),
+    el('label', { class: 'f-label', for: 'alEnlace' }, t('alumno.linkLabel')),
     urlInput,
     el('div', { style: 'margin-top:12px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap' },
       el('button', { class: 'btn primary', type: 'submit' }, t('alumno.openBtn')),

@@ -1,7 +1,8 @@
 // Contador de visitas con el sistema propio de estadísticas en IONOS.
 // Lee los metadatos analytics-* del HTML y registra la visita en segundo
 // plano (JSONP con timeout). Una visita por navegador cada 30 minutos.
-// Sin IP, sin cookies de analítica.
+// Sin IP, sin cookies de analítica. No se carga en las páginas del alumnado
+// (alumno.html) ni en la de entregas.
 //
 // Las cifras no se muestran nunca en la interfaz: se consultan solo desde
 // el panel privado. La respuesta del servidor se descarta.
@@ -28,6 +29,8 @@
     if (protocol !== 'http:' && protocol !== 'https:') return false;
     if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return false;
     if (/\.local$/.test(host)) return false;
+    // Un enlace de entrega (#e=…) abre la portada y salta a entregas: no se cuenta.
+    if (String(window.location.hash).indexOf('#e=') === 0) return false;
     return true;
   }
 
@@ -63,7 +66,9 @@
     var query = new URLSearchParams();
     query.set('site', cfg.siteId);
     query.set('callback', callbackName);
-    query.set('page_url', window.location.href);
+    // Solo la página, sin parámetros ni «#»: ahí pueden viajar enlaces de
+    // fichas o entregas, que no deben salir del navegador.
+    query.set('page_url', window.location.origin + window.location.pathname);
     query.set('referrer', document.referrer || '');
     if (!countVisit) query.set('summary_only', '1');
 

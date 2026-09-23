@@ -265,3 +265,5 @@ El cifrado usa la **Web Crypto API** del navegador (sin biblioteca externa).
 ## Licencia
 
 [AGPLv3](LICENSE) · © Juan José de Haro
+
+OpenWorksheets se ha programado con ayuda de IA, en [cocreación, nivel 4 del MIAE](https://jjdeharo.github.io/miae/es/?nivel=4): el autor ha decidido el diseño y las funciones, y ha probado el programa numerosas veces, en situaciones diferentes, para detectar errores y aspectos que mejorar.

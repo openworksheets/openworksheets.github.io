@@ -282,3 +282,5 @@ Encryption uses the browser's **Web Crypto API** (no external library).
 ## License
 
 [AGPLv3](LICENSE) · © Juan José de Haro
+
+OpenWorksheets was programmed with the help of AI, in [co-creation, level 4 of MIAE](https://jjdeharo.github.io/miae/en/?nivel=4): the author decided the design and the features, and tested the program many times, in different situations, to find errors and things to improve.

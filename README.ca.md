@@ -265,3 +265,5 @@ El xifratge usa la **Web Crypto API** del navegador (sense biblioteca externa).
 ## Llicència
 
 [AGPLv3](LICENSE) · © Juan José de Haro
+
+OpenWorksheets s'ha programat amb ajuda d'IA, en [cocreació, nivell 4 del MIAE](https://jjdeharo.github.io/miae/ca/?nivel=4): l'autor n'ha decidit el disseny i les funcions, i ha provat el programa moltes vegades, en situacions diferents, per detectar-hi errors i aspectes que cal millorar.

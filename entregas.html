@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OpenWorksheets · Ver y verificar entregas</title>
   <meta name="description" content="Abre los archivos de entrega del alumnado para ver la puntuación, las respuestas a cada pregunta y comprobar que no se han modificado.">
-  <meta name="analytics-endpoint" content="https://bilateria.org/app/estadistica/openworksheets/track.php">
-  <meta name="analytics-site-id" content="openworksheets">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/app.css">
   <script>(function(){var t=localStorage.getItem('wpf-tema');if(t)document.documentElement.setAttribute('data-theme',t);})();</script>
@@ -53,12 +51,16 @@
       <a href="https://github.com/openworksheets/openworksheets.github.io/issues" target="_blank" rel="noopener" data-i18n="footer.issues">Problemas y sugerencias</a>
       <span class="pie-sep">·</span>
       <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener">AGPLv3</a>
+      <span class="pie-sep">·</span>
+      <details class="pie-priv">
+        <summary data-i18n="footer.ai">Uso de IA</summary>
+        <p data-i18n-html="footer.aiNotice">OpenWorksheets se ha programado con ayuda de IA, en <a href="https://jjdeharo.github.io/miae/es/?nivel=4" target="_blank" rel="noopener">cocreación, nivel 4 del MIAE</a>: el autor ha decidido el diseño y las funciones, y ha probado el programa numerosas veces, en situaciones diferentes, para detectar errores y aspectos que mejorar.</p>
+      </details>
     </span>
   </footer>
 
   <script src="config.js"></script>
   <script src="js/theme.js"></script>
-  <script src="js/analytics.js" defer></script>
   <script type="module" src="js/entregas.js"></script>
 </body>
 </html>

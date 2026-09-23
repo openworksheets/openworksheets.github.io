@@ -46,9 +46,9 @@ function askDecryptPassword() {
         <h2>${esc(t('crypto.decryptTitle'))}</h2>
         <p>${esc(t('crypto.decryptIntro'))}</p>
         <p class="warn">${esc(t('crypto.decryptWarning'))}</p>
-        <label class="f-label">${esc(t('crypto.decryptPasswordLabel'))}</label>
+        <label class="f-label" for="descifrarClave">${esc(t('crypto.decryptPasswordLabel'))}</label>
         <div class="password-row">
-          <input type="password" autocomplete="current-password" required>
+          <input type="password" id="descifrarClave" autocomplete="current-password" required>
           <button type="button" class="pw-toggle" title="${esc(t('crypto.showPassword'))}">${EYE_SVG}</button>
         </div>
         <label class="check-row">

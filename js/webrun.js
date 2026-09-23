@@ -36,10 +36,10 @@ function showError(message) {
 function askFichaPassword(titulo) {
   return new Promise(resolve => {
     root.textContent = '';
-    const pass = el('input', { type: 'password', autocomplete: 'off', required: '' });
+    const pass = el('input', { type: 'password', id: 'alFichaClave', autocomplete: 'off', required: '' });
     const form = el('form', {},
       el('p', {}, t('alumno.encryptedDesc')),
-      el('label', { class: 'f-label' }, t('player.passwordLabel')),
+      el('label', { class: 'f-label', for: 'alFichaClave' }, t('player.passwordLabel')),
       pass,
       el('div', { style: 'margin-top:18px;text-align:center' },
         el('button', { class: 'btn primary', type: 'submit' }, t('player.startBtn'))));

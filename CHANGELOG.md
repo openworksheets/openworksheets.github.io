@@ -9,6 +9,20 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.32.0] — 2026-09-23
+
+### Añadido
+- **El pie declara el uso de IA**. Un desplegable «Uso de IA», junto al de privacidad, explica que la aplicación se ha programado con ayuda de IA en cocreación, nivel 4 del MIAE, con enlace al nivel en el idioma de la página, y qué ha hecho el autor: decidir el diseño y las funciones y probar el programa. Está en la portada, en Características y en Entregas, en los cinco idiomas, y también al final de los README.
+- **Registro de decisiones (ADR)** en `docs/adr`, empezando por la del contador de visitas.
+
+### Cambiado
+- **Las páginas del alumnado ya no cuentan visitas**. `alumno.html` y `entregas.html` no cargan el contador. En el resto, el contador envía solo la página, sin parámetros ni `#`: antes mandaba la dirección completa, y en entregas esa dirección puede llevar la entrega entera (`#e=…`). El aviso de privacidad lo dice.
+
+### Corregido
+- **Accesibilidad, según axe y con teclado**. Los campos de nombre, grupo, contraseña y enlace tenían la etiqueta al lado, pero sin asociarla, y un lector de pantalla los leía sin nombre. «Unir con flechas» no se podía usar con el teclado: ahora cada elemento se alcanza con Tab y se une con Intro o Espacio, con el foco visible. El desplegable de respuesta no tenía nombre accesible y las piezas recortadas del documento no tenían texto alternativo. Algunos colores no llegaban a 4.5:1: las etiquetas de zonas y parejas en el editor, las insignias de Características y, en modo oscuro, los botones principales, los enlaces y el aviso de éxito. El enlace «Características» de la barra no se veía en modo oscuro.
+- **El aviso del pie se salía de la pantalla en el móvil** cuando su rótulo quedaba al final de la línea. En pantalla estrecha ahora se centra en la ventana.
+
+
 ## [1.31.0] — 2026-08-24
 
 ### Añadido

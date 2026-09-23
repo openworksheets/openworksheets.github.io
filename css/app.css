@@ -120,7 +120,7 @@ h1 { font-size: 2rem; font-weight: 900; }
 h2 { font-size: 1.4rem; font-weight: 700; }
 h3 { font-size: 1.1rem; font-weight: 700; }
 p { margin: 0 0 0.8em; }
-a { color: var(--rojo); }
+a { color: var(--enlace, var(--rojo)); }
 small { color: var(--tinta-suave); }
 
 ::selection { background: var(--tinta); color: var(--papel); }
@@ -168,6 +168,17 @@ body.embed-mode .topbar { display: none; }
 :root[data-theme='dark'] .topbar .title-input { color: #f7f2e7; border-bottom-color: rgba(247, 242, 231, 0.4); }
 :root[data-theme='dark'] .topbar .title-input::placeholder { color: #93a2b8; }
 :root[data-theme='dark'] .topbar .brand { color: #f7f2e7; }
+/* En modo oscuro el rojo de la marca no llega a 4.5:1 ni como fondo del texto
+   blanco ni como texto sobre el fondo oscuro: los botones principales usan el
+   rojo oscuro, los enlaces uno claro y el aviso de éxito el verde del modo claro. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) { --enlace: #ec8a7a; }
+  :root:not([data-theme='light']) .btn.primary { background: var(--rojo-oscuro); }
+  :root:not([data-theme='light']) .wpf-toast[data-kind='ok'] { background: #2c7a4b; }
+}
+:root[data-theme='dark'] { --enlace: #ec8a7a; }
+:root[data-theme='dark'] .btn.primary { background: var(--rojo-oscuro); }
+:root[data-theme='dark'] .wpf-toast[data-kind='ok'] { background: #2c7a4b; }
 
 #btnTema { color: #f7f2e7; border-color: rgba(247, 242, 231, 0.3); font-size: 1rem; padding: 5px 9px; }
 #btnTema:hover { border-color: #f7f2e7; background: transparent; }
@@ -232,7 +243,7 @@ body.embed-mode .topbar { display: none; }
 .btn.ghost { background: transparent; box-shadow: none; border-color: var(--tinta-tenue); }
 .btn.ghost:hover { border-color: var(--tinta); }
 /* El topbar es siempre oscuro: los ghost dentro de él deben usar color claro */
-.topbar .btn.ghost { color: var(--papel); border-color: rgba(247, 242, 231, 0.3); }
+.topbar .btn.ghost { color: #f7f2e7; border-color: rgba(247, 242, 231, 0.3); }
 .topbar .btn.ghost:hover { border-color: rgba(247, 242, 231, 0.8); }
 .btn.small { padding: 5px 10px; font-size: 0.8rem; box-shadow: none; }
 .btn.danger { color: var(--rojo); border-color: var(--rojo); }
@@ -662,6 +673,11 @@ footer.pie .pie-priv p {
   text-align: left;
   font-size: 0.8rem;
   z-index: 50;
+}
+/* En pantalla estrecha el aviso se centra en la ventana: anclado a su rótulo,
+   el que queda al final de la línea se salía por la derecha. */
+@media (max-width: 720px) {
+  footer.pie .pie-priv p { position: fixed; top: 50%; bottom: auto; transform: translate(-50%, -50%); margin: 0; }
 }
 
 /* ---------- Diálogos ---------- */
@@ -1750,6 +1766,7 @@ body.resizing-col { cursor: col-resize; }
   color: #1d2c42;
   color-scheme: light;
   /* Fijar variables al modo claro para que los campos siempre se vean sobre el PDF blanco */
+  --enlace: #c63d2c;
   --papel: #f7f2e7;
   --papel-2: #efe7d5;
   --blanco: #fffdf8;
@@ -1959,7 +1976,8 @@ body.resizing-col { cursor: col-resize; }
 .ed-zone .chip {
   font-size: 0.62em;
   font-weight: 700;
-  background: var(--ambar);
+  /* Ámbar oscurecido: el de la variable no llega a 4.5:1 con el texto blanco. */
+  background: #946500;
   color: #fff;
   padding: 1px 6px;
   border-bottom-right-radius: 5px;
@@ -3367,6 +3385,9 @@ input.wpf-gap-input {
 .wpf-am-hs-right .wpf-am-dot { left: calc(-0.75cqw * var(--fs, 1)); right: auto; }
 .wpf-am-hotspot .wpf-am-dot { position: absolute; top: 50%; transform: translateY(-50%); }
 .wpf-am-hotspot.am-dot-active { border-style: solid; }
+/* Foco visible al recorrer los elementos con el teclado. */
+.wpf-am-hotspot:focus-visible,
+.wpf-am-dot:focus-visible { outline: 3px solid #1d2c42; outline-offset: 2px; }
 .wpf-am-svg-page {
   position: absolute;
   top: 0; left: 0;
@@ -3402,7 +3423,7 @@ input.wpf-gap-input {
   pointer-events: none;
 }
 .ed-amitem-left  .chip { background: #5377ad; }
-.ed-amitem-right .chip { background: #2a9d8f; }
+.ed-amitem-right .chip { background: #217a70; } /* más oscuro que el borde, para 4.5:1 con el blanco */
 .ed-amitem.selected { border-style: solid; z-index: 5; }
 .ed-amitem-left.selected  { border-color: #3a5a8a; }
 .ed-amitem-right.selected { border-color: #1a7a70; }
