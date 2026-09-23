@@ -13,6 +13,7 @@ Las versiones publicadas también están en la página de
 
 ### Cambiado
 - **Las tipografías se alojan en el propio sitio**. Nunito, Atkinson Hyperlegible, Lexend, Andika, Patrick Hand y Lora se pedían a Google Fonts, que así recibía la IP de quien abría la aplicación, también la del alumnado. Además, sin conexión la ficha se veía con la letra del sistema, aunque el README decía lo contrario. Ahora están en `fonts/` con sus créditos y su licencia (SIL OFL), y la aplicación no pide nada a terceros. El aviso de privacidad ya no menciona Google Fonts (ADR 3).
+- **El servidor MCP pasa a la 1.34.0**. Su código no cambia, pero el ZIP de la release lleva la copia actual de la aplicación para la vista previa: tipografías locales, sin contador de visitas y con las correcciones de accesibilidad de la 1.32.0.
 - **Los paquetes exportados llevan solo las tipografías que usa la ficha**: las dos de la interfaz, la global y las de cada campo, o todas si la ficha va cifrada. Antes llevaban siempre OpenDyslexic y pedían el resto a Google, así que en un Moodle sin salida a internet perdían la letra.
 
 
