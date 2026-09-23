@@ -9,6 +9,13 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.34.0] — 2026-09-23
+
+### Cambiado
+- **Las tipografías se alojan en el propio sitio**. Nunito, Atkinson Hyperlegible, Lexend, Andika, Patrick Hand y Lora se pedían a Google Fonts, que así recibía la IP de quien abría la aplicación, también la del alumnado. Además, sin conexión la ficha se veía con la letra del sistema, aunque el README decía lo contrario. Ahora están en `fonts/` con sus créditos y su licencia (SIL OFL), y la aplicación no pide nada a terceros. El aviso de privacidad ya no menciona Google Fonts (ADR 3).
+- **Los paquetes exportados llevan solo las tipografías que usa la ficha**: las dos de la interfaz, la global y las de cada campo, o todas si la ficha va cifrada. Antes llevaban siempre OpenDyslexic y pedían el resto a Google, así que en un Moodle sin salida a internet perdían la letra.
+
+
 ## [1.33.0] — 2026-09-23
 
 ### Eliminado

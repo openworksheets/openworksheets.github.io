@@ -203,7 +203,7 @@ const STRINGS = {
     'index.footer': 'OpenWorksheets · aplicación web para crear fichas autocorregibles',
     'footer.issues': 'Problemas y sugerencias',
     'footer.privacy': 'Privacidad',
-    'footer.privacyNotice': 'OpenWorksheets no cuenta visitas ni recoge estadísticas de uso, y no usa cookies. Las tipografías se cargan desde Google Fonts.',
+    'footer.privacyNotice': 'OpenWorksheets no cuenta visitas ni recoge estadísticas de uso, y no usa cookies.',
     'footer.ai': 'Uso de IA',
     'footer.aiNotice': 'OpenWorksheets se ha programado con ayuda de IA, en <a href="https://jjdeharo.github.io/miae/es/?nivel=4" target="_blank" rel="noopener">cocreación, nivel 4 del MIAE</a>: el autor ha decidido el diseño y las funciones, y ha probado el programa numerosas veces, en situaciones diferentes, para detectar errores y aspectos que mejorar.',
 
@@ -1257,7 +1257,7 @@ const STRINGS = {
     'index.footer': 'OpenWorksheets · web app for creating self-correcting worksheets',
     'footer.issues': 'Issues and suggestions',
     'footer.privacy': 'Privacy',
-    'footer.privacyNotice': 'OpenWorksheets does not count visits or collect usage statistics, and uses no cookies. Fonts are loaded from Google Fonts.',
+    'footer.privacyNotice': 'OpenWorksheets does not count visits or collect usage statistics, and uses no cookies.',
     'footer.ai': 'Use of AI',
     'footer.aiNotice': 'OpenWorksheets was programmed with the help of AI, in <a href="https://jjdeharo.github.io/miae/en/?nivel=4" target="_blank" rel="noopener">co-creation, level 4 of MIAE</a>: the author decided the design and the features, and tested the program many times, in different situations, to find errors and things to improve.',
 
@@ -2279,7 +2279,7 @@ const STRINGS = {
     'index.footer': 'OpenWorksheets · aplicació web per a crear fitxes autocorregibles',
     'footer.issues': 'Problemes i suggeriments',
     'footer.privacy': 'Privadesa',
-    'footer.privacyNotice': 'OpenWorksheets no compta visites ni recull estadístiques d\'ús, i no fa servir galetes. Les tipografies es carreguen des de Google Fonts.',
+    'footer.privacyNotice': 'OpenWorksheets no compta visites ni recull estadístiques d\'ús, i no fa servir galetes.',
     'footer.ai': 'Ús d\'IA',
     'footer.aiNotice': 'OpenWorksheets s\'ha programat amb ajuda d\'IA, en <a href="https://jjdeharo.github.io/miae/ca/?nivel=4" target="_blank" rel="noopener">cocreació, nivell 4 del MIAE</a>: l\'autor n\'ha decidit el disseny i les funcions, i ha provat el programa moltes vegades, en situacions diferents, per detectar-hi errors i aspectes que cal millorar.',
 
@@ -3294,7 +3294,7 @@ const STRINGS = {
     'index.footer': 'OpenWorksheets · aplicación web para crear fichas autocorrixibles',
     'footer.issues': 'Problemas e suxestións',
     'footer.privacy': 'Privacidade',
-    'footer.privacyNotice': 'OpenWorksheets non conta visitas nin recolle estatísticas de uso, e non usa cookies. As tipografías cárganse desde Google Fonts.',
+    'footer.privacyNotice': 'OpenWorksheets non conta visitas nin recolle estatísticas de uso, e non usa cookies.',
     'footer.ai': 'Uso de IA',
     'footer.aiNotice': 'OpenWorksheets programouse con axuda de IA, en <a href="https://jjdeharo.github.io/miae/gl/?nivel=4" target="_blank" rel="noopener">cocreación, nivel 4 do MIAE</a>: o autor decidiu o deseño e as funcións, e probou o programa moitas veces, en situacións diferentes, para detectar erros e aspectos que mellorar.',
 
@@ -4309,7 +4309,7 @@ const STRINGS = {
     'index.footer': 'OpenWorksheets · fitxa autoaztergarriak sortzeko web aplikazioa',
     'footer.issues': 'Arazoak eta iradokizunak',
     'footer.privacy': 'Pribatutasuna',
-    'footer.privacyNotice': 'OpenWorksheets-ek ez ditu bisitak zenbatzen ez erabilera-estatistikarik biltzen, eta ez du cookierik erabiltzen. Letra-tipoak Google Fonts-etik kargatzen dira.',
+    'footer.privacyNotice': 'OpenWorksheets-ek ez ditu bisitak zenbatzen ez erabilera-estatistikarik biltzen, eta ez du cookierik erabiltzen.',
     'footer.ai': 'AAren erabilera',
     'footer.aiNotice': 'OpenWorksheets AAren laguntzaz programatu da, <a href="https://jjdeharo.github.io/miae/eu/?nivel=4" target="_blank" rel="noopener">elkarrekin sortuz, MIAEren 4. mailan</a>: egileak erabaki ditu diseinua eta funtzioak, eta programa askotan probatu du, egoera desberdinetan, akatsak eta hobetu beharrekoak aurkitzeko.',
 

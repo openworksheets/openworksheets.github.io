@@ -15,6 +15,7 @@
 // Usa JSZip (window.JSZip) y la exportación de ficha de zipio.js.
 
 import { exportFichaZip } from './zipio.js';
+import { fontFilesFor } from './fonts.js';
 
 // Archivos del visor que se copian al paquete. Son el subconjunto que necesita
 // el reproductor del alumno (sin el editor ni la importación de PDF).
@@ -22,8 +23,6 @@ const APP_FILES = [
   'css/app.css',
   'vendor/jszip.min.js',
   'vendor/mathjax-tex-svg.js',
-  'fonts/opendyslexic-400.woff2',
-  'fonts/opendyslexic-700.woff2',
   'favicon.svg',
   'scorm-sw.js',
   'js/player.js', 'js/render.js', 'js/grading.js', 'js/fieldtypes.js',
@@ -121,7 +120,9 @@ export async function exportScormPackage(ficha, scorm) {
 
   // 1) Copia del visor (se lee del propio despliegue mediante fetch relativo).
   const base = new URL('.', document.baseURI).href;
-  await Promise.all(APP_FILES.map(async path => {
+  // Las tipografías, solo las que usa la ficha (fonts.js).
+  const appFiles = [...APP_FILES, ...fontFilesFor(manifest)];
+  await Promise.all(appFiles.map(async path => {
     const resp = await fetch(new URL(path, base).href);
     if (!resp.ok) throw new Error(`No se pudo leer «${path}» (HTTP ${resp.status})`);
     zip.file(path, await resp.blob());
@@ -132,7 +133,7 @@ export async function exportScormPackage(ficha, scorm) {
 
   // 3) SCO + manifiesto SCORM. El manifiesto lista todos los archivos del paquete.
   zip.file('index.html', buildIndexHtml(manifest, scorm));
-  const fileList = ['index.html', 'ficha.zip', ...APP_FILES];
+  const fileList = ['index.html', 'ficha.zip', ...appFiles];
   zip.file('imsmanifest.xml', buildManifestXml(manifest, scorm, fileList));
 
   return zip.generateAsync({

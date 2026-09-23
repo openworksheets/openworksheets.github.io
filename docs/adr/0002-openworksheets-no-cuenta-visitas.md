@@ -16,8 +16,7 @@ sin IP ni cookies. Con un contador en cualquier página, la aplicación salía
 
 La aplicación no lleva ningún contador de visitas ni estadísticas de uso. Se
 borra `js/analytics.js` y los metadatos `analytics-*` de todas las páginas. El
-aviso de privacidad del pie dice que no se cuentan visitas, que no se usan
-cookies y que las tipografías se cargan desde Google Fonts.
+aviso de privacidad del pie dice que no se cuentan visitas ni se usan cookies.
 
 ## Alternativas descartadas
 

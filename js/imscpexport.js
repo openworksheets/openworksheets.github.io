@@ -13,13 +13,12 @@
 //   css/  fonts/  vendor/  js/   (el código del visor)
 
 import { exportFichaZip } from './zipio.js';
+import { fontFilesFor } from './fonts.js';
 
 const APP_FILES = [
   'css/app.css',
   'vendor/jszip.min.js',
   'vendor/mathjax-tex-svg.js',
-  'fonts/opendyslexic-400.woff2',
-  'fonts/opendyslexic-700.woff2',
   'favicon.svg',
   'scorm-sw.js',
   'js/player.js', 'js/render.js', 'js/grading.js', 'js/fieldtypes.js',
@@ -112,7 +111,9 @@ export async function exportImscpPackage(ficha) {
   const zip = new window.JSZip();
 
   const base = new URL('.', document.baseURI).href;
-  await Promise.all(APP_FILES.map(async path => {
+  // Las tipografías, solo las que usa la ficha (fonts.js).
+  const appFiles = [...APP_FILES, ...fontFilesFor(ficha.manifest)];
+  await Promise.all(appFiles.map(async path => {
     const resp = await fetch(new URL(path, base).href);
     if (!resp.ok) throw new Error(`No se pudo leer «${path}» (HTTP ${resp.status})`);
     zip.file(path, await resp.blob());
@@ -125,7 +126,7 @@ export async function exportImscpPackage(ficha) {
   if (!entregasResp.ok) throw new Error(`No se pudo leer «entregas.html» (HTTP ${entregasResp.status})`);
   zip.file('entregas.html', adaptEntregasHtml(await entregasResp.text()));
 
-  const fileList = ['index.html', 'ficha.owpkg', 'entregas.html', ...APP_FILES];
+  const fileList = ['index.html', 'ficha.owpkg', 'entregas.html', ...appFiles];
   zip.file('imsmanifest.xml', buildManifestXml(ficha.manifest, fileList));
 
   return zip.generateAsync({
