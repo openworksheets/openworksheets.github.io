@@ -20,7 +20,7 @@ const puppeteer = require('puppeteer-core');
       github: Boolean(pie.querySelector('a[href*="github.com/openworksheets"]')),
       issues: Boolean(pie.querySelector('a[href*="issues"]')),
       priv: Boolean(pie.querySelector('.pie-priv summary')),
-      metas: Boolean(document.querySelector('meta[name="analytics-site-id"]')),
+      sinContador: !document.querySelector('meta[name^="analytics-"], script[src*="analytics"]'),
       sinCifras: !pie.querySelector('[data-analytics-summary], [data-analytics-total], [data-analytics-today]')
     };
   });
@@ -29,7 +29,7 @@ const puppeteer = require('puppeteer-core');
   check('enlace GitHub del repo', f.github);
   check('enlace issues', f.issues);
   check('popover de privacidad', f.priv);
-  check('metadatos analytics presentes', f.metas);
+  check('sin contador de visitas', f.sinContador);
   check('sin cifras de visitas en el pie', f.sinCifras);
 
   // Abrir el popover de privacidad y capturar

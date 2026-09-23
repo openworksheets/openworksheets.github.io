@@ -68,14 +68,14 @@ function buildIndexHtml(manifest) {
 
 // Adapta la página «entregas.html» del programa principal para el paquete: se
 // reutiliza tal cual para que la corrección sea idéntica, pero se le quitan:
-//   - la analítica y el config.js del autor (no deben viajar a sitios ajenos),
+//   - el config.js del autor (no debe viajar a sitios ajenos),
 //   - el botón «Volver al inicio», porque en el paquete index.html es la ficha
 //     del alumnado, no una portada a la que tenga sentido volver.
 // Como sin config.js se pierde el número de versión, se inyecta directamente.
 function adaptEntregasHtml(html) {
   let out = html
     .split('\n')
-    .filter(line => !/analytics|config\.js|nav\.backHome/.test(line))
+    .filter(line => !/config\.js|nav\.backHome/.test(line))
     .join('\n');
   // La marca sigue enlazando a index.html (la ficha, portada del paquete), pero
   // sin el tooltip «Volver al inicio», que aquí no aplica.

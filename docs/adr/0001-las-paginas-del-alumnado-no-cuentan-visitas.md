@@ -1,6 +1,6 @@
 # 1. Las páginas del alumnado no cuentan visitas
 
-Fecha: 2026-09-23 · Estado: aceptado
+Fecha: 2026-09-23 · Estado: sustituido por [ADR 2](0002-openworksheets-no-cuenta-visitas.md)
 
 ## Contexto
 

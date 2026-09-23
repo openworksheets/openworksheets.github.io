@@ -9,6 +9,12 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.33.0] — 2026-09-23
+
+### Eliminado
+- **El contador de visitas, en toda la aplicación**. La 1.32.0 lo quitó de las páginas del alumnado y de entregas; ahora sale también de la portada, el editor y Características, y se borra `js/analytics.js`. La rúbrica de la guía de vibe coding responsable da un 0 eliminatorio en datos personales a cualquier analítica, aunque sea propia. El aviso de privacidad del pie dice ahora que no se cuentan visitas, que no se usan cookies y que las tipografías se cargan desde Google Fonts (ADR 2).
+
+
 ## [1.32.0] — 2026-09-23
 
 ### Añadido

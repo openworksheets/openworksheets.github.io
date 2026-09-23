@@ -11,4 +11,5 @@ pendientes de pasar aquí.
 
 | Nº | Decisión | Estado |
 |---|---|---|
-| [1](0001-las-paginas-del-alumnado-no-cuentan-visitas.md) | Las páginas del alumnado no cuentan visitas | aceptado |
+| [1](0001-las-paginas-del-alumnado-no-cuentan-visitas.md) | Las páginas del alumnado no cuentan visitas | sustituido por el 2 |
+| [2](0002-openworksheets-no-cuenta-visitas.md) | OpenWorksheets no cuenta visitas | aceptado |

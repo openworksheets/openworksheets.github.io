@@ -95,7 +95,7 @@ ${files}
 function adaptEntregasHtml(html) {
   let out = html
     .split('\n')
-    .filter(line => !/analytics|config\.js|nav\.backHome/.test(line))
+    .filter(line => !/config\.js|nav\.backHome/.test(line))
     .join('\n');
   out = out.replace(/ title="Volver al inicio"/g, '');
   const version = window.OPENWORKSHEETS_CONFIG?.appVersion;
