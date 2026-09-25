@@ -19,3 +19,20 @@ debate más adelante.
 ## Consecuencias
 
 Qué mejora y qué empeora, incluido el trabajo que añade a partir de ahora.
+
+Los tres apartados siguientes se añaden cuando la decisión depende de hechos
+técnicos que pueden comprobarse.
+
+## Evidencia
+
+En qué se apoya: documentación oficial, una versión concreta del código
+(repositorio, ruta y commit) o una prueba que pueda repetirse. Lo que no se ha
+podido comprobar se marca como hipótesis pendiente de validación.
+
+## Riesgos y limitaciones
+
+Qué puede fallar, qué queda fuera y qué dudas siguen abiertas.
+
+## Validación
+
+Cómo se ha comprobado la decisión y qué resultado se obtuvo.
