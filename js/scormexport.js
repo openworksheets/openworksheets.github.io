@@ -16,6 +16,7 @@
 
 import { exportFichaZip } from './zipio.js';
 import { fontFilesFor } from './fonts.js';
+import { CREDIT_FILES } from './creditos.js';
 
 // Archivos del visor que se copian al paquete. Son el subconjunto que necesita
 // el reproductor del alumno (sin el editor ni la importación de PDF).
@@ -121,7 +122,7 @@ export async function exportScormPackage(ficha, scorm) {
   // 1) Copia del visor (se lee del propio despliegue mediante fetch relativo).
   const base = new URL('.', document.baseURI).href;
   // Las tipografías, solo las que usa la ficha (fonts.js).
-  const appFiles = [...APP_FILES, ...fontFilesFor(manifest)];
+  const appFiles = [...APP_FILES, ...fontFilesFor(manifest), ...CREDIT_FILES];
   await Promise.all(appFiles.map(async path => {
     const resp = await fetch(new URL(path, base).href);
     if (!resp.ok) throw new Error(`No se pudo leer «${path}» (HTTP ${resp.status})`);

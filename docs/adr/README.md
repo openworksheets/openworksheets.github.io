@@ -16,3 +16,4 @@ pendientes de pasar aquí.
 | [3](0003-las-tipografias-se-alojan-en-el-propio-sitio.md) | Las tipografías se alojan en el propio sitio | aceptado |
 | [4](0004-contenidos-cc-by-sa-y-creditos-de-terceros.md) | Los contenidos son CC BY-SA 4.0 y el material de terceros se acredita en un solo archivo | aceptado |
 | [5](0005-el-codigo-html-insertado-se-muestra-aislado.md) | El código HTML insertado se muestra aislado de la ficha | aceptado |
+| [6](0006-topes-al-abrir-archivos-zip.md) | Al abrir un ZIP se comprueban unos topes antes de descomprimirlo | aceptado |

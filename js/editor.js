@@ -28,7 +28,7 @@ import { mdToHtml } from './markdown.js';
 import { typesetMath } from './mathrender.js';
 import { expectedText } from './grading.js';
 import { pdfToPages, imageToPage, isPdf, isImage } from './pdfimport.js';
-import { exportFichaZip, importFichaZip, newManifest, usedFiles } from './zipio.js';
+import { exportFichaZip, importFichaZip, newManifest, usedFiles, loadZipSafely, safeZipPath, ZipLimitError } from './zipio.js';
 import { exportScormPackage } from './scormexport.js';
 import { exportWebPackage } from './webexport.js';
 import { exportImscpPackage } from './imscpexport.js';
@@ -3846,7 +3846,7 @@ function uploadScormPackage(field) {
     const file = inp.files[0];
     if (!file) return;
     try {
-      const zip = await window.JSZip.loadAsync(file);
+      const { zip, track } = await loadZipSafely(file);
       let mEntry = zip.file('imsmanifest.xml');
       if (!mEntry) { const arr = zip.file(/imsmanifest\.xml$/i); mEntry = arr && arr[0]; }
       if (!mEntry) { toast(t('toast.scormNoManifest'), 'error'); return; }
@@ -3858,7 +3858,7 @@ function uploadScormPackage(field) {
       // del paquete son relativas a ella.
       const rootDir = mEntry.name.slice(0, mEntry.name.length - 'imsmanifest.xml'.length);
       const entries = [];
-      zip.forEach((path, entry) => { if (!entry.dir) entries.push({ path, entry }); });
+      zip.forEach((path, entry) => { if (!entry.dir && safeZipPath(path)) entries.push({ path, entry }); });
 
       clearPackageFiles(field.config.pkg); // descarta el paquete anterior si lo hubiera
       resetEditorPkgCache();               // fuerza reaprovisionar la vista en vivo
@@ -3867,7 +3867,9 @@ function uploadScormPackage(field) {
         if (rootDir && !path.startsWith(rootDir)) continue;
         const internal = rootDir ? path.slice(rootDir.length) : path;
         if (!internal) continue;
-        state.files.set(prefix + internal, await entry.async('blob'));
+        const blob = await entry.async('blob');
+        track(blob.size);
+        state.files.set(prefix + internal, blob);
       }
 
       const org = parsed.organizations[0];
@@ -3880,8 +3882,8 @@ function uploadScormPackage(field) {
       renderCanvas();
       renderPanel();
       toast(t('toast.scormLoaded'), 'ok');
-    } catch {
-      toast(t('toast.scormError'), 'error');
+    } catch (err) {
+      toast(err instanceof ZipLimitError ? err.message : t('toast.scormError'), 'error');
     }
   });
   inp.click();
@@ -3913,13 +3915,13 @@ function uploadWebPackage(field, kind) {
     const file = inp.files[0];
     if (!file) return;
     try {
-      const zip = await window.JSZip.loadAsync(file);
+      const { zip, track } = await loadZipSafely(file);
       const entry = findWebEntry(zip);
       if (!entry) { toast(t('toast.webNoIndex'), 'error'); return; }
       // Carpeta del index: los recursos de la web son relativos a ella.
       const rootDir = entry.slice(0, entry.lastIndexOf('/') + 1);
       const entries = [];
-      zip.forEach((path, e) => { if (!e.dir) entries.push({ path, entry: e }); });
+      zip.forEach((path, e) => { if (!e.dir && safeZipPath(path)) entries.push({ path, entry: e }); });
 
       clearPackageFiles(field.config.pkg);  // descarta un paquete anterior
       resetEditorPkgCache();
@@ -3928,7 +3930,9 @@ function uploadWebPackage(field, kind) {
         if (rootDir && !path.startsWith(rootDir)) continue;
         const internal = rootDir ? path.slice(rootDir.length) : path;
         if (!internal) continue;
-        state.files.set(prefix + internal, await e.async('blob'));
+        const blob = await e.async('blob');
+        track(blob.size);
+        state.files.set(prefix + internal, blob);
       }
       const cfg = field.config;
       cfg.pkg = prefix;
@@ -3937,8 +3941,8 @@ function uploadWebPackage(field, kind) {
       renderCanvas();
       renderPanel();
       toast(t('toast.webLoaded'), 'ok');
-    } catch {
-      toast(t('toast.webError'), 'error');
+    } catch (err) {
+      toast(err instanceof ZipLimitError ? err.message : t('toast.webError'), 'error');
     }
   });
   inp.click();
@@ -3955,7 +3959,7 @@ function uploadImscpPackage(field) {
     const file = inp.files[0];
     if (!file) return;
     try {
-      const zip = await window.JSZip.loadAsync(file);
+      const { zip, track } = await loadZipSafely(file);
       let mEntry = zip.file('imsmanifest.xml');
       if (!mEntry) { const arr = zip.file(/imsmanifest\.xml$/i); mEntry = arr && arr[0]; }
       if (!mEntry) { toast(t('toast.scormNoManifest'), 'error'); return; }
@@ -3964,7 +3968,7 @@ function uploadImscpPackage(field) {
 
       const rootDir = mEntry.name.slice(0, mEntry.name.length - 'imsmanifest.xml'.length);
       const entries = [];
-      zip.forEach((path, e) => { if (!e.dir) entries.push({ path, entry: e }); });
+      zip.forEach((path, e) => { if (!e.dir && safeZipPath(path)) entries.push({ path, entry: e }); });
 
       clearPackageFiles(field.config.pkg);
       resetEditorPkgCache();
@@ -3973,7 +3977,9 @@ function uploadImscpPackage(field) {
         if (rootDir && !path.startsWith(rootDir)) continue;
         const internal = rootDir ? path.slice(rootDir.length) : path;
         if (!internal) continue;
-        state.files.set(prefix + internal, await entry.async('blob'));
+        const blob = await entry.async('blob');
+        track(blob.size);
+        state.files.set(prefix + internal, blob);
       }
       const org = parsed.organizations[0];
       const cfg = field.config;
@@ -3985,8 +3991,8 @@ function uploadImscpPackage(field) {
       renderCanvas();
       renderPanel();
       toast(t('toast.imscpLoaded'), 'ok');
-    } catch {
-      toast(t('toast.webError'), 'error');
+    } catch (err) {
+      toast(err instanceof ZipLimitError ? err.message : t('toast.webError'), 'error');
     }
   });
   inp.click();

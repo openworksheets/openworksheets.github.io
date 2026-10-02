@@ -40,6 +40,11 @@ jobs:
           cp -r js css fonts dist/openworksheets-mcp/app/
           # MathJax lo pide mathrender.js como vendor/… relativo al documento.
           cp vendor/mathjax-tex-svg.js dist/openworksheets-mcp/vendor/
+          # Licencias y créditos del material de terceros que va en el ZIP
+          # (pdf.js, MathJax, iconos y tipografías de la copia de la aplicación).
+          cp LICENSE dist/openworksheets-mcp/LICENSE
+          cp vendor/TERCEROS.md dist/openworksheets-mcp/vendor/
+          cp -r vendor/licencias dist/openworksheets-mcp/vendor/
 
       - name: Comprobar que está completo y sin errores de sintaxis
         run: |
@@ -57,6 +62,9 @@ jobs:
           test -f vendor/mathjax-tex-svg.js || { echo "Falta vendor/mathjax-tex-svg.js"; exit 1; }
           test -f vendor/pdf.min.js || { echo "Falta vendor/pdf.min.js"; exit 1; }
           test -f vendor/pdf.worker.min.js || { echo "Falta vendor/pdf.worker.min.js"; exit 1; }
+          for f in LICENSE vendor/TERCEROS.md vendor/licencias/Apache-2.0.txt app/fonts/OFL.txt; do
+            test -f "$f" || { echo "Falta $f"; exit 1; }
+          done
           # La copia de pdf.js debe ser la misma que usa la aplicación
           cmp vendor/pdf.min.js ../../vendor/pdf.min.js
           cmp vendor/pdf.worker.min.js ../../vendor/pdf.worker.min.js

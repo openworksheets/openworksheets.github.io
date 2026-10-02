@@ -1051,6 +1051,9 @@ const STRINGS = {
     'zipio.badManifest': 'El manifest.json del paquete no es válido.',
     'zipio.notWorkpdf': 'El paquete no es una ficha de OpenWorksheets.',
     'zipio.missingImage': 'Falta la imagen {path} dentro del paquete.',
+    'zipio.tooManyFiles': 'El archivo no se puede abrir: contiene {n} archivos y el máximo es {max}.',
+    'zipio.tooBig': 'El archivo no se puede abrir: descomprimido ocuparía {size} y el máximo es {max}.',
+    'zipio.suspicious': 'El archivo no se puede abrir: está tan comprimido que descomprimido ocuparía {size}. Puede estar dañado o preparado para bloquear el navegador.',
 
     // entrega — verificación
     'verify.notWorkpdf': 'El archivo no es una entrega de OpenWorksheets.',
@@ -2079,6 +2082,9 @@ const STRINGS = {
     'zipio.badManifest': 'The manifest.json in the package is not valid.',
     'zipio.notWorkpdf': 'The package is not a OpenWorksheets worksheet.',
     'zipio.missingImage': 'Image {path} is missing from the package.',
+    'zipio.tooManyFiles': 'The file cannot be opened: it contains {n} files and the maximum is {max}.',
+    'zipio.tooBig': 'The file cannot be opened: uncompressed it would take {size} and the maximum is {max}.',
+    'zipio.suspicious': 'The file cannot be opened: it is so heavily compressed that uncompressed it would take {size}. It may be damaged or crafted to freeze the browser.',
 
     'verify.notWorkpdf': 'The file is not a OpenWorksheets submission.',
     'verify.encrypted': 'The submission is encrypted.',
@@ -3103,6 +3109,9 @@ const STRINGS = {
     'zipio.badManifest': 'El manifest.json del paquet no és vàlid.',
     'zipio.notWorkpdf': 'El paquet no és una fitxa de OpenWorksheets.',
     'zipio.missingImage': 'Falta la imatge {path} dins del paquet.',
+    'zipio.tooManyFiles': 'El fitxer no es pot obrir: conté {n} fitxers i el màxim és {max}.',
+    'zipio.tooBig': 'El fitxer no es pot obrir: descomprimit ocuparia {size} i el màxim és {max}.',
+    'zipio.suspicious': 'El fitxer no es pot obrir: està tan comprimit que descomprimit ocuparia {size}. Pot estar malmès o preparat per bloquejar el navegador.',
 
     'verify.notWorkpdf': 'El fitxer no és un lliurament de OpenWorksheets.',
     'verify.encrypted': 'El lliurament està xifrat.',
@@ -4125,6 +4134,9 @@ const STRINGS = {
     'zipio.badManifest': 'O manifest.json do paquete non é válido.',
     'zipio.notWorkpdf': 'O paquete non é unha ficha de OpenWorksheets.',
     'zipio.missingImage': 'Falta a imaxe {path} dentro do paquete.',
+    'zipio.tooManyFiles': 'O ficheiro non se pode abrir: contén {n} ficheiros e o máximo é {max}.',
+    'zipio.tooBig': 'O ficheiro non se pode abrir: descomprimido ocuparía {size} e o máximo é {max}.',
+    'zipio.suspicious': 'O ficheiro non se pode abrir: está tan comprimido que descomprimido ocuparía {size}. Pode estar danado ou preparado para bloquear o navegador.',
 
     'verify.notWorkpdf': 'O ficheiro non é unha entrega de OpenWorksheets.',
     'verify.encrypted': 'A entrega está cifrada.',
@@ -5147,6 +5159,9 @@ const STRINGS = {
     'zipio.badManifest': 'Paketeko manifest.json ez da baliogarria.',
     'zipio.notWorkpdf': 'Paketea ez da OpenWorksheets fitxa bat.',
     'zipio.missingImage': '{path} irudia falta da paketearen barruan.',
+    'zipio.tooManyFiles': 'Fitxategia ezin da ireki: {n} fitxategi ditu eta gehienezkoa {max} da.',
+    'zipio.tooBig': 'Fitxategia ezin da ireki: deskonprimituta {size} hartuko luke eta gehienezkoa {max} da.',
+    'zipio.suspicious': 'Fitxategia ezin da ireki: hain dago konprimituta, ezen deskonprimituta {size} hartuko bailuke. Hondatuta egon daiteke edo nabigatzailea blokeatzeko prestatuta.',
 
     'verify.notWorkpdf': 'Fitxategia ez da OpenWorksheets entrega bat.',
     'verify.encrypted': 'Entrega zifratuta dago.',

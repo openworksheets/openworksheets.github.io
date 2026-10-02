@@ -9,6 +9,21 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.36.0] — 2026-10-02
+
+### Seguridad
+- **Topes al abrir un ZIP**. Las fichas y los paquetes que se insertan (SCORM, IMS CP, web en ZIP y `.elpx`) se descomprimían enteros sin ningún límite, y un archivo preparado para inflarse podía colgar el navegador. Ahora, antes de descomprimir, se comprueba que no pase de 50 000 archivos ni de 2 GB, y que no sea un archivo de más de 200 MB comprimido más de 100 veces. Ninguna ficha real llega a esas cifras; si un archivo las supera, el programa dice por qué no lo abre (ADR 6).
+- **Vídeos de YouTube y Vimeo con menos rastreo**. YouTube se incrusta en su modo de privacidad mejorada (`youtube-nocookie.com`), que no pone cookies hasta que se reproduce el vídeo, y Vimeo con `dnt=1`, que evita las que no son imprescindibles. Vale también para los iframes pegados en el campo «Insertar».
+
+### Añadido
+- **Los paquetes exportados llevan las licencias y los créditos** (web, SCORM e IMS CP): `LICENSE`, `LICENSE-CONTENIDOS`, `vendor/TERCEROS.md` y los textos de las licencias de las bibliotecas, los iconos y las tipografías. El ZIP del servidor MCP también los lleva (ADR 4).
+
+### Corregido
+- **El foco de los huecos de texto se ve mejor**: el hueco se rodea entero al escribir en él, en vez de cambiar solo el color de la raya.
+- **Orden de los encabezados de la portada**: los títulos de las tarjetas pasan de tercer a segundo nivel, sin cambiar su aspecto.
+- **El servidor MCP pasa a la 1.36.0**, con la copia actual de la aplicación para la vista previa.
+
+
 ## [1.35.1] — 2026-10-02
 
 ### Corregido

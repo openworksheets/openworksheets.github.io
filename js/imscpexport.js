@@ -14,6 +14,7 @@
 
 import { exportFichaZip } from './zipio.js';
 import { fontFilesFor } from './fonts.js';
+import { CREDIT_FILES } from './creditos.js';
 
 const APP_FILES = [
   'css/app.css',
@@ -112,7 +113,7 @@ export async function exportImscpPackage(ficha) {
 
   const base = new URL('.', document.baseURI).href;
   // Las tipografías, solo las que usa la ficha (fonts.js).
-  const appFiles = [...APP_FILES, ...fontFilesFor(ficha.manifest)];
+  const appFiles = [...APP_FILES, ...fontFilesFor(ficha.manifest), ...CREDIT_FILES];
   await Promise.all(appFiles.map(async path => {
     const resp = await fetch(new URL(path, base).href);
     if (!resp.ok) throw new Error(`No se pudo leer «${path}» (HTTP ${resp.status})`);

@@ -504,11 +504,15 @@ function parseMediaUrl(url) {
   const u = (url || '').trim();
   if (!u) return null;
   let m;
-  if ((m = u.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/))) {
-    return { type: 'iframe', src: 'https://www.youtube.com/embed/' + m[1] };
+  // YouTube se incrusta en su modo de privacidad mejorada (youtube-nocookie.com),
+  // que no pone cookies hasta que se reproduce el vídeo, y Vimeo con dnt=1, que
+  // evita las cookies que no son imprescindibles. Ninguno de los dos evita que
+  // el servicio reciba la IP al cargar el reproductor.
+  if ((m = u.match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/))) {
+    return { type: 'iframe', src: 'https://www.youtube-nocookie.com/embed/' + m[1] };
   }
   if ((m = u.match(/vimeo\.com\/(?:video\/)?(\d+)/))) {
-    return { type: 'iframe', src: 'https://player.vimeo.com/video/' + m[1] };
+    return { type: 'iframe', src: 'https://player.vimeo.com/video/' + m[1] + '?dnt=1' };
   }
   return { type: 'file', src: u };
 }
@@ -576,6 +580,8 @@ function onlyExternalIframes(html) {
     let url;
     try { url = new URL(f.getAttribute('src') || '', location.href); } catch { return null; }
     if (!/^https?:$/.test(url.protocol) || url.origin === location.origin) return null;
+    if (/^(www\.)?youtube\.com$/.test(url.hostname) && url.pathname.startsWith('/embed/')) url.hostname = 'www.youtube-nocookie.com';
+    if (url.hostname === 'player.vimeo.com' && !url.searchParams.has('dnt')) url.searchParams.set('dnt', '1');
     const attrs = { src: url.href, class: 'wpf-media-el' };
     EMBED_IFRAME_ATTRS.forEach(a => { if (f.hasAttribute(a)) attrs[a] = f.getAttribute(a); });
     if (!attrs.title) attrs.title = t('render.embedFrameTitle');

@@ -749,6 +749,8 @@ textarea { resize: vertical; min-height: 70px; }
   margin-top: 28px;
 }
 .home-card { display: flex; flex-direction: column; gap: 8px; }
+/* Los títulos de las tarjetas son h2 (siguen al h1 de la portada) con el tamaño de un h3. */
+.home-card h2 { font-size: 1.1rem; }
 .home-card-top { display: flex; align-items: center; justify-content: space-between; }
 .home-icon { width: 30px; height: 30px; color: var(--rojo); opacity: 0.9; }
 .home-card .num, .card > .num {
@@ -794,7 +796,7 @@ textarea { resize: vertical; min-height: 70px; }
 .home-feature-banner .banner-content {
   flex: 1;
 }
-.home-feature-banner h3 {
+.home-feature-banner h2 {
   margin: 0 0 6px 0;
   font-family: var(--display);
   font-weight: 700;
@@ -3264,6 +3266,9 @@ input.wpf-gap-input {
   color: var(--field-fg, var(--tinta));
   width: auto;
 }
+/* Los huecos solo tienen raya inferior: al recibir el foco se rodean entero,
+   para que se vea dónde se escribe también al moverse con el teclado. */
+input.wpf-gap-input:focus { box-shadow: 0 0 0 2px var(--rojo); }
 
 .wpf-match {
   background: var(--field-bg, rgb(255, 253, 248));

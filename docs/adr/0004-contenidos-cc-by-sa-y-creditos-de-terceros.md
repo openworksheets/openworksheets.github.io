@@ -39,5 +39,8 @@ Al añadir o actualizar una biblioteca, un icono o una tipografía hay que
 actualizar `vendor/TERCEROS.md` y, si cambia la licencia, su texto en
 `vendor/licencias/`.
 
-Los paquetes exportados (web, SCORM e IMS CP) copian bibliotecas y tipografías
-pero todavía no llevan `TERCEROS.md` ni los textos de las licencias.
+Los paquetes exportados (web, SCORM e IMS CP) llevan `LICENSE`,
+`LICENSE-CONTENIDOS`, `vendor/TERCEROS.md`, los textos de `vendor/licencias/` y
+los de las tipografías, según la lista de `js/creditos.js` (desde la 1.36.0). El
+ZIP del servidor MCP lleva `LICENSE`, `vendor/TERCEROS.md` y
+`vendor/licencias/`, que añade la acción `.github/workflows/mcp-zip.yml`.

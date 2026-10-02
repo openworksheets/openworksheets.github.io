@@ -17,6 +17,7 @@
 
 import { exportFichaZip } from './zipio.js';
 import { fontFilesFor } from './fonts.js';
+import { CREDIT_FILES } from './creditos.js';
 
 // Archivos del visor que se copian al paquete: el subconjunto que necesita el
 // reproductor del alumno en modo normal (sin editor, sin importación de PDF y
@@ -95,7 +96,7 @@ export async function exportWebPackage(ficha) {
   // 1) Copia del visor (se lee del propio despliegue mediante fetch relativo).
   const base = new URL('.', document.baseURI).href;
   // Las tipografías, solo las que usa la ficha (fonts.js).
-  const appFiles = [...APP_FILES, ...fontFilesFor(ficha.manifest)];
+  const appFiles = [...APP_FILES, ...fontFilesFor(ficha.manifest), ...CREDIT_FILES];
   await Promise.all(appFiles.map(async path => {
     const resp = await fetch(new URL(path, base).href);
     if (!resp.ok) throw new Error(`No se pudo leer «${path}» (HTTP ${resp.status})`);
