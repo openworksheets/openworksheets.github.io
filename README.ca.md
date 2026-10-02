@@ -263,6 +263,16 @@ Les úniques dependències són biblioteques locals que viatgen amb l'aplicació
 
 El xifratge usa la **Web Crypto API** del navegador (sense biblioteca externa).
 
+## Executar-lo en local
+
+No cal instal·lar dependències ni compilar res. N'hi ha prou de descarregar o clonar el repositori i servir-ne la carpeta amb qualsevol servidor web estàtic, per exemple:
+
+```bash
+python3 -m http.server 8000
+```
+
+i obrir `http://localhost:8000`. Els canvis a `js/` i `css/` es veuen en recarregar la pàgina. Firefox també obre l'aplicació amb doble clic a `index.html`; Chrome i Edge no, perquè no carreguen mòduls de JavaScript des de fitxers locals. Les proves i com passar-les són a [tests/README.md](tests/README.md), i per publicar una còpia en un altre domini cal desplegar el propi Google Apps Script ([gas/README.md](gas/README.md)).
+
 ## Llicència
 
 © Juan José de Haro. Codi amb llicència [AGPLv3](LICENSE) i continguts (textos de la interfície, fitxes d'exemple i documentació) amb llicència [CC BY-SA 4.0](LICENSE-CONTENIDOS).

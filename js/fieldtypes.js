@@ -369,7 +369,7 @@ export const FIELD_TYPES = {
   },
   // Inserción de contenido externo. El modo se elige al configurar el campo:
   //   'url'  → se incrusta una URL en un iframe
-  //   'html' → código pegado tal cual, sin sanear (responsabilidad del autor)
+  //   'html' → código pegado; se muestra aislado de la ficha (buildEmbedHtml)
   //   'zip'  → web completa en un .zip (index + css/js/carpetas), servida por SW
   //   'elpx' → paquete de eXeLearning (.elpx, que es un .zip con una web dentro)
   // Los modos 'zip'/'elpx' guardan sus archivos en state.files bajo config.pkg

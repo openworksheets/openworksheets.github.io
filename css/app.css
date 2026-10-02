@@ -3386,6 +3386,8 @@ input.wpf-gap-input {
   transition: border-color 0.12s ease, background 0.12s ease;
 }
 .wpf-zone.armed { border-color: var(--rojo); background: rgba(198, 61, 44, 0.10); }
+.wpf-zone:focus-visible,
+.wpf-cbbox:focus-visible { outline: 3px solid #1d2c42; outline-offset: 2px; }
 .wpf-zone.filled { border-style: solid; background: var(--field-bg, rgb(255, 253, 248)); }
 .wpf-zone.drag-over { border-style: solid; border-color: var(--tinta); background: var(--azul-claro); transform: scale(1.03); }
 .wpf-zone.mark-ok { border-color: var(--verde); background: var(--verde-claro); }

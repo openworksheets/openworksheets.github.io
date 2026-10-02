@@ -544,6 +544,64 @@ function mediaFigure(field, bodyEl, extraClass) {
   return fig;
 }
 
+// Código de inserción pegado por el autor de la ficha (modo «html»). Nunca se
+// mete en la página de OpenWorksheets, donde podría leer o cambiar los
+// intentos, las entregas y los resultados guardados (ADR 5):
+//   - Si es solo uno o varios <iframe> de otra web (lo que dan YouTube,
+//     Genially, Canva…), se recrean con su dirección y sus permisos. Al ser de
+//     otro dominio, el navegador ya los aísla, y siguen funcionando igual.
+//   - Cualquier otro HTML va a un iframe con `sandbox` sin `allow-same-origin`:
+//     sus scripts se ejecutan, pero en un origen opaco, sin acceso a la ficha.
+const EMBED_IFRAME_ATTRS = ['allow', 'allowfullscreen', 'title', 'referrerpolicy', 'loading', 'name'];
+const EMBED_SANDBOX = 'allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-downloads';
+
+function onlyExternalIframes(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const frames = [...doc.body.querySelectorAll('iframe')];
+  if (!frames.length) return null;
+  // Lo que no sea un iframe solo puede ser un envoltorio sin contenido activo
+  // (los div o p con estilos que añaden algunos servicios para el tamaño) o un
+  // script externo que solo ajusta la altura (el de H5P): se descarta, porque
+  // el campo ya tiene su tamaño en la página.
+  const wrappers = new Set(['DIV', 'P', 'SPAN', 'CENTER', 'FIGURE', 'BR']);
+  const resizer = node => node.tagName === 'SCRIPT' && node.hasAttribute('src') && !node.textContent.trim();
+  for (const node of doc.head.children) if (!resizer(node)) return null;
+  for (const node of doc.body.querySelectorAll('*')) {
+    if (node.tagName === 'IFRAME' || resizer(node)) continue;
+    if (!wrappers.has(node.tagName)) return null;
+    if ([...node.attributes].some(a => /^on/i.test(a.name))) return null;
+  }
+  const out = [];
+  for (const f of frames) {
+    let url;
+    try { url = new URL(f.getAttribute('src') || '', location.href); } catch { return null; }
+    if (!/^https?:$/.test(url.protocol) || url.origin === location.origin) return null;
+    const attrs = { src: url.href, class: 'wpf-media-el' };
+    EMBED_IFRAME_ATTRS.forEach(a => { if (f.hasAttribute(a)) attrs[a] = f.getAttribute(a); });
+    if (!attrs.title) attrs.title = t('render.embedFrameTitle');
+    out.push(attrs);
+  }
+  return out;
+}
+
+function buildEmbedHtml(html, title) {
+  const frames = onlyExternalIframes(html);
+  if (frames) {
+    const box = el('div', { class: 'wpf-embed-html' });
+    frames.forEach(attrs => box.appendChild(el('iframe', attrs)));
+    return box;
+  }
+  const frame = el('iframe', {
+    class: 'wpf-media-el wpf-embed-sandbox', sandbox: EMBED_SANDBOX,
+    allow: 'fullscreen; autoplay; clipboard-write; encrypted-media; picture-in-picture',
+    allowfullscreen: '', title: title || t('render.embedFrameTitle')
+  });
+  frame.srcdoc = '<!doctype html><html><head><meta charset="utf-8"><base target="_blank">' +
+    '<style>html,body{margin:0;height:100%}iframe{border:0;width:100%;height:100%}</style>' +
+    '</head><body>' + html + '</body></html>';
+  return frame;
+}
+
 // Construye el contenido real de un medio (vídeo/audio/embed) con su título y pie.
 // `fileUrl` resuelve los archivos subidos; opts.editor desactiva la
 // autorreproducción (en el editor no queremos que arranque solo).
@@ -575,9 +633,7 @@ export function buildMediaContent(field, fileUrl, opts = {}) {
     if (url) { body = el('audio', { src: url, class: 'wpf-media-el wpf-audio-el' }); applyMediaOpts(body, { ...cfg, autoplay }); }
   } else if (field.type === 'embed') {
     if (cfg.mode === 'html' && (cfg.html || '').trim()) {
-      // Código pegado tal cual, sin sanear (responsabilidad del autor de la ficha).
-      body = el('div', { class: 'wpf-embed-html' });
-      body.innerHTML = cfg.html;
+      body = buildEmbedHtml(cfg.html, cfg.title);
     } else if (cfg.mode === 'zip' || cfg.mode === 'elpx') {
       body = buildPackageIframe(field, opts.host, cfg.title);
     } else if (cfg.mode === 'imscp') {
@@ -1213,12 +1269,25 @@ const renderers = {
 
     function paint() {
       boxes.forEach(b => {
-        boxEls.get(b.id)?.classList.toggle('checked', selected.has(b.id));
+        const node = boxEls.get(b.id);
+        if (!node) return;
+        node.classList.toggle('checked', selected.has(b.id));
+        node.setAttribute('aria-checked', String(selected.has(b.id)));
       });
     }
 
-    boxes.forEach(b => {
+    boxes.forEach((b, i) => {
       const node = el('div', { class: 'wpf-cbbox', dataset: { id: b.id } });
+      // Con teclado: cada casilla entra en el orden de tabulación y se marca
+      // con Intro o Espacio, igual que con el clic.
+      node.setAttribute('tabindex', '0');
+      node.setAttribute('role', multiple ? 'checkbox' : 'radio');
+      node.setAttribute('aria-label', t('render.cbN', { n: i + 1 }));
+      node.addEventListener('keydown', e => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        node.click();
+      });
       node.style.left   = (b.rect.x * 100) + '%';
       node.style.top    = (b.rect.y * 100) + '%';
       node.style.width  = (b.rect.w * 100) + '%';
@@ -1247,7 +1316,13 @@ const renderers = {
         paint();
       },
       isAnswered: () => selected.size > 0,
-      setDisabled: b => { disabled = b; },
+      setDisabled: b => {
+        disabled = b;
+        boxEls.forEach(node => {
+          node.setAttribute('tabindex', b ? '-1' : '0');
+          node.setAttribute('aria-disabled', String(b));
+        });
+      },
       markDetail() {
         const correct = new Set((cfg.correct || []).map(String));
         boxes.forEach(b => {
@@ -1663,10 +1738,21 @@ const renderers = {
 
     // Las zonas de destino se colocan directamente sobre la página.
     const zoneEls = {};
-    zones.forEach(z => {
+    zones.forEach((z, zi) => {
       const zEl = el('div', { class: 'wpf-zone', dataset: { zone: z.id } });
       positionRect(zEl, z.rect);
       zEl.style.setProperty('--fs', field.fontScale || 1);
+
+      // Con teclado: se elige la pieza con Intro, se llega a la zona con el
+      // tabulador y se suelta con Intro o Espacio (lo mismo que el clic).
+      zEl.setAttribute('tabindex', '0');
+      zEl.setAttribute('role', 'button');
+      zEl.setAttribute('aria-label', t('render.dropZoneN', { n: zi + 1 }));
+      zEl.addEventListener('keydown', e => {
+        if (e.target !== zEl || (e.key !== 'Enter' && e.key !== ' ')) return;
+        e.preventDefault();
+        zEl.click();
+      });
 
       // Clic: coloca el token seleccionado por clic.
       zEl.addEventListener('click', () => {
@@ -1730,13 +1816,24 @@ const renderers = {
       btn.appendChild(tokenContent(tk));
       if (opts.selected) btn.classList.add('selected');
       btn.disabled = disabled;
+      btn.setAttribute('aria-pressed', String(Boolean(opts.selected)));
       btn.addEventListener('click', () => {
         if (disabled) return;
         selectedToken = selectedToken === tk ? null : tk;
         paint();
+        refocusToken(tk);
       });
       wireDrag(btn, tk);
       return btn;
+    }
+
+    // paint() rehace los botones de las piezas: tras elegir una, el foco del
+    // teclado vuelve a esa pieza en vez de perderse.
+    function refocusToken(tk) {
+      const sel = '.wpf-token, .wpf-hole-piece';
+      const scope = root.parentElement || root;
+      const again = [...scope.querySelectorAll(sel)].find(b => b.dataset.label === tk);
+      if (again) again.focus();
     }
 
     // Pieza descansando en su hueco de origen (modo recorte).
@@ -1744,12 +1841,14 @@ const renderers = {
       const btn = el('button', { class: 'wpf-hole-piece', type: 'button', draggable: 'true', dataset: { label: tk } });
       btn.appendChild(tokenContent(tk));
       if (selectedToken === tk) btn.classList.add('selected');
+      btn.setAttribute('aria-pressed', String(selectedToken === tk));
       btn.disabled = disabled;
       btn.addEventListener('click', e => {
         e.stopPropagation();
         if (disabled) return;
         selectedToken = selectedToken === tk ? null : tk;
         paint();
+        refocusToken(tk);
       });
       wireDrag(btn, tk);
       return btn;
@@ -1817,7 +1916,13 @@ const renderers = {
         paint();
       },
       isAnswered: () => Object.values(assignment).some(arr => arr.length > 0),
-      setDisabled: b => { disabled = b; selectedToken = null; paint(); },
+      setDisabled: b => {
+        disabled = b; selectedToken = null; paint();
+        Object.values(zoneEls).forEach(zEl => {
+          zEl.setAttribute('tabindex', b ? '-1' : '0');
+          zEl.setAttribute('aria-disabled', String(b));
+        });
+      },
       markDetail() {
         zones.forEach(z => {
           const correct = correctTokens(z);

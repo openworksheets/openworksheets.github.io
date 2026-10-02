@@ -280,6 +280,16 @@ The only dependencies are local libraries that travel with the application, so e
 
 Encryption uses the browser's **Web Crypto API** (no external library).
 
+## Running it locally
+
+There is nothing to install or build. Download or clone the repository and serve its folder with any static web server, for example:
+
+```bash
+python3 -m http.server 8000
+```
+
+then open `http://localhost:8000`. Changes in `js/` and `css/` show up when the page is reloaded. Firefox also opens the app by double-clicking `index.html`; Chrome and Edge do not, because they do not load JavaScript modules from local files. The tests and how to run them are in [tests/README.md](tests/README.md), and publishing a copy on another domain requires deploying your own Google Apps Script ([gas/README.md](gas/README.md)).
+
 ## License
 
 © Juan José de Haro. Code under the [AGPLv3](LICENSE) license and content (interface texts, example worksheets and documentation) under the [CC BY-SA 4.0](LICENSE-CONTENIDOS) license.

@@ -329,6 +329,14 @@ function renderPalette() {
           refreshPaletteState();
         }
       });
+      // Con teclado no se puede dibujar el rectángulo: Intro o Espacio crean el
+      // campo con su tamaño por defecto en el centro de la página visible, y
+      // queda seleccionado para moverlo con las flechas (Mayús para ir más rápido).
+      btn.addEventListener('keydown', e => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        createFieldFromKeyboard(type);
+      });
       btn.dataset.type = type;
       inner.appendChild(btn);
     });
@@ -1790,6 +1798,17 @@ function normRect(x0, y0, x1, y1) {
 }
 
 // ---------- Campos ----------
+
+function createFieldFromKeyboard(type) {
+  if (!state.manifest.pages.length) { toast(t('toast.addPdfFirst'), 'error'); return; }
+  state.activeTool = null;
+  state.pendingPieceZone = null;
+  refreshPaletteState();
+  const pi = currentPageIndex();
+  const def = FIELD_TYPES[type].defRect;
+  createField(pi, type, { x: (1 - def.w) / 2, y: (1 - def.h) / 2, w: def.w, h: def.h });
+  toast(t('toast.fieldCreatedKeyboard'), 'info');
+}
 
 function createField(pi, type, rect) {
   const field = {

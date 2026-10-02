@@ -9,6 +9,21 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.35.0] — 2026-10-02
+
+### Seguridad
+- **El código HTML del campo «Insertar» ya no se ejecuta dentro de la aplicación**. Antes se metía tal cual en la página, y una ficha preparada por otra persona podía leer o cambiar los intentos, las entregas y los resultados guardados en el navegador. Ahora, si el código es solo el iframe de otra web (YouTube, Genially, H5P, Canva…), se inserta ese iframe, que funciona igual que antes; cualquier otro código se muestra en un marco aislado, donde sus scripts se ejecutan pero no llegan a la ficha. Los SCORM, ZIP y paquetes de eXeLearning no cambian (ADR 5).
+
+### Añadido
+- **Las casillas de verificación dibujadas y las zonas de «Arrastrar a zonas» se manejan con el teclado**. Cada casilla y cada zona entran en el orden de tabulación con su nombre («Casilla 1», «Zona 1»…). Intro o Espacio marcan la casilla; en el arrastre se elige la pieza con Intro, se llega a la zona con el tabulador y se suelta con Intro. Al elegir una pieza, el foco se queda en ella.
+- **El editor crea campos con el teclado**. Intro o Espacio sobre una herramienta de la paleta crean el campo con su tamaño por defecto en el centro de la página visible, seleccionado para moverlo con las flechas.
+- **«Ejecutarlo en local»** en los README: cómo servir la carpeta y por qué Chrome y Edge no la abren con doble clic.
+
+### Corregido
+- **Fichas de ejemplo**, en los cinco idiomas: en «Recortar imágenes», la nube ya no lleva el rótulo «Vapor», porque las nubes son gotas de agua o hielo, sino «Condensación»; en «Unir con flechas», el grupo «Ser vivo» pasa a «Planta», que no se solapa con «Animal»; y «Ser vivo con hojas» acepta también «árbol». La versión catalana y la inglesa abren ya la interfaz en su idioma.
+- **Licencia del servidor MCP**: `mcp/package.json` decía GPL-3.0; ahora AGPL-3.0, como el resto del proyecto.
+
+
 ## [1.34.1] — 2026-10-02
 
 ### Añadido

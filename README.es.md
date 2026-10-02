@@ -263,6 +263,16 @@ Las únicas dependencias son bibliotecas locales que viajan con la aplicación, 
 El cifrado usa la **Web Crypto API** del navegador (sin biblioteca externa).
 
 
+## Ejecutarlo en local
+
+No hace falta instalar dependencias ni compilar nada. Basta con descargar o clonar el repositorio y servir su carpeta con cualquier servidor web estático, por ejemplo:
+
+```bash
+python3 -m http.server 8000
+```
+
+y abrir `http://localhost:8000`. Los cambios en `js/` y `css/` se ven al recargar la página. Firefox también abre la aplicación con doble clic en `index.html`; Chrome y Edge no, porque no cargan módulos de JavaScript desde archivos locales. Las pruebas y cómo pasarlas están en [tests/README.md](tests/README.md), y para publicar una copia en otro dominio hay que desplegar el propio Google Apps Script ([gas/README.md](gas/README.md)).
+
 ## Licencia
 
 © Juan José de Haro. Código con licencia [AGPLv3](LICENSE) y contenidos (textos de la interfaz, fichas de ejemplo y documentación) con licencia [CC BY-SA 4.0](LICENSE-CONTENIDOS).

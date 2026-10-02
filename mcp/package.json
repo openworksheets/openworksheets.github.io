@@ -2,7 +2,7 @@
   "name": "openworksheets-mcp",
   "version": "1.34.0",
   "description": "Servidor MCP de OpenWorksheets: crea y diseña fichas interactivas desde cero o coloca campos sobre un PDF.",
-  "license": "GPL-3.0-or-later",
+  "license": "AGPL-3.0-or-later",
   "homepage": "https://openworksheets.github.io",
   "repository": {
     "type": "git",
