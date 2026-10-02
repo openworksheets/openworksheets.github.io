@@ -188,11 +188,11 @@ Això significa que no cal afegir variants que només canvien per accents o maj�
 
 ## Lliuraments i verificació
 
-El docent pot obrir els fitxers de lliurament des de la pàgina principal per veure la puntuació, les respostes i comprovar automàticament que no han estat modificats. És possible carregar múltiples fitxers alhora o rebre'ls mitjançant l'enllaç que genera l'alumnat en acabar. Els resultats de tota una classe es mostren en una taula ordenable i es poden exportar a CSV.
+El docent pot obrir els fitxers de lliurament des de la pàgina principal per veure la puntuació, les respostes i comprovar automàticament si s'han editat a mà. És possible carregar múltiples fitxers alhora o rebre'ls mitjançant l'enllaç que genera l'alumnat en acabar. Els resultats de tota una classe es mostren en una taula ordenable i es poden exportar a CSV.
 
-Les respostes que no s'autocorregeixen —els **enregistraments de veu** en mode *manual*— apareixen com a **pendents**: en obrir el lliurament, el docent reprodueix cada àudio i escriu la seva puntuació, i la nota total, la nota sobre 10, el percentatge i el CSV de la classe es recalculen a l'instant. Aquests ajustos es guarden localment al navegador del docent **sense modificar el lliurament original** de l'alumnat, per la qual cosa la seva verificació d'integritat continua sent vàlida.
+Les respostes que no s'autocorregeixen —els **enregistraments de veu** en mode *manual*— apareixen com a **pendents**: en obrir el lliurament, el docent reprodueix cada àudio i escriu la seva puntuació, i la nota total, la nota sobre 10, el percentatge i el CSV de la classe es recalculen a l'instant. Aquests ajustos es guarden localment al navegador del docent **sense modificar el lliurament original** de l'alumnat, per la qual cosa el seu codi de comprovació continua sent vàlid.
 
-La verificació d'integritat és automàtica i avisa si algun fitxer ha estat manipulat. Els lliuraments també es poden xifrar perquè només el docent els pugui llegir (vegeu [Seguretat i xifratge](#seguretat-i-xifratge)).
+Cada lliurament porta un codi de comprovació que avisa si el fitxer s'ha editat a mà. No detecta un lliurament falsificat per algú amb coneixements tècnics, perquè el format és públic. Els lliuraments també es poden xifrar perquè només el docent els pugui llegir (vegeu [Seguretat i xifratge](#seguretat-i-xifratge)).
 
 ## Control d'accés
 
@@ -243,7 +243,7 @@ Convé entendre bé el model, perquè condiciona què protegeix i què no:
 - **Tota la seguretat recau en la contrasenya.** Com que no hi ha servidor, la clau privada xifrada i les dades xifrades viatgen dins de fitxers que poden acabar en mans de tercers. Qui obtingui un d'aquests fitxers pot intentar un **atac de diccionari sense connexió**. Les 250 000 iteracions de PBKDF2 encareixen molt cada intent, però **una contrasenya feble continua sent vulnerable**. Usa contrasenyes llargues i úniques.
 - **No hi ha recuperació.** Si es perd la contrasenya, els lliuraments xifrats i la fitxa xifrada són **irrecuperables**: no existeix restabliment ni porta del darrere.
 - **El xifratge de la fitxa no és DRM.** Protegeix les solucions davant de qui **no** té la contrasenya (per exemple, un paquet filtrat públicament). No protegeix davant d'un alumne que **sí** rep la contrasenya d'accés, ja que aquesta mateixa contrasenya desxifra el manifest: tècnicament podria extreure les respostes. Evita la fuga accidental del fitxer, no a un usuari autoritzat i maliciós.
-- **Integritat garantida.** AES-GCM és xifratge autenticat: qualsevol manipulació del text xifrat es detecta en desxifrar. Els lliuraments, a més, inclouen verificació d'integritat que avisa si un fitxer ha estat alterat.
+- **Integritat davant de tercers.** AES-GCM és xifratge autenticat: qualsevol canvi en un fitxer xifrat es detecta en desxifrar-lo. No impedeix que algú amb coneixements tècnics prepari un lliurament nou i el xifri amb la clau pública de la fitxa.
 - **Límit inherent a les aplicacions de client.** Com que tot s'executa al navegador de l'alumnat, el xifratge protegeix les dades **en repòs** (els fitxers), però no impedeix que un usuari amb coneixements tècnics inspeccioni o manipuli la seva pròpia sessió en execució. Per això OpenWorksheets és adequat per a l'aula, però **no substitueix un sistema d'examen d'alta seguretat** amb supervisió i backend de confiança.
 
 ## Idiomes

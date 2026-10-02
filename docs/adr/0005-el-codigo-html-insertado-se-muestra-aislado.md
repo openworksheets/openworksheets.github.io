@@ -53,8 +53,17 @@ dentro del marco aislado; para esos casos sirve el modo «Página web (URL)».
 
 No cambia nada en SCORM, IMS CP, web en ZIP ni eXeLearning, que siguen
 sirviéndose desde el mismo origen. SCORM lo necesita para encontrar
-`window.API` y devolver la nota. Aislarlos de verdad exige servirlos desde otro
-dominio y pasar la nota con `postMessage`; queda como trabajo pendiente.
+`window.API` y devolver la nota.
+
+Aislarlos de verdad exigiría que el proyecto sirviera los paquetes desde una
+segunda dirección propia y pasara la nota con `postMessage`. No se hace: esos
+paquetes los sube el propio autor de la ficha, normalmente hechos por él o de
+fuentes de confianza, así que el riesgo es pequeño, y el coste es alto. Además
+no serviría en la aplicación descargada en local ni en los paquetes exportados
+a un LMS. Se acepta el riesgo y, en su lugar, el editor avisa al subir un
+SCORM, un IMS CP, una web en ZIP o un `.elpx` de que su contenido se ejecuta
+dentro de la ficha y de que conviene usar solo paquetes propios o de fuentes de
+confianza.
 
 ## Evidencia
 
@@ -65,7 +74,7 @@ convierta en opaco) y la documentación de MDN sobre el atributo `sandbox`.
 ## Riesgos y limitaciones
 
 Un iframe de otra web sigue mostrando lo que esa web sirva; el aislamiento solo
-impide que toque la ficha. Queda abierto el riesgo de los paquetes ZIP, ELPX,
+impide que toque la ficha. Queda aceptado el riesgo de los paquetes ZIP, ELPX,
 IMS y SCORM descrito arriba.
 
 ## Validación
@@ -75,4 +84,7 @@ código de H5P (iframe y script de altura) y el de Genially (iframe con
 envoltorios) se insertan como iframes sin `sandbox`. Un script en línea, un
 `<img onerror>` y un iframe `javascript:` van al marco aislado: el script recibe
 `SecurityError` al leer `parent.localStorage` y su propio `localStorage`, y el
-`onerror` se ejecuta con origen `null`.
+`onerror` se ejecuta con origen `null`. Una ficha con un `.elpx` real y una web
+en ZIP se abre en la vista del alumnado con los dos paquetes visibles y
+navegables, sin errores, en los dos navegadores; las pruebas de SCORM del
+repositorio siguen pasando.

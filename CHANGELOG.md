@@ -9,6 +9,15 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.35.1] — 2026-10-02
+
+### Corregido
+- **Lo que se dice de la verificación de las entregas se ajusta a lo que hace**. La aplicación prometía «verificación de integridad» e «integridad garantizada», y que avisaba si un archivo había sido manipulado. El código de comprobación solo detecta que alguien edite el archivo a mano: no una entrega falsificada por alguien con conocimientos técnicos, porque el formato es público, ni una entrega nueva cifrada con la clave pública de la ficha. La portada, Entregas, Características y los README lo dicen ahora así, en los cinco idiomas.
+
+### Añadido
+- **Aviso al subir paquetes en el editor**. Al subir un SCORM, un IMS CP, una web en ZIP o un `.elpx`, el editor recuerda que su contenido se ejecuta dentro de la ficha y que conviene usar solo paquetes propios o de fuentes de confianza (ADR 5).
+
+
 ## [1.35.0] — 2026-10-02
 
 ### Seguridad

@@ -185,11 +185,11 @@ Esto significa que no hace falta añadir variantes que solo cambian por acentos 
 
 ## Entregas y verificación
 
-El docente puede abrir los archivos de entrega desde la página principal para ver la puntuación, las respuestas y comprobar automáticamente que no han sido modificados. Es posible cargar múltiples archivos a la vez o recibirlos mediante el enlace que genera el alumnado al terminar. Los resultados de toda una clase se muestran en una tabla ordenable y se pueden exportar a CSV.
+El docente puede abrir los archivos de entrega desde la página principal para ver la puntuación, las respuestas y comprobar automáticamente si se han editado a mano. Es posible cargar múltiples archivos a la vez o recibirlos mediante el enlace que genera el alumnado al terminar. Los resultados de toda una clase se muestran en una tabla ordenable y se pueden exportar a CSV.
 
-Las respuestas que no se autocorrigen —las **grabaciones de voz** en modo *manual*— aparecen como **pendientes**: al abrir la entrega, el docente reproduce cada audio y escribe su puntuación, y la nota total, la nota sobre 10, el porcentaje y el CSV de la clase se recalculan al instante. Estos ajustes se guardan localmente en el navegador del docente **sin modificar la entrega original** del alumnado, por lo que su verificación de integridad sigue siendo válida.
+Las respuestas que no se autocorrigen —las **grabaciones de voz** en modo *manual*— aparecen como **pendientes**: al abrir la entrega, el docente reproduce cada audio y escribe su puntuación, y la nota total, la nota sobre 10, el porcentaje y el CSV de la clase se recalculan al instante. Estos ajustes se guardan localmente en el navegador del docente **sin modificar la entrega original** del alumnado, por lo que su código de comprobación sigue siendo válido.
 
-La verificación de integridad es automática y avisa si algún archivo ha sido manipulado. Las entregas también pueden cifrarse para que solo el docente pueda leerlas (ver [Seguridad y cifrado](#seguridad-y-cifrado)).
+Cada entrega lleva un código de comprobación que avisa si el archivo se ha editado a mano. No detecta una entrega falsificada por alguien con conocimientos técnicos, porque el formato es público. Las entregas también pueden cifrarse para que solo el docente pueda leerlas (ver [Seguridad y cifrado](#seguridad-y-cifrado)).
 
 ## Control de acceso
 
@@ -242,7 +242,7 @@ Conviene entender bien el modelo, porque condiciona qué protege y qué no:
 - **Toda la seguridad recae en la contraseña.** Como no hay servidor, la clave privada cifrada y los datos cifrados viajan dentro de archivos que pueden acabar en manos de terceros. Quien obtenga uno de esos archivos puede intentar un **ataque de diccionario sin conexión**. Las 250 000 iteraciones de PBKDF2 encarecen mucho cada intento, pero **una contraseña débil sigue siendo vulnerable**. Usa contraseñas largas y únicas.
 - **No hay recuperación.** Si se pierde la contraseña, las entregas cifradas y la ficha cifrada son **irrecuperables**: no existe restablecimiento ni puerta trasera.
 - **El cifrado de la ficha no es DRM.** Protege las soluciones frente a quien **no** tiene la contraseña (por ejemplo, un paquete filtrado públicamente). No protege frente a un alumno que **sí** recibe la contraseña de acceso, ya que esa misma contraseña descifra el manifiesto: técnicamente podría extraer las respuestas. Evita la fuga accidental del archivo, no a un usuario autorizado y malintencionado.
-- **Integridad garantizada.** AES-GCM es cifrado autenticado: cualquier manipulación del texto cifrado se detecta al descifrar. Las entregas, además, incluyen verificación de integridad que avisa si un archivo ha sido alterado.
+- **Integridad frente a terceros.** AES-GCM es cifrado autenticado: cualquier cambio en un archivo cifrado se detecta al descifrarlo. No impide que alguien con conocimientos técnicos prepare una entrega nueva y la cifre con la clave pública de la ficha.
 - **Límite inherente a las aplicaciones de cliente.** Como todo se ejecuta en el navegador del alumnado, el cifrado protege los datos **en reposo** (los archivos), pero no impide que un usuario con conocimientos técnicos inspeccione o manipule su propia sesión en ejecución. Por eso OpenWorksheets es adecuado para el aula, pero **no sustituye a un sistema de examen de alta seguridad** con supervisión y backend de confianza.
 
 ## Idiomas
