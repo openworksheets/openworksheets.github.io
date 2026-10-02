@@ -14,3 +14,4 @@ pendientes de pasar aquí.
 | [1](0001-las-paginas-del-alumnado-no-cuentan-visitas.md) | Las páginas del alumnado no cuentan visitas | sustituido por el 2 |
 | [2](0002-openworksheets-no-cuenta-visitas.md) | OpenWorksheets no cuenta visitas | aceptado |
 | [3](0003-las-tipografias-se-alojan-en-el-propio-sitio.md) | Las tipografías se alojan en el propio sitio | aceptado |
+| [4](0004-contenidos-cc-by-sa-y-creditos-de-terceros.md) | Los contenidos son CC BY-SA 4.0 y el material de terceros se acredita en un solo archivo | aceptado |

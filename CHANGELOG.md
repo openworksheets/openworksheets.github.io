@@ -9,6 +9,16 @@ Las versiones publicadas también están en la página de
 
 ---
 
+## [1.34.1] — 2026-10-02
+
+### Añadido
+- **Licencia de los contenidos**. Los textos de la interfaz, las fichas de ejemplo y la documentación se publican con licencia CC BY-SA 4.0 (`LICENSE-CONTENIDOS`); el código sigue en AGPLv3.
+- **Créditos del material de terceros**. `vendor/TERCEROS.md` recoge la autoría, la procedencia, la versión y la licencia de pdf.js, JSZip, MathJax, qrcode-generator, los iconos de Lucide y las tipografías, con los textos de las licencias en `vendor/licencias/` y `fonts/OFL.txt`. El pie tiene un desplegable «Créditos», junto a «Privacidad» y «Uso de IA», que lo resume y enlaza a esa lista, en los cinco idiomas (ADR 4).
+
+### Cambiado
+- **El enlace al nivel del MIAE ya no lleva el idioma** en la dirección (`miae/?nivel=4`), para que la web del MIAE se abra en el idioma de quien lee.
+
+
 ## [1.34.0] — 2026-09-23
 
 ### Cambiado

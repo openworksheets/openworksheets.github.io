@@ -259,11 +259,14 @@ Les úniques dependències són biblioteques locals que viatgen amb l'aplicació
 - **[pdf.js](https://mozilla.github.io/pdf.js/)** — converteix cada pàgina del PDF en imatge en importar.
 - **[JSZip](https://stuk.github.io/jszip/)** — llegeix i escriu els paquets `.owpkg`, `.owsub` i els ZIP d'exportació.
 - **[MathJax](https://www.mathjax.org/)** (component *tex-svg*) — renderitza les fórmules LaTeX i químiques a SVG; es carrega només quan la fitxa conté fórmules.
+- **[qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator)** — genera el codi QR de l'enllaç que es comparteix amb l'alumnat.
 
 El xifratge usa la **Web Crypto API** del navegador (sense biblioteca externa).
 
 ## Llicència
 
-[AGPLv3](LICENSE) · © Juan José de Haro
+© Juan José de Haro. Codi amb llicència [AGPLv3](LICENSE) i continguts (textos de la interfície, fitxes d'exemple i documentació) amb llicència [CC BY-SA 4.0](LICENSE-CONTENIDOS).
 
-OpenWorksheets s'ha programat amb ajuda d'IA, en [cocreació, nivell 4 del MIAE](https://jjdeharo.github.io/miae/ca/?nivel=4): l'autor n'ha decidit el disseny i les funcions, i ha provat el programa moltes vegades, en situacions diferents, per detectar-hi errors i aspectes que cal millorar.
+Les biblioteques (pdf.js, JSZip, MathJax i qrcode-generator), les icones de Lucide i les tipografies són d'altres autors i conserven la seva llicència lliure. L'autoria, la procedència i la llicència de cadascun són a [vendor/TERCEROS.md](vendor/TERCEROS.md) (en castellà).
+
+OpenWorksheets s'ha programat amb ajuda d'IA, en [cocreació, nivell 4 del MIAE](https://jjdeharo.github.io/miae/?nivel=4): l'autor n'ha decidit el disseny i les funcions, i ha provat el programa moltes vegades, en situacions diferents, per detectar-hi errors i aspectes que cal millorar.
