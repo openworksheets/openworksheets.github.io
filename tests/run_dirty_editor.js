@@ -15,7 +15,7 @@ const puppeteer = require('puppeteer-core');
   const wait=ms=>new Promise(r=>setTimeout(r,ms));
 
   // 1) Ficha nueva en blanco desde la pantalla inicial
-  await page.evaluate(()=>{ const b=[...document.querySelectorAll('.ed-empty button')]; b[b.length-1].click(); });
+  await page.evaluate(()=>{ document.querySelector('.ed-empty [data-start="blank"]').click(); });
   await wait(500);
   check('se crea la página en blanco', (await page.$$eval('.wpf-page', n=>n.length))===1);
 

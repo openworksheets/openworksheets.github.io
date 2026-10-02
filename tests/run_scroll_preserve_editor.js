@@ -43,8 +43,7 @@ const puppeteer = require('puppeteer-core');
 
   // Hoja en blanco para disponer del lienzo completo.
   await page.evaluate(() => {
-    const btns = [...document.querySelectorAll('.ed-empty button')];
-    btns[btns.length - 1].click();
+    document.querySelector('.ed-empty [data-start="blank"]').click(); // «Hoja en blanco»
   });
   await page.waitForSelector('.wpf-page img.fondo');
   await wait(300);

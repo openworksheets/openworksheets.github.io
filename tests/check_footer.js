@@ -21,7 +21,10 @@ const puppeteer = require('puppeteer-core');
       issues: Boolean(pie.querySelector('a[href*="issues"]')),
       priv: Boolean(pie.querySelector('.pie-priv summary')),
       sinContador: !document.querySelector('meta[name^="analytics-"], script[src*="analytics"]'),
-      sinCifras: !pie.querySelector('[data-analytics-summary], [data-analytics-total], [data-analytics-today]')
+      sinCifras: !pie.querySelector('[data-analytics-summary], [data-analytics-total], [data-analytics-today]'),
+      ia: Boolean(pie.querySelector('[data-i18n-html="footer.aiNotice"] a[href="https://jjdeharo.github.io/miae/?nivel=4"]')),
+      creditos: Boolean(pie.querySelector('[data-i18n-html="footer.creditsNotice"] a[href*="vendor/TERCEROS.md"]')),
+      vcer: Boolean(pie.querySelector('a[data-i18n="footer.vcer"][href*="/vcer/?r="]'))
     };
   });
   check('© Juan José de Haro', f.copy);
@@ -31,13 +34,9 @@ const puppeteer = require('puppeteer-core');
   check('popover de privacidad', f.priv);
   check('sin contador de visitas', f.sinContador);
   check('sin cifras de visitas en el pie', f.sinCifras);
-
-  // Abrir el popover de privacidad y capturar
-  await page.click('footer.pie .pie-priv summary');
-  await new Promise(r => setTimeout(r, 200));
-  await page.evaluate(() => document.querySelector('footer.pie').scrollIntoView());
-  await new Promise(r => setTimeout(r, 200));
-  await page.screenshot({ path: '/tmp/footer.png', clip: { x: 0, y: 400, width: 1200, height: 400 } });
+  check('uso de IA con el nivel del MIAE', f.ia);
+  check('créditos con enlace a TERCEROS.md', f.creditos);
+  check('mención de la evaluación VCER', f.vcer);
 
   console.log(fails ? '__TEST_FAIL__' : '__TEST_OK__');
   await browser.close();

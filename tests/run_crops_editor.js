@@ -33,8 +33,7 @@ const puppeteer = require('puppeteer-core');
   // Página en blanco (tiene img.fondo, necesaria para recortar).
   await page.click('.ed-group[data-group="relate"]');
   await page.evaluate(() => {
-    const btns = [...document.querySelectorAll('.ed-empty button')];
-    btns[btns.length - 1].click(); // «Hoja en blanco»
+    document.querySelector('.ed-empty [data-start="blank"]').click(); // «Hoja en blanco»
   });
   await page.waitForSelector('.wpf-page img.fondo');
   await wait(300);

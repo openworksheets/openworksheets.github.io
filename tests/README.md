@@ -2,6 +2,18 @@
 
 Pruebas de integración que se ejecutan en un navegador real.
 
+Para pasarlas todas de una vez, desde la raíz del proyecto:
+
+```bash
+bash tests/run_all.sh
+```
+
+Levanta el servidor en el puerto 8765, pasa cada prueba, dice cuáles fallan y
+dónde está su registro, y cierra el servidor. Conviene pasarlo antes de publicar
+una versión: si una prueba falla, algo falla, en el programa o en la prueba.
+
+Para pasar solo algunas:
+
 ```bash
 # Desde la raíz del proyecto:
 python3 -m http.server 8765 &
@@ -83,6 +95,29 @@ pantalla y termina con `__TEST_OK__` o `__TEST_FAIL__`.
   `web-ejemplo.zip`, comprueba que la web se sirve en vivo en el lienzo y que
   «Cambiar tipo» reabre el selector
   (`node tests/run_embed_editor.js`, con el servidor en el puerto 8765).
+- `run_smoke_editor.js` — comprobación básica del editor: paleta agrupada,
+  apertura de grupos, opciones de la pantalla de inicio, creación y borrado de
+  un campo y «ficha nueva».
+- `run_panel_check.js` — orden de las secciones del panel de propiedades
+  (Contenido · Tamaño y posición · Estilo) en varios tipos de campo.
+- `run_scroll_preserve_editor.js` — al crear, duplicar o pegar un campo, el
+  lienzo del editor conserva su desplazamiento vertical.
+- `run_origin_guard.js` — protección de dominio de `config.js`: el Apps Script
+  del autor solo se usa en el sitio oficial y en local.
+- `check_footer.js` — el pie de la portada: autoría, licencias, enlaces, aviso
+  de privacidad, uso de IA, créditos, mención VCER y que no hay contador.
+- `check_resumen.js` — «Copiar resumen» del alumnado: con nota copia la
+  puntuación; si la ficha oculta la nota, el botón está desactivado. Fabrica
+  sus propias fichas.
+- `test_classdetail.html` — tabla de clase: el detalle de una entrega se abre
+  al pulsar su fila y se cierra con ✕.
+- `test_scorm_export.html` — exportación de una ficha como paquete SCORM y
+  reapertura de la ficha que lleva dentro.
+- `test_scorm_run.html` — la ficha exportada como SCORM informa al LMS: localiza
+  su API, marca el intento y envía la nota y el estado (80/100, aprobado).
+- `shot_footer.js`, `shot_origin_guard.js` — no son pruebas: sacan capturas del
+  pie y del aviso de dominio ajeno para revisarlas a ojo.
+- `run_all.sh` — pasa todas las anteriores (salvo las capturas).
 - `web-ejemplo.zip` — web mínima (index.html + assets/style.css) para probar el
   modo «Web en ZIP» del campo «Insertar».
 - `test_doc.pdf` — PDF mínimo usado por las pruebas.

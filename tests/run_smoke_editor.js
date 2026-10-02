@@ -79,8 +79,7 @@ const puppeteer = require('puppeteer-core');
   check('restablecer limpia preferencias persistentes', !resetPrefs.thumbs && !resetPrefs.panel && !resetPrefs.zoom && !resetPrefs.unit);
   await page.keyboard.press('Escape');
   await page.evaluate(() => {
-    const btns = [...document.querySelectorAll('.ed-empty button')];
-    btns[btns.length - 1].click();
+    document.querySelector('.ed-empty [data-start="blank"]').click(); // «Hoja en blanco»
   });
   await new Promise(r => setTimeout(r, 300));
   await page.click('.ed-group[data-group="write"]');

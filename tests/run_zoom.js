@@ -22,8 +22,7 @@ const puppeteer = require('puppeteer-core');
 
   // Página en blanco (último botón del estado vacío)
   await page.evaluate(() => {
-    const btns = [...document.querySelectorAll('.ed-empty button')];
-    btns[btns.length - 1].click();
+    document.querySelector('.ed-empty [data-start="blank"]').click(); // «Hoja en blanco»
   });
   await page.waitForSelector('.wpf-page img.fondo');
   await new Promise(r => setTimeout(r, 300));

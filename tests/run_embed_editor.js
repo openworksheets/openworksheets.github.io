@@ -35,8 +35,7 @@ const path = require('path');
 
   // Página en blanco y dibujar el campo.
   await page.evaluate(() => {
-    const btns = [...document.querySelectorAll('.ed-empty button')];
-    btns[btns.length - 1].click();
+    document.querySelector('.ed-empty [data-start="blank"]').click(); // «Hoja en blanco»
   });
   await page.waitForSelector('.wpf-page img.fondo');
   await wait(300);
@@ -61,8 +60,17 @@ const path = require('path');
   await wait(250);
   const embedSrc = await page.evaluate(() =>
     document.querySelector('.ed-field-embed iframe.wpf-media-el')?.getAttribute('src') || '');
+  // YouTube se incrusta en su modo de privacidad mejorada (youtube-nocookie.com).
   check('la URL incrustada usa la ruta embed en la vista previa del editor',
-    embedSrc === 'https://www.youtube.com/embed/dQw4w9WgXcQ');
+    embedSrc === 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ', embedSrc);
+
+  // Vimeo se incrusta con dnt=1, sin las cookies que no son imprescindibles.
+  await page.evaluate(() => { const i = document.querySelector('#panel input[type="url"]'); i.value = ''; });
+  await page.type('#panel input[type="url"]', 'https://vimeo.com/76979871');
+  await wait(250);
+  const vimeoSrc = await page.evaluate(() =>
+    document.querySelector('.ed-field-embed iframe.wpf-media-el')?.getAttribute('src') || '');
+  check('Vimeo se incrusta con dnt=1', vimeoSrc === 'https://player.vimeo.com/video/76979871?dnt=1', vimeoSrc);
 
   await page.evaluate(() => {
     const color = document.querySelector('#panel input[type="color"]');

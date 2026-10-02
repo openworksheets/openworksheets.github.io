@@ -22,6 +22,7 @@ Las versiones publicadas también están en la página de
 - **El foco de los huecos de texto se ve mejor**: el hueco se rodea entero al escribir en él, en vez de cambiar solo el color de la raya.
 - **Orden de los encabezados de la portada**: los títulos de las tarjetas pasan de tercer a segundo nivel, sin cambiar su aspecto.
 - **El servidor MCP pasa a la 1.36.0**, con la copia actual de la aplicación para la vista previa.
+- **Las pruebas del repositorio vuelven a pasar todas** (27). Nueve pruebas del editor pulsaban por su posición el botón «Hoja en blanco» de la pantalla de inicio, que dejó de ser el último al añadirse las opciones de IA; ahora lo buscan por su identificador. La del resumen dependía de dos fichas que no estaban en el repositorio y esperaba un comportamiento retirado en junio; ahora fabrica sus fichas. `tests/run_all.sh` las pasa todas de una vez.
 
 
 ## [1.35.1] — 2026-10-02
