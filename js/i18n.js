@@ -208,6 +208,7 @@ const STRINGS = {
     'footer.aiNotice': 'OpenWorksheets se ha programado con ayuda de IA, en <a href="https://jjdeharo.github.io/miae/?nivel=4" target="_blank" rel="noopener">cocreación, nivel 4 del MIAE</a>: el autor ha decidido el diseño y las funciones, y ha probado el programa numerosas veces, en situaciones diferentes, para detectar errores y aspectos que mejorar. Las ilustraciones de las fichas de ejemplo también se han generado con IA.',
     'footer.credits': 'Créditos',
     'footer.creditsNotice': 'Código con licencia AGPLv3 y contenidos con licencia <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener">CC BY-SA 4.0</a>. Usa bibliotecas de otros autores (pdf.js, JSZip, MathJax y qrcode-generator), iconos de Lucide y tipografías libres, cada uno con su licencia libre: <a href="https://github.com/openworksheets/openworksheets.github.io/blob/main/vendor/TERCEROS.md" target="_blank" rel="noopener">autoría, procedencia y licencia de cada uno</a>.',
+    'footer.vcer': 'Evaluación VCER de la versión 1.35.1: Recomendable (100 %), octubre de 2026',
 
     'feat.title': 'Características · OpenWorksheets',
     'feat.head': '¿Qué puedes hacer con OpenWorksheets?',
@@ -1268,6 +1269,7 @@ const STRINGS = {
     'footer.aiNotice': 'OpenWorksheets was programmed with the help of AI, in <a href="https://jjdeharo.github.io/miae/?nivel=4" target="_blank" rel="noopener">co-creation, level 4 of MIAE</a>: the author decided the design and the features, and tested the program many times, in different situations, to find errors and things to improve. The illustrations in the example worksheets were also generated with AI.',
     'footer.credits': 'Credits',
     'footer.creditsNotice': 'Code under the AGPLv3 license and content under the <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.en" target="_blank" rel="noopener">CC BY-SA 4.0</a> license. It uses libraries by other authors (pdf.js, JSZip, MathJax and qrcode-generator), Lucide icons and free typefaces, each under its own free license: <a href="https://github.com/openworksheets/openworksheets.github.io/blob/main/vendor/TERCEROS.md" target="_blank" rel="noopener">authorship, source and license of each one</a>.',
+    'footer.vcer': 'VCER evaluation of version 1.35.1: Recommended (100 %), October 2026',
 
     'feat.title': 'Features · OpenWorksheets',
     'feat.head': 'What can you do with OpenWorksheets?',
@@ -2296,6 +2298,7 @@ const STRINGS = {
     'footer.aiNotice': 'OpenWorksheets s\'ha programat amb ajuda d\'IA, en <a href="https://jjdeharo.github.io/miae/?nivel=4" target="_blank" rel="noopener">cocreació, nivell 4 del MIAE</a>: l\'autor n\'ha decidit el disseny i les funcions, i ha provat el programa moltes vegades, en situacions diferents, per detectar-hi errors i aspectes que cal millorar. Les il·lustracions de les fitxes d\'exemple també s\'han generat amb IA.',
     'footer.credits': 'Crèdits',
     'footer.creditsNotice': 'Codi amb llicència AGPLv3 i continguts amb llicència <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ca" target="_blank" rel="noopener">CC BY-SA 4.0</a>. Fa servir biblioteques d\'altres autors (pdf.js, JSZip, MathJax i qrcode-generator), icones de Lucide i tipografies lliures, cadascun amb la seva llicència lliure: <a href="https://github.com/openworksheets/openworksheets.github.io/blob/main/vendor/TERCEROS.md" target="_blank" rel="noopener">autoria, procedència i llicència de cadascun</a>.',
+    'footer.vcer': 'Avaluació VCER de la versió 1.35.1: Recomanable (100 %), octubre de 2026',
 
     'feat.title': 'Característiques · OpenWorksheets',
     'feat.head': 'Què pots fer amb OpenWorksheets?',
@@ -3317,6 +3320,7 @@ const STRINGS = {
     'footer.aiNotice': 'OpenWorksheets programouse con axuda de IA, en <a href="https://jjdeharo.github.io/miae/?nivel=4" target="_blank" rel="noopener">cocreación, nivel 4 do MIAE</a>: o autor decidiu o deseño e as funcións, e probou o programa moitas veces, en situacións diferentes, para detectar erros e aspectos que mellorar. As ilustracións das fichas de exemplo tamén se xeraron con IA.',
     'footer.credits': 'Créditos',
     'footer.creditsNotice': 'Código con licenza AGPLv3 e contidos con licenza <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.gl" target="_blank" rel="noopener">CC BY-SA 4.0</a>. Usa bibliotecas doutros autores (pdf.js, JSZip, MathJax e qrcode-generator), iconas de Lucide e tipografías libres, cada un coa súa licenza libre: <a href="https://github.com/openworksheets/openworksheets.github.io/blob/main/vendor/TERCEROS.md" target="_blank" rel="noopener">autoría, procedencia e licenza de cada un</a>.',
+    'footer.vcer': 'Avaliación VCER da versión 1.35.1: Recomendable (100 %), outubro de 2026',
 
     'feat.title': 'Características · OpenWorksheets',
     'feat.head': 'Que podes facer con OpenWorksheets?',
@@ -4338,6 +4342,7 @@ const STRINGS = {
     'footer.aiNotice': 'OpenWorksheets AAren laguntzaz programatu da, <a href="https://jjdeharo.github.io/miae/?nivel=4" target="_blank" rel="noopener">elkarrekin sortuz, MIAEren 4. mailan</a>: egileak erabaki ditu diseinua eta funtzioak, eta programa askotan probatu du, egoera desberdinetan, akatsak eta hobetu beharrekoak aurkitzeko. Adibide-fitxetako irudiak ere AArekin sortu dira.',
     'footer.credits': 'Kredituak',
     'footer.creditsNotice': 'Kodea AGPLv3 lizentziarekin eta edukiak <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.eu" target="_blank" rel="noopener">CC BY-SA 4.0</a> lizentziarekin. Beste egile batzuen liburutegiak (pdf.js, JSZip, MathJax eta qrcode-generator), Lucide-ren ikonoak eta letra-tipo libreak erabiltzen ditu, bakoitza bere lizentzia librearekin: <a href="https://github.com/openworksheets/openworksheets.github.io/blob/main/vendor/TERCEROS.md" target="_blank" rel="noopener">bakoitzaren egilea, jatorria eta lizentzia</a>.',
+    'footer.vcer': '1.35.1 bertsioaren VCER ebaluazioa: Gomendagarria (% 100), 2026ko urria',
 
     'feat.title': 'Ezaugarriak · OpenWorksheets',
     'feat.head': 'Zer egin dezakezu OpenWorksheets-ekin?',

@@ -15,6 +15,7 @@ Las versiones publicadas también están en la página de
 - **Lo que se dice de la verificación de las entregas se ajusta a lo que hace**. La aplicación prometía «verificación de integridad» e «integridad garantizada», y que avisaba si un archivo había sido manipulado. El código de comprobación solo detecta que alguien edite el archivo a mano: no una entrega falsificada por alguien con conocimientos técnicos, porque el formato es público, ni una entrega nueva cifrada con la clave pública de la ficha. La portada, Entregas, Características y los README lo dicen ahora así, en los cinco idiomas.
 
 ### Añadido
+- **Resultado de la evaluación VCER**. El informe completo está en `evaluacion-vcer.md` y el pie lo menciona, en los cinco idiomas, con un enlace a la página que explica la evaluación: «Evaluación VCER de la versión 1.35.1: Recomendable (100 %), octubre de 2026».
 - **Aviso al subir paquetes en el editor**. Al subir un SCORM, un IMS CP, una web en ZIP o un `.elpx`, el editor recuerda que su contenido se ejecuta dentro de la ficha y que conviene usar solo paquetes propios o de fuentes de confianza (ADR 5).
 
 
