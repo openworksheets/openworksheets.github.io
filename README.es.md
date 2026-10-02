@@ -269,4 +269,4 @@ El cifrado usa la **Web Crypto API** del navegador (sin biblioteca externa).
 
 Las bibliotecas (pdf.js, JSZip, MathJax y qrcode-generator), los iconos de Lucide y las tipografías son de otros autores y conservan su licencia libre. La autoría, la procedencia y la licencia de cada uno están en [vendor/TERCEROS.md](vendor/TERCEROS.md).
 
-OpenWorksheets se ha programado con ayuda de IA, en [cocreación, nivel 4 del MIAE](https://jjdeharo.github.io/miae/?nivel=4): el autor ha decidido el diseño y las funciones, y ha probado el programa numerosas veces, en situaciones diferentes, para detectar errores y aspectos que mejorar.
+OpenWorksheets se ha programado con ayuda de IA, en [cocreación, nivel 4 del MIAE](https://jjdeharo.github.io/miae/?nivel=4): el autor ha decidido el diseño y las funciones, y ha probado el programa numerosas veces, en situaciones diferentes, para detectar errores y aspectos que mejorar. Las ilustraciones de las fichas de ejemplo también se han generado con IA.

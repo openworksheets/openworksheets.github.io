@@ -269,4 +269,4 @@ El xifratge usa la **Web Crypto API** del navegador (sense biblioteca externa).
 
 Les biblioteques (pdf.js, JSZip, MathJax i qrcode-generator), les icones de Lucide i les tipografies són d'altres autors i conserven la seva llicència lliure. L'autoria, la procedència i la llicència de cadascun són a [vendor/TERCEROS.md](vendor/TERCEROS.md) (en castellà).
 
-OpenWorksheets s'ha programat amb ajuda d'IA, en [cocreació, nivell 4 del MIAE](https://jjdeharo.github.io/miae/?nivel=4): l'autor n'ha decidit el disseny i les funcions, i ha provat el programa moltes vegades, en situacions diferents, per detectar-hi errors i aspectes que cal millorar.
+OpenWorksheets s'ha programat amb ajuda d'IA, en [cocreació, nivell 4 del MIAE](https://jjdeharo.github.io/miae/?nivel=4): l'autor n'ha decidit el disseny i les funcions, i ha provat el programa moltes vegades, en situacions diferents, per detectar-hi errors i aspectes que cal millorar. Les il·lustracions de les fitxes d'exemple també s'han generat amb IA.

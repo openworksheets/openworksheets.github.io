@@ -16,6 +16,7 @@ Las versiones publicadas también están en la página de
 - **Créditos del material de terceros**. `vendor/TERCEROS.md` recoge la autoría, la procedencia, la versión y la licencia de pdf.js, JSZip, MathJax, qrcode-generator, los iconos de Lucide y las tipografías, con los textos de las licencias en `vendor/licencias/` y `fonts/OFL.txt`. El pie tiene un desplegable «Créditos», junto a «Privacidad» y «Uso de IA», que lo resume y enlaza a esa lista, en los cinco idiomas (ADR 4).
 
 ### Cambiado
+- **La declaración de uso de IA incluye las ilustraciones** de las fichas de ejemplo, que también se han generado con IA, en el pie y en los README, en los cinco idiomas.
 - **El enlace al nivel del MIAE ya no lleva el idioma** en la dirección (`miae/?nivel=4`), para que la web del MIAE se abra en el idioma de quien lee.
 
 

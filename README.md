@@ -286,4 +286,4 @@ Encryption uses the browser's **Web Crypto API** (no external library).
 
 The libraries (pdf.js, JSZip, MathJax and qrcode-generator), the Lucide icons and the typefaces belong to other authors and keep their free licenses. The authorship, source and license of each one are listed in [vendor/TERCEROS.md](vendor/TERCEROS.md) (in Spanish).
 
-OpenWorksheets was programmed with the help of AI, in [co-creation, level 4 of MIAE](https://jjdeharo.github.io/miae/?nivel=4): the author decided the design and the features, and tested the program many times, in different situations, to find errors and things to improve.
+OpenWorksheets was programmed with the help of AI, in [co-creation, level 4 of MIAE](https://jjdeharo.github.io/miae/?nivel=4): the author decided the design and the features, and tested the program many times, in different situations, to find errors and things to improve. The illustrations in the example worksheets were also generated with AI.
