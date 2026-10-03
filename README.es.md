@@ -216,6 +216,8 @@ Si el intento se reanuda tras una recarga accidental, estas medidas de supervisi
 
 ## Seguridad y cifrado
 
+**Privacidad.** OpenWorksheets no cuenta visitas ni recoge estadísticas de uso, y no usa cookies. Si una ficha está en Google Drive, se descarga a través de un servicio de Google del autor (Apps Script) y, si este falla, de uno público (corsproxy.io o cors.eu.org): por ellos pasa solo la ficha, nunca las respuestas. Los vídeos de YouTube o Vimeo que lleve una ficha se cargan desde esos servicios, en su modo de privacidad.
+
 OpenWorksheets ofrece un nivel de seguridad alto para el uso en el aula: el alumnado no puede acceder al archivo de la ficha y las entregas pueden cifrarse para que solo el docente pueda leerlas. Incorpora dos mecanismos de cifrado **independientes**, ambos ejecutados íntegramente en el navegador mediante la Web Crypto API (`crypto.subtle`), sin servidor ni envío de datos a terceros.
 
 ### Cifrado de entregas (clave pública)

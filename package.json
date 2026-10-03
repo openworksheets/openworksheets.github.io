@@ -1,0 +1,17 @@
+{
+  "name": "openworksheets",
+  "private": true,
+  "description": "Aplicación web para crear fichas autocorregibles. Este archivo solo declara lo que necesitan las pruebas; la aplicación no tiene dependencias que instalar.",
+  "license": "AGPL-3.0-or-later",
+  "homepage": "https://openworksheets.github.io",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/openworksheets/openworksheets.github.io.git"
+  },
+  "scripts": {
+    "test": "bash tests/run_all.sh"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^25.1.0"
+  }
+}

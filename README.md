@@ -234,6 +234,8 @@ If an attempt is resumed after an accidental reload, these supervision rules **r
 
 ## Security and encryption
 
+**Privacy.** OpenWorksheets does not count visits or collect usage statistics, and uses no cookies. If a worksheet is stored on Google Drive, it is downloaded through a Google service run by the author (Apps Script) and, if that fails, through a public one (corsproxy.io or cors.eu.org): only the worksheet goes through them, never the answers. YouTube or Vimeo videos in a worksheet are loaded from those services, in their privacy mode.
+
 OpenWorksheets offers a high level of security for classroom use: students cannot access the worksheet file and submissions can be encrypted so that only the teacher can read them. It incorporates two **independent** encryption mechanisms, both running entirely in the browser using the Web Crypto API (`crypto.subtle`), with no server or data sent to third parties.
 
 ### Submission encryption (public key)

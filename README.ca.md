@@ -217,6 +217,8 @@ A l'alumnat se l'informa de les regles a la pantalla d'inici (sense revelar quan
 
 ## Seguretat i xifratge
 
+**Privadesa.** OpenWorksheets no compta visites ni recull estadístiques d'ús, i no fa servir galetes. Si una fitxa és a Google Drive, es descarrega a través d'un servei de Google de l'autor (Apps Script) i, si falla, d'un de públic (corsproxy.io o cors.eu.org): per ells només hi passa la fitxa, mai les respostes. Els vídeos de YouTube o Vimeo que porti una fitxa es carreguen des d'aquests serveis, en el seu mode de privadesa.
+
 OpenWorksheets ofereix un nivell de seguretat alt per a l'ús a l'aula: l'alumnat no pot accedir al fitxer de la fitxa i els lliuraments es poden xifrar perquè només el docent els pugui llegir. Incorpora dos mecanismes de xifratge **independents**, tots dos executats íntegrament al navegador mitjançant la Web Crypto API (`crypto.subtle`), sense servidor ni enviament de dades a tercers.
 
 ### Xifratge de lliuraments (clau pública)

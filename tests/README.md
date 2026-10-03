@@ -2,10 +2,12 @@
 
 Pruebas de integración que se ejecutan en un navegador real.
 
-Para pasarlas todas de una vez, desde la raíz del proyecto:
+Necesitan Node.js, Chromium en `/usr/bin/chromium` y `puppeteer-core`, que se
+instala una sola vez desde la raíz del proyecto con `npm install`. Para pasarlas
+todas de una vez:
 
 ```bash
-bash tests/run_all.sh
+npm test          # o bien: bash tests/run_all.sh
 ```
 
 Levanta el servidor en el puerto 8765, pasa cada prueba, dice cuáles fallan y
@@ -18,7 +20,7 @@ Para pasar solo algunas:
 # Desde la raíz del proyecto:
 python3 -m http.server 8765 &
 
-# Con puppeteer-core instalado (npm i puppeteer-core) y Chromium en el sistema:
+# Con las dependencias instaladas (npm install) y Chromium en el sistema:
 node tests/run_headless.js tests/test_pdf.html tests/test_zip.html tests/test_player.html
 ```
 
