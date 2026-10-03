@@ -15,6 +15,7 @@ Las versiones publicadas también están en la página de
 - **El aviso de privacidad dice por dónde pasa una ficha**. Además de que no se cuentan visitas ni se usan cookies, explica que una ficha alojada en Google Drive se descarga a través del Apps Script del autor y, si falla, de un servicio público (corsproxy.io o cors.eu.org), que por ellos pasa solo la ficha y nunca las respuestas, y que los vídeos de YouTube o Vimeo se cargan desde esos servicios en su modo de privacidad. Está en los cinco idiomas, en el pie y en los README, y la página de Entregas tiene ahora también el desplegable «Privacidad», como la portada y Características.
 
 ### Añadido
+- **Evaluación VCER de la 1.36.1**: Recomendable (100 %). `evaluacion-vcer.md` y la mención del pie pasan a esta versión.
 - **`package.json` para las pruebas**: declara `puppeteer-core`, que se instala con `npm install`, y `npm test` las pasa todas. La aplicación sigue sin dependencias que instalar.
 
 
